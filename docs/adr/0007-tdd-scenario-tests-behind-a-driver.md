@@ -1,0 +1,24 @@
+# TDD, and scenario tests behind an in-process / container driver
+
+All of Pictogram is built **test-first**. The test shape is a diamond: a thin layer of
+domain unit tests for edge cases, the **bulk at module-integration level**
+(`@ApplicationModuleTest` against a singleton Testcontainers PostgreSQL, `withReuse` locally),
+and a thin end-to-end cap.
+
+User-goal scenarios are written **once** against a `PictogramApi` driver interface with
+intention-revealing actions (`registerViaGoogle()`, `chooseUsername()`, `publishPost()`,
+`follow()`, `openFeed()`), and run against two transports:
+
+- `InProcessDriver` — `@SpringBootTest` plus Testcontainers Postgres / MinIO /
+  `mock-oauth2-server`. Tagged `fast`, runs every build.
+- `ContainerDriver` — the actual application image over HTTP. Tagged `blackbox`, runs in
+  CI. This is treated as the truth of what production does.
+
+## Consequences
+
+- Assertions on asynchronous outcomes use **Awaitility**, never `Thread.sleep`; time is an
+  injectable `Clock`; test data is randomised per test; isolation is by table truncation,
+  not transaction rollback (which breaks across async listeners).
+- Tests are named as user goals with Given/When/Then bodies; Java uses a fluent DSL +
+  AssertJ, the browser layer uses a page-object/actor layer + Playwright's `expect`.
+- Flakiness is treated as a defect, not a retry target.

@@ -1,0 +1,24 @@
+# Post
+
+The unit of content in Pictogram: one image plus an optional caption, published by one
+person. A post does not change after it is published — it is only created or deleted.
+
+## Language
+
+**Post**:
+One image (referenced by `MediaId`) plus an optional caption, published by an author at a
+point in time. Immutable once published; the only later change is deletion.
+_Avoid_: Picture, photo, upload, entry, gram
+
+**Author**:
+The user who published the post. Referenced by `UserId`.
+_Avoid_: Owner, poster, creator, user
+
+**Caption**:
+Optional free text on a post, up to 2200 characters.
+_Avoid_: Description, text, body, message
+
+**Deletion**:
+Permanent removal of a post. Hard, not soft — the record is gone and `PostDeleted` is
+emitted. There is no trash or undo.
+_Avoid_: Archive, hide, soft delete, remove

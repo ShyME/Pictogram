@@ -1,0 +1,30 @@
+# Identity
+
+Authenticates people and issues the tokens the rest of Pictogram trusts. It knows nothing
+about profiles, posts, or the social graph.
+
+## Language
+
+**User**:
+An authenticated person, identified everywhere by a `UserId` (UUID). Identity stores only
+what it needs to authenticate: the Google subject and the email Google reports.
+_Avoid_: Account, member, principal
+
+**Google subject**:
+The stable, unique identifier Google assigns to a Google account (`sub`). The value
+Pictogram authenticates against; it never changes for a given account.
+_Avoid_: Google ID, external ID
+
+**Identity provider**:
+The external system that vouches for a person's identity. Google is the only one in v1;
+the term exists because email/password is expected to become a second provider.
+_Avoid_: Auth provider, IdP (in prose), broker
+
+**Access token**:
+A short-lived, Pictogram-issued token a client sends with each request. Signed by Pictogram
+(EdDSA), never a Google token.
+_Avoid_: Bearer token, JWT (when the audience matters), session
+
+**Refresh token**:
+A longer-lived, rotating, Pictogram-issued token used only to obtain a new access token.
+_Avoid_: Session token
