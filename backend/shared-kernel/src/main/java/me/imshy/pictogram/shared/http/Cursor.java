@@ -8,10 +8,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * An opaque keyset cursor marking a position in a list ordered by {@code publishedAt}
- * descending with the id as tiebreaker — the ordering the feed and the profile grid share.
- * Encodes to a Base64URL token the client treats as opaque; {@link #decode} rejects
- * anything it did not produce with {@link InvalidCursorException}.
+ * A keyset cursor marking a position in a list ordered by {@code publishedAt} descending
+ * with the id as tiebreaker — the ordering the feed and the profile grid share. Encodes to
+ * a Base64URL token the client passes back verbatim and treats as opaque; {@link #decode}
+ * raises {@link InvalidCursorException} on a token that is not well-formed. The token is
+ * not signed — it reveals no more than a client could infer from the page it came from.
  */
 public record Cursor(Instant publishedAt, UUID id) {
 

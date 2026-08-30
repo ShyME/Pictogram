@@ -19,7 +19,6 @@ class ApiPageTest {
 
         assertThat(page.items()).containsExactly("a", "b");
         assertThat(page.nextCursor()).isEqualTo(next.encode());
-        assertThat(page.hasMore()).isTrue();
     }
 
     @Test
@@ -27,7 +26,6 @@ class ApiPageTest {
         var page = ApiPage.of(List.of("only"), null);
 
         assertThat(page.nextCursor()).isNull();
-        assertThat(page.hasMore()).isFalse();
     }
 
     @Test

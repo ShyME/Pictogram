@@ -20,8 +20,4 @@ public record ApiPage<T>(List<T> items, String nextCursor) {
     public static <T> ApiPage<T> lastPage(List<T> items) {
         return new ApiPage<>(items, null);
     }
-
-    public boolean hasMore() {
-        return nextCursor != null;
-    }
 }
