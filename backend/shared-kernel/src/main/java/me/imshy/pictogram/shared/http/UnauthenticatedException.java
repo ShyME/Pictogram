@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class UnauthenticatedException extends ApiException {
 
     public UnauthenticatedException(String detail) {
-        super(HttpStatus.UNAUTHORIZED, "unauthorized", "Authentication required", detail);
+        super(HttpStatus.UNAUTHORIZED, ProblemType.UNAUTHORIZED, detail);
     }
 }

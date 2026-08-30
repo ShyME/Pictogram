@@ -1,5 +1,7 @@
 package me.imshy.pictogram;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -15,6 +17,7 @@ import me.imshy.pictogram.shared.http.ApiException;
 import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.ProblemType;
 import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,15 +38,14 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * The API edge conventions, exercised end to end through the real security filter chain,
  * the {@code @CurrentUser} resolver, and the Problem Detail advice against a throwaway
- * probe controller (spec §API — no feature endpoints exist yet).
+ * probe controller (spec §API — no feature endpoints exist yet, so this is a
+ * {@code :app}-level test rather than an {@code @ApplicationModuleTest}).
  */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Import(ApiEdgeTest.ProbeController.class)
 class ApiEdgeTest {
-
-    private static final String PROBLEM_TYPE_BASE = "https://pictogram.dev/problems/";
 
     @Autowired
     MockMvc mvc;
@@ -58,10 +60,18 @@ class ApiEdgeTest {
         mvc.perform(get("/api/_probe/current-user"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value(PROBLEM_TYPE_BASE + "unauthorized"))
+                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.title").value("Authentication required"))
                 .andExpect(jsonPath("$.properties").doesNotExist());
+    }
+
+    @Test
+    void invalidAccessTokenIsA401ProblemDetail() throws Exception {
+        mvc.perform(get("/api/_probe/current-user").header("Authorization", "Bearer not-a-real-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -83,12 +93,15 @@ class ApiEdgeTest {
     }
 
     @Test
-    void listEndpointsReturnThePaginationEnvelope() throws Exception {
+    void listEndpointsReturnAnEnvelopeWhoseCursorIsAnOpaqueDecodableToken() throws Exception {
+        var expectedCursor = new Cursor(Instant.parse("2026-08-30T12:00:00Z"), ProbeController.PAGE_TAIL);
+
         mvc.perform(get("/api/_probe/page").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.items[0]").value("first"))
-                .andExpect(jsonPath("$.nextCursor").isNotEmpty());
+                .andExpect(jsonPath("$.nextCursor").value(expectedCursor.encode()))
+                .andExpect(jsonPath("$.nextCursor").value(not(containsString("2026"))));
     }
 
     @Test
@@ -96,7 +109,7 @@ class ApiEdgeTest {
         mvc.perform(get("/api/_probe/boom").with(jwt()))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value(PROBLEM_TYPE_BASE + "probe-conflict"))
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "probe-conflict"))
                 .andExpect(jsonPath("$.detail").value("the probe blew up"));
     }
 
@@ -104,7 +117,14 @@ class ApiEdgeTest {
     void aMalformedCursorRendersAsA400ProblemDetail() throws Exception {
         mvc.perform(get("/api/_probe/by-cursor").param("cursor", "!!not-a-cursor!!").with(jwt()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(PROBLEM_TYPE_BASE + "invalid-cursor"));
+                .andExpect(jsonPath("$.type").value(ProblemType.INVALID_CURSOR.uri().toString()));
+    }
+
+    @Test
+    void aFrameworkErrorStillRendersAsProblemJson() throws Exception {
+        mvc.perform(get("/api/_probe/no-such-route").with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
     }
 
     @Test
@@ -117,6 +137,8 @@ class ApiEdgeTest {
     @RestController
     @RequestMapping("/api/_probe")
     static class ProbeController {
+
+        static final UUID PAGE_TAIL = UUID.fromString("00000000-0000-0000-0000-0000000000ff");
 
         record Clock(Instant at) {
         }
@@ -133,12 +155,13 @@ class ApiEdgeTest {
 
         @GetMapping("/page")
         ApiPage<String> page() {
-            return ApiPage.of(List.of("first"), new Cursor(Instant.parse("2026-08-30T12:00:00Z"), UUID.randomUUID()));
+            return ApiPage.of(List.of("first"), new Cursor(Instant.parse("2026-08-30T12:00:00Z"), PAGE_TAIL));
         }
 
         @GetMapping("/boom")
         void boom() {
-            throw new ApiException(HttpStatus.CONFLICT, "probe-conflict", "Probe conflict", "the probe blew up");
+            throw new ApiException(HttpStatus.CONFLICT, new ProblemType("probe-conflict", "Probe conflict"),
+                    "the probe blew up");
         }
 
         @GetMapping("/by-cursor")

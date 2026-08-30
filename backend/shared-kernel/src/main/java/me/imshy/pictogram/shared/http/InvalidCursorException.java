@@ -2,11 +2,10 @@ package me.imshy.pictogram.shared.http;
 
 import org.springframework.http.HttpStatus;
 
-/** A pagination cursor that is malformed or was not issued by the endpoint it was sent to. */
+/** A pagination cursor that is not a well-formed token this API produces. */
 public class InvalidCursorException extends ApiException {
 
     public InvalidCursorException() {
-        super(HttpStatus.BAD_REQUEST, "invalid-cursor", "Invalid pagination cursor",
-                "The pagination cursor is malformed or was not issued by this endpoint.");
+        super(HttpStatus.BAD_REQUEST, ProblemType.INVALID_CURSOR, "The pagination cursor is malformed.");
     }
 }

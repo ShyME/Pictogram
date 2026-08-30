@@ -1,19 +1,28 @@
 package me.imshy.pictogram.shared.http;
 
 import java.net.URI;
+import java.util.Objects;
 
 /**
- * Builds the stable {@code type} URI for an RFC 9457 Problem Detail. The URIs are stable
- * identifiers a client can branch on; they are not meant to be dereferenced.
+ * A kind of failure: its stable {@code type} URI (a stable identifier clients branch on,
+ * not meant to be dereferenced) and its human-readable {@code title}. {@code shared} owns
+ * the cross-cutting ones below; a module declares its own constants for its own failures.
  */
-public final class ProblemType {
+public record ProblemType(String slug, String title) {
 
     public static final String BASE = "https://pictogram.dev/problems/";
 
-    private ProblemType() {
+    public static final ProblemType UNAUTHORIZED = new ProblemType("unauthorized", "Authentication required");
+    public static final ProblemType FORBIDDEN = new ProblemType("forbidden", "Access denied");
+    public static final ProblemType INVALID_CURSOR = new ProblemType("invalid-cursor", "Invalid pagination cursor");
+    public static final ProblemType INTERNAL_ERROR = new ProblemType("internal-error", "Internal server error");
+
+    public ProblemType {
+        Objects.requireNonNull(slug, "slug");
+        Objects.requireNonNull(title, "title");
     }
 
-    public static URI of(String slug) {
+    public URI uri() {
         return URI.create(BASE + slug);
     }
 }
