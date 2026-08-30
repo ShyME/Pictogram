@@ -1,0 +1,15 @@
+.git/
+.idea/
+.run/
+**/build/
+**/.gradle/
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+**/coverage/
+playwright-report/
+test-results/
+*.log
+.env
+.env.*
+!.env.example

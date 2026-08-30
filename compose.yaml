@@ -1,0 +1,48 @@
+# The whole app in containers: `docker compose up --build` -> http://localhost:8080
+# For host-based development (apps on the host, infra in containers) use compose.dev.yaml.
+name: pictogram
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pictogram}
+      POSTGRES_USER: ${POSTGRES_USER:-pictogram}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pictogram}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pictogram} -d ${POSTGRES_DB:-pictogram}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pictogram}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-pictogram}
+    volumes:
+      - miniodata:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "${PICTOGRAM_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      PICTOGRAM_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pictogram}
+      PICTOGRAM_DB_USERNAME: ${POSTGRES_USER:-pictogram}
+      PICTOGRAM_DB_PASSWORD: ${POSTGRES_PASSWORD:-pictogram}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+volumes:
+  pgdata:
+  miniodata:

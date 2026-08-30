@@ -1,0 +1,82 @@
+# Common tasks. Install go-task: https://taskfile.dev  (brew install go-task)
+# `task --list` shows everything.
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  up:
+    desc: Build and run the whole app in containers at http://localhost:8080
+    cmds:
+      - docker compose up --build -d
+      - 'echo "Pictogram: http://localhost:{{.PICTOGRAM_PORT | default 8080}}"'
+
+  down:
+    desc: Stop the whole-app stack (keeps volumes)
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: Tail the app container logs
+    cmds:
+      - docker compose logs -f app
+
+  dev:
+    desc: Start dev infra only (Postgres + MinIO + mock-oauth2-server)
+    cmds:
+      - docker compose -f compose.dev.yaml up -d
+
+  dev:down:
+    desc: Stop the dev infra
+    cmds:
+      - docker compose -f compose.dev.yaml down
+
+  backend:
+    desc: Run the backend on the host (local profile; auto-starts dev infra)
+    dir: backend
+    cmds:
+      - ./gradlew :app:bootRun
+
+  frontend:
+    desc: Run the Vite dev server (proxies /api and /oauth2 to the host backend)
+    dir: frontend
+    cmds:
+      - pnpm install
+      - pnpm dev
+
+  test:
+    desc: Run all checks — backend build + frontend lint/typecheck/tests
+    cmds:
+      - task: test:backend
+      - task: test:frontend
+
+  test:backend:
+    dir: backend
+    cmds:
+      - ./gradlew build
+
+  test:frontend:
+    dir: frontend
+    cmds:
+      - pnpm install
+      - pnpm lint
+      - pnpm typecheck
+      - pnpm test
+
+  openapi:
+    desc: Export the OpenAPI document (placeholder — needs springdoc wired and endpoints to exist)
+    cmds:
+      - 'echo "No OpenAPI document yet: no springdoc-openapi dependency and no @RestController endpoints. The first slice to add an endpoint wires this up."'
+
+  clean:
+    desc: Stop everything and drop volumes and build output
+    cmds:
+      - docker compose down -v
+      - docker compose -f compose.dev.yaml down -v
+      - cd backend && ./gradlew clean
+      - rm -rf frontend/dist
