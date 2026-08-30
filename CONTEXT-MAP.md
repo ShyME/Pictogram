@@ -34,6 +34,6 @@ persistence.
 
 ## Recording decisions
 
-Architecture-level decisions live in [`docs/adr/`](./docs/adr/) (`0001`–`0008`). Start
-there before changing module boundaries, the integration style, the auth model, or the
-feed strategy.
+Architecture-level decisions live in [`docs/adr/`](./docs/adr/) (`0001`–`0009`). Start
+there before changing module boundaries, the integration style, the auth model, the
+database-migration layout, or the feed strategy.

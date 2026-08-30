@@ -11,6 +11,24 @@ spring:
     url: jdbc:postgresql://localhost:5432/pictogram
     username: pictogram
     password: pictogram
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: pictogram-local
+            client-secret: pictogram-local-secret
+            scope: openid, email
+        provider:
+          # The mock-oauth2-server from compose.dev.yaml stands in for Google. Bring infra
+          # up first (`docker compose -f compose.dev.yaml up -d`) — issuer discovery runs at
+          # startup.
+          google:
+            issuer-uri: http://localhost:8090/default
+
+pictogram:
+  auth:
+    cookie-secure: false   # local runs on plain http
 
 management:
   endpoints:
