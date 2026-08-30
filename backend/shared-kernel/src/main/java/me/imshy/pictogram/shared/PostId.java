@@ -1,5 +1,7 @@
 package me.imshy.pictogram.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -14,10 +16,12 @@ public record PostId(UUID value) {
         return new PostId(UUID.randomUUID());
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static PostId fromString(String value) {
         return new PostId(UUID.fromString(value));
     }
 
+    @JsonValue
     @Override
     public String toString() {
         return value.toString();

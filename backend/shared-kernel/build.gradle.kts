@@ -1,4 +1,23 @@
-// Pure Java, no Spring — every module may depend on it (the whitelisted Modulith shared module).
+// The whitelisted Modulith shared module. Carries the ID value types plus the HTTP edge
+// conventions every module's web layer reuses (Problem Details, the pagination envelope,
+// current-user resolution) — see docs/adr/0008. The web dependencies are `api` so a
+// module's `internal.web` package compiles against them; none of them pull a servlet
+// container (that stays in :app).
 plugins {
     id("pictogram.java-library-conventions")
+}
+
+dependencies {
+    api("org.springframework:spring-webmvc")
+    api("org.springframework.security:spring-security-web")
+    api("org.springframework.security:spring-security-oauth2-resource-server")
+    api("org.springframework.security:spring-security-oauth2-jose")
+    api("tools.jackson.core:jackson-databind")
+    api("org.springframework.boot:spring-boot-autoconfigure")
+
+    compileOnly("jakarta.servlet:jakarta.servlet-api")
+    compileOnly("org.springframework.modulith:spring-modulith-core")
+
+    testImplementation("jakarta.servlet:jakarta.servlet-api")
+    testImplementation("org.springframework:spring-test")
 }
