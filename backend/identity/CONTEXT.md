@@ -28,3 +28,15 @@ _Avoid_: Bearer token, JWT (when the audience matters), session
 **Refresh token**:
 A longer-lived, rotating, Pictogram-issued token used only to obtain a new access token.
 _Avoid_: Session token
+
+**Refresh token family**:
+The rotation chain of refresh tokens that starts at one sign-in. Each use of a refresh
+token consumes it and issues the next in the same family. Presenting a token that was
+already consumed is treated as theft and revokes the whole family — the person signs in
+again.
+_Avoid_: Session, chain (in prose)
+
+**Session**:
+The `(access token, refresh token)` pair a caller holds after signing in or refreshing.
+Not a server-side object — Pictogram keeps no session state; the term names the pair.
+_Avoid_: Login, ticket

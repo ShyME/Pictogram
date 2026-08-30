@@ -11,6 +11,21 @@ spring:
     compose:
       enabled: false   # only the "local" profile starts infra via Compose
 
+# Google sign-in is off until a client is configured — set
+# spring.security.oauth2.client.registration.google.client-id / .client-secret (env:
+# SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID / ..._CLIENT_SECRET).
+# Until then /oauth2/** is denied and the rest of the app runs normally. The "local"
+# profile wires the bundled mock-oauth2-server.
+
+# Pictogram-issued tokens (ADR-0004). signing-key is a private EC (P-256) JWK as JSON;
+# when unset an ephemeral key is generated at startup — set it in production.
+pictogram:
+  auth:
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+    signing-key: ${PICTOGRAM_AUTH_SIGNING_KEY:}
+    post-login-redirect: /
+
 server:
   shutdown: graceful
   port: 8080

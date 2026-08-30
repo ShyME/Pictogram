@@ -20,3 +20,28 @@ in for Google in tests.
   httpOnly/Secure/SameSite=Lax cookie.
 - We run a small token issuer: key management, refresh-token rotation with reuse detection,
   a short access-token TTL as the revocation strategy.
+
+## Amendment (#8): ES256, not Ed25519
+
+The access token is signed with **ES256 (ECDSA on P-256)**, not EdDSA/Ed25519 as first
+written. Both are asymmetric, so every property this ADR relies on holds unchanged — a
+service extracted from the monolith verifies with the public key and holds no signing
+material. ES256 is chosen only for tooling: Spring Security 7's `NimbusJwtEncoder` still
+rejects EdDSA ([spring-security#17098](https://github.com/spring-projects/spring-security/issues/17098)),
+so Ed25519 would need an extra crypto dependency (Google Tink) and hand-rolled signing for
+no security gain.
+
+- The signing key is a P-256 EC JWK. In production it comes from `pictogram.auth.signing-key`
+  (private JWK as JSON); unset, identity generates a process-lifetime key and logs a warning.
+- Rotation consumes the presented token with a single conditional `UPDATE`, so two refreshes
+  racing on the same token can't both succeed — the loser (0 rows updated) is treated as reuse
+  and the family is revoked. The SPA must single-flight its refresh calls.
+- The reuse path revokes the family **in the rotation's own transaction** and throws a
+  `RefreshTokenReuseException` marked `noRollbackFor`, so the revoke commits as the exception
+  unwinds. Isolating the revoke in a `REQUIRES_NEW` transaction deadlocked: the race loser's
+  failed conditional `UPDATE` still holds an exclusive tuple lock until its transaction ends,
+  and a second connection revoking the family blocked on it forever.
+- identity contributes the `JwtDecoder` bean the `:app` resource server verifies with, plus
+  a published `PictogramAccessTokens` interface for in-process / future-extracted callers.
+- The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) is the
+  only server-side state; the Pictogram session (access + refresh) stays fully stateless.

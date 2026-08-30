@@ -92,7 +92,14 @@ Actuator health/liveness/readiness under `/actuator`; Spring Modulith observabil
 (module-boundary spans) is on via `spring-modulith-observability` + a Brave tracer bridge.
 Structured ECS-JSON console logging is on by default (plain text on the `test` profile).
 
+## Database migrations
+
+Flyway runs on startup. Each module owns its schema and ships its own migrations under
+`<module>/src/main/resources/db/migration/`, version-prefixed by a module ordinal
+(`V1_…` identity, `V2_…` profile, …) so they share one ordered history — see
+[ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
+
 ## Not in this skeleton
 
-No domain behaviour, no Flyway migrations, no security, no REST endpoints beyond Actuator,
-no OpenAPI task, no CI wiring. Those arrive with the feature slices.
+No OpenAPI task and no CI wiring yet. Those arrive with later slices. Security and the
+first schema landed with the identity slice (#8).

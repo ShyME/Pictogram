@@ -29,6 +29,7 @@ dependencies {
     testImplementation(project(":test-support"))
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("no.nav.security:mock-oauth2-server:5.0.2")
 }
 
 base {
