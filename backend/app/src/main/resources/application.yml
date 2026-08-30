@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: pictogram
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  docker:
+    compose:
+      enabled: false   # only the "local" profile starts infra via Compose
+
+server:
+  shutdown: graceful
+  port: 8080
+
+# Structured (ECS) JSON logging to the console. Overridden to plain text on the "test"
+# profile so test output stays readable.
+logging:
+  structured:
+    format:
+      console: ecs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+      group:
+        readiness:
+          include: readinessState, db
+  observations:
+    annotations:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+# Module-boundary spans come from the spring-modulith-observability dependency — no config needed.

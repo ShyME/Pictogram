@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pictogram App (local)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" value="local" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <module name="pictogram.app.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="me.imshy.pictogram.PictogramApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

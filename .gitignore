@@ -24,6 +24,11 @@ test-results/
 # keep shared run configurations
 !.idea/runConfigurations/
 
+# --- Eclipse / Buildship (Gradle IDE integration) ---
+.project
+.classpath
+.settings/
+
 # --- Env / secrets ---
 .env
 .env.*
