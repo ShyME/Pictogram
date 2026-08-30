@@ -1,6 +1,11 @@
 spring:
   application:
     name: pictogram
+  jackson:
+    time-zone: UTC   # Jackson 3 already serializes temporal types as ISO-8601 by default
+  mvc:
+    problemdetails:
+      enabled: true   # Spring MVC's own exceptions render as RFC 9457 Problem Details too
   jpa:
     open-in-view: false
     hibernate:

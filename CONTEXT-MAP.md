@@ -7,9 +7,11 @@ modular monolith whose module boundaries are drawn so they could later be extrac
 separate services.
 
 Each module below is one bounded context, one Gradle subproject, and one Spring Modulith
-module. `shared-kernel` is the single exception: an open module every context may depend
-on, containing **only** ID value types (`UserId`, `PostId`, `MediaId`) — no behaviour, no
-entities, no DTOs.
+module. `shared-kernel` is the single exception: a whitelisted module every context may
+depend on. It holds the ID value types (`UserId`, `PostId`, `MediaId`, `ViewerId`) and,
+in its `http` sub-package, the cross-cutting HTTP edge conventions — Problem Details, the
+pagination envelope, current-user resolution (ADR-0008). No domain behaviour, entities, or
+persistence.
 
 ## Contexts
 
@@ -32,5 +34,6 @@ entities, no DTOs.
 
 ## Recording decisions
 
-Architecture-level decisions live in [`docs/adr/`](./docs/adr/). Start there before
-changing module boundaries, the integration style, the auth model, or the feed strategy.
+Architecture-level decisions live in [`docs/adr/`](./docs/adr/) (`0001`–`0008`). Start
+there before changing module boundaries, the integration style, the auth model, or the
+feed strategy.
