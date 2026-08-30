@@ -1,0 +1,11 @@
+# Production: run as a container. Datasource comes from the environment.
+spring:
+  datasource:
+    url: ${PICTOGRAM_DB_URL}
+    username: ${PICTOGRAM_DB_USERNAME}
+    password: ${PICTOGRAM_DB_PASSWORD}
+
+management:
+  endpoint:
+    health:
+      show-details: never

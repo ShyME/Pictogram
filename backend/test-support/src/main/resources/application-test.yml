@@ -1,0 +1,15 @@
+# Defaults for every @ModuleIntegrationTest / @SpringBootTest run on the "test" profile.
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+
+# Plain-text logs under test; the app enables ECS JSON on other profiles.
+logging:
+  structured:
+    format:
+      console: ""

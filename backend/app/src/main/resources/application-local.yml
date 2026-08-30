@@ -1,0 +1,22 @@
+# Local development on the host. Infra (PostgreSQL etc.) is started from compose.dev.yaml
+# at the repo root — bootRun and the "Pictogram App (local)" run config both set the
+# working directory there.
+spring:
+  docker:
+    compose:
+      enabled: true
+      file: compose.dev.yaml
+      lifecycle-management: start-only   # leave containers up between restarts
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pictogram
+    username: pictogram
+    password: pictogram
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
