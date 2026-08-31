@@ -43,5 +43,12 @@ no security gain.
   and a second connection revoking the family blocked on it forever.
 - identity contributes the `JwtDecoder` bean the `:app` resource server verifies with, plus
   a published `PictogramAccessTokens` interface for in-process / future-extracted callers.
+  A stray `spring.security.oauth2.resourceserver.jwt.*` property (`issuer-uri` /
+  `jwk-set-uri`) would arm `OAuth2ResourceServerAutoConfiguration` to contribute a rival
+  `JwtDecoder` that holds none of identity's signing material and would reject every
+  Pictogram token. Boot's decoder config is `@ConditionalOnMissingBean(JwtDecoder.class)`
+  so it already stands down for identity's bean; on top of that identity's decoder is
+  `@Primary` and `:app` passes it into the resource-server chain by reference rather than
+  relying on a bean-type lookup (#28).
 - The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) is the
   only server-side state; the Pictogram session (access + refresh) stays fully stateless.

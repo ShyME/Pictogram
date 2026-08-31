@@ -8,6 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -16,6 +17,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * module contributes (ADR-0004). Both rejection paths render as Problem Details. Everything
  * else — the actuator probes, the bundled SPA, and identity's own sign-in endpoints — is
  * handled by other filter chains.
+ *
+ * <p>identity's decoder is passed in by reference rather than left to a bean-type lookup;
+ * ADR-0004 covers why (#28).
  */
 @Configuration
 @EnableWebSecurity
@@ -24,6 +28,7 @@ class ApiSecurityConfiguration {
     @Bean
     @Order(1)
     SecurityFilterChain apiSecurity(HttpSecurity http,
+            JwtDecoder identityJwtDecoder,
             ProblemDetailAuthenticationEntryPoint entryPoint,
             ProblemDetailAccessDeniedHandler accessDeniedHandler) throws Exception {
         return http
@@ -32,8 +37,7 @@ class ApiSecurityConfiguration {
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .authenticationEntryPoint(entryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
-                        .jwt(jwt -> {
-                        }))
+                        .jwt(jwt -> jwt.decoder(identityJwtDecoder)))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(handling -> handling

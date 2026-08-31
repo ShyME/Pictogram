@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -39,7 +40,13 @@ class IdentityConfiguration {
         return SigningKey.generate();
     }
 
+    /**
+     * The decoder the {@code :app} resource server verifies Pictogram access tokens with.
+     * {@code @Primary} so a stray {@code spring.security.oauth2.resourceserver.jwt.*}
+     * property can't let Spring Boot's own decoder win a by-type lookup — see ADR-0004 (#28).
+     */
     @Bean
+    @Primary
     JwtDecoder jwtDecoder(SigningKey signingKey, AuthProperties properties, Clock clock) {
         return AccessTokenVerification.decoder(signingKey.jwkSource(), properties.issuer(), clock);
     }
