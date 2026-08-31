@@ -1,13 +1,11 @@
+import type { components } from "./schema";
+
 /**
  * RFC 9457 Problem Details as the backend sends them (`shared.http`): every expected
  * failure carries a stable `type` URI whose slug clients branch on without parsing prose.
+ * Generated from `openapi.json`, where the error responses reference this schema.
  */
-export type ProblemDetail = {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-};
+export type ProblemDetail = components["schemas"]["ProblemDetail"];
 
 const PROBLEM_TYPE_BASE = "https://pictogram.dev/problems/";
 

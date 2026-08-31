@@ -8,10 +8,12 @@ export type MyProfile =
 
 /** Reads the caller's own profile — the root-route guard's single source of truth. */
 export async function fetchMyProfile(): Promise<MyProfile> {
-  const { data, response } = await api.GET("/api/profiles/me");
-  if (response.status === 401) return { status: "unauthenticated" };
-  if (response.status === 404) return { status: "not-onboarded" };
+  const { data, error, response } = await api.GET("/api/profiles/me");
   if (data) return { status: "onboarded", profile: toProfile(data) };
+  if (problemSlug(error) === "profile-not-found") return { status: "not-onboarded" };
+  // A 401 is the shared auth boundary (the middleware's silent refresh has already failed),
+  // not a documented response of this endpoint.
+  if (response.status === 401) return { status: "unauthenticated" };
   throw new Error(`Unexpected /api/profiles/me response: ${response.status}`);
 }
 

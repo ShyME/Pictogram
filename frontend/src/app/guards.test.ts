@@ -3,7 +3,8 @@ import { jsonResponse, problemResponse, stubFetch } from "../test/mock-fetch";
 import { loginLoader, onboardingLoader, rootLoader } from "./guards";
 
 function profileEndpoint(status: number, body: unknown = {}) {
-  stubFetch(() => (status === 200 ? jsonResponse(body) : problemResponse("x", status)));
+  const slug = status === 404 ? "profile-not-found" : "unauthorized";
+  stubFetch(() => (status === 200 ? jsonResponse(body) : problemResponse(slug, status)));
 }
 
 function redirectTarget(result: unknown): string | null {

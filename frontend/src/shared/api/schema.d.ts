@@ -88,6 +88,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccessTokenResponse: {
+            accessToken: string;
+            /** Format: int64 */
+            expiresInSeconds: number;
+        };
         ApiPageFeedCard: {
             items?: components["schemas"]["FeedCard"][];
             nextCursor?: string;
@@ -100,6 +105,19 @@ export interface components {
             bio?: string;
             displayName?: string;
             username?: string;
+        };
+        ProblemDetail: {
+            detail?: string;
+            /** Format: uri */
+            instance?: string;
+            properties?: {
+                [key: string]: unknown;
+            };
+            /** Format: int32 */
+            status?: number;
+            title?: string;
+            /** Format: uri */
+            type?: string;
         };
         ProfileView: {
             bio?: string;
@@ -125,8 +143,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description The session is ended and the refresh cookie cleared. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -143,13 +161,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description A fresh access token; the refresh cookie is rotated. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["AccessTokenResponse"];
+                };
+            };
+            /** @description The refresh cookie is missing, already used, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -187,13 +214,33 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description The profile was created. */
+            201: {
                 headers: {
+                    /** @description The new profile's URL, by username. */
+                    Location?: string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileView"];
+                };
+            };
+            /** @description The username is malformed, or the display name or bio is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The username is taken, or this account has already onboarded. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -207,13 +254,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description The caller's own profile. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileView"];
+                };
+            };
+            /** @description The caller has no profile yet — they have not onboarded. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
