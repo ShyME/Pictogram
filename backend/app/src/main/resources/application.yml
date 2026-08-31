@@ -10,6 +10,10 @@ spring:
   docker:
     compose:
       enabled: false   # only the "local" profile starts infra via Compose
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 16MB
 
 # Google sign-in is off until a client is configured — set
 # spring.security.oauth2.client.registration.google.client-id / .client-secret (env:
@@ -25,6 +29,17 @@ pictogram:
     refresh-token-ttl: 30d
     signing-key: ${PICTOGRAM_AUTH_SIGNING_KEY:}
     post-login-redirect: /
+  # Object storage for image bytes (ADR-0006). Defaults target a local MinIO (compose.dev.yaml);
+  # prod overrides the endpoint and credentials from the environment. The bucket is created
+  # on first upload, so no provisioning step is needed.
+  media:
+    storage:
+      endpoint: ${PICTOGRAM_MEDIA_ENDPOINT:http://localhost:9000}
+      region: ${PICTOGRAM_MEDIA_REGION:us-east-1}
+      access-key: ${PICTOGRAM_MEDIA_ACCESS_KEY:pictogram}
+      secret-key: ${PICTOGRAM_MEDIA_SECRET_KEY:pictogram}
+      bucket: ${PICTOGRAM_MEDIA_BUCKET:pictogram-media}
+      path-style-access: ${PICTOGRAM_MEDIA_PATH_STYLE:true}
 
 # The OpenAPI document is exported to backend/openapi.json (the `generateOpenApiSpec` Gradle
 # task) and the frontend generates its typed client from that file. Swagger UI is not on the

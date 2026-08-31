@@ -84,6 +84,25 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void mediaUploadIsDocumentedAs201WithAMediaIdAndA400ProblemDetail() {
+        JsonNode upload = spec.at("/paths/~1api~1media/post/responses");
+
+        assertThat(upload.at("/201/content/application~1json/schema/$ref").asString())
+                .endsWith("/MediaUploadResponse");
+        assertThat(upload.at("/400/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void servingAMediaRenditionIsDocumentedAsBinaryJpegWith404() {
+        JsonNode original = spec.at("/paths/~1api~1media~1{mediaId}~1original/get/responses");
+
+        assertThat(original.at("/200/content/image~1jpeg/schema/format").asString()).isEqualTo("binary");
+        assertThat(original.at("/404/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 
