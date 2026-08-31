@@ -18,6 +18,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.0")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-actuator")
     implementation("org.springframework.modulith:spring-modulith-observability")
@@ -43,6 +44,23 @@ springBoot {
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     // Stable name so the Dockerfile's COPY doesn't depend on the version string.
     archiveFileName = "pictogram.jar"
+}
+
+val openApiSpecFile = rootProject.layout.projectDirectory.file("openapi.json")
+
+tasks.withType<Test>().configureEach {
+    // Absolute so the OpenAPI contract check finds the file regardless of the test's cwd.
+    systemProperty("pictogram.openapi.file", openApiSpecFile.asFile.absolutePath)
+}
+
+tasks.register<Test>("generateOpenApiSpec") {
+    description = "Boots the app and (re)writes backend/openapi.json from /v3/api-docs."
+    group = "documentation"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    systemProperty("pictogram.openapi.generate", "true")
+    filter { includeTestsMatching("me.imshy.pictogram.OpenApiContractTest") }
+    outputs.upToDateWhen { false }
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
