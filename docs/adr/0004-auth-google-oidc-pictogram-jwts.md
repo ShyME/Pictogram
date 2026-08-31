@@ -52,3 +52,7 @@ no security gain.
   relying on a bean-type lookup (#28).
 - The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) is the
   only server-side state; the Pictogram session (access + refresh) stays fully stateless.
+- identity's sign-in filter chain matches `/oauth2/**` and `/login/oauth2/**` — the
+  redirection endpoint only, not all of `/login/**`. The SPA has its own `/login` route
+  (#10); scoping the matcher to `/login/oauth2/**` lets that path fall through to the
+  permit-all chain and the SPA fallback (#34) instead of hitting `oauth2Login` / `denyAll`.

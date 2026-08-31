@@ -100,8 +100,8 @@ class GoogleSignInWebTest {
     }
 
     private void signInThroughGoogle(CookieManager cookies) throws Exception {
-        // The redirect chain ends at the post-login page (the SPA, absent in this test, so a
-        // 404) — what matters is the refresh cookie the callback set along the way.
+        // The redirect chain ends at the post-login page (the SPA shell) — what matters here
+        // is the refresh cookie the callback set along the way.
         browser(cookies).send(
                 HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
                 HttpResponse.BodyHandlers.discarding());

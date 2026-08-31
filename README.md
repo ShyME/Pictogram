@@ -49,11 +49,9 @@ secret in `.env` (see `.env.example`).
 
 Open <http://localhost:8080>. `backend/Dockerfile` is a three-stage build: it compiles the
 SPA, bundles it into the Spring Boot jar as static resources, and runs it on the `prod`
-profile against the `postgres` and `minio` services. Spring serves the SPA at `/`.
-
-> A hard browser reload on a client route other than `/` (`/login`, `/onboarding`) still
-> 404s — the backend needs an `index.html` fallback for non-API paths. Tracked separately;
-> the app itself navigates client-side and is unaffected.
+profile against the `postgres` and `minio` services. Spring serves the SPA at `/`, and a
+hard reload or pasted link on a client route (`/login`, `/onboarding`) forwards to
+`index.html` so the SPA re-resolves it.
 
 ```bash
 docker compose -f compose.yaml down --remove-orphans     # stop      (task down)
