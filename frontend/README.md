@@ -1,8 +1,8 @@
 # Pictogram frontend
 
 React 19 + TypeScript SPA, built with Vite. React Router, TanStack Query and
-Tailwind v4 are wired in; there are no features yet — just the app shell and one
-placeholder route (`/`).
+Tailwind v4 are wired in. The auth shell is in place: `/login`, the root-route guard
+that routes a visitor by `GET /api/profiles/me`, `/onboarding`, and the (empty) feed.
 
 ## Commands
 
@@ -25,6 +25,35 @@ from the backend's committed `backend/openapi.json`, and `client.ts` exports `ap
 come from the schema. Regenerate with `pnpm generate:api` (or `task openapi` from the repo
 root, which refreshes both sides) whenever a backend endpoint changes, and commit the
 result — `pnpm test` fails if `schema.d.ts` is out of sync with `../backend/openapi.json`.
+
+## Auth shell
+
+`features/auth` holds the session: the access token lives only in memory (the refresh
+token is an httpOnly cookie the script can't see), and `installApiAuth()` registers an
+`openapi-fetch` middleware that attaches the bearer token and, on a 401, silently calls
+`POST /api/auth/refresh` once and replays the request. A refresh that fails leaves the
+401 to stand, and the route guards in `app/guards.ts` send the visitor to `/login`.
+
+`"Continue with Google"` is a plain link to `/oauth2/authorization/google` — the backend
+drives the OIDC handshake (ADR-0004) and redirects back to `/`, where the first guard's
+401 bootstraps the access token.
+
+## End-to-end
+
+`task test:e2e` (from the repo root) builds the whole stack — app plus a
+`mock-oauth2-server` standing in for Google, since `compose.yaml` has no OIDC provider —
+waits for it, runs the Playwright journeys, and tears it down.
+
+To iterate against a stack you keep running:
+
+```bash
+docker compose -f compose.yaml -f compose.mock-oauth.yaml up --build -d --wait   # = task up
+cd frontend && pnpm test:e2e          # PICTOGRAM_BASE_URL overrides the default :8080
+```
+
+The app shares the mock's network namespace (see `compose.mock-oauth.yaml`) so browser and
+app reach the OIDC issuer at the same `localhost:8095` — no `/etc/hosts` edit, no browser
+flags. CI runs the same journeys on the push to `main` (see `.github/workflows/ci.yml`).
 
 ## Structure — feature slices
 

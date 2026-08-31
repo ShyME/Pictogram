@@ -11,20 +11,30 @@ tasks:
     silent: true
 
   up:
-    desc: Build and run the whole app in containers at http://localhost:8080
+    desc: Build and run the whole app in containers at http://localhost:8080 (mock Google — sign in with any username)
+    env:
+      COMPOSE_FILE: compose.yaml:compose.mock-oauth.yaml
     cmds:
-      - docker compose up --build -d
+      - docker compose up --build -d --wait
+      - 'echo "Pictogram: http://localhost:{{.PICTOGRAM_PORT | default 8080}}"'
+
+  up:google:
+    desc: Like `up`, but against real Google — needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env
+    env:
+      COMPOSE_FILE: compose.yaml:compose.google.yaml
+    cmds:
+      - docker compose up --build -d --wait
       - 'echo "Pictogram: http://localhost:{{.PICTOGRAM_PORT | default 8080}}"'
 
   down:
-    desc: Stop the whole-app stack (keeps volumes)
+    desc: Stop the whole-app stack — either variant (keeps volumes)
     cmds:
-      - docker compose down
+      - docker compose -f compose.yaml down --remove-orphans
 
   logs:
     desc: Tail the app container logs
     cmds:
-      - docker compose logs -f app
+      - docker compose -f compose.yaml logs -f app
 
   dev:
     desc: Start dev infra only (Postgres + MinIO + mock-oauth2-server)
@@ -69,11 +79,15 @@ tasks:
       - pnpm test
 
   test:e2e:
-    desc: Run the Playwright blackbox journeys (needs `task up` running)
+    desc: Playwright blackbox journeys — builds and starts the full stack (app + mock OIDC), runs, tears down
     dir: frontend
+    env:
+      COMPOSE_FILE: ../compose.yaml:../compose.mock-oauth.yaml
     cmds:
       - pnpm install
       - pnpm exec playwright install --with-deps chromium
+      - docker compose up --build -d --wait
+      - defer: docker compose down -v
       - pnpm test:e2e
 
   openapi:
@@ -85,7 +99,7 @@ tasks:
   clean:
     desc: Stop everything and drop volumes and build output
     cmds:
-      - docker compose down -v
+      - docker compose -f compose.yaml down -v --remove-orphans
       - docker compose -f compose.dev.yaml down -v
       - cd backend && ./gradlew clean
       - rm -rf frontend/dist

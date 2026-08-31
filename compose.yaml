@@ -1,4 +1,8 @@
 # The whole app in containers: `docker compose up --build` -> http://localhost:8080
+#
+# This base file has no OIDC provider, so Google sign-in is denied. Add one overlay:
+#   compose.mock-oauth.yaml  — a bundled mock, zero setup       (`task up`)
+#   compose.google.yaml      — real Google, creds from .env     (`task up:google`)
 # For host-based development (apps on the host, infra in containers) use compose.dev.yaml.
 name: pictogram
 
@@ -37,6 +41,15 @@ services:
       PICTOGRAM_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pictogram}
       PICTOGRAM_DB_USERNAME: ${POSTGRES_USER:-pictogram}
       PICTOGRAM_DB_PASSWORD: ${POSTGRES_PASSWORD:-pictogram}
+      # This stack is localhost/HTTP; the refresh cookie can't carry Secure. A TLS
+      # deployment must override this back to true.
+      PICTOGRAM_AUTH_COOKIE_SECURE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
     depends_on:
       postgres:
         condition: service_healthy
