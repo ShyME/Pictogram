@@ -59,7 +59,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["byIds"];
         put?: never;
         post: operations["onboard"];
         delete?: never;
@@ -76,6 +76,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["byUsername"];
         put?: never;
         post?: never;
         delete?: never;
@@ -201,6 +217,28 @@ export interface operations {
             };
         };
     };
+    byIds: {
+        parameters: {
+            query: {
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The batch of profiles for the ids that have one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileView"][];
+                };
+            };
+        };
+    };
     onboard: {
         parameters: {
             query?: never;
@@ -264,6 +302,37 @@ export interface operations {
                 };
             };
             /** @description The caller has no profile yet — they have not onboarded. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    byUsername: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The public profile for that username. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileView"];
+                };
+            };
+            /** @description No user has that username. */
             404: {
                 headers: {
                     [name: string]: unknown;

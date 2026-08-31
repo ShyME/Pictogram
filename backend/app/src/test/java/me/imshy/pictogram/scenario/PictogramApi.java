@@ -29,6 +29,9 @@ public interface PictogramApi {
         /** Choose a username plus an optional display name and bio. */
         Profile completeOnboarding(String username, String displayName, String bio);
 
+        /** Open someone's public profile by username — empty when no such user exists. */
+        Optional<Profile> viewProfile(String username);
+
         /** The viewer's home feed. */
         FeedPage openFeed();
     }

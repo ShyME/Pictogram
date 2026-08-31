@@ -31,6 +31,15 @@ class SpaDeepLinkBlackboxTest {
     }
 
     @Test
+    void aDirectGetOnANestedProfileRouteReturnsTheSpaShellAsHtml() {
+        HttpResponse<String> response = http.get("/u/ada_lovelace");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(contentType(response)).contains("text/html");
+        assertThat(response.body()).contains("id=\"root\"");
+    }
+
+    @Test
     void unmatchedApiRoutesStayJsonNotTheSpaShell() {
         HttpResponse<String> response = http.get("/api/does-not-exist");
 

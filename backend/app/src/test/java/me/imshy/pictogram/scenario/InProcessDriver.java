@@ -98,6 +98,16 @@ public final class InProcessDriver implements PictogramApi {
         }
 
         @Override
+        public Optional<Profile> viewProfile(String username) {
+            HttpResponse<String> response = call("GET", "/api/profiles/" + username, null);
+            if (response.statusCode() == 404) {
+                return Optional.empty();
+            }
+            require(response, 200, "view a profile by username");
+            return Optional.of(profile(response.body()));
+        }
+
+        @Override
         public FeedPage openFeed() {
             HttpResponse<String> response = call("GET", "/api/feed", null);
             require(response, 200, "open feed");

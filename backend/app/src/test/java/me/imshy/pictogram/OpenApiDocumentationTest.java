@@ -54,6 +54,23 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void profileByUsernameIsDocumentedWith200And404() {
+        JsonNode byUsername = spec.at("/paths/~1api~1profiles~1{username}/get/responses");
+
+        assertThat(byUsername.at("/200/content/application~1json/schema/$ref").asString()).endsWith("/ProfileView");
+        assertThat(byUsername.at("/404/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void theBatchProfileLookupIsDocumentedAsAnArrayOfProfileView() {
+        JsonNode byIds = spec.at("/paths/~1api~1profiles/get/responses");
+
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString()).isEqualTo("array");
+        assertThat(byIds.at("/200/content/application~1json/schema/items/$ref").asString()).endsWith("/ProfileView");
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 
