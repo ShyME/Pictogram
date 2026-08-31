@@ -4,7 +4,6 @@ import java.time.Clock;
 import me.imshy.pictogram.identity.PictogramAccessTokens;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +21,6 @@ import org.springframework.util.StringUtils;
 class IdentityConfiguration {
 
     private static final Log log = LogFactory.getLog(IdentityConfiguration.class);
-
-    @Bean
-    @ConditionalOnMissingBean
-    Clock identityClock() {
-        return Clock.systemUTC();
-    }
 
     @Bean
     SigningKey accessTokenSigningKey(AuthProperties properties) {
