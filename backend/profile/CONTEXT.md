@@ -30,3 +30,9 @@ The step a person completes on first sign-in: choosing a username, which creates
 profile. Until it is done the person is a `User` (in identity) with no `Profile` — a valid
 "not yet onboarded" state.
 _Avoid_: Registration, sign-up, setup wizard
+
+**Edit profile**:
+An onboarded user changing their own display name, bio, or username. A username change is a
+rename: the old handle is freed the instant the change lands. Every successful edit emits
+`ProfileUpdated`.
+_Avoid_: Update account, profile settings

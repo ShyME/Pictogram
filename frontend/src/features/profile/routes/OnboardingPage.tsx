@@ -2,14 +2,9 @@ import { useId, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { submitOnboarding } from "../api/profile-api";
-import { USERNAME_RULE, isUsernameShapeValid } from "../model/username";
+import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from "../model/username";
 
 type ServerError = "username-shape" | "username-taken" | "details";
-
-const USERNAME_MESSAGE: Record<"username-shape" | "username-taken", string> = {
-  "username-shape": `Usernames are ${USERNAME_RULE}`,
-  "username-taken": "That username is already taken. Try another.",
-};
 
 export function OnboardingPage() {
   const navigate = useNavigate();
@@ -22,12 +17,7 @@ export function OnboardingPage() {
   const [serverError, setServerError] = useState<ServerError | null>(null);
 
   const shapeValid = isUsernameShapeValid(username);
-  const usernameError: keyof typeof USERNAME_MESSAGE | null =
-    username.length > 0 && !shapeValid
-      ? "username-shape"
-      : serverError === "username-taken" || serverError === "username-shape"
-        ? serverError
-        : null;
+  const nameError = usernameError(username, serverError);
 
   const mutation = useMutation({
     mutationFn: submitOnboarding,
@@ -89,13 +79,13 @@ export function OnboardingPage() {
             autoCapitalize="none"
             spellCheck={false}
             required
-            aria-invalid={usernameError !== null}
-            aria-describedby={usernameError ? usernameErrorId : undefined}
+            aria-invalid={nameError !== null}
+            aria-describedby={nameError ? usernameErrorId : undefined}
             className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none aria-[invalid=true]:border-red-500"
           />
-          {usernameError && (
+          {nameError && (
             <p id={usernameErrorId} role="alert" className="mt-1.5 text-sm text-red-600">
-              {USERNAME_MESSAGE[usernameError]}
+              {USERNAME_MESSAGE[nameError]}
             </p>
           )}
         </div>

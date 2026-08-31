@@ -28,6 +28,20 @@
         },
         "type" : "object"
       },
+      "EditProfileRequest" : {
+        "properties" : {
+          "bio" : {
+            "type" : "string"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "FeedCard" : {
         "properties" : {
           "author" : {
@@ -275,6 +289,62 @@
               }
             },
             "description" : "The caller has no profile yet — they have not onboarded."
+          }
+        },
+        "tags" : [ "profiles-controller" ]
+      },
+      "put" : {
+        "operationId" : "editMyProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EditProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileView"
+                }
+              }
+            },
+            "description" : "The updated profile."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The username is malformed, or the display name or bio is invalid."
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no profile yet — they have not onboarded."
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The new username is already taken."
           }
         },
         "tags" : [ "profiles-controller" ]

@@ -5,7 +5,7 @@ import type { Locator, Page } from "@playwright/test";
 export class ProfilePage {
   readonly notFoundHeading: Locator;
   readonly followButton: Locator;
-  readonly editProfileButton: Locator;
+  readonly editProfileLink: Locator;
 
   private readonly page: Page;
 
@@ -13,7 +13,7 @@ export class ProfilePage {
     this.page = page;
     this.notFoundHeading = page.getByRole("heading", { name: /doesn.t exist/i });
     this.followButton = page.getByRole("button", { name: /^follow$/i });
-    this.editProfileButton = page.getByRole("button", { name: /edit profile/i });
+    this.editProfileLink = page.getByRole("link", { name: /edit profile/i });
   }
 
   async open(username: string): Promise<void> {

@@ -8,6 +8,7 @@ import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.data.domain.Persistable;
@@ -56,6 +57,17 @@ class Profile implements Persistable<UUID> {
 
     static Profile onboard(UserId user, Username username, DisplayName displayName, Bio bio, Instant at) {
         return new Profile(user, username, displayName, bio, at);
+    }
+
+    /** Applies the new details and reports whether any field actually moved. */
+    boolean edit(Username username, DisplayName displayName, Bio bio) {
+        boolean changed = !this.username.equals(username.value())
+                || !Objects.equals(this.displayName, displayName.value())
+                || !Objects.equals(this.bio, bio.value());
+        this.username = username.value();
+        this.displayName = displayName.value();
+        this.bio = bio.value();
+        return changed;
     }
 
     @Override

@@ -26,7 +26,7 @@ test("public profile page: an existing user renders, a missing one shows not-fou
   await expect(page).toHaveURL(new RegExp(`/u/${username}$`));
   await expect(profile.displayName("E2E Profile Tester")).toBeVisible();
   await expect(profile.handle(username)).toBeVisible();
-  await expect(profile.editProfileButton).toBeVisible();
+  await expect(profile.editProfileLink).toBeVisible();
 
   await profile.open(`ghost_${Date.now().toString(36)}`);
   await expect(profile.notFoundHeading).toBeVisible();

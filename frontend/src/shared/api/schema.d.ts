@@ -76,7 +76,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["me"];
-        put?: never;
+        put: operations["editMyProfile"];
         post?: never;
         delete?: never;
         options?: never;
@@ -112,6 +112,11 @@ export interface components {
         ApiPageFeedCard: {
             items?: components["schemas"]["FeedCard"][];
             nextCursor?: string;
+        };
+        EditProfileRequest: {
+            bio?: string;
+            displayName?: string;
+            username?: string;
         };
         FeedCard: {
             author?: string;
@@ -303,6 +308,57 @@ export interface operations {
             };
             /** @description The caller has no profile yet — they have not onboarded. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    editMyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileView"];
+                };
+            };
+            /** @description The username is malformed, or the display name or bio is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The caller has no profile yet — they have not onboarded. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The new username is already taken. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
