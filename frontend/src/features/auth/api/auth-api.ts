@@ -1,12 +1,9 @@
-import { api } from "@shared";
+import { api, type components } from "@shared";
 import { clearAccessToken, setAccessToken } from "../model/session";
 
-// Refresh is the one endpoint kept off the typed client: its body is opaque in the
-// generated schema (springdoc emits `type: object`), and routing it through the same
-// client the auth middleware wraps would recurse on a 401.
+// Kept off the typed client: routing refresh through the same client the auth middleware
+// wraps would recurse on its own 401.
 const REFRESH_ENDPOINT = "/api/auth/refresh";
-
-type RefreshResponse = { accessToken: string; expiresInSeconds: number };
 
 // One in-flight refresh at a time: several calls can 401 at once (e.g. every route
 // loader on first load), and they should share a single round-trip, not stampede the
@@ -44,7 +41,7 @@ async function runRefresh(): Promise<string | null> {
     return null;
   }
 
-  const body = (await response.json()) as RefreshResponse;
+  const body = (await response.json()) as components["schemas"]["AccessTokenResponse"];
   setAccessToken(body.accessToken);
   return body.accessToken;
 }

@@ -1,5 +1,9 @@
 package me.imshy.pictogram.identity.internal.web;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import java.time.Duration;
@@ -39,10 +43,19 @@ class AuthController {
         this.clock = clock;
     }
 
-    record AccessTokenResponse(String accessToken, long expiresInSeconds) {
+    record AccessTokenResponse(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String accessToken,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long expiresInSeconds) {
     }
 
     /** Rotates the refresh cookie and returns a fresh access token; reuse ends the session. */
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "A fresh access token; the refresh cookie is rotated.",
+                content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))),
+        @ApiResponse(responseCode = "401", description = "The refresh cookie is missing, already used, or expired.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @PostMapping("/refresh")
     ResponseEntity<?> refresh(HttpServletRequest request) {
         String presented = RefreshCookie.readFrom(request).orElse(null);
@@ -61,6 +74,7 @@ class AuthController {
                 .body(new AccessTokenResponse(session.accessToken(), expiresIn));
     }
 
+    @ApiResponse(responseCode = "204", description = "The session is ended and the refresh cookie cleared.")
     @PostMapping("/logout")
     ResponseEntity<Void> logout(HttpServletRequest request) {
         RefreshCookie.readFrom(request).ifPresent(authentication::signOut);
