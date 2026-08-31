@@ -81,6 +81,10 @@ jobs:
     name: Blackbox
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    env:
+      # compose.mock-oauth.yaml overlays mock-oauth2-server (as Google) so the signed-in
+      # journeys can run; every `docker compose` step below picks up both files.
+      COMPOSE_FILE: compose.yaml:compose.mock-oauth.yaml
     steps:
       - uses: actions/checkout@v4
 
@@ -97,20 +101,8 @@ jobs:
         working-directory: frontend
         run: pnpm exec playwright install --with-deps chromium
 
-      # compose.yaml is the container stack (no mock-oauth2-server — journeys that need a
-      # signed-in user get a CI compose override when #10/#19 add them).
       - name: Start the app
-        run: docker compose up --build -d
-
-      - name: Wait for readiness
-        run: |
-          for _ in $(seq 1 60); do
-            if curl -fsS http://localhost:8080/actuator/health >/dev/null; then
-              echo "app is up"; exit 0
-            fi
-            sleep 5
-          done
-          echo "app did not become healthy"; exit 1
+        run: docker compose up --build -d --wait
 
       # @Tag("blackbox") backend tests: the ContainerDriver hits the running stack above.
       - name: Backend blackbox tests

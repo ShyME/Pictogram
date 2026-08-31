@@ -1,0 +1,58 @@
+# Overlay: run the whole app with a bundled mock Google (`task up`, and the `blackbox`
+# CI job / `task test:e2e`). `compose.yaml` has no OIDC provider; this adds
+# `mock-oauth2-server` standing in for Google. Sign in with any username — no real
+# account needed. By hand:
+#
+#   docker compose -f compose.yaml -f compose.mock-oauth.yaml up --build -d --wait
+#
+# `app` shares the mock's network namespace so it reaches the issuer at the *same*
+# localhost:8095 the browser does. That host has to be identical on both sides — the app
+# validates the `iss` claim against it — and a container name doesn't resolve from the
+# host browser (DNS_PROBE_FINISHED_NXDOMAIN). mock-oauth2-server therefore publishes
+# app's port too. Port 8095, not compose.dev.yaml's 8090, so this runs alongside `task dev`.
+
+name: pictogram
+
+services:
+  mock-oauth2-server:
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    environment:
+      SERVER_PORT: 8095
+      # The interactive sign-in form asks only for a username (-> the Google `sub`).
+      # tokenCallbacks add the `email` / `email_verified` claims identity's
+      # GoogleIdentityProvider requires, so nobody has to hand-write claims JSON. Email is
+      # not a key (identity looks users up by provider+subject), so a shared value is fine.
+      JSON_CONFIG: >-
+        {
+          "interactiveLogin": true,
+          "tokenCallbacks": [
+            {
+              "issuerId": "google",
+              "requestMappings": [
+                {
+                  "requestParam": "grant_type",
+                  "match": "authorization_code",
+                  "claims": { "email": "mock-user@pictogram.dev", "email_verified": true }
+                }
+              ]
+            }
+          ]
+        }
+    ports:
+      - "${PICTOGRAM_PORT:-8080}:8080"
+      - "8095:8095"
+
+  app:
+    network_mode: "service:mock-oauth2-server"
+    ports: !reset []
+    # OIDC discovery runs at startup; restart until the mock is accepting requests
+    # (a couple of seconds).
+    restart: on-failure
+    environment:
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: pictogram-mock
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: pictogram-mock-secret
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,email
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_ISSUER_URI: http://localhost:8095/google
+    depends_on:
+      mock-oauth2-server:
+        condition: service_started

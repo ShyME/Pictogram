@@ -1,0 +1,22 @@
+# Overlay: run the whole app against real Google (`task up:google`). `compose.yaml` has no
+# OIDC provider; this wires one from your OAuth client. The zero-setup alternative is
+# `compose.mock-oauth.yaml` (`task up`).
+#
+#   1. Create an OAuth 2.0 Client ID (type "Web application") in the Google Cloud console.
+#   2. Add the authorized redirect URI:  http://localhost:8080/login/oauth2/code/google
+#   3. Put the credentials in .env (see .env.example):
+#        GOOGLE_CLIENT_ID=...
+#        GOOGLE_CLIENT_SECRET=...
+#   4. docker compose -f compose.yaml -f compose.google.yaml up --build -d --wait
+#
+# `docker compose` fails fast with the message below if either value is missing.
+
+name: pictogram
+
+services:
+  app:
+    environment:
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?set GOOGLE_CLIENT_ID in .env — see .env.example}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?set GOOGLE_CLIENT_SECRET in .env — see .env.example}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,email
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_ISSUER_URI: https://accounts.google.com

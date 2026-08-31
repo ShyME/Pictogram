@@ -28,22 +28,36 @@ cp .env.example .env
 
 ### Whole app in containers
 
-One image serves the API and the built SPA at a single origin.
+One image serves the API and the built SPA at a single origin. `compose.yaml` has no OIDC
+provider on its own — pick how Google sign-in is wired:
 
 ```bash
-docker compose up --build        # or: task up
+task up          # bundled mock Google — sign in with any username, no account needed
+task up:google   # real Google — needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env
 ```
+
+Under the hood each overlays `compose.yaml`:
+
+```bash
+docker compose -f compose.yaml -f compose.mock-oauth.yaml up --build -d --wait
+docker compose -f compose.yaml -f compose.google.yaml     up --build -d --wait
+```
+
+For `up:google`, create an OAuth 2.0 "Web application" client in the Google Cloud console
+with the redirect URI `http://localhost:8080/login/oauth2/code/google`, then put the id and
+secret in `.env` (see `.env.example`).
 
 Open <http://localhost:8080>. `backend/Dockerfile` is a three-stage build: it compiles the
 SPA, bundles it into the Spring Boot jar as static resources, and runs it on the `prod`
 profile against the `postgres` and `minio` services. Spring serves the SPA at `/`.
 
-Client-side deep links (a browser reload on a route other than `/`) will 404 until the
-frontend grows real nested routes and a matching `index.html` fallback is added.
+> A hard browser reload on a client route other than `/` (`/login`, `/onboarding`) still
+> 404s — the backend needs an `index.html` fallback for non-API paths. Tracked separately;
+> the app itself navigates client-side and is unaffected.
 
 ```bash
-docker compose down              # stop      (task down)
-docker compose down -v           # stop + wipe data
+docker compose -f compose.yaml down --remove-orphans     # stop      (task down)
+docker compose -f compose.yaml down -v --remove-orphans   # stop + wipe data
 ```
 
 ### Apps on the host (development)
@@ -90,14 +104,15 @@ cd frontend && pnpm test         # frontend
 
 ### Blackbox journeys
 
-Playwright drives the whole stack in containers. `main`-only in CI; run it locally against
-a live `compose.yaml`:
+Playwright drives the whole stack in containers (the `compose.mock-oauth.yaml` overlay
+stands in for Google). `main`-only in CI; run it locally with:
 
 ```bash
-task up                                       # start the app
-cd frontend && pnpm exec playwright install   # first run only
-cd frontend && pnpm test:e2e                  # or: task test:e2e
+task test:e2e     # builds + starts the stack, runs the journeys, tears it down
 ```
+
+Or against a stack you keep running (`task up`), `cd frontend && pnpm test:e2e`
+(after `pnpm exec playwright install` once).
 
 ## Continuous integration
 
@@ -106,11 +121,12 @@ cd frontend && pnpm test:e2e                  # or: task test:e2e
 `openapi.json` drift check) and the frontend lint / typecheck / test / build.
 
 The push to `main` runs **only** the `blackbox` job — the `@Tag("blackbox")` backend tests
-and the Playwright journeys against `compose.yaml`. With "require branches up to date before
-merging" on, the merged tree already passed the backend/frontend suites on the PR, so those
-don't re-run. `workflow_dispatch` forces a full run.
+and the Playwright journeys against `compose.yaml` + `compose.mock-oauth.yaml`. With
+"require branches up to date before merging" on, the merged tree already passed the
+backend/frontend suites on the PR, so those don't re-run. `workflow_dispatch` forces a
+full run.
 
 ## Task reference
 
-`task --list` after installing go-task. Common ones: `up`, `down`, `dev`, `backend`,
+`task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,
 `frontend`, `test`, `logs`, `clean`.
