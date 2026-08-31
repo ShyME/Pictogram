@@ -1,5 +1,7 @@
 # Pictogram
 
+[![CI](https://github.com/ShyME/pictogram/actions/workflows/ci.yml/badge.svg)](https://github.com/ShyME/pictogram/actions/workflows/ci.yml)
+
 An Instagram-like portfolio app — square image posts, a follow graph, and a feed —
 built as a **modular monolith** (React 19 + Spring Boot 4 / Java 25) to practise DDD and
 TDD. Architecture lives in [`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`](./docs/adr/);
@@ -85,6 +87,28 @@ task test                        # everything
 cd backend && ./gradlew build    # backend + module-boundary check
 cd frontend && pnpm test         # frontend
 ```
+
+### Blackbox journeys
+
+Playwright drives the whole stack in containers. `main`-only in CI; run it locally against
+a live `compose.yaml`:
+
+```bash
+task up                                       # start the app
+cd frontend && pnpm exec playwright install   # first run only
+cd frontend && pnpm test:e2e                  # or: task test:e2e
+```
+
+## Continuous integration
+
+`.github/workflows/ci.yml` gates every PR: the backend `./gradlew build` (Modulith
+`verify()`, unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the
+`openapi.json` drift check) and the frontend lint / typecheck / test / build.
+
+The push to `main` runs **only** the `blackbox` job — the `@Tag("blackbox")` backend tests
+and the Playwright journeys against `compose.yaml`. With "require branches up to date before
+merging" on, the merged tree already passed the backend/frontend suites on the PR, so those
+don't re-run. `workflow_dispatch` forces a full run.
 
 ## Task reference
 
