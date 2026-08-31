@@ -47,8 +47,8 @@ tasks.withType<Test>().configureEach {
         // `-PincludeBlackbox` to run those and nothing else.
         if (includeBlackbox) includeTags("blackbox") else excludeTags("blackbox")
     }
-    // No blackbox tests exist yet (they arrive with the feature tickets), so the
-    // -PincludeBlackbox build must not fail on an empty selection.
+    // Most modules carry no blackbox tests, so a -PincludeBlackbox run must not fail on an
+    // empty selection for those Test tasks.
     filter { isFailOnNoMatchingTests = !includeBlackbox }
     testLogging {
         events("passed", "skipped", "failed")
