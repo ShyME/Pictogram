@@ -53,14 +53,12 @@ export function ProfilePage() {
                 {profile.displayName ?? `@${profile.username}`}
               </h1>
               {isOwnProfile ? (
-                <button
-                  type="button"
-                  disabled
-                  title="Editing your profile is coming soon"
-                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:opacity-50"
+                <Link
+                  to="/settings/profile"
+                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                 >
                   Edit profile
-                </button>
+                </Link>
               ) : (
                 <button
                   type="button"
@@ -77,7 +75,7 @@ export function ProfilePage() {
               <p className="mt-1 text-sm text-neutral-500">@{profile.username}</p>
             )}
 
-            {/* Real follower/following counts arrive with the follow graph (#12, spec story 41). */}
+            {/* Real follower/following counts arrive with the follow graph (spec story 41). */}
             <dl className="mt-3 flex gap-6 text-sm text-neutral-700">
               <div className="flex gap-1">
                 <dt className="sr-only">Followers</dt>

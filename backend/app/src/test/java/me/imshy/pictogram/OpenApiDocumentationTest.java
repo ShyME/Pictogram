@@ -54,6 +54,19 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void editingOwnProfileIsDocumentedWith200AndProblemDetailErrors() {
+        JsonNode edit = spec.at("/paths/~1api~1profiles~1me/put/responses");
+
+        assertThat(edit.at("/200/content/application~1json/schema/$ref").asString()).endsWith("/ProfileView");
+        assertThat(edit.at("/400/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+        assertThat(edit.at("/404/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+        assertThat(edit.at("/409/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void profileByUsernameIsDocumentedWith200And404() {
         JsonNode byUsername = spec.at("/paths/~1api~1profiles~1{username}/get/responses");
 

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { isUsernameShapeValid } from "./username";
+import { isUsernameShapeValid, usernameError } from "./username";
 
 test.each(["ada", "ada_lovelace", "a1_", "abc", "a".repeat(20)])(
   "accepts well-formed username %j",
@@ -14,3 +14,18 @@ test.each(["", "ab", "a".repeat(21), "Ada", "ada lovelace", "adá", "ada-lovelac
     expect(isUsernameShapeValid(value)).toBe(false);
   },
 );
+
+test("usernameError prefers a live shape check over the server verdict", () => {
+  expect(usernameError("No Good", "username-taken")).toBe("username-shape");
+});
+
+test("usernameError falls back to the server verdict when the shape is fine", () => {
+  expect(usernameError("ada_lovelace", "username-taken")).toBe("username-taken");
+  expect(usernameError("ada_lovelace", "username-shape")).toBe("username-shape");
+});
+
+test("usernameError ignores a clear field and non-username server errors", () => {
+  expect(usernameError("ada_lovelace", "details")).toBeNull();
+  expect(usernameError("ada_lovelace", null)).toBeNull();
+  expect(usernameError("", null)).toBeNull();
+});

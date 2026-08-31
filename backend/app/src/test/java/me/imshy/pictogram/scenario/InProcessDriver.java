@@ -88,13 +88,23 @@ public final class InProcessDriver implements PictogramApi {
 
         @Override
         public Profile completeOnboarding(String username, String displayName, String bio) {
-            String body = json.writeValueAsString(Map.of(
+            HttpResponse<String> response = call("POST", "/api/profiles", profileBody(username, displayName, bio));
+            require(response, 201, "complete onboarding");
+            return profile(response.body());
+        }
+
+        @Override
+        public Profile editProfile(String username, String displayName, String bio) {
+            HttpResponse<String> response = call("PUT", "/api/profiles/me", profileBody(username, displayName, bio));
+            require(response, 200, "edit own profile");
+            return profile(response.body());
+        }
+
+        private String profileBody(String username, String displayName, String bio) {
+            return json.writeValueAsString(Map.of(
                     "username", username,
                     "displayName", Optional.ofNullable(displayName).orElse(""),
                     "bio", Optional.ofNullable(bio).orElse("")));
-            HttpResponse<String> response = call("POST", "/api/profiles", body);
-            require(response, 201, "complete onboarding");
-            return profile(response.body());
         }
 
         @Override

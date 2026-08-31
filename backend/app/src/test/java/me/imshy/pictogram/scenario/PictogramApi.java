@@ -29,6 +29,13 @@ public interface PictogramApi {
         /** Choose a username plus an optional display name and bio. */
         Profile completeOnboarding(String username, String displayName, String bio);
 
+        /**
+         * Edit the caller's own profile — new display name and bio, and a new username
+         * (pass the current one to leave the handle unchanged). A rename frees the old
+         * handle immediately.
+         */
+        Profile editProfile(String username, String displayName, String bio);
+
         /** Open someone's public profile by username — empty when no such user exists. */
         Optional<Profile> viewProfile(String username);
 

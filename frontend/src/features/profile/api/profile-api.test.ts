@@ -1,6 +1,11 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { jsonResponse, problemResponse, stubFetch } from "../../../test/mock-fetch";
-import { fetchMyProfile, fetchProfileByUsername, submitOnboarding } from "./profile-api";
+import {
+  fetchMyProfile,
+  fetchProfileByUsername,
+  submitOnboarding,
+  submitProfileEdit,
+} from "./profile-api";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -134,4 +139,40 @@ test("submitOnboarding omits blank optional fields from the request body", async
   await submitOnboarding({ username: "ada_lovelace", displayName: "  ", bio: "" });
 
   expect(sentBody).toEqual({ username: "ada_lovelace" });
+});
+
+test("submitProfileEdit PUTs to /api/profiles/me and returns the updated profile", async () => {
+  const calls = stubFetch(() =>
+    jsonResponse({ userId: "u-1", username: "ada_lovelace", displayName: "Ada L.", bio: "hi" }),
+  );
+
+  await expect(
+    submitProfileEdit({ username: "ada_lovelace", displayName: "Ada L.", bio: "hi" }),
+  ).resolves.toEqual({
+    status: "updated",
+    profile: { userId: "u-1", username: "ada_lovelace", displayName: "Ada L.", bio: "hi" },
+  });
+  expect(calls[0].method).toBe("PUT");
+  expect(new URL(calls[0].url).pathname).toBe("/api/profiles/me");
+});
+
+test("submitProfileEdit distinguishes a taken username, a malformed one, and bad details", async () => {
+  stubFetch(() => problemResponse("username-taken", 409));
+  await expect(submitProfileEdit({ username: "grace" })).resolves.toEqual({ status: "username-taken" });
+
+  stubFetch(() => problemResponse("username-invalid", 400));
+  await expect(submitProfileEdit({ username: "No Good" })).resolves.toEqual({
+    status: "username-invalid",
+  });
+
+  stubFetch(() => problemResponse("profile-details-invalid", 400));
+  await expect(submitProfileEdit({ username: "ada", bio: "x" })).resolves.toEqual({
+    status: "details-invalid",
+  });
+});
+
+test("submitProfileEdit maps a missing profile to not-onboarded", async () => {
+  stubFetch(() => problemResponse("profile-not-found", 404));
+
+  await expect(submitProfileEdit({ username: "ada" })).resolves.toEqual({ status: "not-onboarded" });
 });

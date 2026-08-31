@@ -44,14 +44,17 @@ test("another user's profile shows a follow slot, not an edit slot", () => {
   renderWithProviders(<ProfilePage />);
 
   expect(screen.getByRole("button", { name: /follow/i })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /edit profile/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /edit profile/i })).not.toBeInTheDocument();
 });
 
-test("the viewer's own profile shows an edit slot, not a follow slot", () => {
+test("the viewer's own profile shows an edit link to the settings page, not a follow slot", () => {
   loaderData = found({ isOwnProfile: true });
   renderWithProviders(<ProfilePage />);
 
-  expect(screen.getByRole("button", { name: /edit profile/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /edit profile/i })).toHaveAttribute(
+    "href",
+    "/settings/profile",
+  );
   expect(screen.queryByRole("button", { name: /follow/i })).not.toBeInTheDocument();
 });
 
