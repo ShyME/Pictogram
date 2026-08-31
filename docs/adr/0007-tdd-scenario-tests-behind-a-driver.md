@@ -19,6 +19,11 @@ intention-revealing actions (`registerViaGoogle()`, `chooseUsername()`, `publish
 - Assertions on asynchronous outcomes use **Awaitility**, never `Thread.sleep`; time is an
   injectable `Clock`; test data is randomised per test; isolation is by table truncation,
   not transaction rollback (which breaks across async listeners).
+- There is **one** `Clock` bean, not a per-module `@ConditionalOnMissingBean` fallback:
+  `:app`'s `ClockConfiguration` for the running application and `@SpringBootTest`s, and
+  `test-support`'s `ModulithTestApplication` for `@ApplicationModuleTest` (which boots
+  without `:app` and cannot import the bean — spring-modulith#1381). A controlled-time test
+  overrides it by type with `@MockitoBean Clock`.
 - Tests are named as user goals with Given/When/Then bodies; Java uses a fluent DSL +
   AssertJ, the browser layer uses a page-object/actor layer + Playwright's `expect`.
 - Flakiness is treated as a defect, not a retry target.
