@@ -68,6 +68,14 @@ tasks:
       - pnpm typecheck
       - pnpm test
 
+  test:e2e:
+    desc: Run the Playwright blackbox journeys (needs `task up` running)
+    dir: frontend
+    cmds:
+      - pnpm install
+      - pnpm exec playwright install --with-deps chromium
+      - pnpm test:e2e
+
   openapi:
     desc: Regenerate backend/openapi.json and the frontend's typed client from it
     cmds:

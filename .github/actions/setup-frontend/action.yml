@@ -1,0 +1,20 @@
+name: Set up frontend toolchain
+description: pnpm (from the package.json pin) plus Node from frontend/.nvmrc, with the pnpm store cached.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        package_json_file: frontend/package.json
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: frontend/.nvmrc
+        cache: pnpm
+        cache-dependency-path: frontend/pnpm-lock.yaml
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: frontend
+      run: pnpm install --frozen-lockfile

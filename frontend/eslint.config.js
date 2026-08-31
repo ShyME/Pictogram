@@ -8,7 +8,7 @@ import boundaries from "eslint-plugin-boundaries";
 // `boundaries/element-types` below keeps feature slices isolated the way the
 // backend context map isolates modules: one feature may not import another.
 export default tseslint.config(
-  { ignores: ["dist", "coverage", "node_modules"] },
+  { ignores: ["dist", "coverage", "node_modules", "playwright-report", "test-results"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -76,6 +76,12 @@ export default tseslint.config(
   },
   {
     files: ["vite.config.ts"],
+    languageOptions: { globals: globals.node },
+    settings: { "boundaries/include": [] },
+  },
+  {
+    // Playwright blackbox journeys run in Node against the deployed app, not a feature slice.
+    files: ["e2e/**/*.ts", "playwright.config.ts"],
     languageOptions: { globals: globals.node },
     settings: { "boundaries/include": [] },
   },

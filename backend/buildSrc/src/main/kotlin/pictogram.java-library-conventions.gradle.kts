@@ -38,8 +38,18 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
 }
 
+val includeBlackbox = project.hasProperty("includeBlackbox")
+
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // `blackbox` tests (ContainerDriver over the built image, Playwright) run the heavy
+        // suite on `main` only — see ADR-0007 and .github/workflows/ci.yml. Pass
+        // `-PincludeBlackbox` to run those and nothing else.
+        if (includeBlackbox) includeTags("blackbox") else excludeTags("blackbox")
+    }
+    // No blackbox tests exist yet (they arrive with the feature tickets), so the
+    // -PincludeBlackbox build must not fail on an empty selection.
+    filter { isFailOnNoMatchingTests = !includeBlackbox }
     testLogging {
         events("passed", "skipped", "failed")
     }

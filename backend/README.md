@@ -120,7 +120,14 @@ Flyway runs on startup. Each module owns its schema and ships its own migrations
 (`V1_…` identity, `V2_…` profile, …) so they share one ordered history — see
 [ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
 
+## CI
+
+`.github/workflows/ci.yml` runs `./gradlew build` on every PR — Modulith `verify()`, the
+unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenario suites, and the
+`openapi.json` drift check. `@Tag("blackbox")` tests (the `ContainerDriver` over the built
+image) are excluded by default and run only on `main`, selected with `-PincludeBlackbox`.
+
 ## Not in this skeleton
 
-No CI wiring yet — that arrives with a later slice. Security and the first schema landed
-with the identity slice (#8); the OpenAPI export with #6.
+Security and the first schema landed with the identity slice (#8); the OpenAPI export with
+#6; CI with #7.
