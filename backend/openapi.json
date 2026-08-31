@@ -53,6 +53,15 @@
         },
         "type" : "object"
       },
+      "MediaUploadResponse" : {
+        "properties" : {
+          "mediaId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "mediaId" ],
+        "type" : "object"
+      },
       "OnboardingRequest" : {
         "properties" : {
           "bio" : {
@@ -175,6 +184,126 @@
           }
         },
         "tags" : [ "feed-controller" ]
+      }
+    },
+    "/api/media" : {
+      "post" : {
+        "operationId" : "upload",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MediaUploadResponse"
+                }
+              }
+            },
+            "description" : "The image was accepted and re-encoded."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The upload is missing, empty, or not a readable image."
+          }
+        },
+        "tags" : [ "media-controller" ]
+      }
+    },
+    "/api/media/{mediaId}/original" : {
+      "get" : {
+        "operationId" : "original",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "mediaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The full-size canonical JPEG."
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No media has that id."
+          }
+        },
+        "tags" : [ "media-controller" ]
+      }
+    },
+    "/api/media/{mediaId}/thumbnail" : {
+      "get" : {
+        "operationId" : "thumbnail",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "mediaId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The square thumbnail JPEG."
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No media has that id."
+          }
+        },
+        "tags" : [ "media-controller" ]
       }
     },
     "/api/profiles" : {

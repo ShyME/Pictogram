@@ -79,7 +79,8 @@ Run configs under `.run/` (repo root):
   `me.imshy.pictogram.testsupport.ModuleIntegrationTest` (from `:test-support`): a sliced
   `@ApplicationModuleTest` against one **singleton** Testcontainers PostgreSQL
   (`SharedPostgres`, `withReuse` locally). Isolation is by `TRUNCATE` after each test, not
-  transaction rollback (ADR-0007).
+  transaction rollback (ADR-0007). `media` tests also wire the singleton MinIO
+  (`SharedMinio`) for the object store.
 - **Application smoke** — `ApplicationSmokeTest` boots the whole app and checks the health
   probes.
 

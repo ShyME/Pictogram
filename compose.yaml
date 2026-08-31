@@ -41,6 +41,9 @@ services:
       PICTOGRAM_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pictogram}
       PICTOGRAM_DB_USERNAME: ${POSTGRES_USER:-pictogram}
       PICTOGRAM_DB_PASSWORD: ${POSTGRES_PASSWORD:-pictogram}
+      PICTOGRAM_MEDIA_ENDPOINT: http://minio:9000
+      PICTOGRAM_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER:-pictogram}
+      PICTOGRAM_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-pictogram}
       # This stack is localhost/HTTP; the refresh cookie can't carry Secure. A TLS
       # deployment must override this back to true.
       PICTOGRAM_AUTH_COOKIE_SECURE: "false"

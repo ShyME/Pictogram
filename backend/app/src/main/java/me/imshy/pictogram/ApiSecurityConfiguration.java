@@ -19,12 +19,14 @@ import org.springframework.security.web.SecurityFilterChain;
  * else — the actuator probes, the bundled SPA, and identity's own sign-in endpoints — is
  * handled by other filter chains.
  *
- * <p>{@code GET /api/profiles/{username}} is the one carve-out: a profile page is
- * shareable by link to anyone (spec story 18), so it is reachable without a token.
- * {@code /me} keeps its own line ahead of the wildcard because it must stay authenticated,
- * and the batch {@code GET /api/profiles?ids=} stays authenticated too — only the
- * signed-in feed composes from it (ADR-0005), and an anonymous unbounded id list is not
- * something to hand out.
+ * <p>Two GET carve-outs are reachable without a token: the profile lookup by username (a
+ * profile page is shareable by link — spec story 18) and the two media rendition paths
+ * ("original" and "thumbnail"), whose bytes back a public profile grid and feed cards
+ * (stories 13, 18, 35). {@code /api/profiles/me} keeps its own line ahead of the wildcard
+ * because it must stay authenticated, and the batch {@code GET /api/profiles?ids=} stays
+ * authenticated too — only the signed-in feed composes from it (ADR-0005), and an anonymous
+ * unbounded id list is not something to hand out. Uploading media stays authenticated (it
+ * is not a GET).
  *
  * <p>identity's decoder is passed in by reference rather than left to a bean-type lookup;
  * ADR-0004 covers why (#28).
@@ -44,6 +46,7 @@ class ApiSecurityConfiguration {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.GET, "/api/profiles/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/profiles/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .authenticationEntryPoint(entryPoint)
