@@ -86,6 +86,27 @@ Run configs under `.run/` (repo root):
 For container reuse across local runs, put `testcontainers.reuse.enable=true` in
 `~/.testcontainers.properties`.
 
+## OpenAPI
+
+springdoc publishes the live document as JSON at `/v3/api-docs` (no Swagger UI on the
+classpath). `backend/openapi.json` is the committed copy the frontend generates its typed
+client from:
+
+```
+./gradlew :app:generateOpenApiSpec   # boots the app, rewrites backend/openapi.json
+```
+
+`OpenApiContractTest` runs in every `./gradlew build` and fails when the committed file
+drifts from what the app produces — regenerate and commit when you change an endpoint.
+`OpenApiConfiguration` pins the title/version and a relative server URL so the file only
+moves when the API does.
+
+The document currently reflects springdoc's inference from method signatures: every
+operation is documented as `200`, and `ResponseEntity<?>` returns show as an untyped
+object. Precise status codes (201/204), response schemas, and error responses come as each
+endpoint's own slice annotates its web contract (the auth client with #10, profile reads
+with #11).
+
 ## Observability
 
 Actuator health/liveness/readiness under `/actuator`; Spring Modulith observability
@@ -101,5 +122,5 @@ Flyway runs on startup. Each module owns its schema and ships its own migrations
 
 ## Not in this skeleton
 
-No OpenAPI task and no CI wiring yet. Those arrive with later slices. Security and the
-first schema landed with the identity slice (#8).
+No CI wiring yet — that arrives with a later slice. Security and the first schema landed
+with the identity slice (#8); the OpenAPI export with #6.

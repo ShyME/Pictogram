@@ -26,6 +26,15 @@ pictogram:
     signing-key: ${PICTOGRAM_AUTH_SIGNING_KEY:}
     post-login-redirect: /
 
+# The OpenAPI document is exported to backend/openapi.json (the `generateOpenApiSpec` Gradle
+# task) and the frontend generates its typed client from that file. Swagger UI is not on the
+# classpath — the JSON at /v3/api-docs is the whole surface, and it's disabled in production.
+springdoc:
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  api-docs:
+    version: openapi_3_1
+
 server:
   shutdown: graceful
   port: 8080

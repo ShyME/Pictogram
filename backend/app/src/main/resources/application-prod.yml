@@ -5,6 +5,12 @@ spring:
     username: ${PICTOGRAM_DB_USERNAME}
     password: ${PICTOGRAM_DB_PASSWORD}
 
+# The OpenAPI document is generated at build time and committed; production has no reason to
+# serve it, and the /v3/api-docs endpoint sits on the permit-all filter chain.
+springdoc:
+  api-docs:
+    enabled: false
+
 management:
   endpoint:
     health:

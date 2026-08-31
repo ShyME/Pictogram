@@ -69,9 +69,10 @@ tasks:
       - pnpm test
 
   openapi:
-    desc: Export the OpenAPI document (placeholder — needs springdoc wired and endpoints to exist)
+    desc: Regenerate backend/openapi.json and the frontend's typed client from it
     cmds:
-      - 'echo "No OpenAPI document yet: no springdoc-openapi dependency and no @RestController endpoints. The first slice to add an endpoint wires this up."'
+      - cd backend && ./gradlew :app:generateOpenApiSpec
+      - cd frontend && pnpm install && pnpm generate:api
 
   clean:
     desc: Stop everything and drop volumes and build output
