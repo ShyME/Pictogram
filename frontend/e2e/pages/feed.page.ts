@@ -4,9 +4,17 @@ export class FeedPage {
   readonly emptyState: Locator;
   readonly signOutButton: Locator;
 
+  private readonly page: Page;
+
   constructor(page: Page) {
+    this.page = page;
     this.emptyState = page.getByText(/find people to follow/i);
     this.signOutButton = page.getByRole("button", { name: /sign out/i });
+  }
+
+  /** The signed-in handle in the app header — the way to reach your own profile. */
+  myProfileLink(username: string): Locator {
+    return this.page.getByRole("link", { name: `@${username}` });
   }
 
   async signOut(): Promise<void> {

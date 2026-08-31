@@ -17,6 +17,40 @@ export async function fetchMyProfile(): Promise<MyProfile> {
   throw new Error(`Unexpected /api/profiles/me response: ${response.status}`);
 }
 
+export type ProfileLookup =
+  | { status: "found"; profile: Profile }
+  | { status: "not-found" };
+
+/**
+ * Reads a public profile by username — the `/u/<username>` page's data. A username nobody
+ * holds comes back as `not-found` (a `profile-not-found` Problem Detail) so the page can
+ * show a clear "no such account" screen rather than an error.
+ *
+ * A stale in-memory access token that can't be refreshed makes the resource server reject
+ * even this public call with a 401 (the bearer filter runs before the permit rule). Since
+ * the profile is public, we retry once with no credentials rather than fail the page.
+ */
+export async function fetchProfileByUsername(username: string): Promise<ProfileLookup> {
+  const { data, error, response } = await api.GET("/api/profiles/{username}", {
+    params: { path: { username } },
+  });
+  if (data) return { status: "found", profile: toProfile(data) };
+  if (problemSlug(error) === "profile-not-found") return { status: "not-found" };
+  if (response.status === 401) return anonymousProfileLookup(username);
+  throw new Error(`Unexpected /api/profiles/${username} response: ${response.status}`);
+}
+
+async function anonymousProfileLookup(username: string): Promise<ProfileLookup> {
+  const response = await fetch(`/api/profiles/${encodeURIComponent(username)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (response.ok) {
+    return { status: "found", profile: toProfile(await response.json()) };
+  }
+  if (response.status === 404) return { status: "not-found" };
+  throw new Error(`Unexpected /api/profiles/${username} response: ${response.status}`);
+}
+
 export type OnboardingInput = {
   username: string;
   displayName?: string;

@@ -62,6 +62,15 @@ class SpaDeepLinkTest {
     }
 
     @Test
+    void aDirectGetOnAProfilePageServesTheSpaShell() {
+        HttpResponse<String> response = http.get("/u/ada_lovelace");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(contentType(response)).contains("text/html");
+        assertThat(response.body()).contains(SPA_SHELL_MARKER);
+    }
+
+    @Test
     void anUnknownClientRouteStillServesTheSpaShellForTheRouterToHandle() {
         HttpResponse<String> response = http.get("/not-a-real-route");
 

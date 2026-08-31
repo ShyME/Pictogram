@@ -164,6 +164,38 @@
       }
     },
     "/api/profiles" : {
+      "get" : {
+        "operationId" : "byIds",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "ids",
+          "required" : true,
+          "schema" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProfileView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The batch of profiles for the ids that have one."
+          }
+        },
+        "tags" : [ "profiles-controller" ]
+      },
       "post" : {
         "operationId" : "onboard",
         "requestBody" : {
@@ -243,6 +275,42 @@
               }
             },
             "description" : "The caller has no profile yet — they have not onboarded."
+          }
+        },
+        "tags" : [ "profiles-controller" ]
+      }
+    },
+    "/api/profiles/{username}" : {
+      "get" : {
+        "operationId" : "byUsername",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileView"
+                }
+              }
+            },
+            "description" : "The public profile for that username."
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No user has that username."
           }
         },
         "tags" : [ "profiles-controller" ]

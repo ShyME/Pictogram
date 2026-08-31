@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { LoginPage, installApiAuth } from "@features/auth";
-import { OnboardingPage } from "@features/profile";
+import { OnboardingPage, ProfilePage, profileLoader } from "@features/profile";
 import { FeedPage } from "@features/feed";
 import { AppLayout } from "./AppLayout";
 import { RouteError } from "./RouteError";
@@ -20,6 +20,7 @@ export const router = createBrowserRouter([
       },
       { path: "/login", element: <LoginPage />, loader: loginLoader },
       { path: "/onboarding", element: <OnboardingPage />, loader: onboardingLoader },
+      { path: "/u/:username", element: <ProfilePage />, loader: profileLoader },
     ],
   },
 ]);

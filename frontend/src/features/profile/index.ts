@@ -1,4 +1,6 @@
-export { fetchMyProfile } from "./api/profile-api";
-export type { MyProfile } from "./api/profile-api";
+export { fetchMyProfile, fetchProfileByUsername } from "./api/profile-api";
+export type { MyProfile, ProfileLookup } from "./api/profile-api";
 export type { Profile } from "./model/profile";
 export { OnboardingPage } from "./routes/OnboardingPage";
+export { ProfilePage } from "./routes/ProfilePage";
+export { profileLoader } from "./routes/profile-loader";
