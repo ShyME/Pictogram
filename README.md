@@ -124,6 +124,11 @@ and the Playwright journeys against `compose.yaml` + `compose.mock-oauth.yaml`. 
 backend/frontend suites on the PR, so those don't re-run. `workflow_dispatch` forces a
 full run.
 
+## Contributing
+
+Formatting is machine-enforced — run `task format` before you push. IDE setup and the
+`git blame` cutover config are in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
 ## Task reference
 
 `task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,

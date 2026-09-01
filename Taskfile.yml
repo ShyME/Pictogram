@@ -59,6 +59,17 @@ tasks:
       - pnpm install
       - pnpm dev
 
+  format:
+    desc: Auto-format the codebase — frontend (Prettier)
+    cmds:
+      - task: format:frontend
+
+  format:frontend:
+    dir: frontend
+    cmds:
+      - pnpm install
+      - pnpm format
+
   test:
     desc: Run all checks — backend build + frontend lint/typecheck/tests
     cmds:
@@ -74,6 +85,7 @@ tasks:
     dir: frontend
     cmds:
       - pnpm install
+      - pnpm format:check
       - pnpm lint
       - pnpm typecheck
       - pnpm test

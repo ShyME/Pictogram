@@ -1,0 +1,14 @@
+# Build output and reports
+dist
+coverage
+playwright-report
+test-results
+
+# Generated — openapi-typescript owns the layout; `pnpm test` checks it against openapi.json
+src/shared/api/schema.d.ts
+
+# Lockfile
+pnpm-lock.yaml
+
+# Prose stays hand-wrapped
+*.md
