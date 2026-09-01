@@ -11,6 +11,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import me.imshy.pictogram.identity.internal.refreshtoken.RefreshTokenService;
 import me.imshy.pictogram.shared.UserId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

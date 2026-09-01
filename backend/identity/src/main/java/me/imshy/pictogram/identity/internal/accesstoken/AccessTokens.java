@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.accesstoken;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
  * private key; verification uses the public key, so a service extracted from the monolith
  * can verify without holding signing material.
  */
-class AccessTokens {
+public class AccessTokens {
 
     private final JwtEncoder encoder;
     private final JwtDecoder decoder;
@@ -28,7 +28,7 @@ class AccessTokens {
     private final Duration ttl;
     private final String issuer;
 
-    AccessTokens(JwtEncoder encoder, JwtDecoder decoder, Clock clock, Duration ttl, String issuer) {
+    public AccessTokens(JwtEncoder encoder, JwtDecoder decoder, Clock clock, Duration ttl, String issuer) {
         this.encoder = encoder;
         this.decoder = decoder;
         this.clock = clock;
@@ -36,7 +36,7 @@ class AccessTokens {
         this.issuer = issuer;
     }
 
-    String issue(UserId user) {
+    public String issue(UserId user) {
         Instant now = clock.instant();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(issuer)
@@ -48,7 +48,7 @@ class AccessTokens {
                 JwsHeader.with(SignatureAlgorithm.ES256).build(), claims)).getTokenValue();
     }
 
-    UserId resolve(String accessToken) {
+    public UserId resolve(String accessToken) {
         String subject;
         try {
             subject = decoder.decode(accessToken).getSubject();
@@ -62,7 +62,7 @@ class AccessTokens {
         }
     }
 
-    Duration ttl() {
+    public Duration ttl() {
         return ttl;
     }
 }

@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.refreshtoken;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

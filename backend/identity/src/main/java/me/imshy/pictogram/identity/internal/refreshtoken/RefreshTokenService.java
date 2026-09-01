@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.refreshtoken;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
+import me.imshy.pictogram.identity.internal.InvalidRefreshTokenException;
+import me.imshy.pictogram.identity.internal.RefreshTokenReuseException;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -38,7 +40,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * {@code @Transactional} — fail loud if one is active rather than trusting that. ({@link #startSession}
  * is exempt: it is the one entry point legitimately called inside {@code authenticate()}'s transaction.)
  */
-class RefreshTokenService {
+public class RefreshTokenService {
 
     private final RefreshTokens tokens;
     private final Clock clock;
@@ -47,7 +49,7 @@ class RefreshTokenService {
     private final TransactionTemplate tx;
     private final SecureRandom random = new SecureRandom();
 
-    RefreshTokenService(RefreshTokens tokens, Clock clock, Duration ttl, Duration rotationGrace,
+    public RefreshTokenService(RefreshTokens tokens, Clock clock, Duration ttl, Duration rotationGrace,
             PlatformTransactionManager txManager) {
         this.tokens = tokens;
         this.clock = clock;
@@ -56,14 +58,14 @@ class RefreshTokenService {
         this.tx = new TransactionTemplate(txManager);
     }
 
-    record Issued(UserId user, String token, Instant expiresAt) {
+    public record Issued(UserId user, String token, Instant expiresAt) {
     }
 
-    Issued startSession(UserId user) {
+    public Issued startSession(UserId user) {
         return tx.execute(status -> issue(user, UUID.randomUUID()));
     }
 
-    Issued rotate(String presentedToken) {
+    public Issued rotate(String presentedToken) {
         requireNoAmbientTransaction();
         String presentedHash = hash(presentedToken);
         Rotation result = tx.execute(status -> rotateWithin(presentedHash));
@@ -104,7 +106,7 @@ class RefreshTokenService {
                 : new Rotation.Reuse(familyId);
     }
 
-    void revokeFamilyOf(String presentedToken) {
+    public void revokeFamilyOf(String presentedToken) {
         requireNoAmbientTransaction();
         String presentedHash = hash(presentedToken);
         tx.executeWithoutResult(status -> tokens.findByTokenHash(presentedHash)

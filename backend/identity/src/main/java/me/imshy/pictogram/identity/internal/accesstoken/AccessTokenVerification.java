@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.accesstoken;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -18,12 +18,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
  * hand from the in-process EC key. The {@code :app} resource server and
  * {@link AccessTokens#resolve} share this one decoder.
  */
-final class AccessTokenVerification {
+public final class AccessTokenVerification {
 
     private AccessTokenVerification() {
     }
 
-    static NimbusJwtDecoder decoder(JWKSource<SecurityContext> jwkSource, String issuer, Clock clock) {
+    public static NimbusJwtDecoder decoder(JWKSource<SecurityContext> jwkSource, String issuer, Clock clock) {
         var processor = new DefaultJWTProcessor<SecurityContext>();
         processor.setJWSKeySelector(new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, jwkSource));
         // Spring's validators below own claim checks; keep Nimbus from applying its own

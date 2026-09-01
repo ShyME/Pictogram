@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.accesstoken;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.Curve;
@@ -16,7 +16,7 @@ import java.util.UUID;
  * private JWK comes from {@code pictogram.auth.signing-key}; when that is blank a fresh key
  * is generated for the lifetime of the process (fine for local and test).
  */
-final class SigningKey {
+public final class SigningKey {
 
     private final ECKey jwk;
 
@@ -24,7 +24,7 @@ final class SigningKey {
         this.jwk = jwk;
     }
 
-    static SigningKey generate() {
+    public static SigningKey generate() {
         try {
             return new SigningKey(new ECKeyGenerator(Curve.P_256)
                     .keyID(UUID.randomUUID().toString())
@@ -34,7 +34,7 @@ final class SigningKey {
         }
     }
 
-    static SigningKey fromJwkJson(String json) {
+    public static SigningKey fromJwkJson(String json) {
         try {
             ECKey parsed = ECKey.parse(json);
             if (!parsed.isPrivate()) {
@@ -46,7 +46,7 @@ final class SigningKey {
         }
     }
 
-    JWKSource<SecurityContext> jwkSource() {
+    public JWKSource<SecurityContext> jwkSource() {
         return new ImmutableJWKSet<>(new JWKSet(jwk));
     }
 }
