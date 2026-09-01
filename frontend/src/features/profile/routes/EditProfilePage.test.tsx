@@ -3,8 +3,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../../test/render";
 import { jsonResponse, problemResponse, stubFetch } from "../../../test/mock-fetch";
-import { EditProfilePage } from "./EditProfilePage";
-import type { EditProfileData } from "./edit-profile-loader";
+import { EditProfilePage, type EditProfileData } from "./EditProfilePage";
 
 const navigate = vi.fn();
 let loaderData: EditProfileData;

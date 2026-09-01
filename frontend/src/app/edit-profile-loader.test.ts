@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { jsonResponse, problemResponse, stubFetch } from "../../../test/mock-fetch";
-import { editProfileLoader } from "./edit-profile-loader";
+import { jsonResponse, problemResponse, stubFetch } from "../test/mock-fetch";
+import { editProfileLoader } from "./guards";
 
 afterEach(() => {
   vi.unstubAllGlobals();

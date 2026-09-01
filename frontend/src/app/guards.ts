@@ -1,36 +1,27 @@
-import { redirect } from "react-router";
-import { fetchMyProfile } from "@features/profile";
+import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from "./access-gate";
 
 /**
- * The root-route guard: one `GET /api/profiles/me` decides where a visitor belongs —
- * no token → `/login`, a token but no profile → `/onboarding`, otherwise the app, with
- * the profile handed to the layout.
+ * The access gate throws `redirect(...)` on its reject paths. React Router
+ * treats a thrown and a returned redirect alike, but callers that invoke a
+ * loader directly expect the Response back — so unwrap a thrown Response here
+ * and let anything else propagate.
  */
-export async function rootLoader() {
-  const me = await fetchMyProfile();
-  if (me.status === "unauthenticated") return redirect("/login");
-  if (me.status === "not-onboarded") return redirect("/onboarding");
-  return { profile: me.profile };
-}
+const asLoader =
+  <T>(load: () => Promise<T>) =>
+  async (): Promise<T | Response> => {
+    try {
+      return await load();
+    } catch (thrown) {
+      if (thrown instanceof Response) return thrown;
+      throw thrown;
+    }
+  };
 
-export async function loginLoader() {
-  const me = await fetchMyProfile();
-  if (me.status === "onboarded") return redirect("/");
-  if (me.status === "not-onboarded") return redirect("/onboarding");
-  return null;
-}
+export const rootLoader = asLoader(async () => ({ profile: await requireOnboarded() }));
 
-export async function onboardingLoader() {
-  const me = await fetchMyProfile();
-  if (me.status === "unauthenticated") return redirect("/login");
-  if (me.status === "onboarded") return redirect("/");
-  return null;
-}
+/** The post composer and the profile edit form both need the same onboarded profile the root layout does. */
+export const newPostLoader = rootLoader;
+export const editProfileLoader = rootLoader;
 
-/** Loads the post composer: you can only post as a profile you have (same fork as the root guard). */
-export async function newPostLoader() {
-  const me = await fetchMyProfile();
-  if (me.status === "unauthenticated") return redirect("/login");
-  if (me.status === "not-onboarded") return redirect("/onboarding");
-  return { profile: me.profile };
-}
+export const loginLoader = asLoader(requireAnonymous);
+export const onboardingLoader = asLoader(requireOnboardedOrAnon);
