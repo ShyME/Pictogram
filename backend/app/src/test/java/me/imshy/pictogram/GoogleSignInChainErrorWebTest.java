@@ -26,12 +26,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * The Google sign-in filter chain runs with no {@code DispatcherServlet} behind it, so an
- * unexpected failure there can't reach the shared {@code ApiExceptionHandler}. It must
- * still render as {@code application/problem+json}, never a white-label 500 (#27). Here the
- * identity service is stubbed to throw once the handshake has already succeeded.
- */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class GoogleSignInChainErrorWebTest {

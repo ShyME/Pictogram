@@ -8,16 +8,6 @@ import me.imshy.pictogram.shared.http.ForbiddenException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-/**
- * The delete command (post/CONTEXT.md): an author permanently removes one of their own
- * posts. Hard delete — the row is gone, there is no trash and no undo. Only the author may
- * delete their post; anyone else is a {@link ForbiddenException} and the post is untouched.
- * A successful delete emits {@link PostDeleted}.
- *
- * <p>Not {@code @Transactional}, mirroring {@link Publishing}: the delete runs in its own
- * transaction and the event publishes after it, so there is no outer boundary for a listener
- * to roll back.
- */
 @Service
 public class PostDeletion {
 

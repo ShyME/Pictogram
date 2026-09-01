@@ -5,12 +5,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 
-/**
- * An expected failure that renders as an RFC 9457 Problem Detail. Modules throw a subclass
- * (or this directly) from their web layer; {@link ApiExceptionHandler} turns it into an
- * {@code application/problem+json} response carrying the {@link ProblemType}'s stable
- * {@code type} URI so clients can branch on the failure without parsing prose.
- */
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;

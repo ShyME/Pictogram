@@ -10,7 +10,6 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
-/** Builds the S3 client the {@link S3BlobStore} talks to, from {@link MediaStorageProperties}. */
 @Configuration
 @EnableConfigurationProperties(MediaStorageProperties.class)
 class MediaStorageConfiguration {

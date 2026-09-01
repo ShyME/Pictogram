@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 import java.util.UUID;
 
-/** A published post, referenced across modules by value only. */
 public record PostId(UUID value) {
 
     public PostId {

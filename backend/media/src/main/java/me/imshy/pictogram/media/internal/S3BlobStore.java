@@ -9,11 +9,6 @@ import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
-/**
- * {@link BlobStore} over the S3 API. The bucket is created on first write rather than at
- * startup, so a fresh MinIO (local, CI, a new environment) needs no provisioning step and
- * an app boot never depends on the object store being reachable.
- */
 @Component
 class S3BlobStore implements BlobStore {
 
@@ -40,8 +35,6 @@ class S3BlobStore implements BlobStore {
 
     @Override
     public void remove(String key) {
-        // S3 (and MinIO) answer a delete of an absent key with success, so the sweep needs
-        // no existence check and a half-finished previous sweep re-runs cleanly.
         s3.deleteObject(request -> request.bucket(bucket).key(key));
     }
 
@@ -57,7 +50,6 @@ class S3BlobStore implements BlobStore {
                 try {
                     s3.createBucket(request -> request.bucket(bucket));
                 } catch (BucketAlreadyOwnedByYouException | BucketAlreadyExistsException raced) {
-                    // another instance got there first — fine
                 }
             }
             bucketReady = true;
@@ -71,8 +63,6 @@ class S3BlobStore implements BlobStore {
         } catch (NoSuchBucketException absent) {
             return false;
         } catch (S3Exception e) {
-            // MinIO answers a missing bucket with a bare 404/403 rather than the typed
-            // error; anything else (auth, connectivity) is a real fault.
             if (e.statusCode() == 404 || e.statusCode() == 403) {
                 return false;
             }

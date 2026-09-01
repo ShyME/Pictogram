@@ -1,9 +1,6 @@
 import type { components } from "@shared/api/schema";
 import { api } from "@shared/api/client";
 
-// Smoke test: one real endpoint driven through the generated client, proving the committed
-// schema, openapi-fetch, and the path/response types line up. The fetch is stubbed per
-// request — no backend — but everything above it is the real thing.
 test("reads GET /api/profiles/me through the generated client", async () => {
   const profile = {
     userId: "1a2b3c4d-0000-0000-0000-000000000000",

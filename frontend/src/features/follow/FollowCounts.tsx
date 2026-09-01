@@ -1,15 +1,6 @@
 import { Link } from "react-router";
 import { useFollowRelationship } from "./use-follow-relationship";
 
-/**
- * The follower / following count row on a profile page (spec story 41). Reads the same
- * public query as {@link FollowButton}, so following someone and seeing the count move is
- * one cache invalidation. Counts show for everyone, signed in or not.
- *
- * Each count links to the matching list screen (#57), `/u/<handle>/{followers,following}` —
- * those pages are authenticated, so a signed-out visitor following the link lands on
- * `/login`.
- */
 export function FollowCounts({ userId, username }: { userId: string; username: string }) {
   const { data } = useFollowRelationship(userId);
 

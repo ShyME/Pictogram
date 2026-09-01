@@ -25,12 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * The media endpoints: a signed-in user uploads one image and gets back a {@link MediaId};
- * anyone can fetch either rendition's bytes by that id (the bytes back a public profile
- * grid and feed cards — spec stories 13, 18, 35 — so serving them carries no auth). The
- * renditions are immutable for a given id, so they are served with a long-lived cache.
- */
 @RestController
 @RequestMapping("/api/media")
 class MediaController {

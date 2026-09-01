@@ -5,9 +5,6 @@ import { FeedPage } from "./pages/feed.page";
 import { ProfilePage } from "./pages/profile.page";
 import { EditProfilePage } from "./pages/edit-profile.page";
 
-// The ticket's broad journey (#12), against `task up`: a signed-in user edits each field of
-// their profile, is warned before a username change, and after the rename the old handle
-// stops resolving.
 test("edit profile: change display name, bio and username; the old handle 404s", async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);

@@ -7,11 +7,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Renders the 401 for a request the security filter chain rejects before it reaches a
- * controller — a missing or invalid access token — as the same Problem Detail an
- * {@link UnauthenticatedException} thrown from a controller would produce.
- */
 public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;

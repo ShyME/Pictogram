@@ -11,13 +11,6 @@ import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
-/**
- * Builds the {@link NimbusJwtDecoder} that verifies a Pictogram access token — ES256
- * signature against the public key, plus issuer and expiry. Spring's {@code NimbusJwtDecoder}
- * builders only cover RSA public keys and remote JWK sets, so the processor is assembled by
- * hand from the in-process EC key. The {@code :app} resource server and
- * {@link AccessTokens#resolve} share this one decoder.
- */
 public final class AccessTokenVerification {
 
     private AccessTokenVerification() {
@@ -26,8 +19,6 @@ public final class AccessTokenVerification {
     public static NimbusJwtDecoder decoder(JWKSource<SecurityContext> jwkSource, String issuer, Clock clock) {
         var processor = new DefaultJWTProcessor<SecurityContext>();
         processor.setJWSKeySelector(new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, jwkSource));
-        // Spring's validators below own claim checks; keep Nimbus from applying its own
-        // system-clock expiry check so a test Clock fully controls token lifetime.
         processor.setJWTClaimsSetVerifier((claims, context) -> { });
 
         var timestamps = new JwtTimestampValidator();

@@ -16,30 +16,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/**
- * Issues and rotates refresh tokens with reuse detection (ADR-0004). The raw token is a
- * 256-bit random value returned once; only its SHA-256 hash is stored. Rotation consumes
- * the presented row and issues the next in the same family.
- *
- * <p>Presenting a spent row is only treated as theft — the whole family is revoked — once it
- * has been spent longer than {@code rotationGrace}. Within that window a second presentation
- * of a just-consumed token is a benign concurrent refresh (a double-submit, a client retry,
- * React StrictMode's double effect): it is rejected with an {@link InvalidRefreshTokenException}
- * and the cookie is cleared, but the family stands, so the racer that won the rotation still
- * holds a usable cookie.
- *
- * <p>Transaction boundaries are explicit here rather than annotation-driven: reuse detection
- * must <em>persist</em> a family revocation and then <em>throw</em>. An exception rolls back
- * the transaction it is thrown from, so the revoke has to land in a separate transaction that
- * has already committed by the time the exception flies. Sequencing two {@link TransactionTemplate}
- * calls does that without the deadlock a {@code REQUIRES_NEW} revoke hit — the losing rotation's
- * conditional consume can hold an exclusive tuple lock until its transaction ends, and a second
- * connection revoking the family would block on it forever. This only holds with no ambient
- * transaction, so {@link #rotate} and {@link #revokeFamilyOf} — reached from
- * {@code IdentityAuthentication.refresh} / {@code signOut}, which are deliberately not
- * {@code @Transactional} — fail loud if one is active rather than trusting that. ({@link #startSession}
- * is exempt: it is the one entry point legitimately called inside {@code authenticate()}'s transaction.)
- */
 public class RefreshTokenService {
 
     private final RefreshTokens tokens;
@@ -91,8 +67,6 @@ public class RefreshTokenService {
             throw new InvalidRefreshTokenException("Refresh token expired");
         }
         if (tokens.consumeIfLive(row.getId(), now) == 0) {
-            // another rotation of this exact token beat us to it between the read and here;
-            // re-read the spent state (not the stale row) to tell a benign race from theft
             SpentState spent = tokens.spentStateById(row.getId())
                     .orElseThrow(() -> new InvalidRefreshTokenException("Unknown refresh token"));
             return outcomeFor(spent, row.familyId(), now);
@@ -147,7 +121,6 @@ public class RefreshTokenService {
         record Ok(Issued issued) implements Rotation {
         }
 
-        /** The presented token was consumed within the grace window — a concurrent refresh, not theft. */
         record BenignReplay() implements Rotation {
         }
 

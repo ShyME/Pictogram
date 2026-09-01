@@ -27,12 +27,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * The follow endpoints through the real security chain: {@code PUT} / {@code DELETE} need a
- * token and always act as the caller; {@code GET /api/follows/{userId}} is public and
- * reports counts to everyone but the {@code followedByViewer} flag only to a signed-in
- * viewer; a self-follow is a {@code 422} Problem Detail.
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -139,8 +133,6 @@ class FollowApiTest {
         mvc.perform(put("/api/follows/" + carol).with(jwt().jwt(jwt -> jwt.subject(bob))))
                 .andExpect(status().isNoContent());
 
-        // Order (newest follow first) is asserted deterministically in follow's FollowListTest,
-        // which controls the clock; here the two follows race the real clock, so assert membership.
         mvc.perform(get("/api/follows/" + carol + "/followers").with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(2)))

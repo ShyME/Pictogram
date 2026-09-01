@@ -14,19 +14,6 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * The Google sign-in filter chain has no {@code DispatcherServlet} behind it, so the shared
- * {@code ApiExceptionHandler} never sees what it throws — an unhandled exception from
- * {@link OidcSignInSuccessHandler} or the OAuth2 filters would otherwise reach the container
- * as a white-label 500. This wraps the chain and renders anything unexpected as
- * {@code application/problem+json}, the same shape the API edge produces (#27).
- *
- * <p>{@link UnusableGoogleAccountException} is caught here only as a backstop — the success
- * handler already turns it into a redirect via {@link SignInCompletion}; if it ever escapes,
- * the browser still gets the SPA error route rather than a Problem Detail it can't act on.
- * Either way {@link SignInCompletion} owns the session teardown; the filter only guards the
- * response ({@code isCommitted} / {@code reset}) so a half-written body isn't overlaid.
- */
 class OidcChainErrorFilter extends OncePerRequestFilter {
 
     private static final Log log = LogFactory.getLog(OidcChainErrorFilter.class);

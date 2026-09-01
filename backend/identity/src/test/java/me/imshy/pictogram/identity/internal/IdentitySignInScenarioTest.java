@@ -12,11 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 
-/**
- * The broad slice from the ticket: a person signs in with Google (verified account handed
- * straight to the service — the OIDC handshake is covered by the {@code :app} web test),
- * comes back later, lets an access token lapse, and has a stolen refresh token replayed.
- */
 class IdentitySignInScenarioTest extends ClockControlledModuleTest {
 
     @Autowired
@@ -79,7 +74,6 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
                 new ExternalAccount("google", "google-sub-004", "mae@example.com"));
         var rotated = authentication.refresh(session.refreshToken());
 
-        // past the rotation grace, so this is theft rather than a benign concurrent refresh (#26)
         time.advance(Duration.ofMinutes(1).plusSeconds(1));
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)

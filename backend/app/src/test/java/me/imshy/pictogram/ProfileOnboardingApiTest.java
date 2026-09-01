@@ -23,12 +23,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * The onboarding endpoints through the real security chain and the Problem Detail advice:
- * {@code GET /api/profiles/me} is 404 until onboarded, and the two username failures —
- * "wrong shape" and "taken" — render as Problem Details a client can tell apart by
- * {@code type} (ticket AC).
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

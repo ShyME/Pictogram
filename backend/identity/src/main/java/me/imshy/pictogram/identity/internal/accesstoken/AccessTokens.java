@@ -14,12 +14,6 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
-/**
- * Mints and verifies Pictogram access tokens: an ES256-signed JWT whose subject is the
- * {@link UserId}, valid for {@link #ttl()} from issue (ADR-0004). Signing uses identity's
- * private key; verification uses the public key, so a service extracted from the monolith
- * can verify without holding signing material.
- */
 public class AccessTokens {
 
     private final JwtEncoder encoder;

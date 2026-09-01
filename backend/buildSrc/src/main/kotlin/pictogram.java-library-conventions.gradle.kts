@@ -1,7 +1,5 @@
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
-// Base conventions for every subproject: JDK 25 toolchain, the Spring Boot + Modulith BOMs, JUnit 5.
-
 plugins {
     `java-library`
     id("io.spring.dependency-management")
@@ -11,7 +9,6 @@ group = "me.imshy"
 version = "0.1.0-SNAPSHOT"
 
 base {
-    // :app overrides this to plain "pictogram" — the deployable artifact.
     archivesName = "pictogram-${project.name}"
 }
 
@@ -42,13 +39,8 @@ val includeBlackbox = project.hasProperty("includeBlackbox")
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform {
-        // `blackbox` tests (ContainerDriver over the built image, Playwright) run the heavy
-        // suite on `main` only — see ADR-0007 and .github/workflows/ci.yml. Pass
-        // `-PincludeBlackbox` to run those and nothing else.
         if (includeBlackbox) includeTags("blackbox") else excludeTags("blackbox")
     }
-    // Most modules carry no blackbox tests, so a -PincludeBlackbox run must not fail on an
-    // empty selection for those Test tasks.
     filter { isFailOnNoMatchingTests = !includeBlackbox }
     testLogging {
         events("passed", "skipped", "failed")

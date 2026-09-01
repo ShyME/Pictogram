@@ -1,5 +1,3 @@
-// A full-page navigation, not a client-side route change: it hands off to the backend's
-// OIDC entry point, which redirects to Google and back (ADR-0004).
 export const GOOGLE_SIGN_IN_PATH = "/oauth2/authorization/google";
 
 export function ContinueWithGoogleButton({ className = "" }: { className?: string }) {

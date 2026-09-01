@@ -6,14 +6,6 @@ export type ProfilePageData =
   | { status: "found"; profile: Profile; isOwnProfile: boolean; viewerCanFollow: boolean }
   | { status: "not-found"; username: string };
 
-/**
- * Loads the `/u/<username>` page. The profile itself is public, so this works signed out;
- * the extra `GET /api/profiles/me` decides whether the viewer sees the edit affordance
- * (their own profile), an interactive follow button (a signed-in someone else), or a
- * sign-in prompt in its place (a signed-out visitor — following needs an account). That
- * check is cosmetic, so if it fails for any reason the page still renders — as a
- * signed-out visitor's view.
- */
 export async function profileLoader({ params }: LoaderFunctionArgs): Promise<ProfilePageData> {
   const username = params.username ?? "";
   const [lookup, me] = await Promise.all([

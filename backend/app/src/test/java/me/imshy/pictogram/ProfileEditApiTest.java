@@ -23,12 +23,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * {@code PUT /api/profiles/me} through the real security chain and the Problem Detail
- * advice: it edits the caller's profile, is 404 before onboarding, tells a malformed new
- * username apart from a taken one, and — the ticket's headline behaviour — a rename frees
- * the old handle so the old {@code /api/profiles/&lt;old&gt;} link 404s.
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

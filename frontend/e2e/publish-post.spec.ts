@@ -8,9 +8,6 @@ import { NewPostPage } from "./pages/new-post.page";
 
 const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
 
-// The ticket's broad journey (#14), against `task up`: a signed-in user picks a photo, frames
-// it in the square crop, captions it, publishes, and lands on their profile with the new
-// post at the top of the grid.
 test("publish a post: pick a photo, crop, caption, and see it in the grid", async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
@@ -32,7 +29,6 @@ test("publish a post: pick a photo, crop, caption, and see it in the grid", asyn
   await expect(compose.heading).toBeVisible();
 
   await compose.selectPhoto(PHOTO);
-  // the crop frame is up once the zoom control appears
   await expect(compose.zoom).toBeVisible();
   await compose.frameShot();
 

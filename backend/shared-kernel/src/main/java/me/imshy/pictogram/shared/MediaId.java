@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 import java.util.UUID;
 
-/** A stored image, referenced across modules by value only. */
 public record MediaId(UUID value) {
 
     public MediaId {

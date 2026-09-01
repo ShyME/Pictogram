@@ -10,11 +10,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-/**
- * The Google claim check on its own: a verified email passes through, anything else fails
- * as an {@link UnusableGoogleAccountException} carrying the reason the SPA shows a message
- * for (#27) — never a bare {@code IllegalStateException} that renders as a 500.
- */
 class GoogleIdentityProviderTest {
 
     private final GoogleIdentityProvider google = new GoogleIdentityProvider();

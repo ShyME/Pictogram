@@ -10,16 +10,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-/**
- * The follow and unfollow commands (follow/CONTEXT.md). Both are idempotent: following a
- * user already followed, or unfollowing one not followed, changes nothing and returns
- * quietly. A {@link UserFollowed} / {@link UserUnfollowed} is emitted only on a real state
- * change. Following yourself is rejected as a {@link SelfFollowException}.
- *
- * <p>Not {@code @Transactional}, like {@link me.imshy.pictogram.profile.internal.Onboarding}:
- * the write commits in its own transaction and the event publishes after it, so there is no
- * outer boundary for a listener to roll back.
- */
 @Service
 public class Following {
 
@@ -45,8 +35,6 @@ public class Following {
         try {
             follows.save(Follow.of(viewer.asUserId(), followed, followedAt));
         } catch (DataIntegrityViolationException alreadyFollowing) {
-            // A concurrent follow of the same pair won the unique constraint — the edge
-            // exists either way, so this call still changed nothing.
             return;
         }
         events.publishEvent(new UserFollowed(viewer.asUserId(), followed, followedAt));

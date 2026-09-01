@@ -9,16 +9,6 @@ import me.imshy.pictogram.shared.UserId;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-/**
- * The publish command (post/CONTEXT.md): an author turns an already-uploaded image plus an
- * optional caption into a {@link Post}. The image must be media the author owns — checked
- * against {@link MediaCatalog}, media's published interface (CONTEXT-MAP: post → media) —
- * or the publish is rejected as {@link UnusableMediaException}. A successful publish emits
- * {@link PostPublished}.
- *
- * <p>Not {@code @Transactional}: the {@code save} runs in its own transaction and the event
- * publishes after it, so there is no outer boundary for a listener to roll back.
- */
 @Service
 public class Publishing {
 

@@ -1,7 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 
-// Page object for the `/settings/profile` edit form (ADR-0007): locators and navigation
-// here, assertions in the spec.
 export class EditProfilePage {
   readonly heading: Locator;
   readonly username: Locator;

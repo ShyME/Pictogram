@@ -1,7 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 
-// Page object for the `/new` post composer (ADR-0007): locators and actions here, assertions
-// in the spec.
 export class NewPostPage {
   readonly heading: Locator;
   readonly caption: Locator;
@@ -22,7 +20,6 @@ export class NewPostPage {
     await this.page.locator('input[type="file"]').setInputFiles(filePath);
   }
 
-  /** Frame the shot: zoom in and drag the photo within the square. */
   async frameShot(): Promise<void> {
     await this.zoom.fill("2");
     const frame = this.page.getByRole("img", { name: /position your photo/i });

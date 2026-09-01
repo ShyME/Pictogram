@@ -16,14 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * The ticket's broad test (#16): with the {@link Clock} wound past the grace period, the
- * orphan sweep deletes every media no post references, row and bytes both, and leaves the
- * rest alone. {@link me.imshy.pictogram.media.PostReferences} stands in for {@code post}
- * here — a media-only module test does not start it — so "never posted" and "its post was
- * deleted" both show up as "not in the referenced set"; the two are told apart against the
- * real {@code post} adapter in {@code :app}'s {@code OrphanMediaCollectionTest}.
- */
 class OrphanCollectorTest extends MediaModuleIntegrationTest {
 
     private static final Duration GRACE = Duration.ofHours(24);

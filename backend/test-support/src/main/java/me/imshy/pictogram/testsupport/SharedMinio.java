@@ -6,12 +6,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-/**
- * The one MinIO container for the build — the object store the {@code media} module writes
- * image bytes to. Singleton, like {@link SharedPostgres}: started once, reaped at JVM
- * shutdown. {@code registerTo} points {@code pictogram.media.storage.*} at it; the bucket
- * is created lazily by the module on first write.
- */
 public final class SharedMinio {
 
     private static final int API_PORT = 9000;

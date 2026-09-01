@@ -20,12 +20,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 
-/**
- * Exercises the handshake-completion decision on its own — no {@code mock-oauth2-server}, no
- * servlet chain. The invariants under test: the refresh cookie is written on success and
- * only on success, each outcome lands on the right redirect, and every terminal path ends
- * the handshake servlet session exactly once (and does not NPE when there is none) (#27).
- */
 class SignInCompletionTest {
 
     private static final AuthProperties PROPERTIES = new AuthProperties(

@@ -3,11 +3,6 @@ package me.imshy.pictogram.shared.http;
 import java.net.URI;
 import java.util.Objects;
 
-/**
- * A kind of failure: its stable {@code type} URI (a stable identifier clients branch on,
- * not meant to be dereferenced) and its human-readable {@code title}. {@code shared} owns
- * the cross-cutting ones below; a module declares its own constants for its own failures.
- */
 public record ProblemType(String slug, String title) {
 
     public static final String BASE = "https://pictogram.dev/problems/";

@@ -11,12 +11,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * The identity application service. Turns a verified {@link ExternalAccount} into a
- * {@link Session}, creating the {@code User} and emitting {@link UserRegistered} the first
- * time a given {@code (provider, subject)} is seen, and resolving the same {@link UserId}
- * on every later sign-in. Also rotates and revokes sessions.
- */
 @Service
 public class IdentityAuthentication {
 

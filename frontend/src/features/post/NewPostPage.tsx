@@ -6,12 +6,6 @@ import { SquareCropper, type CropperHandle } from "./cropper/SquareCropper";
 import { CAPTION_MAX_LENGTH, captionLength, isCaptionWithinLimit } from "./caption";
 import { postsByAuthorKey } from "./query-keys";
 
-/**
- * The post composer: pick a photo, frame it in the square crop, optionally caption it, and
- * publish. Publishing is two calls — upload the framed bytes for a `MediaId`, then publish
- * the post — after which the author's grid query is invalidated and we land on their profile
- * where the new post sits at the top.
- */
 export function NewPostPage({
   authorId,
   profileUsername,

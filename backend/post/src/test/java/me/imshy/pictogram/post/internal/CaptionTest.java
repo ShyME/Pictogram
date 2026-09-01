@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.Test;
 
-/** The caption rule: optional, trimmed, at most 2200 code points; blank means "no caption". */
 class CaptionTest {
 
     @Test
@@ -36,7 +35,7 @@ class CaptionTest {
 
     @Test
     void lengthIsCountedInCodePointsSoAnEmojiCostsOne() {
-        String emoji = "📷".repeat(Caption.MAX_LENGTH); // camera emoji, 2 chars / 1 code point
+        String emoji = "📷".repeat(Caption.MAX_LENGTH);
 
         assertThat(Caption.of(emoji).value()).isEqualTo(emoji);
     }

@@ -22,17 +22,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import org.springframework.stereotype.Component;
 
-/**
- * The re-encode step: an accepted upload in → one canonical square JPEG plus a square
- * thumbnail out (ADR-0006). Decoding to a raster and re-encoding is also what strips
- * EXIF/GPS — the pipeline reads the orientation tag first so the result is upright, then
- * nothing else from the source metadata survives. Anything that is not a JPEG, PNG or WebP
- * a codec can read — or whose pixel count is implausibly large for its byte size — raises
- * {@link UndecodableImageException}.
- *
- * <p>Stateless and free of I/O, so it is unit-tested directly; {@link MediaLibrary} is the
- * only caller.
- */
 @Component
 class ImagePipeline {
 
@@ -42,9 +31,6 @@ class ImagePipeline {
     private static final float JPEG_QUALITY = 0.82f;
     private static final Set<String> ACCEPTED_FORMATS = Set.of("jpeg", "jpg", "png", "webp");
 
-    // A backstop against decompression bombs: the multipart size limit already caps the
-    // bytes, so a file that still decodes to more than this many pixels is pathological.
-    // Well clear of any real camera (a 108 MP phone sensor is ~1.1e8).
     private static final long MAX_PIXELS = 200_000_000L;
 
     record Renditions(byte[] original, byte[] thumbnail) {
@@ -96,12 +82,10 @@ class ImagePipeline {
                 return exif.getInt(ExifDirectoryBase.TAG_ORIENTATION);
             }
         } catch (Exception noReadableOrientation) {
-            // no metadata, unreadable metadata, or no orientation tag — treat as upright
         }
         return 1;
     }
 
-    /** Reorients per the EXIF orientation value (1–8); values 5–8 also swap width and height. */
     private static BufferedImage applyOrientation(BufferedImage src, int orientation) {
         if (orientation < 2 || orientation > 8) {
             return src;
@@ -154,7 +138,6 @@ class ImagePipeline {
         var out = new ByteArrayOutputStream();
         try (var stream = ImageIO.createImageOutputStream(out)) {
             writer.setOutput(stream);
-            // Null metadata: the encoder writes a bare JFIF stream, so no EXIF/GPS block.
             writer.write(null, new IIOImage(image, null, null), param);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to encode the canonical JPEG", e);

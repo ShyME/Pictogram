@@ -1,6 +1,3 @@
-// Not a bounded context: the shared module-integration harness, consumed as
-// testImplementation(project(":test-support")). Deps are `api` so they reach consumers' tests.
-
 plugins {
     id("pictogram.java-library-conventions")
 }

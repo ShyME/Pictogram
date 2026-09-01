@@ -7,7 +7,6 @@ export function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, "wrapper">,
 ): RenderResult {
-  // Fresh client per render so query cache never leaks between tests.
   const queryClient = createQueryClient();
 
   function Wrapper({ children }: { children: ReactNode }) {

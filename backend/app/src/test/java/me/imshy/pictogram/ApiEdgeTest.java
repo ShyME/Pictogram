@@ -35,12 +35,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * The API edge conventions, exercised end to end through the real security filter chain,
- * the {@code @CurrentUser} resolver, and the Problem Detail advice against a throwaway
- * probe controller (spec §API — no feature endpoints exist yet, so this is a
- * {@code :app}-level test rather than an {@code @ApplicationModuleTest}).
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

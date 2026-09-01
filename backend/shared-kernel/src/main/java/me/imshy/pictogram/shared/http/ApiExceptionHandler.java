@@ -13,13 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-/**
- * Renders exceptions thrown from a controller as RFC 9457 Problem Details. Expected
- * failures come through {@link ApiException} and carry a stable {@link ProblemType};
- * Spring MVC's own exceptions keep their built-in problem bodies ({@code about:blank},
- * which RFC 9457 §4.1 permits); anything else is a 500 whose body never leaks a stack
- * trace.
- */
 @RestControllerAdvice
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {

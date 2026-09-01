@@ -1,10 +1,5 @@
 package me.imshy.pictogram.profile.internal;
 
-/**
- * The optional free-text description on a profile (glossary: up to 160 characters). A blank
- * input means "not set" and is carried as {@code null}. Length is counted in code points,
- * so an emoji costs one; line breaks are allowed.
- */
 record Bio(String value) {
 
     static final int MAX_LENGTH = 160;

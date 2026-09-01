@@ -3,16 +3,6 @@ import { followUser, unfollowUser } from "./follow-api";
 import { followRelationshipKey } from "./query-keys";
 import { useFollowRelationship } from "./use-follow-relationship";
 
-/**
- * The follow / unfollow control on another user's profile (spec story 20). The label
- * reflects the current relationship — "Follow" when not following, "Following" when already
- * following (clicking it unfollows). Both server calls are idempotent, so a double-click is
- * harmless; on success the shared relationship query is invalidated and the count row
- * ({@link FollowCounts}) moves with it.
- *
- * The app layer only renders this for a signed-in viewer looking at someone else's profile,
- * so there is no "follow yourself" or "log in first" state to handle here.
- */
 export function FollowButton({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const key = followRelationshipKey(userId);

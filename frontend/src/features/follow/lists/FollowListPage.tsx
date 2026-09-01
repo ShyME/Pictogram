@@ -31,11 +31,6 @@ const COPY: Record<FollowListMode, { title: (handle: string) => string; empty: s
   },
 };
 
-/**
- * The `/u/:username/followers` and `/u/:username/following` screens (#57). One component,
- * a `mode` prop: the copy, the query key and the endpoint all switch on it. The list is
- * keyset-paged with a "Load more" button, matching the profile grid.
- */
 export function FollowListPage({ mode }: { mode: FollowListMode }) {
   const data = useLoaderData() as FollowListData;
 
@@ -69,7 +64,6 @@ function Loaded({
     queryKey: followListKey(mode, target.userId),
     queryFn: async ({ pageParam }) => {
       const page = await fetchFollowListPage(mode, target.userId, pageParam);
-      // Seed before the page renders, so each row's FollowButton reads warm cache (#59).
       seedFollowRelationships(queryClient, page.relationships);
       return page;
     },

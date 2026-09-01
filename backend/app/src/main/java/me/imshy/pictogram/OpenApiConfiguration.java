@@ -9,13 +9,6 @@ import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Shapes the document so {@code openapi.json} is deterministic and only changes when the API
- * changes: a fixed title/version (springdoc otherwise stamps in the build version) and a
- * relative server URL (otherwise the random test port leaks in). {@code @CurrentUser}
- * arguments are resolved from the token, not the request — hidden so they don't surface as
- * bogus query parameters.
- */
 @Configuration
 class OpenApiConfiguration {
 

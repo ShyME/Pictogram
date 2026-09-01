@@ -6,12 +6,6 @@ import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import org.springframework.stereotype.Service;
 
-/**
- * The read side of {@code follow} — the implementation of {@link FollowGraph}. Every answer
- * is a single query against the one edge table; there is no cache and nothing derived, so a
- * count is always the live number of rows (follow/CONTEXT.md: "no counts beyond what the
- * graph itself answers").
- */
 @Service
 public class FollowDirectory implements FollowGraph {
 

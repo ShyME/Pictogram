@@ -18,13 +18,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.ReflectionUtils;
 
-/**
- * The {@code @CurrentUser} resolver turns the access token into an explicit {@link UserId}
- * or {@link ViewerId} parameter (spec §API). A required parameter fails the request when
- * there is no token; an {@code Optional} parameter lets a public endpoint (a shareable
- * profile page's follow state) resolve to {@link Optional#empty()} for an anonymous caller
- * instead.
- */
 class CurrentUserArgumentResolverTest {
 
     private final CurrentUserArgumentResolver resolver = new CurrentUserArgumentResolver();

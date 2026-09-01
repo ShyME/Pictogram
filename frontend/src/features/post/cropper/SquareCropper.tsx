@@ -21,16 +21,9 @@ import {
 } from "./crop";
 
 export type CropperHandle = {
-  /** Render the framed square to a downscaled JPEG blob, ready to upload. */
   getCroppedBlob: () => Promise<Blob>;
 };
 
-/**
- * A square frame the author pans and zooms over their photo — the output is always 1:1
- * (the media pipeline crops to square server-side regardless, but framing it here keeps
- * what they see as what they get). `getCroppedBlob` draws the framed region to a 1080²
- * canvas, which also downscales an oversized photo before upload.
- */
 export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHandle> }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);

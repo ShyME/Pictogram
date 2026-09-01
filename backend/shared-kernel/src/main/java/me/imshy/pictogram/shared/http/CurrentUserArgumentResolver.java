@@ -13,17 +13,6 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-/**
- * Turns the authenticated Pictogram access token into an explicit {@link UserId} or
- * {@link ViewerId} parameter, so authorization is visible at the edge rather than an
- * ambient {@code SecurityContext} read buried in a service (spec §API).
- *
- * <p>A bare {@code UserId} / {@code ViewerId} parameter is required — no token fails the
- * request. Wrapped as {@code Optional<UserId>} / {@code Optional<ViewerId>} it is optional:
- * an anonymous caller on a public endpoint resolves to {@link Optional#empty()} rather than
- * a rejection, so e.g. a shareable profile page can report follow counts to everyone and a
- * "you follow them" flag only to a signed-in viewer.
- */
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override

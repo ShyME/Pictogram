@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { LoginPage } from "./pages/login.page";
 
-// #27: when Google sign-in can't complete the backend redirects the browser to
-// `/login?error=<reason>`. The built SPA must turn that reason into a readable explanation
-// and still offer another attempt. The backend web test (`GoogleSignInWebTest`) covers the
-// OIDC handshake producing these redirects; this covers the SPA rendering them.
 test("an unusable Google account lands back on login with an explanation", async ({ page }) => {
   const login = new LoginPage(page);
 

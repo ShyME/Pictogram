@@ -8,11 +8,6 @@ import me.imshy.pictogram.media.PostReferences;
 import me.imshy.pictogram.shared.MediaId;
 import org.springframework.stereotype.Component;
 
-/**
- * post's side of media's {@link PostReferences} port (CONTEXT-MAP: post → media). A media id
- * is "referenced" exactly while a {@code post} row still holds it; a deleted post is a hard
- * delete, so its media stops being reported the moment the row is gone (#16).
- */
 @Component
 class PostMediaReferences implements PostReferences {
 

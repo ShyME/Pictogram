@@ -1,6 +1,5 @@
 import { useRouteError } from "react-router";
 
-/** Catch-all for a loader/render that threw something other than a redirect. */
 export function RouteError() {
   const error = useRouteError();
 

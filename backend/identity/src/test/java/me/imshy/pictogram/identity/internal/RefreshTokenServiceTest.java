@@ -20,10 +20,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 class RefreshTokenServiceTest extends ClockControlledModuleTest {
 
-    /** Matches {@code pictogram.auth.refresh-token-ttl}'s default. */
     private static final Duration TTL = Duration.ofDays(30);
 
-    /** Matches {@code pictogram.auth.refresh-token-rotation-grace}'s default. */
     private static final Duration GRACE = Duration.ofSeconds(60);
 
     @Autowired
@@ -55,7 +53,6 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         assertThatExceptionOfType(RefreshTokenReuseException.class)
                 .isThrownBy(() -> refreshTokens.rotate(first.token()));
 
-        // the still-"current" token is dead too — the chain is gone, back to sign-in
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
                 .isThrownBy(() -> refreshTokens.rotate(second.token()));
     }
@@ -69,7 +66,6 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
                 .isThrownBy(() -> refreshTokens.rotate(first.token()))
                 .isNotInstanceOf(RefreshTokenReuseException.class);
 
-        // the legitimate current token still rotates — a benign double-submit is not a logout
         assertThatNoException().isThrownBy(() -> refreshTokens.rotate(second.token()));
     }
 
@@ -99,7 +95,6 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         assertThat(outcomes).anySatisfy(outcome -> assertThat(outcome)
                 .isInstanceOf(InvalidRefreshTokenException.class)
                 .isNotInstanceOf(RefreshTokenReuseException.class));
-        // the racer that won already set the next cookie; it must still be usable
         assertThatNoException().isThrownBy(() -> refreshTokens.rotate(winner.getFirst().token()));
     }
 
@@ -108,8 +103,6 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         var first = refreshTokens.startSession(UserId.random());
         var tx = new TransactionTemplate(txManager);
 
-        // reuse revocation must survive the reuse exception, which needs rotate() to own its
-        // transaction boundaries — an ambient transaction silently breaks that (ADR-0004)
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() ->
                 tx.executeWithoutResult(status -> refreshTokens.rotate(first.token())));
     }

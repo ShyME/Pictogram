@@ -3,8 +3,6 @@ import { SignOutButton } from "@features/auth";
 import type { Profile } from "@features/profile";
 
 export function AppLayout() {
-  // rootLoader returns { profile } for anyone who reaches this layout (it redirects
-  // everyone else away before the element renders).
   const { profile } = useLoaderData() as { profile: Profile };
 
   return (

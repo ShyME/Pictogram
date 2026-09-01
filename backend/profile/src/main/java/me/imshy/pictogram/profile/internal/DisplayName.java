@@ -1,11 +1,5 @@
 package me.imshy.pictogram.profile.internal;
 
-/**
- * The free-text name shown on the profile and feed cards (glossary: 1–50 characters, spaces
- * and emoji allowed, not unique, never in a URL). Optional: a blank input means "not set"
- * and is carried as {@code null}. Length is counted in code points so an emoji costs one,
- * not two; line breaks and other control characters are rejected since it renders inline.
- */
 record DisplayName(String value) {
 
     static final int MAX_LENGTH = 50;

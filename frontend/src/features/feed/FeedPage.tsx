@@ -13,7 +13,6 @@ export function FeedPage() {
   const feed = useQuery({
     queryKey: ["feed"],
     queryFn: fetchFeed,
-    // a dead session won't come back by retrying — fail fast to the redirect below
     retry: (count, error) => !(error instanceof SessionExpiredError) && count < 1,
   });
 
@@ -38,8 +37,6 @@ export function FeedPage() {
     );
   }
 
-  // The feed is empty by design until fan-out-on-read lands — the "go find people"
-  // nudge is the whole screen for now.
   return (
     <FeedShell>
       <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center">

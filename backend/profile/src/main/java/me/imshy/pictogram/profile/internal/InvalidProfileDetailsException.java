@@ -4,7 +4,6 @@ import me.imshy.pictogram.shared.http.ApiException;
 import me.imshy.pictogram.shared.http.ProblemType;
 import org.springframework.http.HttpStatus;
 
-/** A supplied display name or bio is outside its allowed length. */
 public final class InvalidProfileDetailsException extends ApiException {
 
     static final ProblemType TYPE = new ProblemType("profile-details-invalid", "Profile details are invalid");

@@ -1,10 +1,5 @@
 package me.imshy.pictogram.post.internal;
 
-/**
- * The optional free text on a post (glossary: up to 2200 characters). A blank input means
- * "no caption" and is carried as {@code null}. Length is counted in code points, so an emoji
- * costs one; line breaks are kept.
- */
 record Caption(String value) {
 
     static final int MAX_LENGTH = 2200;

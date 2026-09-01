@@ -9,12 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
-/**
- * The onboarding command from the ticket: a user with no profile picks a username, which
- * creates their {@link Profile}. The malformed-username shape rule is covered by
- * {@link UsernameTest}; here we exercise uniqueness, the already-onboarded guard, and the
- * "not yet onboarded" read.
- */
 class OnboardingTest extends ProfileModuleIntegrationTest {
 
     @Autowired
@@ -81,7 +75,7 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         var created = onboarding.completeOnboarding(
                 UserId.random(), "ada", "🎨".repeat(DisplayName.MAX_LENGTH), null);
 
-        assertThat(created.displayName()).hasSize(DisplayName.MAX_LENGTH * 2); // UTF-16 units
+        assertThat(created.displayName()).hasSize(DisplayName.MAX_LENGTH * 2);
     }
 
     @Test
@@ -89,8 +83,6 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         var user = UserId.random();
         onboarding.completeOnboarding(user, "ada", "Ada", null);
 
-        // A second request that already slipped past the existsById guard: save() must
-        // persist (hit the primary key) rather than merge (overwrite the existing row).
         var racing = Profile.onboard(user, new Username("mallory"),
                 DisplayName.of(null), Bio.of(null), Instant.parse("2026-08-31T00:00:00Z"));
         assertThatExceptionOfType(DataIntegrityViolationException.class)

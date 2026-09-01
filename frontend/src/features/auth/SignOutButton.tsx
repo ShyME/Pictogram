@@ -11,7 +11,6 @@ export function SignOutButton() {
   async function handleClick() {
     setSigningOut(true);
     await signOut();
-    // drop the outgoing session's cached reads so the next sign-in starts clean
     queryClient.clear();
     navigate("/login", { replace: true });
   }

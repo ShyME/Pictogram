@@ -5,13 +5,6 @@ import me.imshy.pictogram.shared.UserId;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-/**
- * The onboarding command: a user with no profile picks a username and gets a {@link Profile}
- * (glossary: "the step a person completes on first sign-in"). Creation is synchronous here,
- * deliberately not a {@code UserRegistered} listener — a user without a profile is a valid
- * "not yet onboarded" state, and the profile only appears when they choose a handle
- * (CONTEXT-MAP: identity → profile).
- */
 @Service
 public class Onboarding {
 

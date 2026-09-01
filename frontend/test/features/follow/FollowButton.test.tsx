@@ -11,8 +11,6 @@ afterEach(() => {
 const relationship = (followedByViewer: boolean, followerCount = followedByViewer ? 1 : 0) =>
   jsonResponse({ followerCount, followingCount: 0, followedByViewer });
 
-// The button stays disabled until the relationship query settles — its "Follow" label is
-// also the loading fallback, so a plain findByRole would click a disabled button.
 async function findEnabledButton(name: string) {
   const button = await screen.findByRole("button", { name });
   await waitFor(() => expect(button).toBeEnabled());

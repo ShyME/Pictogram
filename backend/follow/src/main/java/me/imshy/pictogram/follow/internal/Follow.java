@@ -12,19 +12,6 @@ import java.util.UUID;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.data.domain.Persistable;
 
-/**
- * One directed edge of the follow graph: the follower follows the followed user. At most
- * one row per ordered pair (a unique constraint on the two columns); the surrogate
- * {@link #id} only exists so JPA has a single-column key. There is nothing to mutate — an
- * edge is created or deleted, never edited (follow/CONTEXT.md).
- *
- * <p>{@link #followedAt} is the instant the edge was created; it is not part of the graph's
- * answers (counts, "is A following B" — #17) but it is the keyset sort key for the follower
- * / following list screens (#57).
- *
- * <p>The key is assigned, so {@link Persistable#isNew()} is tracked explicitly and
- * {@code save()} inserts rather than merges.
- */
 @Entity
 @Table(schema = "follow", name = "follow")
 class Follow implements Persistable<UUID> {

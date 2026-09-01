@@ -6,11 +6,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Writes a {@link ProblemDetail} to a raw servlet response as {@code application/problem+json}
- * — for the security-filter callbacks and chain-level error handlers that fire before Spring
- * MVC's message converters are in play.
- */
 public final class ProblemDetails {
 
     private ProblemDetails() {

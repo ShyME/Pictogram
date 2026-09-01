@@ -8,11 +8,6 @@ import java.util.Optional;
 import org.springframework.http.ResponseCookie;
 import org.springframework.util.StringUtils;
 
-/**
- * The rotating refresh token as an httpOnly / SameSite=Lax cookie scoped to {@code /api/auth}
- * — the browser sends it only to the refresh and logout endpoints, and script can't read it
- * (ADR-0004).
- */
 final class RefreshCookie {
 
     static final String NAME = "pictogram_refresh";

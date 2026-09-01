@@ -7,7 +7,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import tools.jackson.databind.ObjectMapper;
 
-/** Renders the 403 for a request the filter chain forbids as a {@link ForbiddenException} Problem Detail. */
 public class ProblemDetailAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;

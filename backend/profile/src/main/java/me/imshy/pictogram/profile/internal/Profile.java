@@ -13,16 +13,6 @@ import java.util.UUID;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.data.domain.Persistable;
 
-/**
- * The public face of a user — {@link Username}, an optional display name and bio. Exactly
- * one per user once onboarded, created by {@link Onboarding} and keyed by {@link UserId}.
- * The user id is the only link back to identity (ADR-0002); there is no cross-schema key.
- *
- * <p>The primary key is assigned (the user's id), so {@link Persistable#isNew()} is tracked
- * explicitly: {@code save()} must {@code persist} a fresh row, never {@code merge}. A merge
- * would let a second onboarding that raced past the {@code existsById} guard silently
- * overwrite the existing profile instead of hitting the primary-key constraint.
- */
 @Entity
 @Table(schema = "profile", name = "profile")
 class Profile implements Persistable<UUID> {
@@ -59,7 +49,6 @@ class Profile implements Persistable<UUID> {
         return new Profile(user, username, displayName, bio, at);
     }
 
-    /** Applies the new details and reports whether any field actually moved. */
     boolean edit(Username username, DisplayName displayName, Bio bio) {
         boolean changed = !this.username.equals(username.value())
                 || !Objects.equals(this.displayName, displayName.value())

@@ -1,11 +1,5 @@
 import { vi } from "vitest";
 
-/**
- * Installs a `globalThis.fetch` stub for a test and returns the list of requests it
- * received. `route` decides each response; `hits` is how many earlier calls hit the same
- * path (so a route can 401 once, then succeed). The client, its retry middleware and the
- * raw refresh call all dispatch through `globalThis.fetch`, so one stub covers them.
- */
 export function stubFetch(
   route: (request: Request, hits: number) => Response | Promise<Response>,
 ): Request[] {
@@ -35,7 +29,6 @@ export function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-/** An RFC 9457 problem body as the backend's `shared.http` layer sends it. */
 export function problemResponse(slug: string, status: number): Response {
   return new Response(
     JSON.stringify({ type: `https://pictogram.dev/problems/${slug}`, title: slug, status }),

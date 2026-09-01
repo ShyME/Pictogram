@@ -1,7 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 
-// Page object for the `/u/<username>/{followers,following}` list screens (#57): locators
-// and navigation here, assertions in the spec.
 export class FollowListPage {
   readonly heading: Locator;
 
@@ -20,7 +18,6 @@ export class FollowListPage {
     await this.page.goto(`/u/${username}/following`);
   }
 
-  /** The row for an account, found by its `@handle` link. */
   row(username: string): Locator {
     return this.page.getByRole("listitem").filter({ has: this.page.getByText(`@${username}`) });
   }

@@ -13,15 +13,6 @@ import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.data.domain.Persistable;
 
-/**
- * One uploaded image, re-encoded to the canonical square format. The row holds only what the
- * rest of the system cannot derive: the {@link MediaId}, the {@link UserId owner}, and when
- * it was uploaded. The bytes are in object storage under keys {@link StorageKeys derived
- * from the id}; content type and dimensions are the same constants for every media (ADR-0006).
- *
- * <p>The primary key is assigned, so {@link Persistable#isNew()} is tracked explicitly —
- * {@code save()} must {@code persist}, never {@code merge}.
- */
 @Entity
 @Table(schema = "media", name = "media")
 class Media implements Persistable<UUID> {

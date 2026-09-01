@@ -13,22 +13,6 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequest
 import org.springframework.security.web.SecurityFilterChain;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * identity's slice of the security filter chain (ADR-0004). Both chains are ordered ahead
- * of the {@code :app} resource-server chain so {@code /api/auth/**} and the OIDC endpoints
- * are handled here.
- *
- * <ul>
- *   <li>{@code /api/auth/**} — refresh and logout, authenticated by the refresh cookie alone,
- *       so the chain is open and stateless.</li>
- *   <li>{@code /oauth2/**}, {@code /login/oauth2/**} — the backend-driven Authorization Code
- *       + PKCE handshake; Spring keeps the authorization request in a short-lived session,
- *       and {@link OidcSignInSuccessHandler} takes over on success. The matcher stops at
- *       {@code /login/oauth2/**} (the redirection endpoint) rather than all of
- *       {@code /login/**} so the SPA's own {@code /login} route falls through to the
- *       permit-all chain (#34). Locked down until a Google client is configured.</li>
- * </ul>
- */
 @Configuration
 class IdentitySecurityConfiguration {
 

@@ -8,12 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-/**
- * The ticket's broad scenario: a user uploads a photo, publishes it with a caption, and
- * sees it on their profile. Written once against {@link PictogramApi}; green here through
- * {@link InProcessDriver}, over real HTTP, Testcontainers Postgres and MinIO. Newest-first
- * ordering across many posts is {@code PostGridTest}'s job (it controls the clock).
- */
 class PublishPostScenarioTest extends ScenarioTest {
 
     @DynamicPropertySource

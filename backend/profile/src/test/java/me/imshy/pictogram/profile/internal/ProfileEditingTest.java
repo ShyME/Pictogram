@@ -9,13 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 
-/**
- * The edit-profile command from the ticket: an onboarded user changes their display name,
- * bio, or username. A rename frees the old handle immediately — a second user can take it
- * and the old {@code /u/&lt;old&gt;} link stops resolving. Every successful edit announces
- * {@link ProfileUpdated}. The value-object rules (length, shape) are covered by
- * {@link ProfileDetailsTest} and {@link UsernameTest}; here we exercise the command.
- */
 class ProfileEditingTest extends ProfileModuleIntegrationTest {
 
     @Autowired
@@ -62,7 +55,6 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
                 .isThrownBy(() -> directory.byUsername("ada"));
         assertThat(directory.byUsername("ada_lovelace").userId()).isEqualTo(ada);
 
-        // A second user can now take the freed handle.
         var mallory = UserId.random();
         onboarding.completeOnboarding(mallory, "ada", null, null);
         assertThat(directory.byUsername("ada").userId()).isEqualTo(mallory);

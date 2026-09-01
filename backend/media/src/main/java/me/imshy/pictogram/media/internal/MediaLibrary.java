@@ -8,17 +8,6 @@ import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.stereotype.Service;
 
-/**
- * media's one service. Commands: take an upload, re-encode it, store both renditions and
- * record the {@link Media}; read either rendition's bytes back. Query: the published
- * {@link MediaCatalog} — does a media exist, and who owns it. The re-encode is
- * {@link ImagePipeline}'s job and the byte storage is a {@link BlobStore}'s; this class is
- * the orchestration.
- *
- * <p>Renditions are written to the {@link BlobStore} before the row is saved: a crash in
- * between leaves orphan objects with no row, which the orphan-collection job reaps (#16) —
- * the harmless direction. The reverse would leave a row pointing at absent bytes.
- */
 @Service
 public class MediaLibrary implements MediaCatalog {
 

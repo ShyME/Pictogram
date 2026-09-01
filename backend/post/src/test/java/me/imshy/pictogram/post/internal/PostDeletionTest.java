@@ -14,12 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 
-/**
- * The delete command from the ticket: an author permanently removes one of their own posts,
- * it disappears from their grid, and the delete announces {@link PostDeleted}. Only the
- * author may delete — anyone else is a {@link ForbiddenException} and the post is left
- * standing. Deleting a post that isn't there is a {@link PostNotFoundException}.
- */
 class PostDeletionTest extends PostModuleIntegrationTest {
 
     @Autowired
