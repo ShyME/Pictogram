@@ -66,6 +66,9 @@ async function publish(page: Page, photoPath: string, caption: string): Promise<
   const compose = new NewPostPage(page);
   const profile = new ProfilePage(page);
 
+  // The "New post" link lives in the feed layout header; a fresh publish may start
+  // from the author's profile grid, which has no such link.
+  await feed.open();
   await feed.newPostLink.click();
   await expect(compose.heading).toBeVisible();
   await compose.selectPhoto(photoPath);
