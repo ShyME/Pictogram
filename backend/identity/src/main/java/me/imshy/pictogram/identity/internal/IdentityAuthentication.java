@@ -4,6 +4,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import me.imshy.pictogram.identity.UserRegistered;
+import me.imshy.pictogram.identity.internal.accesstoken.AccessTokens;
+import me.imshy.pictogram.identity.internal.refreshtoken.RefreshTokenService;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

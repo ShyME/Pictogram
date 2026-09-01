@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.identity.internal.refreshtoken;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -9,7 +9,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
+public interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
 
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
@@ -28,7 +28,7 @@ interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
      * projection, so it hits the database rather than returning the caller's now-stale
      * first-level-cache copy of the row.
      */
-    @Query("select new me.imshy.pictogram.identity.internal.SpentState(t.consumedAt, t.revokedAt) "
+    @Query("select new me.imshy.pictogram.identity.internal.refreshtoken.SpentState(t.consumedAt, t.revokedAt) "
             + "from RefreshToken t where t.id = :id")
     Optional<SpentState> spentStateById(@Param("id") UUID id);
 

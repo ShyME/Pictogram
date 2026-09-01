@@ -15,9 +15,14 @@ test-support    test-only helpers (not a bounded context)
 ```
 
 Each context's API is `me.imshy.pictogram.<context>`; everything under
-`…<context>.internal.{domain,application,infrastructure,web}` is hidden by Modulith. The
-`internal.*` packages are created as code lands — only the exported `package-info` (with
-`@ApplicationModule`) exists in the skeleton.
+`…<context>.internal` is hidden by Modulith. `internal` is flat by default — a subpackage
+appears only for the HTTP edge (`internal.web`) or for a genuine cluster inside a crowded
+module (files you would extract, move, or delete as a unit), named for the idea not the
+layer: `identity.internal.refreshtoken`, `identity.internal.accesstoken`. Composition
+happens in the `internal` root; `InternalSlicingTest` fails the build if one subpackage
+reaches sideways into a sibling — Modulith's `internal` rule, one level down. Splitting a
+cluster out costs some `package-private → public`; that's the trade for a scannable package,
+and the slice test is what keeps the widened surface from being abused.
 
 ## Toolchain
 
