@@ -34,13 +34,20 @@ no security gain.
 - The signing key is a P-256 EC JWK. In production it comes from `pictogram.auth.signing-key`
   (private JWK as JSON); unset, identity generates a process-lifetime key and logs a warning.
 - Rotation consumes the presented token with a single conditional `UPDATE`, so two refreshes
-  racing on the same token can't both succeed — the loser (0 rows updated) is treated as reuse
-  and the family is revoked. The SPA must single-flight its refresh calls.
-- The reuse path revokes the family **in the rotation's own transaction** and throws a
-  `RefreshTokenReuseException` marked `noRollbackFor`, so the revoke commits as the exception
-  unwinds. Isolating the revoke in a `REQUIRES_NEW` transaction deadlocked: the race loser's
-  failed conditional `UPDATE` still holds an exclusive tuple lock until its transaction ends,
-  and a second connection revoking the family blocked on it forever.
+  racing on the same token can't both succeed. The loser (0 rows updated, or a presented row
+  already consumed) is treated as **theft only outside a grace window** — see the #26
+  amendment below.
+- The reuse path does **not** run in the rotation's transaction and there is no `noRollbackFor`.
+  `RefreshTokenService` drives its own boundaries with sequential `TransactionTemplate` calls:
+  the rotation transaction commits and closes first, then the family revocation runs in its own
+  subsequent transaction, then `RefreshTokenReuseException` is thrown. An exception rolls back
+  the transaction it flies from, so the revoke has to be already committed by then; and a
+  `REQUIRES_NEW` revoke deadlocked — the race loser's failed conditional `UPDATE` holds an
+  exclusive tuple lock until its transaction ends, and a second connection revoking the family
+  blocked on it forever. Because this only holds with no ambient transaction, `refresh` and
+  `signOut` on `IdentityAuthentication` are deliberately **not** `@Transactional` (only
+  `authenticate` is), and `RefreshTokenService.rotate` / `revokeFamilyOf` throw
+  `IllegalStateException` if a transaction is active rather than trusting that.
 - identity contributes the `JwtDecoder` bean the `:app` resource server verifies with, plus
   a published `PictogramAccessTokens` interface for in-process / future-extracted callers.
   A stray `spring.security.oauth2.resourceserver.jwt.*` property (`issuer-uri` /
@@ -56,3 +63,29 @@ no security gain.
   redirection endpoint only, not all of `/login/**`. The SPA has its own `/login` route
   (#10); scoping the matcher to `/login/oauth2/**` lets that path fall through to the
   permit-all chain and the SPA fallback (#34) instead of hitting `oauth2Login` / `denyAll`.
+
+## Amendment (#26): a grace window for concurrent refreshes
+
+Treating every second presentation of a consumed refresh token as theft made a benign
+double-submit of a *live* cookie — React StrictMode's double effect, a double-click, a
+client retry — revoke the whole family and force the user back to sign-in ~15 minutes
+later. Rotation now distinguishes the two:
+
+- A presented refresh row that is already consumed (or that loses the `consumeIfLive`
+  race) is theft — revoke the family, throw `RefreshTokenReuseException` — **only if it was
+  consumed longer than `pictogram.auth.refresh-token-rotation-grace` ago** (default `60s`)
+  and the family is not already revoked. Within that window it is a benign concurrent
+  refresh: respond `401` with the `session-invalid` Problem Detail and clear the cookie,
+  but leave the family intact.
+- The racer that won the rotation already set the new cookie, so the SPA's
+  silent-refresh-on-`401`-with-one-retry (#10) then succeeds with it. Net cost of a benign
+  double-submit: one wasted `401` + one retry, not a logout. The SPA should still
+  single-flight its refreshes; the grace window only stops the accidental race from being
+  destructive.
+- A spent token presented **after** the grace window still revokes the family — reuse
+  detection for a genuinely stolen token is unchanged, just delayed by at most the grace
+  period.
+
+Re-serving the *same* successor token to both racers for a true `200` on each was considered
+and left out of scope: it needs the rotation to be idempotent per presented token. If
+`401`+retry proves insufficient in practice, that is the fallback.

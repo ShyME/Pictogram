@@ -53,7 +53,8 @@ class IdentityConfiguration {
     @Bean
     RefreshTokenService refreshTokenService(RefreshTokens refreshTokens, AuthProperties properties, Clock clock,
             PlatformTransactionManager txManager) {
-        return new RefreshTokenService(refreshTokens, clock, properties.refreshTokenTtl(), txManager);
+        return new RefreshTokenService(refreshTokens, clock, properties.refreshTokenTtl(),
+                properties.refreshTokenRotationGrace(), txManager);
     }
 
     @Bean

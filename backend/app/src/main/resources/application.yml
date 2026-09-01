@@ -27,6 +27,9 @@ pictogram:
   auth:
     access-token-ttl: 15m
     refresh-token-ttl: 30d
+    # A refresh token presented again within this window of being consumed is a benign
+    # concurrent refresh (401, cookie cleared, no revoke) — outside it, token theft (#26).
+    refresh-token-rotation-grace: 60s
     signing-key: ${PICTOGRAM_AUTH_SIGNING_KEY:}
     post-login-redirect: /
   # Object storage for image bytes (ADR-0006). Defaults target a local MinIO (compose.dev.yaml);

@@ -13,8 +13,9 @@ import org.springframework.data.domain.Persistable;
 /**
  * One issued refresh token, stored only as a SHA-256 hash. A {@code familyId} groups the
  * rotation chain started at sign-in: each rotation consumes its row and writes the next in
- * the same family. A row is "spent" once consumed or revoked; presenting a spent token is
- * reuse and revokes the whole family (ADR-0004).
+ * the same family. A row is "spent" once consumed or revoked; presenting a spent token more
+ * than the rotation grace after it was consumed is reuse and revokes the whole family, while
+ * a presentation within that grace is a benign concurrent refresh (ADR-0004).
  *
  * <p>Implements {@link Persistable} with an assigned id so {@code save()} does a plain
  * {@code INSERT} rather than a {@code SELECT}-then-{@code INSERT} (Spring Data JPA otherwise
@@ -68,6 +69,10 @@ class RefreshToken implements Persistable<UUID> {
 
     boolean isSpent() {
         return consumedAt != null || revokedAt != null;
+    }
+
+    SpentState spentState() {
+        return new SpentState(consumedAt, revokedAt);
     }
 
     boolean isExpiredAt(Instant when) {

@@ -11,7 +11,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import me.imshy.pictogram.testsupport.SharedPostgres;
 import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
@@ -84,19 +90,68 @@ class GoogleSignInWebTest {
     }
 
     @Test
-    void replayingAConsumedRefreshCookieEndsTheSession() throws Exception {
+    void replayingAConsumedRefreshCookieIsRejected() throws Exception {
         GOOGLE.enqueueCallback(googleUser("google-subject-web-2", "grace@example.com"));
         var cookies = new CookieManager();
         signInThroughGoogle(cookies);
-        String stolen = refreshCookie(cookies).orElseThrow();
+        String presented = refreshCookie(cookies).orElseThrow();
 
         int firstRotation = browser(cookies)
                 .send(post("/api/auth/refresh"), HttpResponse.BodyHandlers.discarding()).statusCode();
         HttpResponse<Void> replay = browser(new CookieManager())
-                .send(postWithRefreshCookie(stolen), HttpResponse.BodyHandlers.discarding());
+                .send(postWithRefreshCookie(presented), HttpResponse.BodyHandlers.discarding());
 
         assertThat(firstRotation).isEqualTo(200);
         assertThat(replay.statusCode()).isEqualTo(401);
+    }
+
+    @Test
+    void twoConcurrentRefreshesOfTheSameCookieKeepTheSessionAlive() throws Exception {
+        GOOGLE.enqueueCallback(googleUser("google-subject-web-3", "linus@example.com"));
+        var cookies = new CookieManager();
+        signInThroughGoogle(cookies);
+        String presented = refreshCookie(cookies).orElseThrow();
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        var barrier = new CyclicBarrier(2);
+        Callable<HttpResponse<Void>> refresh = () -> {
+            barrier.await();
+            return browser(new CookieManager())
+                    .send(postWithRefreshCookie(presented), HttpResponse.BodyHandlers.discarding());
+        };
+
+        List<Future<HttpResponse<Void>>> attempts = pool.invokeAll(List.of(refresh, refresh));
+        pool.shutdown();
+
+        var responses = attempts.stream().map(GoogleSignInWebTest::await).toList();
+        assertThat(responses).map(HttpResponse::statusCode).containsExactlyInAnyOrder(200, 401);
+
+        // the racer that won rotated the cookie; that new cookie must still work — the benign
+        // double-submit must not have revoked the family (#26)
+        String rotated = responses.stream()
+                .filter(response -> response.statusCode() == 200)
+                .flatMap(response -> rotatedRefreshCookieFrom(response).stream())
+                .findFirst()
+                .orElseThrow();
+        int followUp = browser(new CookieManager())
+                .send(postWithRefreshCookie(rotated), HttpResponse.BodyHandlers.discarding()).statusCode();
+        assertThat(followUp).isEqualTo(200);
+    }
+
+    private static <T> HttpResponse<T> await(Future<HttpResponse<T>> future) {
+        try {
+            return future.get();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static Optional<String> rotatedRefreshCookieFrom(HttpResponse<?> response) {
+        return response.headers().allValues("Set-Cookie").stream()
+                .filter(header -> header.startsWith(REFRESH_COOKIE + "="))
+                .map(header -> header.substring((REFRESH_COOKIE + "=").length(), header.indexOf(';')))
+                .filter(value -> !value.isEmpty())
+                .findFirst();
     }
 
     private void signInThroughGoogle(CookieManager cookies) throws Exception {
