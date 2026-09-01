@@ -24,6 +24,15 @@ interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
     int consumeIfLive(@Param("id") UUID id, @Param("when") Instant when);
 
     /**
+     * Re-reads just the spent timestamps after a lost {@link #consumeIfLive} race. A constructor
+     * projection, so it hits the database rather than returning the caller's now-stale
+     * first-level-cache copy of the row.
+     */
+    @Query("select new me.imshy.pictogram.identity.internal.SpentState(t.consumedAt, t.revokedAt) "
+            + "from RefreshToken t where t.id = :id")
+    Optional<SpentState> spentStateById(@Param("id") UUID id);
+
+    /**
      * Revokes every still-live token in the family. {@link RefreshTokenService} calls this from
      * its own {@code TransactionTemplate} once the rotation transaction has committed, so it runs
      * on a clean connection holding no locks and its write survives the reuse exception thrown

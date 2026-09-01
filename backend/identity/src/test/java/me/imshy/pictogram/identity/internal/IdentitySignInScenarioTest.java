@@ -74,10 +74,13 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
     }
 
     @Test
-    void replayingAnAlreadyRotatedRefreshTokenKillsTheWholeChain() {
+    void replayingARotatedRefreshTokenAfterTheGraceWindowKillsTheWholeChain() {
         var session = authentication.authenticate(
                 new ExternalAccount("google", "google-sub-004", "mae@example.com"));
         var rotated = authentication.refresh(session.refreshToken());
+
+        // past the rotation grace, so this is theft rather than a benign concurrent refresh (#26)
+        time.advance(Duration.ofMinutes(1).plusSeconds(1));
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
                 .isThrownBy(() -> authentication.refresh(session.refreshToken()));

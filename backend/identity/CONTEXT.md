@@ -32,9 +32,16 @@ _Avoid_: Session token
 **Refresh token family**:
 The rotation chain of refresh tokens that starts at one sign-in. Each use of a refresh
 token consumes it and issues the next in the same family. Presenting a token that was
-already consumed is treated as theft and revokes the whole family — the person signs in
-again.
+consumed longer than the rotation grace ago is treated as theft and revokes the whole
+family — the person signs in again.
 _Avoid_: Session, chain (in prose)
+
+**Rotation grace**:
+A short window (default 60s) after a refresh token is consumed during which presenting it
+again is treated as a benign concurrent refresh — rejected with a 401, but the family is
+not revoked. Absorbs accidental double-submits (retries, React StrictMode) without ending
+the session.
+_Avoid_: Grace period (that name is media's retention window)
 
 **Session**:
 The `(access token, refresh token)` pair a caller holds after signing in or refreshing.
