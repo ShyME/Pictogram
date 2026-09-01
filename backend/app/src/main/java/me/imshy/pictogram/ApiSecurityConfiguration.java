@@ -29,7 +29,10 @@ import org.springframework.security.web.SecurityFilterChain;
  * {@code /api/profiles/me} keeps its own line ahead of the wildcard
  * because it must stay authenticated, and the batch {@code GET /api/profiles?ids=} stays
  * authenticated too — only the signed-in feed composes from it (ADR-0005), and an anonymous
- * unbounded id list is not something to hand out. Uploading media stays authenticated (it
+ * unbounded id list is not something to hand out. {@code GET /api/follows?ids=} (the batch
+ * relationship read for the list screens — #59) is authenticated for the same reason: the
+ * follow carve-out below is one segment wide, so a request with no path segment falls
+ * through to {@code anyRequest().authenticated()}. Uploading media stays authenticated (it
  * is not a GET).
  *
  * <p>identity's decoder is passed in by reference rather than left to a bean-type lookup;

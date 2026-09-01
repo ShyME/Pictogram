@@ -49,14 +49,22 @@ export async function unfollowUser(userId: string): Promise<void> {
 
 export type FollowListMode = "followers" | "following";
 
-export type AccountListPage = { accounts: Account[]; nextCursor: string | null };
+export type FollowRelationshipById = FollowRelationship & { userId: string };
+
+export type AccountListPage = {
+  accounts: Account[];
+  relationships: FollowRelationshipById[];
+  nextCursor: string | null;
+};
 
 /**
- * One page of a user's follower or following list, resolved to renderable rows (#57). Two
- * calls, per ADR-0005: the follow list (a page of ids + a cursor), then one
- * `GET /api/profiles?ids=` batch to turn those ids into handles and names. Rows keep the
- * follow-list order — newest relationship first — and any id the profile batch doesn't
- * return (a deleted profile) is dropped. Both endpoints are authenticated.
+ * One page of a user's follower or following list, resolved to renderable rows (#57). The
+ * follow list (a page of ids + a cursor), then two batches on that id set, per ADR-0005:
+ * `GET /api/profiles?ids=` for handles and names, and `GET /api/follows?ids=` for each
+ * user's follow standing — the latter seeded into the per-user cache (#59) so the reused
+ * follow buttons don't each fetch `GET /api/follows/{id}`. Rows keep the follow-list order —
+ * newest relationship first — and any id the profile batch doesn't return (a deleted
+ * profile) is dropped. All three endpoints are authenticated.
  */
 export async function fetchFollowListPage(
   mode: FollowListMode,
@@ -74,13 +82,18 @@ export async function fetchFollowListPage(
   if (!data) throw new Error(`Follow list request failed: ${response.status}`);
 
   const ids = data.items ?? [];
-  const byId = new Map((await fetchAccounts(ids)).map((account) => [account.userId, account]));
+  const [accounts, relationships] = await Promise.all([
+    fetchAccounts(ids),
+    fetchFollowRelationships(ids),
+  ]);
+  const byId = new Map(accounts.map((account) => [account.userId, account]));
 
   return {
     accounts: ids.flatMap((id) => {
       const account = byId.get(id);
       return account ? [account] : [];
     }),
+    relationships,
     nextCursor: data.nextCursor ?? null,
   };
 }
@@ -92,4 +105,20 @@ async function fetchAccounts(userIds: string[]): Promise<Account[]> {
   });
   if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
   return data.map(toAccount);
+}
+
+/**
+ * The viewer's follow standing with each of `userIds` in one call (#59). Each record is the
+ * same shape `fetchFollowRelationship` returns, so a caller can seed `followRelationshipKey`
+ * with it. Authenticated — every caller (the list screens) already holds a session.
+ */
+export async function fetchFollowRelationships(
+  userIds: string[],
+): Promise<FollowRelationshipById[]> {
+  if (userIds.length === 0) return [];
+  const { data, response } = await api.GET("/api/follows", {
+    params: { query: { ids: userIds } },
+  });
+  if (!data) throw new Error(`Follow relationship batch request failed: ${response.status}`);
+  return data.map((view) => ({ userId: view.userId ?? "", ...toFollowRelationship(view) }));
 }

@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLoaderData } from "react-router";
 import { fetchFollowListPage } from "../api/follow-api";
 import { AccountList } from "../components/AccountList";
 import { followListKey } from "../model/query-keys";
+import { seedFollowRelationships } from "../model/use-follow-relationship";
 import type { FollowListData, FollowListMode } from "../model/follow-list";
 
 function PageChrome({ children }: { children: ReactNode }) {
@@ -63,9 +64,15 @@ function Loaded({
   viewerId: string;
 }) {
   const copy = COPY[mode];
+  const queryClient = useQueryClient();
   const list = useInfiniteQuery({
     queryKey: followListKey(mode, target.userId),
-    queryFn: ({ pageParam }) => fetchFollowListPage(mode, target.userId, pageParam),
+    queryFn: async ({ pageParam }) => {
+      const page = await fetchFollowListPage(mode, target.userId, pageParam);
+      // Seed before the page renders, so each row's FollowButton reads warm cache (#59).
+      seedFollowRelationships(queryClient, page.relationships);
+      return page;
+    },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });

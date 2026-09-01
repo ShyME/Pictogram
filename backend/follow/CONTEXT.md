@@ -49,3 +49,9 @@ state change; an idempotent no-op emits nothing.
 The paged **follower list / following list** reads (#57) are deliberately *not* on
 `FollowGraph` — they serve the SPA's list screens through `follow`'s own web layer
 (`GET /api/follows/{userId}/followers`, `/following`), and `feed` has no use for them.
+
+The **batch relationship read** (#59, `GET /api/follows?ids=`) is the same story: one call
+returns the viewer's standing — counts and follow flag — with each of a set of users, so a
+list screen renders its follow buttons from a warmed cache instead of one
+`GET /api/follows/{id}` per row. Web-layer only (`FollowRelationships` in `follow.internal`);
+`feed` fans out over the flat `usersFollowedBy` list, not a batch.

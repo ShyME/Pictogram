@@ -46,6 +46,7 @@ beforeEach(() => {
 test("shows who follows the account, newest first, from the loader's target", async () => {
   fetchFollowListPage.mockResolvedValue({
     accounts: [account("carol"), account("bob")],
+    relationships: [],
     nextCursor: null,
   });
 
@@ -57,7 +58,11 @@ test("shows who follows the account, newest first, from the loader's target", as
 });
 
 test("following mode changes the heading and the endpoint", async () => {
-  fetchFollowListPage.mockResolvedValue({ accounts: [account("bob")], nextCursor: null });
+  fetchFollowListPage.mockResolvedValue({
+    accounts: [account("bob")],
+    relationships: [],
+    nextCursor: null,
+  });
 
   renderWithProviders(<FollowListPage mode="following" />);
 
@@ -67,7 +72,7 @@ test("following mode changes the heading and the endpoint", async () => {
 });
 
 test("an empty followers list gets a friendly empty state", async () => {
-  fetchFollowListPage.mockResolvedValue({ accounts: [], nextCursor: null });
+  fetchFollowListPage.mockResolvedValue({ accounts: [], relationships: [], nextCursor: null });
 
   renderWithProviders(<FollowListPage mode="followers" />);
 
@@ -75,7 +80,7 @@ test("an empty followers list gets a friendly empty state", async () => {
 });
 
 test("an empty following list gets its own empty state", async () => {
-  fetchFollowListPage.mockResolvedValue({ accounts: [], nextCursor: null });
+  fetchFollowListPage.mockResolvedValue({ accounts: [], relationships: [], nextCursor: null });
 
   renderWithProviders(<FollowListPage mode="following" />);
 
@@ -84,8 +89,8 @@ test("an empty following list gets its own empty state", async () => {
 
 test("Load more pages on the cursor", async () => {
   fetchFollowListPage
-    .mockResolvedValueOnce({ accounts: [account("carol")], nextCursor: "CURSOR" })
-    .mockResolvedValueOnce({ accounts: [account("bob")], nextCursor: null });
+    .mockResolvedValueOnce({ accounts: [account("carol")], relationships: [], nextCursor: "CURSOR" })
+    .mockResolvedValueOnce({ accounts: [account("bob")], relationships: [], nextCursor: null });
 
   renderWithProviders(<FollowListPage mode="followers" />);
 

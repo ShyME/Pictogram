@@ -3,6 +3,7 @@ import { jsonResponse, pathOf, problemResponse, stubFetch } from "../../../test/
 import {
   fetchFollowListPage,
   fetchFollowRelationship,
+  fetchFollowRelationships,
   followUser,
   unfollowUser,
 } from "./follow-api";
@@ -58,7 +59,30 @@ test("unfollowUser DELETEs the relationship resource", async () => {
   expect(pathOf(calls[0])).toBe("/api/follows/u-9");
 });
 
-test("fetchFollowListPage composes the follow list with one profile batch, keeping order", async () => {
+test("fetchFollowRelationships maps the batch to seedable records", async () => {
+  const calls = stubFetch(() =>
+    jsonResponse([
+      { userId: "u-9", followerCount: 4, followingCount: 2, followedByViewer: true },
+      { userId: "u-3", followerCount: 0, followingCount: 1, followedByViewer: false },
+    ]),
+  );
+
+  await expect(fetchFollowRelationships(["u-9", "u-3"])).resolves.toEqual([
+    { userId: "u-9", followerCount: 4, followingCount: 2, followedByViewer: true },
+    { userId: "u-3", followerCount: 0, followingCount: 1, followedByViewer: false },
+  ]);
+  expect(pathOf(calls[0])).toBe("/api/follows");
+  expect(new URL(calls[0].url).searchParams.getAll("ids")).toEqual(["u-9", "u-3"]);
+});
+
+test("fetchFollowRelationships makes no call for an empty id set", async () => {
+  const calls = stubFetch(() => jsonResponse([]));
+
+  await expect(fetchFollowRelationships([])).resolves.toEqual([]);
+  expect(calls).toHaveLength(0);
+});
+
+test("fetchFollowListPage composes the list with a profile batch and a relationship batch, keeping order", async () => {
   const calls = stubFetch((request) => {
     const url = new URL(request.url);
     if (url.pathname === "/api/follows/u-1/followers") {
@@ -71,6 +95,12 @@ test("fetchFollowListPage composes the follow list with one profile batch, keepi
         { userId: "u-9", username: "ada", displayName: null },
       ]);
     }
+    if (url.pathname === "/api/follows") {
+      return jsonResponse([
+        { userId: "u-9", followerCount: 1, followingCount: 0, followedByViewer: true },
+        { userId: "u-3", followerCount: 2, followingCount: 2, followedByViewer: false },
+      ]);
+    }
     throw new Error(`unexpected ${url.pathname}`);
   });
 
@@ -79,11 +109,16 @@ test("fetchFollowListPage composes the follow list with one profile batch, keepi
       { userId: "u-9", username: "ada", displayName: null },
       { userId: "u-3", username: "carol", displayName: "Carol" },
     ],
+    relationships: [
+      { userId: "u-9", followerCount: 1, followingCount: 0, followedByViewer: true },
+      { userId: "u-3", followerCount: 2, followingCount: 2, followedByViewer: false },
+    ],
     nextCursor: "CURSOR",
   });
 
-  expect(calls.map(pathOf)).toEqual(["/api/follows/u-1/followers", "/api/profiles"]);
-  expect(new URL(calls[1].url).searchParams.getAll("ids")).toEqual(["u-9", "u-3"]);
+  expect(calls.map(pathOf).sort()).toEqual(
+    ["/api/follows", "/api/follows/u-1/followers", "/api/profiles"].sort(),
+  );
 });
 
 test("fetchFollowListPage skips a listed id the profile batch doesn't return", async () => {
@@ -91,6 +126,12 @@ test("fetchFollowListPage skips a listed id the profile batch doesn't return", a
     const url = new URL(request.url);
     if (url.pathname === "/api/follows/u-1/following") {
       return jsonResponse({ items: ["u-9", "u-gone"], nextCursor: null });
+    }
+    if (url.pathname === "/api/follows") {
+      return jsonResponse([
+        { userId: "u-9", followerCount: 0, followingCount: 0, followedByViewer: false },
+        { userId: "u-gone", followerCount: 0, followingCount: 0, followedByViewer: false },
+      ]);
     }
     return jsonResponse([{ userId: "u-9", username: "ada", displayName: "Ada" }]);
   });
@@ -100,11 +141,11 @@ test("fetchFollowListPage skips a listed id the profile batch doesn't return", a
   expect(page.nextCursor).toBeNull();
 });
 
-test("fetchFollowListPage makes no profile call for an empty page", async () => {
+test("fetchFollowListPage makes no batch calls for an empty page", async () => {
   const calls = stubFetch(() => jsonResponse({ items: [], nextCursor: null }));
 
   const page = await fetchFollowListPage("followers", "u-1");
-  expect(page.accounts).toEqual([]);
+  expect(page).toEqual({ accounts: [], relationships: [], nextCursor: null });
   expect(calls.map(pathOf)).toEqual(["/api/follows/u-1/followers"]);
 });
 

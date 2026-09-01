@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import me.imshy.pictogram.scenario.PictogramApi.AccountPage;
 import me.imshy.pictogram.scenario.PictogramApi.Actor;
+import me.imshy.pictogram.scenario.PictogramApi.FollowRelationship;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -47,6 +48,27 @@ class FollowListScenarioTest extends ScenarioTest {
         ada.unfollow(bobId);
         assertThat(drainFollowers(ada, bobId, null)).containsExactly(carolId);
         assertThat(drainFollowing(ada, adaId, null)).containsExactly(carolId);
+    }
+
+    @Test
+    void oneBatchReadReportsTheViewersStandingWithEveryUserOnAListPage() {
+        var ada = pictogram.registerViaGoogle("ada@example.com");
+        String adaId = ada.completeOnboarding("ada_batch", "Ada", null).userId();
+        var bob = pictogram.registerViaGoogle("bob@example.com");
+        String bobId = bob.completeOnboarding("bob_batch", "Bob", null).userId();
+        var carol = pictogram.registerViaGoogle("carol@example.com");
+        String carolId = carol.completeOnboarding("carol_batch", "Carol", null).userId();
+
+        // Ada follows Bob; Carol follows Bob; Bob follows Carol.
+        ada.follow(bobId);
+        carol.follow(bobId);
+        bob.follow(carolId);
+
+        // Ada opens Bob's follower list: one call resolves her standing with Bob and Carol.
+        var standing = ada.followRelationships(bobId, carolId);
+
+        assertThat(standing.get(bobId)).isEqualTo(new FollowRelationship(2, 1, true));
+        assertThat(standing.get(carolId)).isEqualTo(new FollowRelationship(1, 1, false));
     }
 
     private static List<String> drainFollowers(Actor viewer, String userId, Integer limit) {

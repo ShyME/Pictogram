@@ -1,17 +1,22 @@
 package me.imshy.pictogram.follow.internal.web;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import me.imshy.pictogram.follow.FollowGraph;
 import me.imshy.pictogram.follow.internal.FollowList;
+import me.imshy.pictogram.follow.internal.FollowRelationships;
 import me.imshy.pictogram.follow.internal.Following;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.ApiPage;
+import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
 import org.springframework.http.MediaType;
@@ -38,6 +43,11 @@ import org.springframework.web.bind.annotation.RestController;
  * itself is a signed-in activity, and the client resolves each id to a profile through the
  * (authenticated) {@code GET /api/profiles?ids=} anyway. The response is an {@link ApiPage}
  * of {@link UserId}s — {@code follow} owns no profile data (ADR-0002).
+ *
+ * <p>{@code GET /api/follows?ids=} is the batch relationship read (#59) those list screens
+ * fire once per page — authenticated, like {@code GET /api/profiles?ids=} on the same id
+ * set: it returns each user's counts and the viewer's follow flag so the reused follow
+ * buttons render from a warm cache instead of one {@code GET /{userId}} apiece.
  */
 @RestController
 @RequestMapping("/api/follows")
@@ -46,11 +56,13 @@ class FollowController {
     private final Following following;
     private final FollowGraph graph;
     private final FollowList lists;
+    private final FollowRelationships relationships;
 
-    FollowController(Following following, FollowGraph graph, FollowList lists) {
+    FollowController(Following following, FollowGraph graph, FollowList lists, FollowRelationships relationships) {
         this.following = following;
         this.graph = graph;
         this.lists = lists;
+        this.relationships = relationships;
     }
 
     /**
@@ -58,6 +70,18 @@ class FollowController {
      * caller — the counts are public, the relationship is the viewer's own.
      */
     record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
+    }
+
+    /**
+     * One user's follow standing in a batch read — {@link FollowRelationship} plus the
+     * {@code userId} it belongs to, so the client can key the results without relying on order.
+     */
+    record FollowRelationshipView(UUID userId, long followerCount, long followingCount, boolean followedByViewer) {
+
+        static FollowRelationshipView of(FollowRelationships.Relationship relationship) {
+            return new FollowRelationshipView(relationship.user().value(), relationship.followerCount(),
+                    relationship.followingCount(), relationship.followedByViewer());
+        }
     }
 
     @ApiResponses({
@@ -91,6 +115,22 @@ class FollowController {
         boolean followedByViewer = viewer.map(v -> graph.isFollowing(v, followed)).orElse(false);
         return new FollowRelationship(
                 graph.followerCount(followed), graph.followingCount(followed), followedByViewer);
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "The viewer's follow standing with each requested user.",
+                content = @Content(array = @ArraySchema(schema = @Schema(implementation = FollowRelationshipView.class)))),
+        @ApiResponse(responseCode = "400", description = "The request asked for more ids than the batch limit.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @GetMapping(params = "ids")
+    List<FollowRelationshipView> relationshipsByIds(@CurrentUser ViewerId viewer, @RequestParam("ids") Set<UUID> ids) {
+        List<UserId> users = BatchIds.checked(ids).stream().map(UserId::new).toList();
+        return relationships.of(viewer, users).stream().map(FollowRelationshipView::of).toList();
     }
 
     @ApiResponses({
