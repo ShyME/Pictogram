@@ -22,22 +22,29 @@ export default tseslint.config(
       boundaries,
     },
     settings: {
-      "boundaries/include": ["src/**/*.{ts,tsx}"],
+      // test/ mirrors src/ 1:1 (see test/structure.test.ts), so every element
+      // below spans both roots and test files inherit the same boundary rules
+      // as the production code they exercise.
+      "boundaries/include": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"],
       "boundaries/ignore": ["src/**/*.d.ts"],
       "boundaries/elements": [
-        { type: "app", pattern: "src/app", mode: "folder" },
-        { type: "shared", pattern: "src/shared", mode: "folder" },
+        { type: "app", pattern: ["src/app", "test/app"], mode: "folder" },
+        { type: "shared", pattern: ["src/shared", "test/shared"], mode: "folder" },
         {
           type: "feature",
-          pattern: "src/features/*",
+          pattern: ["src/features/*", "test/features/*"],
           mode: "folder",
           capture: ["feature"],
         },
-        { type: "testkit", pattern: "src/test/*", mode: "file" },
+        {
+          type: "testkit",
+          pattern: ["test/support/*", "test/*.test.{ts,tsx}"],
+          mode: "file",
+        },
         { type: "entrypoint", pattern: "src/main.tsx", mode: "file" },
       ],
       "import/resolver": {
-        typescript: { project: "./tsconfig.app.json" },
+        typescript: { project: ["./tsconfig.app.json", "./tsconfig.test.json"] },
       },
     },
     rules: {
@@ -71,7 +78,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.test.{ts,tsx}", "src/test/**"],
+    files: ["**/*.test.{ts,tsx}", "test/support/**"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
