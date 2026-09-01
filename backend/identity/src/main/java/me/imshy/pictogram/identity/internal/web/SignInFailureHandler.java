@@ -3,7 +3,6 @@ package me.imshy.pictogram.identity.internal.web;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import me.imshy.pictogram.identity.internal.AuthProperties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.core.AuthenticationException;
@@ -11,24 +10,24 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 
 /**
  * Takes over when the Google OIDC handshake itself fails — the user declined consent, the
- * state didn't match, the token exchange errored. Instead of Spring's default redirect to
- * {@code /login?error} (or a white-label page), the browser lands on the configured
- * front-end sign-in-error route (#27).
+ * state didn't match, the token exchange errored. Delegates to {@link SignInCompletion},
+ * which lands the browser on the front-end sign-in-error route and — like every other
+ * terminal outcome of the handshake — ends the handshake servlet session (#27).
  */
 class SignInFailureHandler implements AuthenticationFailureHandler {
 
     private static final Log log = LogFactory.getLog(SignInFailureHandler.class);
 
-    private final AuthProperties properties;
+    private final SignInCompletion completion;
 
-    SignInFailureHandler(AuthProperties properties) {
-        this.properties = properties;
+    SignInFailureHandler(SignInCompletion completion) {
+        this.completion = completion;
     }
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException {
         log.info("Google sign-in did not complete: " + exception.getMessage());
-        response.sendRedirect(properties.signInErrorRedirect());
+        completion.failed(request, response);
     }
 }
