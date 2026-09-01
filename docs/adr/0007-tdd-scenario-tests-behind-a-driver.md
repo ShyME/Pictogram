@@ -10,7 +10,12 @@ intention-revealing actions (`registerViaGoogle()`, `chooseUsername()`, `publish
 `follow()`, `openFeed()`), and run against two transports:
 
 - `InProcessDriver` — `@SpringBootTest` plus Testcontainers Postgres / MinIO /
-  `mock-oauth2-server`. Tagged `fast`, runs every build.
+  `mock-oauth2-server`. Tagged `fast`, runs every build. Split two ways (#51): a deep
+  `HttpPictogramApi` owns all request/response mapping against a base URI, and a small
+  `SignIn` port owns "how a session is minted". `InProcessDriver` composes one
+  `HttpPictogramApi` — that base URI plus a `mock-oauth2-server` `SignIn` — and delegates
+  to it. `ContainerDriver` (#20) composes the same class with a compose URI and a
+  real-handshake `SignIn` — a config, not a second mapping layer.
 - `ContainerDriver` — the actual application image over HTTP. Tagged `blackbox`, runs in
   CI. This is treated as the truth of what production does.
 
