@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     }
 }
 
-listOf(
+include(
     "shared-kernel",
     "test-support",
     "identity",
@@ -21,4 +21,4 @@ listOf(
     "feed",
     "engagement",
     "app",
-).forEach { include(it) }
+)

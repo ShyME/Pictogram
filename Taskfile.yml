@@ -60,9 +60,15 @@ tasks:
       - pnpm dev
 
   format:
-    desc: Auto-format the codebase — frontend (Prettier)
+    desc: Auto-format the codebase — backend (Spotless + ktfmt) and frontend (Prettier)
     cmds:
+      - task: format:backend
       - task: format:frontend
+
+  format:backend:
+    dir: backend
+    cmds:
+      - ./gradlew spotlessApply
 
   format:frontend:
     dir: frontend
