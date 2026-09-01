@@ -24,7 +24,8 @@ class S3BlobStore implements BlobStore {
     @Override
     public void put(String key, byte[] bytes) {
         ensureBucket();
-        s3.putObject(request -> request.bucket(bucket).key(key).contentType(MediaType.IMAGE_JPEG_VALUE),
+        s3.putObject(
+                request -> request.bucket(bucket).key(key).contentType(MediaType.IMAGE_JPEG_VALUE),
                 RequestBody.fromBytes(bytes));
     }
 

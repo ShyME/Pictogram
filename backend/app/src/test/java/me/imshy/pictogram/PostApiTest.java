@@ -56,10 +56,12 @@ class PostApiTest {
 
     @Test
     void publishingNeedsAToken() throws Exception {
-        mvc.perform(post("/api/posts").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID())))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -67,7 +69,8 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(author);
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\",\"caption\":\"sunset over the bay\"}".formatted(mediaId)))
                 .andExpect(status().isCreated())
@@ -100,7 +103,8 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(author);
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, "x".repeat(2201))))
                 .andExpect(status().isBadRequest())
@@ -113,7 +117,8 @@ class PostApiTest {
         var interloper = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(owner);
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(interloper)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(interloper)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\"}".formatted(mediaId)))
                 .andExpect(status().is(422))
@@ -124,7 +129,8 @@ class PostApiTest {
     void publishingAMediaIdNoMediaHasIsTheSameUnprocessableEntity() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID())))
                 .andExpect(status().is(422))
@@ -135,7 +141,8 @@ class PostApiTest {
     void publishingWithNoMediaIdIsAProblemDetailNotAServerError() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"caption\":\"no photo\"}"))
                 .andExpect(status().is(422))
@@ -146,7 +153,8 @@ class PostApiTest {
     void publishingWithAMalformedMediaIdIsABadRequestNotAServerError() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"not-a-uuid\"}"))
                 .andExpect(status().isBadRequest());
@@ -156,7 +164,8 @@ class PostApiTest {
     void deletingNeedsAToken() throws Exception {
         mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID()))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -196,15 +205,15 @@ class PostApiTest {
     }
 
     private String uploadPhoto(String owner) throws Exception {
-        var result = mvc.perform(multipart("/api/media").file(imagePart())
-                        .with(jwt().jwt(jwt -> jwt.subject(owner))))
+        var result = mvc.perform(multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(owner))))
                 .andExpect(status().isCreated())
                 .andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.mediaId");
     }
 
     private String publish(String author, String mediaId, String caption) throws Exception {
-        var result = mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+        var result = mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, caption)))
                 .andExpect(status().isCreated())

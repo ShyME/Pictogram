@@ -27,11 +27,9 @@ class PublishPostScenarioTest extends ScenarioTest {
         assertThat(post.mediaId()).isEqualTo(mediaId);
         assertThat(post.authorId()).isEqualTo(profile.userId());
 
-        assertThat(ada.postsOf(profile.userId()))
-                .singleElement()
-                .satisfies(onGrid -> {
-                    assertThat(onGrid.postId()).isEqualTo(post.postId());
-                    assertThat(onGrid.caption()).isEqualTo("first light over the bay");
-                });
+        assertThat(ada.postsOf(profile.userId())).singleElement().satisfies(onGrid -> {
+            assertThat(onGrid.postId()).isEqualTo(post.postId());
+            assertThat(onGrid.caption()).isEqualTo("first light over the bay");
+        });
     }
 }

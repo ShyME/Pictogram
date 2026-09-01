@@ -46,24 +46,22 @@ public interface PictogramApi {
     }
 
     enum DeleteOutcome {
-        DELETED, FORBIDDEN
+        DELETED,
+        FORBIDDEN
     }
 
     enum FollowOutcome {
-        OK, SELF_FOLLOW
+        OK,
+        SELF_FOLLOW
     }
 
-    record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
-    }
+    record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {}
 
-    record AccountPage(List<String> userIds, String nextCursor) {
-    }
+    record AccountPage(List<String> userIds, String nextCursor) {}
 
-    record Profile(String userId, String username, String displayName, String bio) {
-    }
+    record Profile(String userId, String username, String displayName, String bio) {}
 
-    record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {
-    }
+    record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {}
 
     record FeedPage(List<Post> posts, String nextCursor) {
 

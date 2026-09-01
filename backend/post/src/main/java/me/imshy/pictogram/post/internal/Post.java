@@ -35,8 +35,7 @@ class Post implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Post() {
-    }
+    protected Post() {}
 
     private Post(UUID id, UUID authorId, UUID mediaId, String caption, Instant publishedAt) {
         this.id = id;

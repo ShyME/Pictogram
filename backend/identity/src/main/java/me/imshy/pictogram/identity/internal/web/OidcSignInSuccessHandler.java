@@ -16,16 +16,17 @@ class OidcSignInSuccessHandler implements AuthenticationSuccessHandler {
     private final GoogleIdentityProvider google;
     private final SignInCompletion completion;
 
-    OidcSignInSuccessHandler(IdentityAuthentication authentication, GoogleIdentityProvider google,
-            SignInCompletion completion) {
+    OidcSignInSuccessHandler(
+            IdentityAuthentication authentication, GoogleIdentityProvider google, SignInCompletion completion) {
         this.authentication = authentication;
         this.google = google;
         this.completion = completion;
     }
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-            Authentication authenticationResult) throws IOException {
+    public void onAuthenticationSuccess(
+            HttpServletRequest request, HttpServletResponse response, Authentication authenticationResult)
+            throws IOException {
         var oidcUser = (OidcUser) authenticationResult.getPrincipal();
         GoogleIdentityProvider.VerifiedGoogleAccount verified;
         try {
@@ -35,8 +36,8 @@ class OidcSignInSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        Session session = authentication.authenticate(
-                new ExternalAccount(google.id(), verified.subject(), verified.email()));
+        Session session =
+                authentication.authenticate(new ExternalAccount(google.id(), verified.subject(), verified.email()));
         completion.succeeded(request, response, session);
     }
 }

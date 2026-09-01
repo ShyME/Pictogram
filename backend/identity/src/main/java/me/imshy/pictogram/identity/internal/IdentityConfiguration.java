@@ -42,15 +42,19 @@ class IdentityConfiguration {
 
     @Bean
     AccessTokens accessTokens(SigningKey signingKey, JwtDecoder jwtDecoder, AuthProperties properties, Clock clock) {
-        return new AccessTokens(new NimbusJwtEncoder(signingKey.jwkSource()), jwtDecoder, clock,
-                properties.accessTokenTtl(), properties.issuer());
+        return new AccessTokens(
+                new NimbusJwtEncoder(signingKey.jwkSource()),
+                jwtDecoder,
+                clock,
+                properties.accessTokenTtl(),
+                properties.issuer());
     }
 
     @Bean
-    RefreshTokenService refreshTokenService(RefreshTokens refreshTokens, AuthProperties properties, Clock clock,
-            PlatformTransactionManager txManager) {
-        return new RefreshTokenService(refreshTokens, clock, properties.refreshTokenTtl(),
-                properties.refreshTokenRotationGrace(), txManager);
+    RefreshTokenService refreshTokenService(
+            RefreshTokens refreshTokens, AuthProperties properties, Clock clock, PlatformTransactionManager txManager) {
+        return new RefreshTokenService(
+                refreshTokens, clock, properties.refreshTokenTtl(), properties.refreshTokenRotationGrace(), txManager);
     }
 
     @Bean

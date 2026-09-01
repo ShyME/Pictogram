@@ -35,14 +35,12 @@ class PostDeletionTest extends PostModuleIntegrationTest {
         deletion.delete(author, post.postId());
 
         assertThat(timeline.pageFor(author, null, null).items()).isEmpty();
-        assertThat(events.ofType(PostDeleted.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.postId()).isEqualTo(post.postId());
-                    assertThat(event.authorId()).isEqualTo(author);
-                    assertThat(event.mediaId()).isEqualTo(mediaId);
-                    assertThat(event.deletedAt()).isNotNull();
-                });
+        assertThat(events.ofType(PostDeleted.class)).singleElement().satisfies(event -> {
+            assertThat(event.postId()).isEqualTo(post.postId());
+            assertThat(event.authorId()).isEqualTo(author);
+            assertThat(event.mediaId()).isEqualTo(mediaId);
+            assertThat(event.deletedAt()).isNotNull();
+        });
     }
 
     @Test

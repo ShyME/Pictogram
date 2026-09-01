@@ -18,7 +18,10 @@ interface AppUsers extends CrudRepository<AppUser, UUID> {
             values (:id, :provider, :subject, :email, :registeredAt)
             on conflict (provider, subject) do nothing
             """, nativeQuery = true)
-    int insertIfAbsent(@Param("id") UUID id, @Param("provider") String provider,
-            @Param("subject") String subject, @Param("email") String email,
+    int insertIfAbsent(
+            @Param("id") UUID id,
+            @Param("provider") String provider,
+            @Param("subject") String subject,
+            @Param("email") String email,
             @Param("registeredAt") Instant registeredAt);
 }

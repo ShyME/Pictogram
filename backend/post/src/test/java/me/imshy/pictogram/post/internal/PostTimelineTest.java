@@ -56,8 +56,9 @@ class PostTimelineTest extends PostModuleIntegrationTest {
 
         List<PostId> seen = drain(author, 2);
 
-        assertThat(seen).containsExactly(
-                published.get(4), published.get(3), published.get(2), published.get(1), published.get(0));
+        assertThat(seen)
+                .containsExactly(
+                        published.get(4), published.get(3), published.get(2), published.get(1), published.get(0));
     }
 
     @Test

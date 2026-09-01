@@ -11,11 +11,12 @@ import org.springframework.modulith.Modulithic;
 
 @Modulithic(systemName = "Pictogram", sharedModules = "shared")
 @SpringBootApplication
-@ComponentScan(excludeFilters = {
-        @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
-        @Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class),
-        @Filter(type = FilterType.REGEX, pattern = "me\\.imshy\\.pictogram\\.ModulithTestApplication")
-})
+@ComponentScan(
+        excludeFilters = {
+            @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+            @Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class),
+            @Filter(type = FilterType.REGEX, pattern = "me\\.imshy\\.pictogram\\.ModulithTestApplication")
+        })
 public class PictogramApplication {
 
     static void main(String[] args) {

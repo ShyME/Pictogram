@@ -36,13 +36,11 @@ class PublishingTest extends PostModuleIntegrationTest {
         assertThat(timeline.pageFor(author, null, null).items())
                 .extracting(PostView::postId)
                 .containsExactly(post.postId());
-        assertThat(events.ofType(PostPublished.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.postId()).isEqualTo(post.postId());
-                    assertThat(event.authorId()).isEqualTo(author);
-                    assertThat(event.mediaId()).isEqualTo(mediaId);
-                });
+        assertThat(events.ofType(PostPublished.class)).singleElement().satisfies(event -> {
+            assertThat(event.postId()).isEqualTo(post.postId());
+            assertThat(event.authorId()).isEqualTo(author);
+            assertThat(event.mediaId()).isEqualTo(mediaId);
+        });
     }
 
     @Test

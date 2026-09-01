@@ -9,6 +9,5 @@ public interface PublishedPosts {
 
     Page byAuthors(Collection<UserId> authors, Cursor after, int limit);
 
-    record Page(List<PublishedPost> posts, Cursor nextCursor) {
-    }
+    record Page(List<PublishedPost> posts, Cursor nextCursor) {}
 }

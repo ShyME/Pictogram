@@ -13,5 +13,4 @@ public record AuthProperties(
         String signingKey,
         @DefaultValue("/") String postLoginRedirect,
         @DefaultValue("/login?error=sign-in-failed") String signInErrorRedirect,
-        @DefaultValue("true") boolean cookieSecure) {
-}
+        @DefaultValue("true") boolean cookieSecure) {}

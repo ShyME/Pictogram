@@ -107,12 +107,15 @@ class ResourceServerDecoderContractTest {
                 .expiresAt(now.plusSeconds(900))
                 .build();
         return encoder.encode(JwtEncoderParameters.from(
-                JwsHeader.with(SignatureAlgorithm.ES256).build(), claims)).getTokenValue();
+                        JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
+                .getTokenValue();
     }
 
     private static ECKey generateSigningKey() {
         try {
-            return new ECKeyGenerator(Curve.P_256).keyID("pictogram-test-signing-key").generate();
+            return new ECKeyGenerator(Curve.P_256)
+                    .keyID("pictogram-test-signing-key")
+                    .generate();
         } catch (JOSEException e) {
             throw new IllegalStateException(e);
         }

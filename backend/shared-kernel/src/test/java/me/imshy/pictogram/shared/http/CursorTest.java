@@ -36,31 +36,26 @@ class CursorTest {
 
     @Test
     void rejectsATokenThatIsNotBase64() {
-        assertThatExceptionOfType(InvalidCursorException.class)
-                .isThrownBy(() -> Cursor.decode("not base64 !!!"));
+        assertThatExceptionOfType(InvalidCursorException.class).isThrownBy(() -> Cursor.decode("not base64 !!!"));
     }
 
     @Test
     void rejectsABase64TokenWithoutTheComponentSeparator() {
-        var noSeparator = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString("2026-08-30T12:34:56Z".getBytes());
+        var noSeparator = Base64.getUrlEncoder().withoutPadding().encodeToString("2026-08-30T12:34:56Z".getBytes());
 
-        assertThatExceptionOfType(InvalidCursorException.class)
-                .isThrownBy(() -> Cursor.decode(noSeparator));
+        assertThatExceptionOfType(InvalidCursorException.class).isThrownBy(() -> Cursor.decode(noSeparator));
     }
 
     @Test
     void rejectsABase64TokenWhoseIdIsNotAUuid() {
-        var badId = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString("2026-08-30T12:34:56Z|not-a-uuid".getBytes());
+        var badId =
+                Base64.getUrlEncoder().withoutPadding().encodeToString("2026-08-30T12:34:56Z|not-a-uuid".getBytes());
 
-        assertThatExceptionOfType(InvalidCursorException.class)
-                .isThrownBy(() -> Cursor.decode(badId));
+        assertThatExceptionOfType(InvalidCursorException.class).isThrownBy(() -> Cursor.decode(badId));
     }
 
     @Test
     void rejectsAnEmptyToken() {
-        assertThatExceptionOfType(InvalidCursorException.class)
-                .isThrownBy(() -> Cursor.decode(""));
+        assertThatExceptionOfType(InvalidCursorException.class).isThrownBy(() -> Cursor.decode(""));
     }
 }

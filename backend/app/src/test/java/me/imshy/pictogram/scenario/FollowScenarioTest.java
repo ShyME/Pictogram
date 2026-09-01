@@ -21,7 +21,8 @@ class FollowScenarioTest extends ScenarioTest {
         assertThat(bobStanding.followerCount()).isEqualTo(1);
         assertThat(bobStanding.followedByViewer()).isTrue();
         assertThat(ada.followRelationship(adaProfile.userId()).followingCount()).isEqualTo(1);
-        assertThat(bob.followRelationship(adaProfile.userId()).followedByViewer()).isFalse();
+        assertThat(bob.followRelationship(adaProfile.userId()).followedByViewer())
+                .isFalse();
 
         ada.unfollow(bobProfile.userId());
         ada.unfollow(bobProfile.userId());

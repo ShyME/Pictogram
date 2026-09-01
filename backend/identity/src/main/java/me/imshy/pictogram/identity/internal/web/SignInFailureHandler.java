@@ -19,8 +19,9 @@ class SignInFailureHandler implements AuthenticationFailureHandler {
     }
 
     @Override
-    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException exception) throws IOException {
+    public void onAuthenticationFailure(
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+            throws IOException {
         log.info("Google sign-in did not complete: " + exception.getMessage());
         completion.failed(request, response);
     }

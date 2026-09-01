@@ -51,8 +51,7 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
 
         editing.editProfile(ada, "ada_lovelace", "Ada", null);
 
-        assertThatExceptionOfType(ProfileNotFoundException.class)
-                .isThrownBy(() -> directory.byUsername("ada"));
+        assertThatExceptionOfType(ProfileNotFoundException.class).isThrownBy(() -> directory.byUsername("ada"));
         assertThat(directory.byUsername("ada_lovelace").userId()).isEqualTo(ada);
 
         var mallory = UserId.random();
@@ -109,13 +108,11 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
 
         editing.editProfile(user, "ada_lovelace", "Ada", null);
 
-        assertThat(events.ofType(ProfileUpdated.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.userId()).isEqualTo(user);
-                    assertThat(event.username()).isEqualTo("ada_lovelace");
-                    assertThat(event.updatedAt()).isNotNull();
-                });
+        assertThat(events.ofType(ProfileUpdated.class)).singleElement().satisfies(event -> {
+            assertThat(event.userId()).isEqualTo(user);
+            assertThat(event.username()).isEqualTo("ada_lovelace");
+            assertThat(event.updatedAt()).isNotNull();
+        });
     }
 
     @Test

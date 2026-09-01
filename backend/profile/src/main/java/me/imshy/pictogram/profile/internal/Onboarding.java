@@ -40,8 +40,6 @@ public class Onboarding {
     }
 
     public ProfileView profileOf(UserId user) {
-        return profiles.findById(user.value())
-                .map(ProfileView::of)
-                .orElseThrow(ProfileNotFoundException::new);
+        return profiles.findById(user.value()).map(ProfileView::of).orElseThrow(ProfileNotFoundException::new);
     }
 }

@@ -13,13 +13,13 @@ class AppUser {
 
     @Id
     private UUID id;
+
     private String provider;
     private String subject;
     private String email;
     private Instant registeredAt;
 
-    protected AppUser() {
-    }
+    protected AppUser() {}
 
     UserId userId() {
         return new UserId(id);

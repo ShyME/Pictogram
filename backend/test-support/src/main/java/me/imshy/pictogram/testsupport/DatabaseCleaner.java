@@ -1,7 +1,7 @@
 package me.imshy.pictogram.testsupport;
 
-import javax.sql.DataSource;
 import java.util.List;
+import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public final class DatabaseCleaner {

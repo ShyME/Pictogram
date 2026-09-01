@@ -8,6 +8,5 @@ public interface FeedQuery {
 
     Page pageFor(ViewerId viewer, Cursor after, Integer limit);
 
-    record Page(List<FeedPost> posts, Cursor nextCursor) {
-    }
+    record Page(List<FeedPost> posts, Cursor nextCursor) {}
 }

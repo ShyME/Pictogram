@@ -43,9 +43,7 @@ class GoogleIdentityProviderTest {
     }
 
     private static OidcUser oidcUser(String subject, String email, boolean emailVerified) {
-        var idToken = OidcIdToken.withTokenValue("token")
-                .subject(subject)
-                .claim("email_verified", emailVerified);
+        var idToken = OidcIdToken.withTokenValue("token").subject(subject).claim("email_verified", emailVerified);
         if (email != null) {
             idToken.claim("email", email);
         }

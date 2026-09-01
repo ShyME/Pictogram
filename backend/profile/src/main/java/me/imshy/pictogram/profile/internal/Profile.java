@@ -34,8 +34,7 @@ class Profile implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Profile() {
-    }
+    protected Profile() {}
 
     private Profile(UserId userId, Username username, DisplayName displayName, Bio bio, Instant createdAt) {
         this.userId = userId.value();

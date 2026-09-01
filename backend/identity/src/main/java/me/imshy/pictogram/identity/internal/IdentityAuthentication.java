@@ -6,7 +6,6 @@ import java.util.UUID;
 import me.imshy.pictogram.identity.UserRegistered;
 import me.imshy.pictogram.identity.internal.accesstoken.AccessTokens;
 import me.imshy.pictogram.identity.internal.refreshtoken.RefreshTokenService;
-import me.imshy.pictogram.shared.UserId;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +19,12 @@ public class IdentityAuthentication {
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
-    IdentityAuthentication(AppUsers users, AccessTokens accessTokens, RefreshTokenService refreshTokens,
-            ApplicationEventPublisher events, Clock clock) {
+    IdentityAuthentication(
+            AppUsers users,
+            AccessTokens accessTokens,
+            RefreshTokenService refreshTokens,
+            ApplicationEventPublisher events,
+            Clock clock) {
         this.users = users;
         this.accessTokens = accessTokens;
         this.refreshTokens = refreshTokens;
@@ -38,8 +41,9 @@ public class IdentityAuthentication {
 
     private AppUser register(ExternalAccount account) {
         Instant now = clock.instant();
-        boolean weRegisteredThem = users.insertIfAbsent(UUID.randomUUID(),
-                account.provider(), account.subject(), account.email(), now) == 1;
+        boolean weRegisteredThem =
+                users.insertIfAbsent(UUID.randomUUID(), account.provider(), account.subject(), account.email(), now)
+                        == 1;
         AppUser user = users.findByProviderAndSubject(account.provider(), account.subject())
                 .orElseThrow(() -> new IllegalStateException("user vanished right after being registered"));
         if (weRegisteredThem) {

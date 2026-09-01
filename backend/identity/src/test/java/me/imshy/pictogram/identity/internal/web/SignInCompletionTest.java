@@ -23,8 +23,14 @@ import org.springframework.mock.web.MockHttpSession;
 class SignInCompletionTest {
 
     private static final AuthProperties PROPERTIES = new AuthProperties(
-            Duration.ofMinutes(15), Duration.ofDays(30), Duration.ofSeconds(60), "pictogram", null,
-            "/home", "/login?error=sign-in-failed", false);
+            Duration.ofMinutes(15),
+            Duration.ofDays(30),
+            Duration.ofSeconds(60),
+            "pictogram",
+            null,
+            "/home",
+            "/login?error=sign-in-failed",
+            false);
 
     private final SignInCompletion completion = new SignInCompletion(PROPERTIES);
 
@@ -34,12 +40,9 @@ class SignInCompletionTest {
                 throws Exception;
     }
 
-    private static final Outcome SUCCEEDED =
-            (c, req, res) -> c.succeeded(req, res, session("refresh-token-abc"));
-    private static final Outcome UNUSABLE_UNVERIFIED =
-            (c, req, res) -> c.unusable(req, res, Reason.EMAIL_UNVERIFIED);
-    private static final Outcome UNUSABLE_MISSING =
-            (c, req, res) -> c.unusable(req, res, Reason.EMAIL_MISSING);
+    private static final Outcome SUCCEEDED = (c, req, res) -> c.succeeded(req, res, session("refresh-token-abc"));
+    private static final Outcome UNUSABLE_UNVERIFIED = (c, req, res) -> c.unusable(req, res, Reason.EMAIL_UNVERIFIED);
+    private static final Outcome UNUSABLE_MISSING = (c, req, res) -> c.unusable(req, res, Reason.EMAIL_MISSING);
     private static final Outcome FAILED = SignInCompletion::failed;
 
     @Test
@@ -124,7 +127,10 @@ class SignInCompletionTest {
     }
 
     private static Session session(String refreshToken) {
-        return new Session("access-token", Instant.now().plusSeconds(900),
-                refreshToken, Instant.now().plusSeconds(3600));
+        return new Session(
+                "access-token",
+                Instant.now().plusSeconds(900),
+                refreshToken,
+                Instant.now().plusSeconds(3600));
     }
 }

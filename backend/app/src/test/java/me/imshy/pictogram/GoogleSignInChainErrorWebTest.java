@@ -50,7 +50,8 @@ class GoogleSignInChainErrorWebTest {
         registry.add("spring.security.oauth2.client.registration.google.client-id", () -> CLIENT_ID);
         registry.add("spring.security.oauth2.client.registration.google.client-secret", () -> "pictogram-test-secret");
         registry.add("spring.security.oauth2.client.registration.google.scope", () -> "openid,email");
-        registry.add("spring.security.oauth2.client.provider.google.issuer-uri",
+        registry.add(
+                "spring.security.oauth2.client.provider.google.issuer-uri",
                 () -> GOOGLE.issuerUrl(ISSUER_ID).toString());
         registry.add("pictogram.auth.cookie-secure", () -> false);
     }
@@ -63,9 +64,13 @@ class GoogleSignInChainErrorWebTest {
     @Test
     void anUnexpectedFailureInTheOidcChainRendersAsProblemJsonAndLeavesNoAuthenticatedSession() throws Exception {
         when(authentication.authenticate(any())).thenThrow(new IllegalStateException("boom"));
-        GOOGLE.enqueueCallback(new DefaultOAuth2TokenCallback(ISSUER_ID, "chain-error-subject",
-                JOSEObjectType.JWT.getType(), List.of(CLIENT_ID),
-                Map.of("email", "boom@example.com", "email_verified", true), 3600L));
+        GOOGLE.enqueueCallback(new DefaultOAuth2TokenCallback(
+                ISSUER_ID,
+                "chain-error-subject",
+                JOSEObjectType.JWT.getType(),
+                List.of(CLIENT_ID),
+                Map.of("email", "boom@example.com", "email_verified", true),
+                3600L));
         var cookies = new CookieManager();
 
         HttpResponse<Void> authRequest = HttpClient.newBuilder()
@@ -83,26 +88,34 @@ class GoogleSignInChainErrorWebTest {
                 .cookieHandler(cookies)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build()
-                .send(HttpRequest.newBuilder(URI.create(authRequest.headers().firstValue("Location").orElseThrow()))
-                        .GET().build(),
+                .send(
+                        HttpRequest.newBuilder(URI.create(authRequest
+                                        .headers()
+                                        .firstValue("Location")
+                                        .orElseThrow()))
+                                .GET()
+                                .build(),
                         HttpResponse.BodyHandlers.ofString());
 
         assertThat(landing.statusCode()).isEqualTo(500);
-        assertThat(landing.headers().firstValue("Content-Type").orElseThrow())
-                .contains("application/problem+json");
+        assertThat(landing.headers().firstValue("Content-Type").orElseThrow()).contains("application/problem+json");
         assertThat(landing.body()).contains("problems/internal-error");
 
         HttpResponse<Void> withStaleSession = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build()
-                .send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/oauth2/probe"))
-                        .header("Cookie", "JSESSIONID=" + handshakeSession)
-                        .GET().build(),
+                .send(
+                        HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/oauth2/probe"))
+                                .header("Cookie", "JSESSIONID=" + handshakeSession)
+                                .GET()
+                                .build(),
                         HttpResponse.BodyHandlers.discarding());
         assertThat(withStaleSession.statusCode()).isEqualTo(302);
     }
 
     private HttpRequest get(String path) {
-        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).GET().build();
+        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .GET()
+                .build();
     }
 }

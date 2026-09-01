@@ -28,7 +28,8 @@ interface Posts extends CrudRepository<Post, UUID> {
                    or (p.publishedAt = :beforePublishedAt and p.id < :beforeId))
             order by p.publishedAt desc, p.id desc
             """)
-    List<Post> pageBy(@Param("author") UUID author,
+    List<Post> pageBy(
+            @Param("author") UUID author,
             @Param("beforePublishedAt") Instant beforePublishedAt,
             @Param("beforeId") UUID beforeId,
             Limit limit);
@@ -47,7 +48,8 @@ interface Posts extends CrudRepository<Post, UUID> {
                    or (p.publishedAt = :beforePublishedAt and p.id < :beforeId))
             order by p.publishedAt desc, p.id desc
             """)
-    List<Post> byAuthorsBefore(@Param("authors") Collection<UUID> authors,
+    List<Post> byAuthorsBefore(
+            @Param("authors") Collection<UUID> authors,
             @Param("beforePublishedAt") Instant beforePublishedAt,
             @Param("beforeId") UUID beforeId,
             Limit limit);

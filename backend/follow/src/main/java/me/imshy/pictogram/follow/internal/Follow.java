@@ -31,8 +31,7 @@ class Follow implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Follow() {
-    }
+    protected Follow() {}
 
     private Follow(UUID id, UUID followerId, UUID followedId, Instant followedAt) {
         this.id = id;

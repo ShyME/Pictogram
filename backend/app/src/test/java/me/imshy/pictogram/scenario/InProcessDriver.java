@@ -44,8 +44,12 @@ public final class InProcessDriver implements PictogramApi {
         @Override
         public String authenticate(String email) {
             google.enqueueCallback(new DefaultOAuth2TokenCallback(
-                    ISSUER_ID, UUID.randomUUID().toString(), JOSEObjectType.JWT.getType(),
-                    List.of(CLIENT_ID), Map.of("email", email, "email_verified", true), 3600L));
+                    ISSUER_ID,
+                    UUID.randomUUID().toString(),
+                    JOSEObjectType.JWT.getType(),
+                    List.of(CLIENT_ID),
+                    Map.of("email", email, "email_verified", true),
+                    3600L));
 
             var cookies = new CookieManager();
             HttpClient browser = HttpClient.newBuilder()
@@ -53,7 +57,10 @@ public final class InProcessDriver implements PictogramApi {
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .build();
             try {
-                browser.send(HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google")).GET().build(),
+                browser.send(
+                        HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
                         BodyHandlers.discarding());
             } catch (Exception e) {
                 throw new IllegalStateException("Google sign-in redirect dance failed", e);

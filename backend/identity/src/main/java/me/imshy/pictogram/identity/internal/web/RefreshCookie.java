@@ -13,8 +13,7 @@ final class RefreshCookie {
     static final String NAME = "pictogram_refresh";
     private static final String PATH = "/api/auth";
 
-    private RefreshCookie() {
-    }
+    private RefreshCookie() {}
 
     static ResponseCookie issue(String token, Duration maxAge, boolean secure) {
         return builder(token, secure).maxAge(maxAge).build();

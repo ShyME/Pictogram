@@ -52,7 +52,8 @@ class FollowApiTest {
     void followingRequiresAToken() throws Exception {
         mvc.perform(put("/api/follows/" + UUID.randomUUID()))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -116,10 +117,8 @@ class FollowApiTest {
     void theFollowerAndFollowingListsNeedAToken() throws Exception {
         var user = UUID.randomUUID();
 
-        mvc.perform(get("/api/follows/" + user + "/followers"))
-                .andExpect(status().isUnauthorized());
-        mvc.perform(get("/api/follows/" + user + "/following"))
-                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/follows/" + user + "/followers")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/follows/" + user + "/following")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -165,11 +164,16 @@ class FollowApiTest {
         mvc.perform(get("/api/follows").param("ids", bob, carol).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followerCount").value(contains(1)))
-                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followingCount").value(contains(1)))
-                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followedByViewer").value(contains(true)))
-                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followerCount").value(contains(1)))
-                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followedByViewer").value(contains(false)));
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followerCount")
+                        .value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followingCount")
+                        .value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followedByViewer")
+                        .value(contains(true)))
+                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followerCount")
+                        .value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followedByViewer")
+                        .value(contains(false)));
     }
 
     @Test
@@ -178,10 +182,12 @@ class FollowApiTest {
                 .mapToObj(i -> UUID.randomUUID().toString())
                 .toArray(String[]::new);
 
-        mvc.perform(get("/api/follows").param("ids", tooMany)
+        mvc.perform(get("/api/follows")
+                        .param("ids", tooMany)
                         .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 
     @Test
@@ -194,14 +200,18 @@ class FollowApiTest {
         }
         var viewer = jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()));
 
-        String firstPage = mvc.perform(get("/api/follows/" + target + "/followers?limit=2").with(viewer))
+        String firstPage = mvc.perform(
+                        get("/api/follows/" + target + "/followers?limit=2").with(viewer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(2)))
                 .andExpect(jsonPath("$.nextCursor").isNotEmpty())
-                .andReturn().getResponse().getContentAsString();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
         String cursor = com.jayway.jsonpath.JsonPath.read(firstPage, "$.nextCursor");
 
-        mvc.perform(get("/api/follows/" + target + "/followers?limit=2&cursor=" + cursor).with(viewer))
+        mvc.perform(get("/api/follows/" + target + "/followers?limit=2&cursor=" + cursor)
+                        .with(viewer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(1)))
                 .andExpect(jsonPath("$.nextCursor").value(nullValue()));

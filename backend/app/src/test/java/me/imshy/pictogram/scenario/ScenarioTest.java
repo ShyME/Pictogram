@@ -72,10 +72,11 @@ public abstract class ScenarioTest {
     static void properties(DynamicPropertyRegistry registry) {
         SharedPostgres.registerTo(registry);
         registry.add("spring.security.oauth2.client.registration.google.client-id", () -> InProcessDriver.CLIENT_ID);
-        registry.add("spring.security.oauth2.client.registration.google.client-secret",
-                () -> InProcessDriver.CLIENT_SECRET);
+        registry.add(
+                "spring.security.oauth2.client.registration.google.client-secret", () -> InProcessDriver.CLIENT_SECRET);
         registry.add("spring.security.oauth2.client.registration.google.scope", () -> "openid,email");
-        registry.add("spring.security.oauth2.client.provider.google.issuer-uri",
+        registry.add(
+                "spring.security.oauth2.client.provider.google.issuer-uri",
                 () -> GOOGLE.issuerUrl(InProcessDriver.ISSUER_ID).toString());
         registry.add("pictogram.auth.cookie-secure", () -> false);
     }
