@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { jsonResponse, pathOf, problemResponse, stubFetch } from "../../../test/mock-fetch";
-import { fetchPostsByAuthor, publishPost, uploadPhoto } from "./post-api";
+import { deletePost, fetchPostsByAuthor, publishPost, uploadPhoto } from "./post-api";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -68,6 +68,20 @@ test("publishPost throws on an unexpected failure", async () => {
   stubFetch(() => problemResponse("unauthorized", 401));
 
   await expect(publishPost({ mediaId: "m-1", caption: "" })).rejects.toThrow(/401/);
+});
+
+test("deletePost issues a DELETE to the post's URL", async () => {
+  const calls = stubFetch(() => new Response(null, { status: 204 }));
+
+  await expect(deletePost("p-1")).resolves.toBeUndefined();
+  expect(pathOf(calls[0])).toBe("/api/posts/p-1");
+  expect(calls[0].method).toBe("DELETE");
+});
+
+test("deletePost throws when the server rejects the delete", async () => {
+  stubFetch(() => problemResponse("forbidden", 403));
+
+  await expect(deletePost("p-1")).rejects.toThrow(/403/);
 });
 
 test("fetchPostsByAuthor requests the author's grid and returns the page", async () => {

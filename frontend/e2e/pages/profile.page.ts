@@ -29,6 +29,15 @@ export class ProfilePage {
     return this.page.getByRole("img", { name: caption });
   }
 
+  /** The grid cell for a post, found by its caption — the delete control lives here. */
+  postCellByCaption(caption: string): Locator {
+    return this.page.getByRole("listitem").filter({ has: this.postByCaption(caption) });
+  }
+
+  get confirmDeleteDialog(): Locator {
+    return this.page.getByRole("alertdialog", { name: /delete this post/i });
+  }
+
   get emptyGrid(): Locator {
     return this.page.getByText("No posts yet");
   }

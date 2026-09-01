@@ -53,6 +53,18 @@ export async function publishPost(input: { mediaId: string; caption: string }): 
   }
 }
 
+/**
+ * Permanently deletes one of the caller's own posts — hard delete, no undo (#15). The UI
+ * only offers this on the author's own grid, so a 403 (someone else's post) or 404 (already
+ * gone) is an unexpected state and throws like any other failure.
+ */
+export async function deletePost(postId: string): Promise<void> {
+  const { response } = await api.DELETE("/api/posts/{postId}", {
+    params: { path: { postId } },
+  });
+  if (!response.ok) throw new Error(`Deleting the post failed: ${response.status}`);
+}
+
 export type PostPage = { posts: Post[]; nextCursor: string | null };
 
 /**

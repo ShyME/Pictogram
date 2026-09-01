@@ -450,6 +450,46 @@
         "tags" : [ "posts-controller" ]
       }
     },
+    "/api/posts/{postId}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The post was permanently deleted."
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller is not the author of this post."
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No post has that id."
+          }
+        },
+        "tags" : [ "posts-controller" ]
+      }
+    },
     "/api/profiles" : {
       "get" : {
         "operationId" : "byIds",

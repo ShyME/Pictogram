@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../test/render";
-import { jsonResponse, stubFetch } from "../../../test/mock-fetch";
+import { jsonResponse, pathOf, problemResponse, stubFetch } from "../../../test/mock-fetch";
 import { OwnPostGrid } from "./OwnPostGrid";
 
 afterEach(() => {
@@ -32,6 +32,56 @@ test("renders each post's thumbnail, newest first as the server sends them", asy
     "/api/media/m-2/thumbnail",
     "/api/media/m-1/thumbnail",
   ]);
+});
+
+test("deletes a post after the author confirms, then refetches the grid", async () => {
+  const calls = stubFetch((request) => {
+    if (request.method === "DELETE") return new Response(null, { status: 204 });
+    const seenDelete = calls.some((c) => c.method === "DELETE");
+    return jsonResponse({
+      items: seenDelete ? [] : [{ postId: "p-1", mediaId: "m-1", caption: "bye", publishedAt: "t1" }],
+      nextCursor: null,
+    });
+  });
+  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+
+  const dialog = screen.getByRole("alertdialog");
+  expect(within(dialog).getByText(/can.t be undone/i)).toBeInTheDocument();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+  expect(await screen.findByText("No posts yet")).toBeInTheDocument();
+  const del = calls.find((c) => c.method === "DELETE")!;
+  expect(pathOf(del)).toBe("/api/posts/p-1");
+});
+
+test("cancelling the confirmation leaves the post and sends nothing", async () => {
+  const calls = stubFetch(() =>
+    jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", caption: "stay", publishedAt: "t1" }], nextCursor: null }),
+  );
+  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+  fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: /cancel/i }));
+
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(await screen.findByAltText("stay")).toBeInTheDocument();
+  expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+});
+
+test("a failed delete keeps the dialog open with an error", async () => {
+  stubFetch((request) =>
+    request.method === "DELETE"
+      ? problemResponse("forbidden", 403)
+      : jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", publishedAt: "t1" }], nextCursor: null }),
+  );
+  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+  fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+
+  expect(await within(screen.getByRole("alertdialog")).findByRole("alert")).toHaveTextContent(/didn.t work/i);
 });
 
 test("pages on the keyset cursor when 'Load more' is clicked", async () => {

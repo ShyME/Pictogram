@@ -1,19 +1,33 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchPostsByAuthor } from "../api/post-api";
+import { useId, useState } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { deletePost, fetchPostsByAuthor } from "../api/post-api";
 import { postsByAuthorKey } from "../model/query-keys";
 import { thumbnailUrl } from "../model/post";
+import type { Post } from "../model/post";
 
 /**
  * The signed-in author's own post grid on their profile page — newest first, "Load more"
  * paging on the keyset cursor (infinite scroll is the feed's concern, #18). A just-published
  * post appears at the top because the composer invalidates this query before navigating here.
+ * Deleting a post is permanent, so its control opens a confirmation first.
  */
 export function OwnPostGrid({ authorId }: { authorId: string }) {
+  const queryClient = useQueryClient();
+  const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
+
   const grid = useInfiniteQuery({
     queryKey: postsByAuthorKey(authorId),
     queryFn: ({ pageParam }) => fetchPostsByAuthor(authorId, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+
+  const remove = useMutation({
+    mutationFn: (post: Post) => deletePost(post.postId),
+    onSuccess: async () => {
+      setPendingDelete(null);
+      await queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
+    },
   });
 
   if (grid.isPending) {
@@ -38,16 +52,27 @@ export function OwnPostGrid({ authorId }: { authorId: string }) {
     <>
       <ul className="grid grid-cols-3 gap-1">
         {posts.map((post) => (
-          <li key={post.postId}>
+          <li key={post.postId} className="group relative">
             <img
               src={thumbnailUrl(post.mediaId)}
               alt={post.caption ?? "A post"}
               loading="lazy"
               className="aspect-square w-full rounded-sm object-cover"
             />
+            <button
+              type="button"
+              onClick={() => {
+                remove.reset();
+                setPendingDelete(post);
+              }}
+              className="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
+
       {grid.hasNextPage && (
         <div className="mt-4 text-center">
           <button
@@ -60,6 +85,69 @@ export function OwnPostGrid({ authorId }: { authorId: string }) {
           </button>
         </div>
       )}
+
+      {pendingDelete && (
+        <ConfirmDelete
+          deleting={remove.isPending}
+          failed={remove.isError}
+          onConfirm={() => remove.mutate(pendingDelete)}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </>
+  );
+}
+
+function ConfirmDelete({
+  deleting,
+  failed,
+  onConfirm,
+  onCancel,
+}: {
+  deleting: boolean;
+  failed: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const titleId = useId();
+  return (
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
+      >
+        <h2 id={titleId} className="text-base font-semibold text-neutral-900">
+          Delete this post?
+        </h2>
+        <p className="mt-1 text-sm text-neutral-500">This can&rsquo;t be undone.</p>
+
+        {failed && (
+          <p role="alert" className="mt-2 text-sm text-red-600">
+            That didn&rsquo;t work. Try again in a moment.
+          </p>
+        )}
+
+        <div className="mt-4 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -141,6 +141,17 @@ public final class InProcessDriver implements PictogramApi {
         }
 
         @Override
+        public DeleteOutcome deletePost(String postId) {
+            HttpResponse<String> response = call("DELETE", "/api/posts/" + postId, null);
+            return switch (response.statusCode()) {
+                case 204 -> DeleteOutcome.DELETED;
+                case 403 -> DeleteOutcome.FORBIDDEN;
+                default -> throw new AssertionError(
+                        "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
+            };
+        }
+
+        @Override
         public List<Post> postsOf(String userId) {
             HttpResponse<String> response = call("GET", "/api/posts?author=" + userId, null);
             require(response, 200, "read a post grid");
