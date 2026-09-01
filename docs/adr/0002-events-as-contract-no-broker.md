@@ -18,4 +18,8 @@ missing profile simply means "not yet onboarded", not a lost event.
   even with zero consumers, so fan-out-on-write, notifications, and comment counts can be
   added later without touching the producing modules.
 - No listener may mutate another module's state; that is what published-interface commands
-  would be for, and we don't have any.
+  would be for. The only one so far is `media`'s `OrphanCollection`, driven by a `@Scheduled`
+  trigger at the composition root — infrastructure, not a cross-context reaction.
+- A published-interface query may be declared by the module that *needs* the answer when the
+  Gradle dependency only runs one way: `media` owns the `PostReferences` port and `post`
+  supplies the adapter, so the arrow stays `post → media` (orphan collection, #16).

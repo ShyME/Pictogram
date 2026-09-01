@@ -3,6 +3,7 @@ package me.imshy.pictogram.identity.internal;
 import static org.mockito.BDDMockito.given;
 
 import java.time.Clock;
+import me.imshy.pictogram.testsupport.MutableClock;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 

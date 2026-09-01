@@ -40,6 +40,12 @@ pictogram:
       secret-key: ${PICTOGRAM_MEDIA_SECRET_KEY:pictogram}
       bucket: ${PICTOGRAM_MEDIA_BUCKET:pictogram-media}
       path-style-access: ${PICTOGRAM_MEDIA_PATH_STYLE:true}
+    # A background sweep deletes media no post references — never-posted uploads and the
+    # images of deleted posts alike (#16). collection-cron is its schedule ("-" disables it);
+    # the eligibility delay is pictogram.media.retention.grace-period (default 24h), the
+    # window a composer mid-caption has before its upload can be swept.
+    retention:
+      collection-cron: ${PICTOGRAM_MEDIA_RETENTION_CRON:0 0 * * * *}
 
 # The OpenAPI document is exported to backend/openapi.json (the `generateOpenApiSpec` Gradle
 # task) and the frontend generates its typed client from that file. Swagger UI is not on the

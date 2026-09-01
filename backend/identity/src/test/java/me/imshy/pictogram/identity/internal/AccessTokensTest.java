@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.time.Duration;
 import me.imshy.pictogram.identity.InvalidAccessTokenException;
 import me.imshy.pictogram.shared.UserId;
+import me.imshy.pictogram.testsupport.MutableClock;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;

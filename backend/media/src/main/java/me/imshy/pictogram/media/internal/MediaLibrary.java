@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
  * the orchestration.
  *
  * <p>Renditions are written to the {@link BlobStore} before the row is saved: a crash in
- * between leaves orphan objects with no row, which the orphan-collection job reaps (#15) —
+ * between leaves orphan objects with no row, which the orphan-collection job reaps (#16) —
  * the harmless direction. The reverse would leave a row pointing at absent bytes.
  */
 @Service
