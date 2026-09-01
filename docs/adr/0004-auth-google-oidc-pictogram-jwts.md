@@ -57,8 +57,10 @@ no security gain.
   so it already stands down for identity's bean; on top of that identity's decoder is
   `@Primary` and `:app` passes it into the resource-server chain by reference rather than
   relying on a bean-type lookup (#28).
-- The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) is the
-  only server-side state; the Pictogram session (access + refresh) stays fully stateless.
+- The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) holds
+  the authorization request across the redirect to Google and back. It is the only
+  server-side state, and it is torn down the moment it has served its purpose — see the
+  #27 amendment. The Pictogram session (access + refresh) stays fully stateless.
 - identity's sign-in filter chain matches `/oauth2/**` and `/login/oauth2/**` — the
   redirection endpoint only, not all of `/login/**`. The SPA has its own `/login` route
   (#10); scoping the matcher to `/login/oauth2/**` lets that path fall through to the
@@ -89,3 +91,30 @@ later. Rotation now distinguishes the two:
 Re-serving the *same* successor token to both racers for a true `200` on each was considered
 and left out of scope: it needs the rotation to be idempotent per presented token. If
 `401`+retry proves insufficient in practice, that is the fallback.
+
+## Amendment (#27): sign-in failure paths and the handshake session
+
+The happy path above assumed Google always returns a usable account and the handshake
+always succeeds. Two rough edges are closed:
+
+- **An unusable Google account no longer 500s.** When Google reports `email_verified=false`
+  or omits `email`, `GoogleIdentityProvider.verify` throws `UnusableGoogleAccountException`
+  (a typed failure, not `IllegalStateException`). `OidcSignInSuccessHandler` catches it and
+  redirects the browser to `pictogram.auth.sign-in-error-redirect` (default
+  `/login?error=sign-in-failed`) with the `error` query parameter swapped for the specific
+  reason (`email-unverified` / `email-missing`) so the SPA shows a tailored message. No
+  Pictogram session is issued.
+- **A failed handshake** (declined consent, state mismatch, token-exchange error) goes to
+  the same route via an `AuthenticationFailureHandler` on the `/oauth2` chain, with the
+  generic `error=sign-in-failed`.
+- **Anything else thrown from the `/oauth2` chain** — there is no `DispatcherServlet` behind
+  it, so the shared `ApiExceptionHandler` never sees it — is rendered as
+  `application/problem+json` (`internal-error`, 500) by `OidcChainErrorFilter`, never a
+  white-label page.
+- **The handshake servlet session is invalidated on success.** After the refresh cookie is
+  set and before the final redirect, `OidcSignInSuccessHandler` calls
+  `HttpSession#invalidate` (null-safe) and clears the `SecurityContextHolder`. Otherwise the
+  `JSESSIONID` Spring created to hold the authorization request would linger authenticated
+  until it timed out — `AuthController.logout` is on the stateless chain and never touches
+  it. The authorization-code flow's mid-handshake session is unaffected because this runs
+  only on success. `AuthController.logout` needs no change and carries a comment saying so.

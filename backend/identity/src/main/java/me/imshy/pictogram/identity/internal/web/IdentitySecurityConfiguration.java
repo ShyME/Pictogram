@@ -9,7 +9,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * identity's slice of the security filter chain (ADR-0004). Both chains are ordered ahead
@@ -45,14 +47,19 @@ class IdentitySecurityConfiguration {
     @Order(-1)
     SecurityFilterChain googleSignInSecurity(HttpSecurity http,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations,
-            ObjectProvider<OidcSignInSuccessHandler> successHandler) throws Exception {
+            ObjectProvider<OidcSignInSuccessHandler> successHandler,
+            AuthProperties properties, ObjectProvider<ObjectMapper> objectMapper) throws Exception {
         http.securityMatcher("/oauth2/**", "/login/oauth2/**");
         if (clientRegistrations.getIfAvailable() == null) {
             return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll()).build();
         }
         return http
+                .addFilterBefore(new OidcChainErrorFilter(objectMapper.getObject(), properties),
+                        OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
-                .oauth2Login(login -> login.successHandler(successHandler.getObject()))
+                .oauth2Login(login -> login
+                        .successHandler(successHandler.getObject())
+                        .failureHandler(new SignInFailureHandler(properties)))
                 .build();
     }
 

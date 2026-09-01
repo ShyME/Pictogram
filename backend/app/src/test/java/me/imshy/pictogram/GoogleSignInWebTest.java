@@ -35,7 +35,9 @@ import org.springframework.test.context.DynamicPropertySource;
  * The Google OIDC sign-in wired end to end: {@code mock-oauth2-server} stands in for Google
  * (ADR-0004), the browser's redirect dance is driven by a redirect-following HTTP client,
  * and the resulting refresh cookie is exchanged for an access token the resource server
- * accepts. Replaying the spent cookie ends the session.
+ * accepts. Replaying the spent cookie ends the session. The failure paths (#27): an
+ * unusable Google account and a failed handshake land on the SPA's sign-in-error route,
+ * and a successful sign-in tears down the handshake servlet session.
  */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -138,6 +140,87 @@ class GoogleSignInWebTest {
         assertThat(followUp).isEqualTo(200);
     }
 
+    @Test
+    void anUnverifiedGoogleEmailEndsAtTheSignInErrorRouteWithNoSession() throws Exception {
+        GOOGLE.enqueueCallback(googleUserWithClaims("google-subject-web-unverified",
+                Map.of("email", "unverified@example.com", "email_verified", false)));
+        var cookies = new CookieManager();
+
+        HttpResponse<Void> landing = browser(cookies).send(
+                HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
+                HttpResponse.BodyHandlers.discarding());
+
+        assertThat(landing.uri().getPath()).isEqualTo("/login");
+        assertThat(landing.uri().getQuery()).isEqualTo("error=email-unverified");
+        assertThat(refreshCookie(cookies)).isEmpty();
+    }
+
+    @Test
+    void aGoogleResponseWithNoEmailClaimEndsAtTheSignInErrorRoute() throws Exception {
+        GOOGLE.enqueueCallback(googleUserWithClaims("google-subject-web-no-email",
+                Map.of("email_verified", true)));
+        var cookies = new CookieManager();
+
+        HttpResponse<Void> landing = browser(cookies).send(
+                HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
+                HttpResponse.BodyHandlers.discarding());
+
+        assertThat(landing.uri().getPath()).isEqualTo("/login");
+        assertThat(landing.uri().getQuery()).isEqualTo("error=email-missing");
+        assertThat(refreshCookie(cookies)).isEmpty();
+    }
+
+    @Test
+    void aFailedGoogleHandshakeEndsAtTheSignInErrorRoute() throws Exception {
+        HttpResponse<Void> landing = browser(new CookieManager()).send(
+                HttpRequest.newBuilder(uri("/login/oauth2/code/google?error=access_denied&state=nonexistent"))
+                        .GET().build(),
+                HttpResponse.BodyHandlers.discarding());
+
+        assertThat(landing.uri().getPath()).isEqualTo("/login");
+        assertThat(landing.uri().getQuery()).isEqualTo("error=sign-in-failed");
+    }
+
+    @Test
+    void aSuccessfulSignInInvalidatesTheHandshakeServletSession() throws Exception {
+        GOOGLE.enqueueCallback(googleUser("google-subject-web-session", "hedy@example.com"));
+        var cookies = new CookieManager();
+
+        String handshakeSession = signInCapturingHandshakeSession(cookies);
+        assertThat(refreshCookie(cookies)).isPresent();
+
+        HttpResponse<Void> withStaleSession = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(HttpRequest.newBuilder(uri("/oauth2/probe"))
+                        .header("Cookie", "JSESSIONID=" + handshakeSession)
+                        .GET().build(),
+                        HttpResponse.BodyHandlers.discarding());
+
+        // A live authenticated session would carry through to a 404 (no such route); the
+        // invalidated one is anonymous and gets bounced back to re-authenticate.
+        assertThat(withStaleSession.statusCode()).isEqualTo(302);
+    }
+
+    private String signInCapturingHandshakeSession(CookieManager cookies) throws Exception {
+        HttpResponse<Void> authRequest = HttpClient.newBuilder()
+                .cookieHandler(cookies)
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
+                        HttpResponse.BodyHandlers.discarding());
+        String jsessionid = cookies.getCookieStore().getCookies().stream()
+                .filter(cookie -> "JSESSIONID".equals(cookie.getName()))
+                .map(HttpCookie::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the OIDC handshake set no JSESSIONID"));
+        browser(cookies).send(
+                HttpRequest.newBuilder(URI.create(authRequest.headers().firstValue("Location").orElseThrow()))
+                        .GET().build(),
+                HttpResponse.BodyHandlers.discarding());
+        return jsessionid;
+    }
+
     private static <T> HttpResponse<T> await(Future<HttpResponse<T>> future) {
         try {
             return future.get();
@@ -166,8 +249,12 @@ class GoogleSignInWebTest {
     }
 
     private static DefaultOAuth2TokenCallback googleUser(String subject, String email) {
+        return googleUserWithClaims(subject, Map.of("email", email, "email_verified", true));
+    }
+
+    private static DefaultOAuth2TokenCallback googleUserWithClaims(String subject, Map<String, Object> claims) {
         return new DefaultOAuth2TokenCallback(ISSUER_ID, subject, JOSEObjectType.JWT.getType(),
-                List.of(CLIENT_ID), Map.of("email", email, "email_verified", true), 3600L);
+                List.of(CLIENT_ID), claims, 3600L);
     }
 
     private HttpClient browser(CookieManager cookies) {

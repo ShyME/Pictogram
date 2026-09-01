@@ -74,6 +74,11 @@ class AuthController {
                 .body(new AccessTokenResponse(session.accessToken(), expiresIn));
     }
 
+    /**
+     * Ends the session: revokes the refresh-token family and clears the cookie. This chain
+     * is stateless and has no servlet session to invalidate — the OIDC handshake session is
+     * torn down at sign-in by {@code OidcSignInSuccessHandler}, not here (#27).
+     */
     @ApiResponse(responseCode = "204", description = "The session is ended and the refresh cookie cleared.")
     @PostMapping("/logout")
     ResponseEntity<Void> logout(HttpServletRequest request) {
