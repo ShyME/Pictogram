@@ -3,9 +3,11 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 plugins {
     `java-library`
     id("io.spring.dependency-management")
+    id("pictogram.code-quality-conventions")
 }
 
 group = "me.imshy"
+
 version = "0.1.0-SNAPSHOT"
 
 base {

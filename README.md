@@ -132,4 +132,4 @@ Formatting is machine-enforced — run `task format` before you push. IDE setup 
 ## Task reference
 
 `task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,
-`frontend`, `test`, `logs`, `clean`.
+`frontend`, `format`, `test`, `logs`, `clean`.
