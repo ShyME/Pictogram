@@ -2,8 +2,10 @@ import { useId, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useLoaderData, useNavigate } from "react-router";
 import { submitProfileEdit } from "../api/profile-api";
+import type { Profile } from "../model/profile";
 import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from "../model/username";
-import type { EditProfileData } from "./edit-profile-loader";
+
+export type EditProfileData = { profile: Profile };
 
 type ServerError = "username-shape" | "username-taken" | "details";
 

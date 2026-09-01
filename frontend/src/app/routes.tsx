@@ -1,18 +1,12 @@
 import { createBrowserRouter } from "react-router";
 import { LoginPage, installApiAuth } from "@features/auth";
-import {
-  EditProfilePage,
-  OnboardingPage,
-  ProfilePage,
-  editProfileLoader,
-  profileLoader,
-} from "@features/profile";
+import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from "@features/profile";
 import { FeedPage } from "@features/feed";
 import { OwnPostGrid } from "@features/post";
 import { AppLayout } from "./AppLayout";
 import { NewPostRoute } from "./NewPostRoute";
 import { RouteError } from "./RouteError";
-import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from "./guards";
+import { editProfileLoader, loginLoader, newPostLoader, onboardingLoader, rootLoader } from "./guards";
 
 // Register the access-token / silent-refresh middleware before any loader runs.
 installApiAuth();
