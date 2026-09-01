@@ -11,19 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-/**
- * The single place the Google OIDC handshake's outcome is turned into an HTTP response.
- * Before this, "what happens when the handshake ends" was re-implemented across three Spring
- * hooks that had already drifted apart — the success handler, the chain error filter, and
- * the failure handler.
- *
- * <p>Every terminal path ends the servlet session Spring created to carry the authorization
- * request across the redirect to Google and back: {@code AbstractAuthenticationProcessingFilter}
- * has persisted the OIDC {@code SecurityContext} into it, the sign-in chain has no stateless
- * logout to fall back on, so a partially authenticated {@code JSESSIONID} would linger until
- * it timed out (#27). Only {@link #succeeded} writes the refresh cookie, and it is the only
- * writer of that cookie on this chain.
- */
 class SignInCompletion {
 
     private final AuthProperties properties;
@@ -49,11 +36,6 @@ class SignInCompletion {
         response.sendRedirect(properties.signInErrorRedirect());
     }
 
-    /**
-     * Exposed for {@link OidcChainErrorFilter}'s backstop: when an unhandled throwable is
-     * about to be rendered as problem+json rather than a redirect, the handshake session
-     * still has to be torn down.
-     */
     void endHandshakeSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {

@@ -72,7 +72,6 @@ export function OnboardingPage() {
             value={username}
             onChange={(event) => {
               setUsername(event.target.value);
-              // a fresh handle deserves a fresh verdict — drop the last submit's error
               if (serverError) setServerError(null);
             }}
             autoComplete="off"

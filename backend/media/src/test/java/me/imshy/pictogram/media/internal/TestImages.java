@@ -10,7 +10,6 @@ import org.apache.commons.imaging.formats.tiff.constants.GpsTagConstants;
 import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 
-/** Synthetic uploads for the media tests: plain rasters, and rasters carrying EXIF/GPS. */
 final class TestImages {
 
     private TestImages() {
@@ -24,15 +23,10 @@ final class TestImages {
         return encode(solid(width, height), "png");
     }
 
-    /** A JPEG with camera EXIF and a GPS position — the metadata the pipeline must strip. */
     static byte[] jpegWithLocation(int width, int height) throws Exception {
         return withExif(jpeg(width, height), 1, true);
     }
 
-    /**
-     * A raster with a dark block in its top-left, tagged with the given EXIF orientation
-     * (1–8). Uprighting orientation 6 must move the block to the top-right.
-     */
     static byte[] markedTopLeft(int width, int height, int orientation) throws Exception {
         BufferedImage image = solid(width, height);
         var g = image.createGraphics();
@@ -66,7 +60,7 @@ final class TestImages {
         root.add(TiffTagConstants.TIFF_TAG_ORIENTATION, (short) orientation);
         outputSet.getOrCreateExifDirectory().add(TiffTagConstants.TIFF_TAG_SOFTWARE, "Pictogram test camera");
         if (withGps) {
-            outputSet.setGpsInDegrees(-0.1257, 51.5085); // Trafalgar Square
+            outputSet.setGpsInDegrees(-0.1257, 51.5085);
             outputSet.getGpsDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE, RationalNumber.valueOf(11));
         }
         var out = new ByteArrayOutputStream();

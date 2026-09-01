@@ -4,7 +4,6 @@ import me.imshy.pictogram.shared.http.ApiException;
 import me.imshy.pictogram.shared.http.ProblemType;
 import org.springframework.http.HttpStatus;
 
-/** The caption is longer than the {@link Caption#MAX_LENGTH}-character limit. */
 public final class CaptionTooLongException extends ApiException {
 
     static final ProblemType TYPE = new ProblemType("post-caption-too-long", "Caption is too long");

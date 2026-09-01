@@ -11,15 +11,6 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * The committed {@code openapi.json} must describe the SPA-facing auth and profile endpoints
- * as they actually behave — the real status codes, the {@code Location} header, and the
- * Problem Detail error bodies — so the generated TypeScript client carries them instead of
- * the frontend hand-declaring response shapes and branching on raw status numbers (#35).
- *
- * <p>Reads the file directly rather than booting the app: {@link OpenApiContractTest}
- * already guarantees the file equals what the running app publishes.
- */
 class OpenApiDocumentationTest {
 
     private static JsonNode spec;

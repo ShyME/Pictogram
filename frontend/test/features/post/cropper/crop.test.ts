@@ -20,7 +20,7 @@ test("initialCrop is the largest centred square that fits", () => {
 test("clampCrop keeps the window inside the image", () => {
   const clamped = clampCrop({ x: -500, y: 999, size: 1200 }, landscape);
   expect(clamped.x).toBe(0);
-  expect(clamped.y).toBe(0); // 1200-tall image, 1200 window: only y=0 fits
+  expect(clamped.y).toBe(0);
 });
 
 test("clampCrop refuses to zoom past the frame or past MAX_ZOOM", () => {
@@ -32,7 +32,7 @@ test("clampCrop refuses to zoom past the frame or past MAX_ZOOM", () => {
 });
 
 test("zoomCrop zooms around the window centre", () => {
-  const start = initialCrop(landscape); // centre (800, 600), size 1200
+  const start = initialCrop(landscape);
   const zoomed = zoomCrop(start, 2, landscape);
 
   expect(zoomed.size).toBe(600);
@@ -42,12 +42,10 @@ test("zoomCrop zooms around the window centre", () => {
 });
 
 test("panCrop converts a screen drag into image pixels and re-clamps", () => {
-  const start = zoomCrop(initialCrop(landscape), 2, landscape); // size 600, x 500, y 300
-  // drag 30 screen px right over a 300px viewport -> 60 image px; the window moves left
+  const start = zoomCrop(initialCrop(landscape), 2, landscape);
   const panned = panCrop(start, 30, 0, 300, landscape);
   expect(panned.x).toBe(440);
 
-  // a huge drag can't push the window off the image
   expect(panCrop(start, 100000, 0, 300, landscape).x).toBe(0);
   expect(panCrop(start, -100000, 0, 300, landscape).x).toBe(landscape.width - 600);
 });

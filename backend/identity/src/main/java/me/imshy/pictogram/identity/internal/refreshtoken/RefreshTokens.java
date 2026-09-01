@@ -13,31 +13,15 @@ public interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
 
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-    /**
-     * Marks the row consumed only if it is still live, and reports whether it did (1) or
-     * another concurrent rotation got there first (0). This one statement is what makes
-     * rotation race-safe — no double-spend, no lost reuse detection.
-     */
     @Modifying
     @Query("update RefreshToken t set t.consumedAt = :when "
             + "where t.id = :id and t.consumedAt is null and t.revokedAt is null")
     int consumeIfLive(@Param("id") UUID id, @Param("when") Instant when);
 
-    /**
-     * Re-reads just the spent timestamps after a lost {@link #consumeIfLive} race. A constructor
-     * projection, so it hits the database rather than returning the caller's now-stale
-     * first-level-cache copy of the row.
-     */
     @Query("select new me.imshy.pictogram.identity.internal.refreshtoken.SpentState(t.consumedAt, t.revokedAt) "
             + "from RefreshToken t where t.id = :id")
     Optional<SpentState> spentStateById(@Param("id") UUID id);
 
-    /**
-     * Revokes every still-live token in the family. {@link RefreshTokenService} calls this from
-     * its own {@code TransactionTemplate} once the rotation transaction has committed, so it runs
-     * on a clean connection holding no locks and its write survives the reuse exception thrown
-     * next.
-     */
     @Transactional
     @Modifying
     @Query("update RefreshToken t set t.revokedAt = :when where t.familyId = :familyId and t.revokedAt is null")

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 import java.util.UUID;
 
-/** A user, referenced across modules by value only — never a cross-schema key (ADR-0002). */
 public record UserId(UUID value) {
 
     public UserId {

@@ -15,14 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * The paged reads behind the follower / following list screens (#57): who follows a user,
- * and who a user follows — newest-relationship-first, keyset-paged so an edge added or
- * removed between page fetches causes neither duplicates nor skips, including when several
- * edges share a {@code followedAt} and only the id breaks the tie. These live in
- * {@code follow.internal}: the web layer needs them, {@code feed} does not, so
- * {@link me.imshy.pictogram.follow.FollowGraph} stays as narrow as #17 left it.
- */
 class FollowListTest extends FollowModuleIntegrationTest {
 
     @Autowired

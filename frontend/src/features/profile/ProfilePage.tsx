@@ -32,18 +32,6 @@ function NotFound({ username }: { username: string }) {
   );
 }
 
-/**
- * `renderGrid`, `renderFollowButton` and `renderFollowCounts` are supplied by the app
- * layer, which composes the `post` and `follow` feature slices this one can't import.
- * `renderGrid` is the real post grid, shown on every profile (a profile is shareable by
- * link — spec story 18); its second argument is whether the viewer owns it, which turns on
- * the delete controls. `renderFollowButton` is the follow / unfollow control, shown only
- * when the loader says a signed-in viewer is looking at someone else (`viewerCanFollow`);
- * a signed-out visitor gets a sign-in link in its place. `renderFollowCounts` is the live
- * count row (whose numbers link to the follower / following list screens — #57), shown on
- * every profile. Each falls back to a static placeholder when not supplied (a bare
- * `<ProfilePage />` still renders).
- */
 export function ProfilePage({
   renderGrid,
   renderFollowButton,
@@ -82,7 +70,6 @@ export function ProfilePage({
                   Edit profile
                 </Link>
               ) : !viewerCanFollow ? (
-                // A signed-out visitor can view the profile but needs an account to follow.
                 <Link to="/login" className={followButtonClass}>
                   Follow
                 </Link>
@@ -126,7 +113,6 @@ export function ProfilePage({
           {renderGrid ? (
             renderGrid(profile.userId, isOwnProfile)
           ) : (
-            // Fallback for a bare <ProfilePage /> (tests); the app always supplies the grid.
             <>
               <div className="grid grid-cols-3 gap-1">
                 {Array.from({ length: 9 }, (_, i) => (

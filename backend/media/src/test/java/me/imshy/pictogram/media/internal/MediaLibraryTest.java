@@ -13,12 +13,6 @@ import org.apache.commons.imaging.Imaging;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * The ticket's broad test (#13): a non-square photo carrying EXIF/GPS goes in, and what
- * comes back out of storage is the canonical square JPEG plus a square thumbnail with the
- * metadata gone — end to end through the real re-encode, MinIO, and Postgres. Bytes that
- * aren't an image are refused.
- */
 class MediaLibraryTest extends MediaModuleIntegrationTest {
 
     @Autowired

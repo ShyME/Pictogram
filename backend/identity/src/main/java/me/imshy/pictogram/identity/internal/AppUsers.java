@@ -12,11 +12,6 @@ interface AppUsers extends CrudRepository<AppUser, UUID> {
 
     Optional<AppUser> findByProviderAndSubject(String provider, String subject);
 
-    /**
-     * Inserts a first-time user, or does nothing if another concurrent sign-in for the same
-     * {@code (provider, subject)} already did. One statement, so the {@code unique} constraint
-     * is never actually hit. Returns the number of rows inserted (1 or 0).
-     */
     @Modifying
     @Query(value = """
             insert into identity.app_user (id, provider, subject, email, registered_at)

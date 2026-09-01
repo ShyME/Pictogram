@@ -7,12 +7,6 @@ import java.util.stream.StreamSupport;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.stereotype.Service;
 
-/**
- * The read side of {@code profile}: look a public profile up by username, or resolve a set
- * of {@link UserId}s to their profiles in one query. The client composes feed cards and
- * profile pages from these (ADR-0005, no BFF), so the batch must never fan out into an
- * id-at-a-time loop; an id with no profile is simply absent from the result.
- */
 @Service
 public class ProfileDirectory {
 
@@ -23,8 +17,6 @@ public class ProfileDirectory {
     }
 
     public ProfileView byUsername(String username) {
-        // Handles are stored lowercase (the shape rule is ^[a-z0-9_]{3,20}$), so a link
-        // with different casing still resolves rather than 404ing.
         return profiles.findByUsername(username.toLowerCase(Locale.ROOT))
                 .map(ProfileView::of)
                 .orElseThrow(ProfileNotFoundException::new);

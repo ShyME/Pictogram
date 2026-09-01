@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import org.junit.jupiter.api.Test;
 
-/** The optional display-name and bio value objects: blank handling, length in code points. */
 class ProfileDetailsTest {
 
     @Test

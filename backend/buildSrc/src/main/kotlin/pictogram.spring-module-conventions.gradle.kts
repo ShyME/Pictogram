@@ -1,5 +1,3 @@
-// java-library-conventions + the Modulith runtime, JPA, and the :test-support harness.
-
 plugins {
     id("pictogram.java-library-conventions")
 }

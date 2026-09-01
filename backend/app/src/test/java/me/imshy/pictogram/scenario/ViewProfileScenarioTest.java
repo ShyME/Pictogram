@@ -4,12 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * The ticket's broad scenario: a user opens another user's profile by username and sees
- * their details; a username nobody holds comes back empty so the client can show a clear
- * not-found page. Written once against {@link PictogramApi}; green here through
- * {@link InProcessDriver}.
- */
 class ViewProfileScenarioTest extends ScenarioTest {
 
     @Test

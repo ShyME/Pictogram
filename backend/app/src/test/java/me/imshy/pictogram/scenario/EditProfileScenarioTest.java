@@ -4,11 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * The ticket's broad scenario: a user renames themselves; the old handle becomes reusable
- * by another user, and the old {@code /u/&lt;old&gt;} link stops resolving. Written once
- * against {@link PictogramApi}; green here through {@link InProcessDriver}.
- */
 class EditProfileScenarioTest extends ScenarioTest {
 
     @Test
@@ -21,9 +16,7 @@ class EditProfileScenarioTest extends ScenarioTest {
         assertThat(renamed.displayName()).isEqualTo("Ada Lovelace");
         assertThat(renamed.bio()).isEqualTo("Countess of Lovelace");
 
-        // The old link is dead...
         assertThat(ada.viewProfile("ada")).isEmpty();
-        // ...and a second user can take the freed handle.
         var bob = pictogram.registerViaGoogle("bob@example.com");
         bob.completeOnboarding("ada", "Bob", null);
 

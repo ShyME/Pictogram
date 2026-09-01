@@ -8,12 +8,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 
-/**
- * Takes over when the Google OIDC handshake itself fails — the user declined consent, the
- * state didn't match, the token exchange errored. Delegates to {@link SignInCompletion},
- * which lands the browser on the front-end sign-in-error route and — like every other
- * terminal outcome of the handshake — ends the handshake servlet session (#27).
- */
 class SignInFailureHandler implements AuthenticationFailureHandler {
 
     private static final Log log = LogFactory.getLog(SignInFailureHandler.class);

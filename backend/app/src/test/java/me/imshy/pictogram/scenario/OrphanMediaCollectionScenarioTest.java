@@ -12,14 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-/**
- * The orphan sweep end to end (#16) against the real {@code post → media} adapter: a
- * never-posted upload and the image of a deleted post are both gone after a sweep, while a
- * still-published post keeps its image. The grace period is pinned to zero here so the test
- * needs no clock control — {@code OrphanCollectorTest} covers the time axis. The sweep has
- * no HTTP surface (it is cron-triggered), so the scenario runs it through the published
- * {@link OrphanCollection}.
- */
 class OrphanMediaCollectionScenarioTest extends ScenarioTest {
 
     @Autowired

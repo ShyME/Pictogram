@@ -22,10 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * The session endpoints the SPA drives. Both authenticate purely by the refresh cookie, so
- * they sit outside the resource-server filter chain.
- */
 @RestController
 @RequestMapping("/api/auth")
 class AuthController {
@@ -48,7 +44,6 @@ class AuthController {
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long expiresInSeconds) {
     }
 
-    /** Rotates the refresh cookie and returns a fresh access token; reuse ends the session. */
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "A fresh access token; the refresh cookie is rotated.",
                 content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))),
@@ -74,11 +69,6 @@ class AuthController {
                 .body(new AccessTokenResponse(session.accessToken(), expiresIn));
     }
 
-    /**
-     * Ends the session: revokes the refresh-token family and clears the cookie. This chain
-     * is stateless and has no servlet session to invalidate — the OIDC handshake session is
-     * torn down at sign-in by {@code OidcSignInSuccessHandler}, not here (#27).
-     */
     @ApiResponse(responseCode = "204", description = "The session is ended and the refresh cookie cleared.")
     @PostMapping("/logout")
     ResponseEntity<Void> logout(HttpServletRequest request) {

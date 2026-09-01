@@ -31,14 +31,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-/**
- * The Google OIDC sign-in wired end to end: {@code mock-oauth2-server} stands in for Google
- * (ADR-0004), the browser's redirect dance is driven by a redirect-following HTTP client,
- * and the resulting refresh cookie is exchanged for an access token the resource server
- * accepts. Replaying the spent cookie ends the session. The failure paths (#27): an
- * unusable Google account and a failed handshake land on the SPA's sign-in-error route,
- * and a successful sign-in tears down the handshake servlet session.
- */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class GoogleSignInWebTest {
@@ -128,8 +120,6 @@ class GoogleSignInWebTest {
         var responses = attempts.stream().map(GoogleSignInWebTest::await).toList();
         assertThat(responses).map(HttpResponse::statusCode).containsExactlyInAnyOrder(200, 401);
 
-        // the racer that won rotated the cookie; that new cookie must still work — the benign
-        // double-submit must not have revoked the family (#26)
         String rotated = responses.stream()
                 .filter(response -> response.statusCode() == 200)
                 .flatMap(response -> rotatedRefreshCookieFrom(response).stream())
@@ -197,8 +187,6 @@ class GoogleSignInWebTest {
                         .GET().build(),
                         HttpResponse.BodyHandlers.discarding());
 
-        // A live authenticated session would carry through to a 404 (no such route); the
-        // invalidated one is anonymous and gets bounced back to re-authenticate.
         assertThat(withStaleSession.statusCode()).isEqualTo(302);
     }
 
@@ -238,8 +226,6 @@ class GoogleSignInWebTest {
     }
 
     private void signInThroughGoogle(CookieManager cookies) throws Exception {
-        // The redirect chain ends at the post-login page (the SPA shell) — what matters here
-        // is the refresh cookie the callback set along the way.
         browser(cookies).send(
                 HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
                 HttpResponse.BodyHandlers.discarding());

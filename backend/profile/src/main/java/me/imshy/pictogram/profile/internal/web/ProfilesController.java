@@ -29,13 +29,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * The profile endpoints. Three the SPA drives for the caller's own profile — create it by
- * choosing a username, read it (404 until they have onboarded), edit its display name, bio
- * or username — and two public reads the client composes screens from (ADR-0005): a lookup
- * by username for the {@code /u/<username>} page, and a batch lookup by {@link UserId} set
- * so a feed of cards resolves its authors in one call rather than N.
- */
 @RestController
 @RequestMapping("/api/profiles")
 class ProfilesController {

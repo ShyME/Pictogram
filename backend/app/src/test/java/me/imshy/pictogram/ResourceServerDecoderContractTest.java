@@ -30,18 +30,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * A stray {@code spring.security.oauth2.resourceserver.jwt.*} property must not knock out
- * identity's {@link JwtDecoder} (ADR-0004, #28). {@code issuer-uri} and {@code jwk-set-uri}
- * arm Spring Boot's competing decoder through different conditions, so each is exercised in
- * its own context: the app must still start and identity's decoder must be the one the
- * {@code /api/**} resource server verifies with.
- */
 class ResourceServerDecoderContractTest {
 
     private static final String ISSUER = "pictogram";
     private static final ECKey SIGNING_KEY = generateSigningKey();
-    // An arbitrary value; enough for Boot to arm a competing JwtDecoder, never reached.
     private static final String ARBITRARY_URI = "https://accounts.example.test/not-pictogram";
 
     @SpringBootTest(classes = PictogramApplication.class)
@@ -97,7 +89,6 @@ class ResourceServerDecoderContractTest {
         void theApiChainAcceptsAPictogramTokenAndRejectsEverythingElse() throws Exception {
             String token = mintPictogramAccessToken(UUID.randomUUID());
 
-            // Accepted: authenticated but not onboarded, so the endpoint answers 404 — not 401.
             mvc.perform(get("/api/profiles/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                     .andExpect(status().isNotFound());
 

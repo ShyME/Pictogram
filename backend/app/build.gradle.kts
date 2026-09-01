@@ -42,14 +42,12 @@ springBoot {
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    // Stable name so the Dockerfile's COPY doesn't depend on the version string.
     archiveFileName = "pictogram.jar"
 }
 
 val openApiSpecFile = rootProject.layout.projectDirectory.file("openapi.json")
 
 tasks.withType<Test>().configureEach {
-    // Absolute so the OpenAPI contract check finds the file regardless of the test's cwd.
     systemProperty("pictogram.openapi.file", openApiSpecFile.asFile.absolutePath)
 }
 
@@ -64,7 +62,6 @@ tasks.register<Test>("generateOpenApiSpec") {
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    // Run from the repo root so compose.dev.yaml (one level up from the Gradle build) resolves.
     workingDir = rootProject.projectDir.parentFile
     systemProperty("spring.profiles.active", "local")
 }

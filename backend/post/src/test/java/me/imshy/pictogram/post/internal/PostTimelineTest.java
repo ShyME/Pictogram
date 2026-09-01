@@ -18,11 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * The grid read from the ticket: an author's posts newest-first, keyset-paged so posts
- * published between page fetches cause neither duplicates nor skips — including when several
- * posts share a {@code publishedAt} and only the id breaks the tie.
- */
 class PostTimelineTest extends PostModuleIntegrationTest {
 
     @Autowired
@@ -61,7 +56,6 @@ class PostTimelineTest extends PostModuleIntegrationTest {
 
         List<PostId> seen = drain(author, 2);
 
-        // newest-first is the reverse of publication order
         assertThat(seen).containsExactly(
                 published.get(4), published.get(3), published.get(2), published.get(1), published.get(0));
     }
@@ -69,7 +63,6 @@ class PostTimelineTest extends PostModuleIntegrationTest {
     @Test
     void breaksATieOnPublishedAtWithTheIdSoPagingStaysStable() {
         var author = UserId.random();
-        // three posts at the very same instant — only the id can order them
         publishAt(author, "2026-09-01T10:00:00Z");
         publishAt(author, "2026-09-01T10:00:00Z");
         publishAt(author, "2026-09-01T10:00:00Z");
@@ -123,7 +116,6 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         return page.items().stream().map(PostView::postId).toList();
     }
 
-    /** Walks every page of {@code author}'s grid at the given size, returning post ids in order. */
     private List<PostId> drain(UserId author, int pageSize) {
         List<PostId> ids = new ArrayList<>();
         Cursor cursor = null;

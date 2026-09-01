@@ -4,10 +4,6 @@ import javax.sql.DataSource;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/**
- * Truncates every application table. Used for test isolation instead of transaction
- * rollback, which does not carry across Spring Modulith's async event listeners (ADR-0007).
- */
 public final class DatabaseCleaner {
 
     private final JdbcTemplate jdbc;

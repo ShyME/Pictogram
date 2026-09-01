@@ -8,9 +8,6 @@ import { NewPostPage } from "./pages/new-post.page";
 
 const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
 
-// The ticket's broad journey (#15), against `task up`: a signed-in author publishes a post,
-// then deletes it from their profile grid after confirming the permanent delete. The post
-// is gone from the grid on the next load.
 test("delete a post: confirm the permanent delete and it leaves the grid", async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
@@ -45,7 +42,6 @@ test("delete a post: confirm the permanent delete and it leaves the grid", async
   await expect(profile.postByCaption(caption)).toHaveCount(0);
   await expect(profile.emptyGrid).toBeVisible();
 
-  // Still gone after a fresh load.
   await page.reload();
   await expect(profile.postByCaption(caption)).toHaveCount(0);
 });

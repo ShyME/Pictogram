@@ -14,14 +14,6 @@ import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.data.domain.Persistable;
 
-/**
- * One published post: an {@link #author}, the {@link MediaId} of the image, an optional
- * {@link Caption}, and the instant it was published. Immutable after {@link #publish} —
- * there are no mutators; the only later change is the row being deleted (post/CONTEXT.md).
- *
- * <p>The primary key is assigned, so {@link Persistable#isNew()} is tracked explicitly:
- * {@code save()} must {@code persist} a fresh row, never {@code merge}.
- */
 @Entity
 @Table(schema = "post", name = "post")
 class Post implements Persistable<UUID> {

@@ -5,16 +5,6 @@ import { postsByAuthorKey } from "./query-keys";
 import { thumbnailUrl } from "./post";
 import type { Post } from "./post";
 
-/**
- * An author's post grid on their profile page — newest first, "Load more" paging on the
- * keyset cursor (infinite scroll is the feed's concern, #18). The underlying read is public
- * (a profile is shareable by link — spec story 18), so this renders on anyone's profile.
- *
- * `manageable` turns on the owner-only affordances: a per-cell "Delete" control that opens a
- * confirmation first, since deletion is permanent (#15). It is off by default — a visitor
- * looking at someone else's grid sees the posts and nothing else. A just-published post
- * appears at the top because the composer invalidates this query before navigating here.
- */
 export function PostGrid({
   authorId,
   manageable = false,

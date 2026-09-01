@@ -5,8 +5,6 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import boundaries from "eslint-plugin-boundaries";
 
-// `boundaries/element-types` below keeps feature slices isolated the way the
-// backend context map isolates modules: one feature may not import another.
 export default tseslint.config(
   { ignores: ["dist", "coverage", "node_modules", "playwright-report", "test-results"] },
   {
@@ -22,9 +20,6 @@ export default tseslint.config(
       boundaries,
     },
     settings: {
-      // test/ mirrors src/ 1:1 (see test/structure.test.ts), so every element
-      // below spans both roots and test files inherit the same boundary rules
-      // as the production code they exercise.
       "boundaries/include": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"],
       "boundaries/ignore": ["src/**/*.d.ts"],
       "boundaries/elements": [
@@ -87,7 +82,6 @@ export default tseslint.config(
     settings: { "boundaries/include": [] },
   },
   {
-    // Playwright blackbox journeys run in Node against the deployed app, not a feature slice.
     files: ["e2e/**/*.ts", "playwright.config.ts"],
     languageOptions: { globals: globals.node },
     settings: { "boundaries/include": [] },

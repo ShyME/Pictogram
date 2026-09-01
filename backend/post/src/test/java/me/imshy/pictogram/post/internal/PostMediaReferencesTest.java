@@ -11,11 +11,6 @@ import me.imshy.pictogram.shared.UserId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * post's adapter for media's {@link PostReferences} port: of the media ids handed in, it
- * reports back exactly those a still-published post points at. A deleted post's media is not
- * reported — that is what makes it collectable (#16).
- */
 class PostMediaReferencesTest extends PostModuleIntegrationTest {
 
     @Autowired

@@ -19,13 +19,13 @@ class UsernameTest {
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {
-            "ad",                     // too short
-            "twenty_one_characters",  // too long
-            "Ada",                    // uppercase
-            "ada lovelace",           // space
-            "ada-lovelace",           // hyphen
-            "ada.lovelace",           // dot
-            "adaünicode",             // non-ascii
+            "ad",
+            "twenty_one_characters",
+            "Ada",
+            "ada lovelace",
+            "ada-lovelace",
+            "ada.lovelace",
+            "adaünicode",
             "",
             "   "})
     void rejectsAHandleThatDoesNotMatchTheShapeRule(String candidate) {

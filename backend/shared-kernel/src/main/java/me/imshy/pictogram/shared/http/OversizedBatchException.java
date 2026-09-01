@@ -2,7 +2,6 @@ package me.imshy.pictogram.shared.http;
 
 import org.springframework.http.HttpStatus;
 
-/** A {@code ?ids=} batch lookup asking for more ids than {@link BatchIds#MAX}. */
 public class OversizedBatchException extends ApiException {
 
     public OversizedBatchException(int max, int requested) {

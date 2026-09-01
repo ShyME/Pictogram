@@ -14,7 +14,6 @@ vi.mock("react-router", () => ({
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
-// The real cropper draws to a canvas jsdom can't run; stand in a handle that yields bytes.
 vi.mock("@features/post/cropper/SquareCropper", () => ({
   SquareCropper: ({ ref }: { ref: Ref<CropperHandle> }) => {
     useImperativeHandle(ref, () => ({

@@ -31,18 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * The post endpoints: a signed-in author publishes an uploaded image with an optional
- * caption, and anyone can page an author's timeline newest-first. The timeline is a public
- * read — a profile page is shareable by link (spec story 18) — while publishing needs a
- * token and always publishes as the caller. The pagination cursor is opaque and comes
- * straight from the previous page, so a malformed one is a client bug, not a documented
- * branch (like the feed's 401): it is left to the shared Problem Detail handler.
- *
- * <p>Deleting is authenticated and author-only: a delete of someone else's post is a 403,
- * and once a post is gone it vanishes from the author's grid and every feed on the next
- * read (the feed assembles from post fan-out-on-read).
- */
 @RestController
 @RequestMapping("/api/posts")
 class PostsController {
@@ -76,8 +64,6 @@ class PostsController {
     })
     @PostMapping
     ResponseEntity<PostView> publish(@CurrentUser UserId author, @RequestBody PublishPostRequest request) {
-        // A malformed mediaId string is already a 400 from Jackson; a request with no mediaId
-        // at all names no media to publish, which is the same failure as an unknown one.
         MediaId mediaId = Optional.ofNullable(request.mediaId()).map(MediaId::new)
                 .orElseThrow(UnusableMediaException::new);
         PostView post = publishing.publish(author, mediaId, request.caption());

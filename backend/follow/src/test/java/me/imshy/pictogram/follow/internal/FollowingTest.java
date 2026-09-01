@@ -11,13 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 
-/**
- * The follow and unfollow commands from the ticket: a viewer follows another user and the
- * graph gains one edge, unfollows and it loses it, and either command is a harmless no-op
- * when the state is already what it asks for. Every real state change announces
- * {@link UserFollowed} / {@link UserUnfollowed}; a no-op announces nothing. Following
- * yourself is turned away.
- */
 class FollowingTest extends FollowModuleIntegrationTest {
 
     @Autowired

@@ -89,7 +89,6 @@ test("fetchFollowListPage composes the list with a profile batch and a relations
       return jsonResponse({ items: ["u-9", "u-3"], nextCursor: "CURSOR" });
     }
     if (url.pathname === "/api/profiles") {
-      // The batch endpoint may return them in any order.
       return jsonResponse([
         { userId: "u-3", username: "carol", displayName: "Carol" },
         { userId: "u-9", username: "ada", displayName: null },

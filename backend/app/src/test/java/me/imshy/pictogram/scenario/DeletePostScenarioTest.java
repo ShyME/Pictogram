@@ -9,14 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-/**
- * The ticket's broad scenario: an author deletes one of their posts and it vanishes from
- * every grid it was on — their own, and another viewer's read of it. (Its disappearance
- * from a follower's feed is the same assertion once the feed assembles from post
- * fan-out-on-read; the feed is a single empty page until #18, which should fold that
- * assertion in here.) A second scenario pins the rule that only the author may delete:
- * anyone else is turned away and the post stands.
- */
 class DeletePostScenarioTest extends ScenarioTest {
 
     @DynamicPropertySource

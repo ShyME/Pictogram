@@ -11,11 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 interface Posts extends CrudRepository<Post, UUID> {
 
-    /** Of {@code mediaIds}, the distinct ones some post still references — media's orphan check (#16). */
     @Query("select distinct p.mediaId from Post p where p.mediaId in :mediaIds")
     List<UUID> mediaIdsAmong(@Param("mediaIds") Collection<UUID> mediaIds);
 
-    /** The newest page of an author's posts — {@code publishedAt} descending, id as tiebreaker. */
     @Query("""
             select p from Post p
             where p.authorId = :author
@@ -23,7 +21,6 @@ interface Posts extends CrudRepository<Post, UUID> {
             """)
     List<Post> newestBy(@Param("author") UUID author, Limit limit);
 
-    /** The next page, strictly older than the {@code (publishedAt, id)} the cursor names. */
     @Query("""
             select p from Post p
             where p.authorId = :author

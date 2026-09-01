@@ -12,9 +12,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
 
-/**
- * The whole application boots against a real PostgreSQL and serves its health probes.
- */
 @SpringBootTest(
         classes = PictogramApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

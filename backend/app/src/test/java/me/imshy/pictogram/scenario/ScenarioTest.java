@@ -21,19 +21,11 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Base for a {@link PictogramApi} scenario run through {@link InProcessDriver} (ADR-0007):
- * the whole application on a random port, the singleton Testcontainers Postgres, and
- * {@code mock-oauth2-server} wired in as Google. Tagged {@code fast} — it runs every build.
- */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Tag("fast")
 public abstract class ScenarioTest {
 
-    // One per test JVM, started once and never stopped — reaped at shutdown, like
-    // SharedPostgres. A per-class @AfterAll shutdown would break the next scenario class
-    // that extends this base.
     protected static final MockOAuth2Server GOOGLE = new MockOAuth2Server();
 
     static {
@@ -61,11 +53,6 @@ public abstract class ScenarioTest {
         new DatabaseCleaner(dataSource).truncateAll();
     }
 
-    /**
-     * A 1200×800 solid-colour JPEG for the scenarios that publish a post — real bytes the
-     * media pipeline can decode and re-encode to the canonical square. Scenarios needing
-     * this also register {@code SharedMinio} via their own {@code @DynamicPropertySource}.
-     */
     protected static byte[] jpegPhoto() {
         try {
             var image = new BufferedImage(1200, 800, BufferedImage.TYPE_INT_RGB);

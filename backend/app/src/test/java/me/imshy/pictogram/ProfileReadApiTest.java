@@ -23,12 +23,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * The public profile reads through the real security chain: {@code GET /api/profiles/{username}}
- * is reachable without a token (a profile is shareable by link — spec story 18) and an
- * unknown username is a {@code profile-not-found} Problem Detail, while the {@code ?ids=}
- * batch and {@code GET /api/profiles/me} still need one — the carve-out is one segment wide.
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

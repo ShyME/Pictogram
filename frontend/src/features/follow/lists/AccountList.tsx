@@ -2,11 +2,6 @@ import { Link } from "react-router";
 import type { Account } from "../account";
 import { FollowButton } from "../FollowButton";
 
-/**
- * The rows of a follower / following list (#57): each account's avatar placeholder, name and
- * `@handle`, linking through to its profile, with a follow / unfollow control on every row
- * but the viewer's own.
- */
 export function AccountList({ accounts, viewerId }: { accounts: Account[]; viewerId: string }) {
   return (
     <ul className="divide-y divide-neutral-200">

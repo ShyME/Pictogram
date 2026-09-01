@@ -2,9 +2,6 @@
 import { readFile } from "node:fs/promises";
 import openapiTS, { astToString, COMMENT_HEADER } from "openapi-typescript";
 
-// The backend build fails when backend/openapi.json drifts from the running app; this is the
-// other half — schema.d.ts must be what `pnpm generate:api` produces from that file, so a
-// backend endpoint change can't leave the frontend types silently stale.
 test("schema.d.ts matches backend/openapi.json", async () => {
   const specPath = new URL("../../../../backend/openapi.json", import.meta.url);
   const spec = JSON.parse(await readFile(specPath, "utf8"));

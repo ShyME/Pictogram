@@ -7,14 +7,6 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 
-/**
- * A keyset cursor marking a position in a list ordered by an {@link Instant} descending with
- * the id as tiebreaker — the shape the feed, the profile grid and the follow lists share
- * (the instant is a publish time for posts, a follow time for the graph). Encodes to a
- * Base64URL token the client passes back verbatim and treats as opaque; {@link #decode}
- * raises {@link InvalidCursorException} on a token that is not well-formed. The token is
- * not signed — it reveals no more than a client could infer from the page it came from.
- */
 public record Cursor(Instant at, UUID id) {
 
     private static final char SEPARATOR = '|';

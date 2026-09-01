@@ -30,25 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * The follow endpoints, one relationship resource per followed user
- * ({@code /api/follows/{userId}}). A signed-in viewer {@code PUT}s to follow and
- * {@code DELETE}s to unfollow — both idempotent, both {@code 204}, both acting as the
- * caller; a self-follow is a {@code 422} Problem Detail. {@code GET /{userId}} is public: it
- * returns the followed user's follower / following counts (a profile page is shareable by
- * link — spec story 18) plus, for a signed-in viewer only, whether they follow that user.
- *
- * <p>{@code GET /{userId}/followers} and {@code /{userId}/following} are the paged list
- * screens (#57) — <em>authenticated</em>: the counts are public, but browsing the graph
- * itself is a signed-in activity, and the client resolves each id to a profile through the
- * (authenticated) {@code GET /api/profiles?ids=} anyway. The response is an {@link ApiPage}
- * of {@link UserId}s — {@code follow} owns no profile data (ADR-0002).
- *
- * <p>{@code GET /api/follows?ids=} is the batch relationship read (#59) those list screens
- * fire once per page — authenticated, like {@code GET /api/profiles?ids=} on the same id
- * set: it returns each user's counts and the viewer's follow flag so the reused follow
- * buttons render from a warm cache instead of one {@code GET /{userId}} apiece.
- */
 @RestController
 @RequestMapping("/api/follows")
 class FollowController {
@@ -65,17 +46,9 @@ class FollowController {
         this.relationships = relationships;
     }
 
-    /**
-     * A user's follow standing. {@code followedByViewer} is {@code false} for an anonymous
-     * caller — the counts are public, the relationship is the viewer's own.
-     */
     record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
     }
 
-    /**
-     * One user's follow standing in a batch read — {@link FollowRelationship} plus the
-     * {@code userId} it belongs to, so the client can key the results without relying on order.
-     */
     record FollowRelationshipView(UUID userId, long followerCount, long followingCount, boolean followedByViewer) {
 
         static FollowRelationshipView of(FollowRelationships.Relationship relationship) {
@@ -143,8 +116,6 @@ class FollowController {
     ApiPage<UUID> followers(@CurrentUser ViewerId viewer, @PathVariable("userId") UUID userId,
             @RequestParam(name = "cursor", required = false) String cursor,
             @RequestParam(name = "limit", required = false) Integer limit) {
-        // The viewer isn't read — resolving it is the edge-level assertion that the caller
-        // is signed in (spec story 61); the page itself is the same for any viewer.
         return listPage(lists.followersOf(new UserId(userId), decode(cursor), limit));
     }
 
@@ -162,8 +133,6 @@ class FollowController {
     }
 
     private static Cursor decode(String cursor) {
-        // Opaque and straight from the previous page, so a malformed one is a client bug —
-        // left to the shared Problem Detail handler, like the post grid's cursor.
         return cursor == null ? null : Cursor.decode(cursor);
     }
 

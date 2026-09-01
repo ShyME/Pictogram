@@ -5,10 +5,6 @@ import { FeedPage } from "./pages/feed.page";
 import { ProfilePage } from "./pages/profile.page";
 import { FollowListPage } from "./pages/follow-list.page";
 
-// The ticket's broad journey (#57), against `task up`: from a follow between two people,
-// each one's follower / following list reads back the other account and links through to
-// its profile. Two isolated browser contexts stand in for two people — the shared mock
-// provider has a single interactive login, so they sign in one after the other.
 test("browse a profile's following and followers lists and click through to an account", async ({
   browser,
 }) => {
@@ -26,13 +22,11 @@ test("browse a profile's following and followers lists and click through to an a
     const bobPage = await bobContext.newPage();
     await onboard(bobPage, bob, "Bob List");
 
-    // Alice follows Bob from his profile.
     const aliceOnBob = new ProfilePage(alicePage);
     await aliceOnBob.open(bob);
     await aliceOnBob.followButton.click();
     await expect(aliceOnBob.followingButton).toBeVisible();
 
-    // Alice's own "following" list shows Bob and links to his profile.
     await new ProfilePage(alicePage).open(alice);
     await aliceOnBob.followingLink.click();
     await expect(alicePage).toHaveURL(new RegExp(`/u/${alice}/following$`));
@@ -43,7 +37,6 @@ test("browse a profile's following and followers lists and click through to an a
     await aliceFollowing.accountLink(bob).click();
     await expect(alicePage).toHaveURL(new RegExp(`/u/${bob}$`));
 
-    // Bob's "followers" list shows Alice.
     const bobOnSelf = new ProfilePage(bobPage);
     await bobOnSelf.open(bob);
     await bobOnSelf.followersLink.click();

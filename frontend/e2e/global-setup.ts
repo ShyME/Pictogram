@@ -2,15 +2,8 @@ const BASE_URL = process.env.PICTOGRAM_BASE_URL ?? "http://localhost:8080";
 const WARMUP_BUDGET_MS = 90_000;
 const POLL_INTERVAL_MS = 500;
 
-// The compose healthcheck only proves `/actuator/health` answers — not that the servlet
-// stack, the security filter chain and JPA are warm. Right after `docker compose up
-// --build` the first real request can take several seconds (JIT, class loading, the first
-// pool connection), long enough to blow a per-action timeout in whichever test runs first.
-// Poll representative requests here until they respond as expected, so the suite starts
-// against an already-warm app instead of paying that cost inside an assertion.
 const probes: ReadonlyArray<{ path: string; accept: string; expected: number }> = [
   { path: "/", accept: "text/html", expected: 200 },
-  // a full trip: resource server -> ProfilesController -> a JPA lookup -> Problem Detail 404
   { path: "/api/profiles/warmup_probe", accept: "application/json", expected: 404 },
 ];
 

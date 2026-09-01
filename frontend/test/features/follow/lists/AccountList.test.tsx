@@ -21,7 +21,6 @@ test("renders each account with its name, handle and a link to the profile", () 
 
   expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /Ada Lovelace/ })).toHaveAttribute("href", "/u/ada");
-  // No display name falls back to the handle as the name.
   expect(screen.getByRole("link", { name: /@carol/ })).toHaveAttribute("href", "/u/carol");
 });
 

@@ -10,7 +10,6 @@ import { RouteError } from "./RouteError";
 import { followListLoader } from "./follow-list-loader";
 import { editProfileLoader, loginLoader, newPostLoader, onboardingLoader, rootLoader } from "./guards";
 
-// Register the access-token / silent-refresh middleware before any loader runs.
 installApiAuth();
 
 export const router = createBrowserRouter([

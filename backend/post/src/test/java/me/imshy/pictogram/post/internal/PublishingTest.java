@@ -13,13 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 
-/**
- * The publish command from the ticket: an author turns an uploaded image plus an optional
- * caption into a post that is immediately readable on their own grid, and every publish
- * announces {@link PostPublished}. The image must be media the author owns — anything else
- * is one indistinguishable {@link UnusableMediaException}. Caption length is
- * {@link CaptionTest}'s job; here we exercise the command.
- */
 class PublishingTest extends PostModuleIntegrationTest {
 
     @Autowired

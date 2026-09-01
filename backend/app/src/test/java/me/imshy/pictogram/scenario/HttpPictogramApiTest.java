@@ -22,12 +22,6 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * {@link HttpPictogramApi} in isolation: no Spring context, a hand-rolled
- * {@link HttpServer} for the transport, and a stub {@link SignIn}. Proves the class builds
- * the right request and maps each response the way the scenario suite relies on — the
- * concern that a future {@code ContainerDriver} must not re-derive.
- */
 @Tag("fast")
 class HttpPictogramApiTest {
 
@@ -46,7 +40,6 @@ class HttpPictogramApiTest {
         baseUri = URI.create("http://localhost:" + server.getAddress().getPort());
         api = new HttpPictogramApi(baseUri, JsonMapper.builder().build(), signIn);
 
-        // Every authenticated flow starts by redeeming the refresh cookie for an access token.
         stub("POST", "/api/auth/refresh", 200, "{\"accessToken\":\"stub-access-token\"}");
     }
 

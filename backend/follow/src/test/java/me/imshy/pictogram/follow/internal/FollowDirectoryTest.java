@@ -7,12 +7,6 @@ import me.imshy.pictogram.shared.ViewerId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * The published {@link me.imshy.pictogram.follow.FollowGraph} read model: the follower and
- * following counts a profile page shows, the "am I following them" the follow button
- * reflects, and the list of followed users {@code feed} will fan out over. Each is derived
- * live from the edge table.
- */
 class FollowDirectoryTest extends FollowModuleIntegrationTest {
 
     @Autowired

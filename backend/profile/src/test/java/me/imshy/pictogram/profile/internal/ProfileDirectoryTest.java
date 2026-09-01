@@ -8,11 +8,6 @@ import me.imshy.pictogram.shared.UserId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * The public profile reads the rest of the app composes screens from (ADR-0005): a single
- * lookup by username and a batch lookup by {@link UserId} set. The batch is one query, and
- * an id with no profile is left out of the result rather than erroring.
- */
 class ProfileDirectoryTest extends ProfileModuleIntegrationTest {
 
     @Autowired

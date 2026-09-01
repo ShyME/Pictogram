@@ -6,13 +6,10 @@ export type MyProfile =
   | { status: "not-onboarded" }
   | { status: "unauthenticated" };
 
-/** Reads the caller's own profile — the root-route guard's single source of truth. */
 export async function fetchMyProfile(): Promise<MyProfile> {
   const { data, error, response } = await api.GET("/api/profiles/me");
   if (data) return { status: "onboarded", profile: toProfile(data) };
   if (problemSlug(error) === "profile-not-found") return { status: "not-onboarded" };
-  // A 401 is the shared auth boundary (the middleware's silent refresh has already failed),
-  // not a documented response of this endpoint.
   if (response.status === 401) return { status: "unauthenticated" };
   throw new Error(`Unexpected /api/profiles/me response: ${response.status}`);
 }
@@ -21,15 +18,6 @@ export type ProfileLookup =
   | { status: "found"; profile: Profile }
   | { status: "not-found" };
 
-/**
- * Reads a public profile by username — the `/u/<username>` page's data. A username nobody
- * holds comes back as `not-found` (a `profile-not-found` Problem Detail) so the page can
- * show a clear "no such account" screen rather than an error.
- *
- * A stale in-memory access token that can't be refreshed makes the resource server reject
- * even this public call with a 401 (the bearer filter runs before the permit rule). Since
- * the profile is public, we retry once with no credentials rather than fail the page.
- */
 export async function fetchProfileByUsername(username: string): Promise<ProfileLookup> {
   const { data, error, response } = await api.GET("/api/profiles/{username}", {
     params: { path: { username } },
@@ -51,14 +39,12 @@ async function anonymousProfileLookup(username: string): Promise<ProfileLookup> 
   throw new Error(`Unexpected /api/profiles/${username} response: ${response.status}`);
 }
 
-/** The username and optional details onboarding and the edit form both submit. */
 export type ProfileFields = {
   username: string;
   displayName?: string;
   bio?: string;
 };
 
-/** The three field-level failures onboarding and edit share, by their form-facing name. */
 export type ProfileFieldError = "username-taken" | "username-invalid" | "details-invalid";
 
 export type OnboardingOutcome =
@@ -66,12 +52,6 @@ export type OnboardingOutcome =
   | { status: "already-onboarded" }
   | { status: ProfileFieldError };
 
-/**
- * Creates the profile from a chosen username (plus optional display name and bio). The
- * two username failures are kept distinct so the form can tell "wrong shape" from
- * "taken"; an existing profile resolves as `already-onboarded` rather than an error,
- * since the caller just wants to move on to the feed.
- */
 export async function submitOnboarding(input: ProfileFields): Promise<OnboardingOutcome> {
   const { data, error, response } = await api.POST("/api/profiles", { body: profileWriteBody(input) });
 
@@ -88,12 +68,6 @@ export type ProfileEditOutcome =
   | { status: "not-onboarded" }
   | { status: ProfileFieldError };
 
-/**
- * Edits the caller's own profile — display name, bio, and username. `username` is always
- * sent (the edit form pre-fills it); passing back the current handle just leaves it be,
- * while a different one renames and frees the old handle. A caller who is not onboarded
- * yet (no profile to edit) resolves as `not-onboarded` rather than an error.
- */
 export async function submitProfileEdit(input: ProfileFields): Promise<ProfileEditOutcome> {
   const { data, error, response } = await api.PUT("/api/profiles/me", { body: profileWriteBody(input) });
 

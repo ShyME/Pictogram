@@ -44,7 +44,6 @@ test("seeds every row's relationship so the real FollowButtons never fetch one a
 
   renderWithProviders(<FollowListPage mode="followers" />);
 
-  // Each button renders straight from the seeded cache: Carol is followed, Bob is not.
   expect(await screen.findByRole("button", { name: "Following" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Follow" })).toBeInTheDocument();
 

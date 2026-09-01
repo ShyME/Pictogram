@@ -15,13 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-/**
- * The SPA is served on its own client-side routes (#34): a hard reload or pasted link on
- * {@code /login} or {@code /onboarding} returns {@code index.html} (200) so React Router
- * can re-resolve the route in the browser, while {@code /api/**}, the OIDC callback, and
- * static assets keep their own handling. {@code src/test/resources/static/} stands in for
- * the SPA bundle the Docker build copies onto the classpath.
- */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class SpaDeepLinkTest {
@@ -141,8 +134,6 @@ class SpaDeepLinkTest {
 
     @Test
     void theOidcCallbackStaysWithTheIdentityFilterChain() {
-        // No Google client is configured on the "test" profile, so identity's chain locks
-        // /login/oauth2/** down with denyAll — a 403, never the permit-all SPA fallback.
         HttpResponse<String> response = http.get("/login/oauth2/code/google?code=x&state=y");
 
         assertThat(response.statusCode()).isEqualTo(403);

@@ -14,7 +14,6 @@ export class FeedPage {
     this.newPostLink = page.getByRole("link", { name: /new post/i });
   }
 
-  /** The signed-in handle in the app header — the way to reach your own profile. */
   myProfileLink(username: string): Locator {
     return this.page.getByRole("link", { name: `@${username}` });
   }

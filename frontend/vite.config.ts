@@ -5,15 +5,10 @@ import tailwindcss from "@tailwindcss/vite";
 
 const resolve = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
-// Backend runs on the host (compose.dev.yaml); proxied below so the SPA can use
-// same-origin relative URLs in every environment.
 const BACKEND = "http://localhost:8080";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // Keep these aliases in sync with `paths` in tsconfig.app.json / tsconfig.test.json.
-  // Folder-rooted (not file-rooted) so both the barrel (`@app`) and deep,
-  // test-only imports into internals (`@app/access-gate`) resolve.
   resolve: {
     alias: {
       "@app": resolve("./src/app"),
@@ -34,7 +29,6 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/support/setup.ts"],
     css: true,
-    // Playwright owns e2e/ — Vitest would try to run its specs and choke on the runner.
     exclude: [...configDefaults.exclude, "e2e/**"],
   },
 });

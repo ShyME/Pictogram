@@ -14,14 +14,6 @@ import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * The in-process transport for a {@link PictogramApi} scenario: an {@code @SpringBootTest}
- * on a random port, with {@code mock-oauth2-server} standing in for Google (ADR-0004). All
- * the "speak the HTTP API" work is delegated to a composed {@link HttpPictogramApi}; this
- * class only supplies the two things that are in-process specific — the
- * {@code @LocalServerPort} base URI and a {@link SignIn} that drives the mock provider's
- * redirect dance.
- */
 public final class InProcessDriver implements PictogramApi {
 
     static final String ISSUER_ID = "google";
@@ -39,12 +31,6 @@ public final class InProcessDriver implements PictogramApi {
         return api.registerViaGoogle(email);
     }
 
-    /**
-     * Follows the browser's redirect chain from {@code /oauth2/authorization/google} —
-     * mock provider callback enqueued, redirects followed with a cookie jar — and hands
-     * back the refresh cookie left along the way. The chain ends at the post-login redirect
-     * (the SPA, absent here, so a 404); only the cookie matters.
-     */
     private static final class MockOAuth2SignIn implements SignIn {
 
         private final URI baseUri;

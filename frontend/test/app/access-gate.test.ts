@@ -7,7 +7,6 @@ function profileEndpoint(status: number, body: unknown = {}) {
   stubFetch(() => (status === 200 ? jsonResponse(body) : problemResponse(slug, status)));
 }
 
-/** The gates throw `redirect(...)`; pull the `Location` out of the thrown Response. */
 async function redirectFrom(gate: Promise<unknown>): Promise<string | null> {
   try {
     await gate;

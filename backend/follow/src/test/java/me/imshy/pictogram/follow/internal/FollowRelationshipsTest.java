@@ -12,13 +12,6 @@ import me.imshy.pictogram.shared.ViewerId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * The batch relationship read behind the follower / following list screens (#59): one call
- * resolves, for the viewer, every listed user's follower / following counts and whether the
- * viewer follows them — so the reused follow buttons on the page render from a warm cache
- * instead of one {@code GET /api/follows/{id}} apiece. {@code follow} has no user table, so
- * an id with no edges is not "unknown" — it comes back with zeros, one record per id asked.
- */
 class FollowRelationshipsTest extends FollowModuleIntegrationTest {
 
     @Autowired

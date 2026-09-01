@@ -18,29 +18,8 @@ import java.util.stream.Collectors;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Everything about <em>speaking</em> Pictogram's HTTP API, against an injected base
- * {@link URI}: request building, JSON field mapping, multipart encoding, the per-endpoint
- * outcome translation (204/403/404 …) and the {@code require(...)} assertions. It holds no
- * transport specifics — not how the base URI is discovered, and not how a session is
- * obtained.
- *
- * <p><b>The two-adapter shape.</b> A scenario runs against a {@link PictogramApi} composed
- * from two parts: this deep class, shared by every transport, plus a small {@link SignIn}
- * port for the one thing that genuinely differs — how a session is minted. A transport
- * (e.g. {@link InProcessDriver}) holds one of these and delegates; it does not extend it.
- * {@code InProcessDriver} supplies a random {@code @LocalServerPort} base URI and a
- * {@code SignIn} that drives {@code mock-oauth2-server}; the later {@code ContainerDriver}
- * (issue #20) supplies a compose base URI and a {@code SignIn} for the real Google
- * handshake — a config, not a re-implementation of the 200-odd lines below. The sign-in
- * <em>dance</em> (following redirects with the identity provider) is transport and lives in
- * the adapter; redeeming the resulting refresh cookie via {@code POST /api/auth/refresh} is
- * "speaking the API" and lives here.
- */
 class HttpPictogramApi implements PictogramApi {
 
-    // The identity module's refresh cookie (ADR-0004); the SignIn adapter yields its value,
-    // this class presents it to the redeem endpoint.
     static final String REFRESH_COOKIE = "pictogram_refresh";
 
     private final URI baseUri;
@@ -217,8 +196,6 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public Map<String, FollowRelationship> followRelationships(String... userIds) {
-            // Repeated ids= params, like the frontend and the OpenAPI schema send — not the
-            // comma-joined form, so a scenario failure looks like a real client's request.
             String query = Arrays.stream(userIds).map(id -> "ids=" + id).collect(Collectors.joining("&"));
             HttpResponse<String> response = call("GET", "/api/follows?" + query, null);
             require(response, 200, "read a batch of follow relationships");

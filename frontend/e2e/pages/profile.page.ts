@@ -1,7 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 
-// Page object for the public `/u/<username>` profile page (ADR-0007): locators and
-// navigation here, assertions in the spec.
 export class ProfilePage {
   readonly notFoundHeading: Locator;
   readonly followButton: Locator;
@@ -34,12 +32,10 @@ export class ProfilePage {
     return this.page.getByText(`@${username}`, { exact: true });
   }
 
-  /** A post in the grid, found by its caption (its image's alt text). */
   postByCaption(caption: string): Locator {
     return this.page.getByRole("img", { name: caption });
   }
 
-  /** The grid cell for a post, found by its caption — the delete control lives here. */
   postCellByCaption(caption: string): Locator {
     return this.page.getByRole("listitem").filter({ has: this.postByCaption(caption) });
   }

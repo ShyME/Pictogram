@@ -11,11 +11,6 @@ import com.nimbusds.jose.proc.SecurityContext;
 import java.text.ParseException;
 import java.util.UUID;
 
-/**
- * The elliptic-curve (P-256) key pair identity signs access tokens with. In production the
- * private JWK comes from {@code pictogram.auth.signing-key}; when that is blank a fresh key
- * is generated for the lifetime of the process (fine for local and test).
- */
 public final class SigningKey {
 
     private final ECKey jwk;

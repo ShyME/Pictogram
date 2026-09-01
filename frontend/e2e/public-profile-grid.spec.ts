@@ -8,9 +8,6 @@ import { NewPostPage } from "./pages/new-post.page";
 
 const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
 
-// Spec story 18: "As any visitor, I want to open /u/<username> and see that user's public
-// profile and post grid." Against `task up`: one user publishes a post, then a signed-out
-// visitor in a fresh context opens that profile and sees the post in the grid.
 test("a signed-out visitor sees another user's posts on their profile", async ({ browser }) => {
   const caption = `public grid ${Date.now().toString(36)}`;
   const username = `e2e_pg_${Date.now().toString(36)}`;
@@ -40,7 +37,6 @@ test("a signed-out visitor sees another user's posts on their profile", async ({
     await expect(authorPage).toHaveURL(new RegExp(`/u/${username}$`));
     await expect(new ProfilePage(authorPage).postByCaption(caption)).toBeVisible();
 
-    // A visitor with no session opens the same profile by link.
     const visitorPage = await visitorContext.newPage();
     const visitorView = new ProfilePage(visitorPage);
     await visitorView.open(username);
@@ -48,7 +44,6 @@ test("a signed-out visitor sees another user's posts on their profile", async ({
     await expect(visitorView.displayName("Grid Author")).toBeVisible();
     await expect(visitorView.postByCaption(caption)).toBeVisible();
     await expect(visitorView.emptyGrid).toBeHidden();
-    // ...and no delete control on someone else's grid.
     await expect(visitorPage.getByRole("button", { name: "Delete" })).toBeHidden();
   } finally {
     await authorContext.close();

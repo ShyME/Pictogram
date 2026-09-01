@@ -38,7 +38,6 @@ test("surfaces a load failure without crashing", async () => {
   stubFetch(() => new Response(null, { status: 500 }));
   renderFeed();
 
-  // one query retry (createQueryClient) delays the error state ~1s
   expect(
     await screen.findByText(/couldn.t load your feed/i, undefined, { timeout: 3000 }),
   ).toBeInTheDocument();

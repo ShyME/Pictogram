@@ -32,12 +32,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * The post endpoints through the real security chain: publishing needs a token and
- * publishes as the caller; the grid ({@code GET /api/posts?author=}) is served to anyone,
- * since it renders on a shareable profile page. A caption over the limit is a 400 Problem
- * Detail; a {@code MediaId} the caller does not own is one 422 {@code post-media-unusable}.
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

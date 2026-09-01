@@ -30,11 +30,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * The media endpoints through the real security chain: uploading needs a token, but the
- * rendition bytes are served to anyone (they back public profile grids and feed cards —
- * spec stories 13, 18, 35). A non-image upload and an unknown id are Problem Details.
- */
 @SpringBootTest(classes = PictogramApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

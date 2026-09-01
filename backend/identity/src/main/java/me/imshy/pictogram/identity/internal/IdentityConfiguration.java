@@ -18,10 +18,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.StringUtils;
 
-/**
- * Assembles identity's token machinery. The {@link JwtDecoder} published here is what the
- * {@code :app} resource server verifies Pictogram access tokens with (ADR-0004).
- */
 @Configuration
 @EnableConfigurationProperties(AuthProperties.class)
 class IdentityConfiguration {
@@ -38,11 +34,6 @@ class IdentityConfiguration {
         return SigningKey.generate();
     }
 
-    /**
-     * The decoder the {@code :app} resource server verifies Pictogram access tokens with.
-     * {@code @Primary} so a stray {@code spring.security.oauth2.resourceserver.jwt.*}
-     * property can't let Spring Boot's own decoder win a by-type lookup — see ADR-0004 (#28).
-     */
     @Bean
     @Primary
     JwtDecoder jwtDecoder(SigningKey signingKey, AuthProperties properties, Clock clock) {

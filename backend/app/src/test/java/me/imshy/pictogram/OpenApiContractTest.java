@@ -18,12 +18,6 @@ import org.springframework.web.client.RestClient;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * The committed {@code backend/openapi.json} must match what the running app publishes at
- * {@code /v3/api-docs}. Run with {@code -Dpictogram.openapi.generate=true} (the
- * {@code :app:generateOpenApiSpec} task) to rewrite the file; otherwise this fails on any
- * drift so a stale client can't be generated.
- */
 @SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class OpenApiContractTest {

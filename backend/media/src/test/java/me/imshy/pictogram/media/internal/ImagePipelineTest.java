@@ -11,11 +11,6 @@ import javax.imageio.ImageIO;
 import org.apache.commons.imaging.Imaging;
 import org.junit.jupiter.api.Test;
 
-/**
- * The pure transform at the heart of the media pipeline (media/CONTEXT.md, ADR-0006): any
- * decodable upload becomes one canonical square JPEG plus a square thumbnail, upright and
- * with every scrap of metadata gone. Bytes that no codec can read are rejected.
- */
 class ImagePipelineTest {
 
     private final ImagePipeline pipeline = new ImagePipeline();
@@ -72,7 +67,7 @@ class ImagePipelineTest {
     @Test
     void exifAndGpsMetadataOnTheUploadAreGoneFromBothRenditions() throws Exception {
         byte[] withLocation = TestImages.jpegWithLocation(1600, 1200);
-        assertThat(Imaging.getMetadata(withLocation)).isNotNull(); // sanity: the fixture has EXIF
+        assertThat(Imaging.getMetadata(withLocation)).isNotNull();
 
         var renditions = pipeline.transcode(withLocation);
 
@@ -82,8 +77,6 @@ class ImagePipelineTest {
 
     @Test
     void theCanonicalRenditionIsUprightWhenTheUploadCarriesAnOrientationTag() throws Exception {
-        // Orientation 6 (rotate 90° CW to display) must move the dark block from the
-        // raster's top-left to the top-right of the upright rendition.
         byte[] rotated = TestImages.markedTopLeft(900, 600, 6);
 
         var original = ImageIO.read(new ByteArrayInputStream(pipeline.transcode(rotated).original()));
