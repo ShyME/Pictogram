@@ -253,8 +253,8 @@ export interface components {
             /** Format: int64 */
             expiresInSeconds: number;
         };
-        ApiPageFeedCard: {
-            items?: components["schemas"]["FeedCard"][];
+        ApiPageFeedPost: {
+            items?: components["schemas"]["FeedPost"][];
             nextCursor?: string;
         };
         ApiPagePostView: {
@@ -270,9 +270,13 @@ export interface components {
             displayName?: string;
             username?: string;
         };
-        FeedCard: {
-            author?: string;
+        FeedPost: {
+            authorId?: string;
+            caption?: string;
+            mediaId?: string;
             postId?: string;
+            /** Format: date-time */
+            publishedAt?: string;
         };
         FollowRelationship: {
             followedByViewer?: boolean;
@@ -388,20 +392,41 @@ export interface operations {
     };
     feed: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description A page of the viewer's feed, newest post first. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiPageFeedCard"];
+                    "application/json": components["schemas"]["ApiPageFeedPost"];
+                };
+            };
+            /** @description The pagination cursor is malformed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The caller has no valid access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };

@@ -209,13 +209,25 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public FeedPage openFeed() {
-            HttpResponse<String> response = call("GET", "/api/feed", null);
+            return openFeed(null, null);
+        }
+
+        @Override
+        public FeedPage openFeed(String cursor, Integer limit) {
+            var query = new StringBuilder();
+            if (cursor != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("cursor=").append(cursor);
+            }
+            if (limit != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("limit=").append(limit);
+            }
+            HttpResponse<String> response = call("GET", "/api/feed" + query, null);
             require(response, 200, "open feed");
             JsonNode page = json.readTree(response.body());
-            List<Object> items = new ArrayList<>();
-            page.path("items").forEach(items::add);
-            JsonNode cursor = page.path("nextCursor");
-            return new FeedPage(items, cursor.isNull() || cursor.isMissingNode() ? null : cursor.asString());
+            List<Post> posts = new ArrayList<>();
+            page.path("items").forEach(node -> posts.add(post(node)));
+            JsonNode next = page.path("nextCursor");
+            return new FeedPage(posts, next.isNull() || next.isMissingNode() ? null : next.asString());
         }
 
         private HttpResponse<String> call(String method, String path, String body) {

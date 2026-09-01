@@ -1,15 +1,17 @@
-import { api } from "@shared";
-import type { FeedItem } from "./feed";
+import { api, throwIfSessionExpired } from "@shared";
+import { type FeedPost, toFeedPost } from "./feed";
 
-export class SessionExpiredError extends Error {}
+export type FeedPostPage = { posts: FeedPost[]; nextCursor: string | null };
 
-export async function fetchFeed(): Promise<FeedItem[]> {
-  const { data, response } = await api.GET("/api/feed");
-  if (response.status === 401) throw new SessionExpiredError();
+export async function fetchFeedPage(cursor?: string): Promise<FeedPostPage> {
+  const { data, response } = await api.GET("/api/feed", {
+    params: { query: { cursor } },
+  });
+  throwIfSessionExpired(response);
   if (!data) throw new Error(`Feed request failed: ${response.status}`);
 
-  return (data.items ?? []).map((card) => ({
-    postId: card.postId ?? "",
-    author: card.author ?? "",
-  }));
+  return {
+    posts: (data.items ?? []).map(toFeedPost),
+    nextCursor: data.nextCursor ?? null,
+  };
 }

@@ -32,4 +32,23 @@ interface Posts extends CrudRepository<Post, UUID> {
             @Param("beforePublishedAt") Instant beforePublishedAt,
             @Param("beforeId") UUID beforeId,
             Limit limit);
+
+    @Query("""
+            select p from Post p
+            where p.authorId in :authors
+            order by p.publishedAt desc, p.id desc
+            """)
+    List<Post> newestByAuthors(@Param("authors") Collection<UUID> authors, Limit limit);
+
+    @Query("""
+            select p from Post p
+            where p.authorId in :authors
+              and (p.publishedAt < :beforePublishedAt
+                   or (p.publishedAt = :beforePublishedAt and p.id < :beforeId))
+            order by p.publishedAt desc, p.id desc
+            """)
+    List<Post> byAuthorsBefore(@Param("authors") Collection<UUID> authors,
+            @Param("beforePublishedAt") Instant beforePublishedAt,
+            @Param("beforeId") UUID beforeId,
+            Limit limit);
 }
