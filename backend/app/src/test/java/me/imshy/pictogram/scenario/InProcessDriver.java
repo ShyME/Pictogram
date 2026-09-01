@@ -2,28 +2,25 @@ package me.imshy.pictogram.scenario;
 
 import com.nimbusds.jose.JOSEObjectType;
 import java.net.CookieManager;
+import java.net.HttpCookie;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * The in-process {@link PictogramApi} transport: drives the running {@code @SpringBootTest}
- * over real HTTP, standing {@code mock-oauth2-server} in for Google (ADR-0004). Sign-in
- * follows the browser's redirect dance to land a refresh cookie, then redeems it for the
- * access token every later call carries as a bearer token.
+ * The in-process transport for a {@link PictogramApi} scenario: an {@code @SpringBootTest}
+ * on a random port, with {@code mock-oauth2-server} standing in for Google (ADR-0004). All
+ * the "speak the HTTP API" work is delegated to a composed {@link HttpPictogramApi}; this
+ * class only supplies the two things that are in-process specific — the
+ * {@code @LocalServerPort} base URI and a {@link SignIn} that drives the mock provider's
+ * redirect dance.
  */
 public final class InProcessDriver implements PictogramApi {
 
@@ -31,216 +28,57 @@ public final class InProcessDriver implements PictogramApi {
     static final String CLIENT_ID = "pictogram-test";
     static final String CLIENT_SECRET = "pictogram-test-secret";
 
-    private final URI baseUri;
-    private final MockOAuth2Server google;
-    private final ObjectMapper json;
+    private final HttpPictogramApi api;
 
     public InProcessDriver(URI baseUri, MockOAuth2Server google, ObjectMapper json) {
-        this.baseUri = baseUri;
-        this.google = google;
-        this.json = json;
+        this.api = new HttpPictogramApi(baseUri, json, new MockOAuth2SignIn(baseUri, google));
     }
 
     @Override
     public Actor registerViaGoogle(String email) {
-        google.enqueueCallback(new DefaultOAuth2TokenCallback(
-                ISSUER_ID, UUID.randomUUID().toString(), JOSEObjectType.JWT.getType(),
-                List.of(CLIENT_ID), Map.of("email", email, "email_verified", true), 3600L));
-
-        var cookies = new CookieManager();
-        HttpClient browser = HttpClient.newBuilder()
-                .cookieHandler(cookies)
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-
-        // The chain ends at the post-login redirect (the SPA, absent here, so a 404) — what
-        // matters is the refresh cookie set along the way.
-        send(browser, HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build());
-
-        HttpResponse<String> redeemed = send(browser,
-                HttpRequest.newBuilder(uri("/api/auth/refresh")).POST(BodyPublishers.noBody()).build());
-        require(redeemed, 200, "redeem refresh cookie");
-        return new HttpActor(field(redeemed.body(), "accessToken"));
+        return api.registerViaGoogle(email);
     }
 
-    private final class HttpActor implements Actor {
+    /**
+     * Follows the browser's redirect chain from {@code /oauth2/authorization/google} —
+     * mock provider callback enqueued, redirects followed with a cookie jar — and hands
+     * back the refresh cookie left along the way. The chain ends at the post-login redirect
+     * (the SPA, absent here, so a 404); only the cookie matters.
+     */
+    private static final class MockOAuth2SignIn implements SignIn {
 
-        private final String accessToken;
-        private final HttpClient http = HttpClient.newHttpClient();
+        private final URI baseUri;
+        private final MockOAuth2Server google;
 
-        private HttpActor(String accessToken) {
-            this.accessToken = accessToken;
+        private MockOAuth2SignIn(URI baseUri, MockOAuth2Server google) {
+            this.baseUri = baseUri;
+            this.google = google;
         }
 
         @Override
-        public Optional<Profile> currentProfile() {
-            HttpResponse<String> response = call("GET", "/api/profiles/me", null);
-            if (response.statusCode() == 404) {
-                return Optional.empty();
-            }
-            require(response, 200, "read own profile");
-            return Optional.of(profile(response.body()));
-        }
+        public String authenticate(String email) {
+            google.enqueueCallback(new DefaultOAuth2TokenCallback(
+                    ISSUER_ID, UUID.randomUUID().toString(), JOSEObjectType.JWT.getType(),
+                    List.of(CLIENT_ID), Map.of("email", email, "email_verified", true), 3600L));
 
-        @Override
-        public Profile completeOnboarding(String username) {
-            return completeOnboarding(username, null, null);
-        }
-
-        @Override
-        public Profile completeOnboarding(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("POST", "/api/profiles", profileBody(username, displayName, bio));
-            require(response, 201, "complete onboarding");
-            return profile(response.body());
-        }
-
-        @Override
-        public Profile editProfile(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("PUT", "/api/profiles/me", profileBody(username, displayName, bio));
-            require(response, 200, "edit own profile");
-            return profile(response.body());
-        }
-
-        private String profileBody(String username, String displayName, String bio) {
-            return json.writeValueAsString(Map.of(
-                    "username", username,
-                    "displayName", Optional.ofNullable(displayName).orElse(""),
-                    "bio", Optional.ofNullable(bio).orElse("")));
-        }
-
-        @Override
-        public Optional<Profile> viewProfile(String username) {
-            HttpResponse<String> response = call("GET", "/api/profiles/" + username, null);
-            if (response.statusCode() == 404) {
-                return Optional.empty();
-            }
-            require(response, 200, "view a profile by username");
-            return Optional.of(profile(response.body()));
-        }
-
-        @Override
-        public String uploadPhoto(byte[] image) {
-            String boundary = "----pictogram" + UUID.randomUUID();
-            var request = HttpRequest.newBuilder(uri("/api/media"))
-                    .header("Authorization", "Bearer " + accessToken)
-                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                    .POST(BodyPublishers.ofByteArray(multipartBody(boundary, image)))
+            var cookies = new CookieManager();
+            HttpClient browser = HttpClient.newBuilder()
+                    .cookieHandler(cookies)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
                     .build();
-            HttpResponse<String> response = send(http, request);
-            require(response, 201, "upload a photo");
-            return field(response.body(), "mediaId");
-        }
-
-        @Override
-        public Post publishPost(String mediaId, String caption) {
-            String body = json.writeValueAsString(Map.of("mediaId", mediaId, "caption",
-                    Optional.ofNullable(caption).orElse("")));
-            HttpResponse<String> response = call("POST", "/api/posts", body);
-            require(response, 201, "publish a post");
-            return post(response.body());
-        }
-
-        @Override
-        public DeleteOutcome deletePost(String postId) {
-            HttpResponse<String> response = call("DELETE", "/api/posts/" + postId, null);
-            return switch (response.statusCode()) {
-                case 204 -> DeleteOutcome.DELETED;
-                case 403 -> DeleteOutcome.FORBIDDEN;
-                default -> throw new AssertionError(
-                        "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
-            };
-        }
-
-        @Override
-        public List<Post> postsOf(String userId) {
-            HttpResponse<String> response = call("GET", "/api/posts?author=" + userId, null);
-            require(response, 200, "read a post grid");
-            List<Post> posts = new ArrayList<>();
-            json.readTree(response.body()).path("items").forEach(item -> posts.add(post(item)));
-            return posts;
-        }
-
-        @Override
-        public FeedPage openFeed() {
-            HttpResponse<String> response = call("GET", "/api/feed", null);
-            require(response, 200, "open feed");
-            JsonNode page = json.readTree(response.body());
-            List<Object> items = new ArrayList<>();
-            page.path("items").forEach(items::add);
-            JsonNode cursor = page.path("nextCursor");
-            return new FeedPage(items, cursor.isNull() || cursor.isMissingNode() ? null : cursor.asString());
-        }
-
-        private HttpResponse<String> call(String method, String path, String body) {
-            var request = HttpRequest.newBuilder(uri(path))
-                    .header("Authorization", "Bearer " + accessToken)
-                    .method(method, body == null ? BodyPublishers.noBody() : BodyPublishers.ofString(body));
-            if (body != null) {
-                request.header("Content-Type", "application/json");
+            try {
+                browser.send(HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google")).GET().build(),
+                        BodyHandlers.discarding());
+            } catch (Exception e) {
+                throw new IllegalStateException("Google sign-in redirect dance failed", e);
             }
-            return send(http, request.build());
-        }
-    }
 
-    private Profile profile(String body) {
-        JsonNode node = json.readTree(body);
-        return new Profile(
-                node.path("userId").asString(),
-                node.path("username").asString(),
-                textOrNull(node, "displayName"),
-                textOrNull(node, "bio"));
-    }
-
-    private Post post(String body) {
-        return post(json.readTree(body));
-    }
-
-    private static Post post(JsonNode node) {
-        return new Post(
-                node.path("postId").asString(),
-                node.path("authorId").asString(),
-                node.path("mediaId").asString(),
-                textOrNull(node, "caption"),
-                node.path("publishedAt").asString());
-    }
-
-    private static byte[] multipartBody(String boundary, byte[] file) {
-        var head = ("--" + boundary + "\r\n"
-                + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
-                + "Content-Type: image/jpeg\r\n\r\n").getBytes(StandardCharsets.UTF_8);
-        var tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
-        var body = new byte[head.length + file.length + tail.length];
-        System.arraycopy(head, 0, body, 0, head.length);
-        System.arraycopy(file, 0, body, head.length, file.length);
-        System.arraycopy(tail, 0, body, head.length + file.length, tail.length);
-        return body;
-    }
-
-    private static String textOrNull(JsonNode node, String field) {
-        JsonNode value = node.path(field);
-        return value.isNull() || value.isMissingNode() ? null : value.asString();
-    }
-
-    private String field(String body, String name) {
-        return json.readTree(body).path(name).asString();
-    }
-
-    private URI uri(String path) {
-        return baseUri.resolve(path);
-    }
-
-    private static HttpResponse<String> send(HttpClient client, HttpRequest request) {
-        try {
-            return client.send(request, BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new IllegalStateException("HTTP call failed: " + request.method() + " " + request.uri(), e);
-        }
-    }
-
-    private static void require(HttpResponse<String> response, int expectedStatus, String action) {
-        if (response.statusCode() != expectedStatus) {
-            throw new AssertionError("Expected %d to %s but got %d: %s"
-                    .formatted(expectedStatus, action, response.statusCode(), response.body()));
+            return cookies.getCookieStore().getCookies().stream()
+                    .filter(cookie -> HttpPictogramApi.REFRESH_COOKIE.equals(cookie.getName()))
+                    .map(HttpCookie::getValue)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError(
+                            "No " + HttpPictogramApi.REFRESH_COOKIE + " cookie after the Google redirect dance"));
         }
     }
 }
