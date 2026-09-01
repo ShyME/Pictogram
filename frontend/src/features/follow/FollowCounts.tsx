@@ -1,5 +1,5 @@
-import { Link } from "react-router";
-import { useFollowRelationship } from "./use-follow-relationship";
+import { Link } from 'react-router';
+import { useFollowRelationship } from './use-follow-relationship';
 
 export function FollowCounts({ userId, username }: { userId: string; username: string }) {
   const { data } = useFollowRelationship(userId);
@@ -13,7 +13,7 @@ export function FollowCounts({ userId, username }: { userId: string; username: s
         <dt className="sr-only">Followers</dt>
         <dd>
           <Link to={`/u/${username}/followers`} className="hover:underline">
-            <span className="font-semibold">{followers}</span>{" "}
+            <span className="font-semibold">{followers}</span>{' '}
             <span className="text-neutral-500">followers</span>
           </Link>
         </dd>
@@ -22,7 +22,7 @@ export function FollowCounts({ userId, username }: { userId: string; username: s
         <dt className="sr-only">Following</dt>
         <dd>
           <Link to={`/u/${username}/following`} className="hover:underline">
-            <span className="font-semibold">{following}</span>{" "}
+            <span className="font-semibold">{following}</span>{' '}
             <span className="text-neutral-500">following</span>
           </Link>
         </dd>

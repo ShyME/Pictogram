@@ -1,14 +1,14 @@
-import { fileURLToPath } from "node:url";
-import { expect, test } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { NewPostPage } from "./pages/new-post.page";
+import { expect, test } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { NewPostPage } from './pages/new-post.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
+const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
 
-test("publish a post: pick a photo, crop, caption, and see it in the grid", async ({ page }) => {
+test('publish a post: pick a photo, crop, caption, and see it in the grid', async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
   const feed = new FeedPage(page);
@@ -21,7 +21,7 @@ test("publish a post: pick a photo, crop, caption, and see it in the grid", asyn
   await login.open();
   await login.signInWithGoogle();
   await expect(page).toHaveURL(/\/onboarding$/);
-  await onboarding.completeWith(username, "Post Tester");
+  await onboarding.completeWith(username, 'Post Tester');
   await expect(feed.emptyState).toBeVisible();
 
   await feed.newPostLink.click();

@@ -1,4 +1,4 @@
-import type { components } from "@shared";
+import type { components } from '@shared';
 
 export type FeedPost = {
   postId: string;
@@ -8,13 +8,13 @@ export type FeedPost = {
   publishedAt: string;
 };
 
-export function toFeedPost(wire: components["schemas"]["FeedPost"]): FeedPost {
+export function toFeedPost(wire: components['schemas']['FeedPost']): FeedPost {
   return {
-    postId: wire.postId ?? "",
-    authorId: wire.authorId ?? "",
-    mediaId: wire.mediaId ?? "",
+    postId: wire.postId ?? '',
+    authorId: wire.authorId ?? '',
+    mediaId: wire.mediaId ?? '',
     caption: wire.caption ?? null,
-    publishedAt: wire.publishedAt ?? "",
+    publishedAt: wire.publishedAt ?? '',
   };
 }
 

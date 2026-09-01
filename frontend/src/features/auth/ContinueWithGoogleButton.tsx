@@ -1,6 +1,6 @@
-export const GOOGLE_SIGN_IN_PATH = "/oauth2/authorization/google";
+export const GOOGLE_SIGN_IN_PATH = '/oauth2/authorization/google';
 
-export function ContinueWithGoogleButton({ className = "" }: { className?: string }) {
+export function ContinueWithGoogleButton({ className = '' }: { className?: string }) {
   return (
     <a
       href={GOOGLE_SIGN_IN_PATH}

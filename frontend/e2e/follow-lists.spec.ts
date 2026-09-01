@@ -1,9 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { FollowListPage } from "./pages/follow-list.page";
+import { expect, test, type Page } from '@playwright/test';
+import { FeedPage } from './pages/feed.page';
+import { FollowListPage } from './pages/follow-list.page';
+import { LoginPage } from './pages/login.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
 test("browse a profile's following and followers lists and click through to an account", async ({
   browser,
@@ -17,10 +17,10 @@ test("browse a profile's following and followers lists and click through to an a
 
   try {
     const alicePage = await aliceContext.newPage();
-    await onboard(alicePage, alice, "Alice List");
+    await onboard(alicePage, alice, 'Alice List');
 
     const bobPage = await bobContext.newPage();
-    await onboard(bobPage, bob, "Bob List");
+    await onboard(bobPage, bob, 'Bob List');
 
     const aliceOnBob = new ProfilePage(alicePage);
     await aliceOnBob.open(bob);
@@ -32,7 +32,7 @@ test("browse a profile's following and followers lists and click through to an a
     await expect(alicePage).toHaveURL(new RegExp(`/u/${alice}/following$`));
 
     const aliceFollowing = new FollowListPage(alicePage);
-    await expect(aliceFollowing.heading).toHaveText(new RegExp(`follows`, "i"));
+    await expect(aliceFollowing.heading).toHaveText(new RegExp(`follows`, 'i'));
     await expect(aliceFollowing.row(bob)).toBeVisible();
     await aliceFollowing.accountLink(bob).click();
     await expect(alicePage).toHaveURL(new RegExp(`/u/${bob}$`));
@@ -48,8 +48,8 @@ test("browse a profile's following and followers lists and click through to an a
   }
 });
 
-test("a signed-out visitor who opens a list screen is sent to sign in", async ({ page }) => {
-  await page.goto("/u/nobody_here/followers");
+test('a signed-out visitor who opens a list screen is sent to sign in', async ({ page }) => {
+  await page.goto('/u/nobody_here/followers');
   await expect(page).toHaveURL(/\/login$/);
 });
 

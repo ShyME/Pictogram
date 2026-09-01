@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class ProfilePage {
   readonly notFoundHeading: Locator;
@@ -14,14 +14,14 @@ export class ProfilePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.notFoundHeading = page.getByRole("heading", { name: /doesn.t exist/i });
-    this.followButton = page.getByRole("button", { name: /^follow$/i });
-    this.followingButton = page.getByRole("button", { name: /^following$/i });
-    this.editProfileLink = page.getByRole("link", { name: /edit profile/i });
-    this.followerCount = page.getByRole("definition").filter({ hasText: /followers/ });
-    this.followingCount = page.getByRole("definition").filter({ hasText: /following/ });
-    this.followersLink = page.getByRole("link", { name: /followers/ });
-    this.followingLink = page.getByRole("link", { name: /following/ });
+    this.notFoundHeading = page.getByRole('heading', { name: /doesn.t exist/i });
+    this.followButton = page.getByRole('button', { name: /^follow$/i });
+    this.followingButton = page.getByRole('button', { name: /^following$/i });
+    this.editProfileLink = page.getByRole('link', { name: /edit profile/i });
+    this.followerCount = page.getByRole('definition').filter({ hasText: /followers/ });
+    this.followingCount = page.getByRole('definition').filter({ hasText: /following/ });
+    this.followersLink = page.getByRole('link', { name: /followers/ });
+    this.followingLink = page.getByRole('link', { name: /following/ });
   }
 
   async open(username: string): Promise<void> {
@@ -33,22 +33,22 @@ export class ProfilePage {
   }
 
   postByCaption(caption: string): Locator {
-    return this.page.getByRole("img", { name: caption });
+    return this.page.getByRole('img', { name: caption });
   }
 
   postCellByCaption(caption: string): Locator {
-    return this.page.getByRole("listitem").filter({ has: this.postByCaption(caption) });
+    return this.page.getByRole('listitem').filter({ has: this.postByCaption(caption) });
   }
 
   get confirmDeleteDialog(): Locator {
-    return this.page.getByRole("alertdialog", { name: /delete this post/i });
+    return this.page.getByRole('alertdialog', { name: /delete this post/i });
   }
 
   get emptyGrid(): Locator {
-    return this.page.getByText("No posts yet");
+    return this.page.getByText('No posts yet');
   }
 
   displayName(name: string): Locator {
-    return this.page.getByRole("heading", { name });
+    return this.page.getByRole('heading', { name });
   }
 }

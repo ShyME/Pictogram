@@ -1,4 +1,4 @@
-import type { components } from "@shared";
+import type { components } from '@shared';
 
 export type Post = {
   postId: string;
@@ -8,13 +8,13 @@ export type Post = {
   publishedAt: string;
 };
 
-export function toPost(view: components["schemas"]["PostView"]): Post {
+export function toPost(view: components['schemas']['PostView']): Post {
   return {
-    postId: view.postId ?? "",
-    authorId: view.authorId ?? "",
-    mediaId: view.mediaId ?? "",
+    postId: view.postId ?? '',
+    authorId: view.authorId ?? '',
+    mediaId: view.mediaId ?? '',
     caption: view.caption ?? null,
-    publishedAt: view.publishedAt ?? "",
+    publishedAt: view.publishedAt ?? '',
   };
 }
 

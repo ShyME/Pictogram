@@ -37,7 +37,11 @@ export function panCrop(
 ): Crop {
   const perScreenPixel = crop.size / viewportSize;
   return clampCrop(
-    { x: crop.x - screenDx * perScreenPixel, y: crop.y - screenDy * perScreenPixel, size: crop.size },
+    {
+      x: crop.x - screenDx * perScreenPixel,
+      y: crop.y - screenDy * perScreenPixel,
+      size: crop.size,
+    },
     image,
   );
 }

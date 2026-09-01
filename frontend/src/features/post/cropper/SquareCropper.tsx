@@ -8,7 +8,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-} from "react";
+} from 'react';
 import {
   type Crop,
   type ImageSize,
@@ -18,7 +18,7 @@ import {
   panCrop,
   zoomCrop,
   zoomLevel,
-} from "./crop";
+} from './crop';
 
 export type CropperHandle = {
   getCroppedBlob: () => Promise<Blob>;
@@ -38,7 +38,7 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
     if (!frame) return;
     const measure = () => setFrameSize(frame.clientWidth);
     measure();
-    if (typeof ResizeObserver === "undefined") return;
+    if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => observer.disconnect();
@@ -49,19 +49,29 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
     () => ({
       async getCroppedBlob() {
         const img = imgRef.current;
-        if (!img || !crop) throw new Error("The crop is not ready yet.");
+        if (!img || !crop) throw new Error('The crop is not ready yet.');
 
-        const canvas = document.createElement("canvas");
+        const canvas = document.createElement('canvas');
         canvas.width = OUTPUT_SIZE;
         canvas.height = OUTPUT_SIZE;
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("Canvas 2D is unavailable.");
-        context.drawImage(img, crop.x, crop.y, crop.size, crop.size, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas 2D is unavailable.');
+        context.drawImage(
+          img,
+          crop.x,
+          crop.y,
+          crop.size,
+          crop.size,
+          0,
+          0,
+          OUTPUT_SIZE,
+          OUTPUT_SIZE,
+        );
 
         return await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
-            (blob) => (blob ? resolve(blob) : reject(new Error("Could not read the crop."))),
-            "image/jpeg",
+            (blob) => (blob ? resolve(blob) : reject(new Error('Could not read the crop.'))),
+            'image/jpeg',
             0.9,
           );
         });
@@ -122,15 +132,21 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
           style={
             image && crop
               ? {
-                  position: "absolute",
+                  position: 'absolute',
                   width: image.width * scale,
                   height: image.height * scale,
                   left: -crop.x * scale,
                   top: -crop.y * scale,
-                  maxWidth: "none",
-                  cursor: "grab",
+                  maxWidth: 'none',
+                  cursor: 'grab',
                 }
-              : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }
+              : {
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }
           }
         />
       </div>

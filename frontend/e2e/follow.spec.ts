@@ -1,10 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
+import { expect, test, type Page } from '@playwright/test';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-test("follow and unfollow another user from their profile, and the counts move", async ({
+test('follow and unfollow another user from their profile, and the counts move', async ({
   browser,
 }) => {
   const suffix = Date.now().toString(36);
@@ -16,33 +16,33 @@ test("follow and unfollow another user from their profile, and the counts move",
 
   try {
     const alicePage = await aliceContext.newPage();
-    await onboard(alicePage, alice, "Alice Follow");
+    await onboard(alicePage, alice, 'Alice Follow');
 
     const bobPage = await bobContext.newPage();
-    await onboard(bobPage, bob, "Bob Follow");
+    await onboard(bobPage, bob, 'Bob Follow');
 
     const bobViewOfAlice = new ProfilePage(bobPage);
     await bobViewOfAlice.open(alice);
     await expect(bobViewOfAlice.followButton).toBeVisible();
-    await expect(bobViewOfAlice.followerCount).toContainText("0");
+    await expect(bobViewOfAlice.followerCount).toContainText('0');
 
     await bobViewOfAlice.followButton.click();
     await expect(bobViewOfAlice.followingButton).toBeVisible();
-    await expect(bobViewOfAlice.followerCount).toContainText("1");
+    await expect(bobViewOfAlice.followerCount).toContainText('1');
 
     await bobPage.reload();
     await expect(bobViewOfAlice.followingButton).toBeVisible();
-    await expect(bobViewOfAlice.followerCount).toContainText("1");
+    await expect(bobViewOfAlice.followerCount).toContainText('1');
 
     const aliceViewOfSelf = new ProfilePage(alicePage);
     await aliceViewOfSelf.open(alice);
-    await expect(aliceViewOfSelf.followerCount).toContainText("1");
+    await expect(aliceViewOfSelf.followerCount).toContainText('1');
     await expect(aliceViewOfSelf.editProfileLink).toBeVisible();
     await expect(aliceViewOfSelf.followButton).toBeHidden();
 
     await bobViewOfAlice.followingButton.click();
     await expect(bobViewOfAlice.followButton).toBeVisible();
-    await expect(bobViewOfAlice.followerCount).toContainText("0");
+    await expect(bobViewOfAlice.followerCount).toContainText('0');
   } finally {
     await aliceContext.close();
     await bobContext.close();

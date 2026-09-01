@@ -1,12 +1,12 @@
-import { fileURLToPath } from "node:url";
-import { expect, test } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { NewPostPage } from "./pages/new-post.page";
+import { expect, test } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { NewPostPage } from './pages/new-post.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
+const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
 
 test("a signed-out visitor sees another user's posts on their profile", async ({ browser }) => {
   const caption = `public grid ${Date.now().toString(36)}`;
@@ -25,7 +25,7 @@ test("a signed-out visitor sees another user's posts on their profile", async ({
     await login.open();
     await login.signInWithGoogle();
     await expect(authorPage).toHaveURL(/\/onboarding$/);
-    await onboarding.completeWith(username, "Grid Author");
+    await onboarding.completeWith(username, 'Grid Author');
     await expect(feed.emptyState).toBeVisible();
 
     await feed.newPostLink.click();
@@ -41,10 +41,10 @@ test("a signed-out visitor sees another user's posts on their profile", async ({
     const visitorView = new ProfilePage(visitorPage);
     await visitorView.open(username);
 
-    await expect(visitorView.displayName("Grid Author")).toBeVisible();
+    await expect(visitorView.displayName('Grid Author')).toBeVisible();
     await expect(visitorView.postByCaption(caption)).toBeVisible();
     await expect(visitorView.emptyGrid).toBeHidden();
-    await expect(visitorPage.getByRole("button", { name: "Delete" })).toBeHidden();
+    await expect(visitorPage.getByRole('button', { name: 'Delete' })).toBeHidden();
   } finally {
     await authorContext.close();
     await visitorContext.close();

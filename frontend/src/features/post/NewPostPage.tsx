@@ -1,10 +1,10 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router";
-import { publishPost, uploadPhoto } from "./post-api";
-import { SquareCropper, type CropperHandle } from "./cropper/SquareCropper";
-import { CAPTION_MAX_LENGTH, captionLength, isCaptionWithinLimit } from "./caption";
-import { postsByAuthorKey } from "./query-keys";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { CAPTION_MAX_LENGTH, captionLength, isCaptionWithinLimit } from './caption';
+import { SquareCropper, type CropperHandle } from './cropper/SquareCropper';
+import { publishPost, uploadPhoto } from './post-api';
+import { postsByAuthorKey } from './query-keys';
 
 export function NewPostPage({
   authorId,
@@ -20,7 +20,7 @@ export function NewPostPage({
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
+  const [caption, setCaption] = useState('');
 
   useEffect(() => {
     if (!file) return;
@@ -31,13 +31,13 @@ export function NewPostPage({
 
   const publish = useMutation({
     mutationFn: async () => {
-      if (!cropper.current) throw new Error("The crop is not ready.");
+      if (!cropper.current) throw new Error('The crop is not ready.');
       const framed = await cropper.current.getCroppedBlob();
       const mediaId = await uploadPhoto(framed);
       return publishPost({ mediaId, caption });
     },
     onSuccess: (outcome) => {
-      if (outcome.status === "published") {
+      if (outcome.status === 'published') {
         queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
         navigate(`/u/${profileUsername}`, { replace: true });
       }
@@ -59,7 +59,10 @@ export function NewPostPage({
         <Link to="/" className="font-semibold tracking-tight text-neutral-900">
           Pictogram
         </Link>
-        <Link to={`/u/${profileUsername}`} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
+        <Link
+          to={`/u/${profileUsername}`}
+          className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
+        >
           Cancel
         </Link>
       </header>
@@ -84,7 +87,10 @@ export function NewPostPage({
             {previewUrl && <SquareCropper ref={cropper} src={previewUrl} />}
 
             <div className="mt-4">
-              <label htmlFor={captionFieldId} className="block text-sm font-medium text-neutral-700">
+              <label
+                htmlFor={captionFieldId}
+                className="block text-sm font-medium text-neutral-700"
+              >
                 Caption <span className="font-normal text-neutral-400">(optional)</span>
               </label>
               <textarea
@@ -96,7 +102,9 @@ export function NewPostPage({
                 className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none aria-[invalid=true]:border-red-500"
                 aria-invalid={!captionValid}
               />
-              <p className={`mt-1 text-right text-xs ${captionValid ? "text-neutral-400" : "text-red-600"}`}>
+              <p
+                className={`mt-1 text-right text-xs ${captionValid ? 'text-neutral-400' : 'text-red-600'}`}
+              >
                 {captionCount} / {CAPTION_MAX_LENGTH}
               </p>
             </div>
@@ -106,12 +114,12 @@ export function NewPostPage({
                 Something went wrong publishing your post. Please try again.
               </p>
             )}
-            {outcome?.status === "media-unusable" && (
+            {outcome?.status === 'media-unusable' && (
               <p role="alert" className="mt-2 text-sm text-red-600">
                 That photo couldn&rsquo;t be used. Pick it again and retry.
               </p>
             )}
-            {outcome?.status === "caption-too-long" && (
+            {outcome?.status === 'caption-too-long' && (
               <p role="alert" className="mt-2 text-sm text-red-600">
                 Your caption is too long. Shorten it and try again.
               </p>
@@ -123,7 +131,7 @@ export function NewPostPage({
                 disabled={!captionValid || publish.isPending}
                 className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
               >
-                {publish.isPending ? "Sharing…" : "Share"}
+                {publish.isPending ? 'Sharing…' : 'Share'}
               </button>
               <button
                 type="button"

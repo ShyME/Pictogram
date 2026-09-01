@@ -1,19 +1,19 @@
-import { useId, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
-import { submitOnboarding } from "./profile-api";
-import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from "./username";
+import { useMutation } from '@tanstack/react-query';
+import { useId, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { submitOnboarding } from './profile-api';
+import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from './username';
 
-type ServerError = "username-shape" | "username-taken" | "details";
+type ServerError = 'username-shape' | 'username-taken' | 'details';
 
 export function OnboardingPage() {
   const navigate = useNavigate();
   const usernameFieldId = useId();
   const usernameErrorId = useId();
 
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
   const [serverError, setServerError] = useState<ServerError | null>(null);
 
   const shapeValid = isUsernameShapeValid(username);
@@ -23,18 +23,18 @@ export function OnboardingPage() {
     mutationFn: submitOnboarding,
     onSuccess: (outcome) => {
       switch (outcome.status) {
-        case "created":
-        case "already-onboarded":
-          navigate("/", { replace: true });
+        case 'created':
+        case 'already-onboarded':
+          navigate('/', { replace: true });
           break;
-        case "username-taken":
-          setServerError("username-taken");
+        case 'username-taken':
+          setServerError('username-taken');
           break;
-        case "username-invalid":
-          setServerError("username-shape");
+        case 'username-invalid':
+          setServerError('username-shape');
           break;
-        case "details-invalid":
-          setServerError("details");
+        case 'details-invalid':
+          setServerError('details');
           break;
       }
     },
@@ -55,9 +55,7 @@ export function OnboardingPage() {
         }}
         className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
       >
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-          Pick a username
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Pick a username</h1>
         <p className="mt-2 text-sm text-neutral-500">
           This is how people find you. You can set a display name and bio too.
         </p>
@@ -90,7 +88,10 @@ export function OnboardingPage() {
         </div>
 
         <div className="mt-4">
-          <label htmlFor={`${usernameFieldId}-display`} className="block text-sm font-medium text-neutral-700">
+          <label
+            htmlFor={`${usernameFieldId}-display`}
+            className="block text-sm font-medium text-neutral-700"
+          >
             Display name <span className="font-normal text-neutral-400">(optional)</span>
           </label>
           <input
@@ -104,7 +105,10 @@ export function OnboardingPage() {
         </div>
 
         <div className="mt-4">
-          <label htmlFor={`${usernameFieldId}-bio`} className="block text-sm font-medium text-neutral-700">
+          <label
+            htmlFor={`${usernameFieldId}-bio`}
+            className="block text-sm font-medium text-neutral-700"
+          >
             Bio <span className="font-normal text-neutral-400">(optional)</span>
           </label>
           <textarea
@@ -118,7 +122,7 @@ export function OnboardingPage() {
           />
         </div>
 
-        {serverError === "details" && (
+        {serverError === 'details' && (
           <p role="alert" className="mt-4 text-sm text-red-600">
             Your display name or bio is too long. Shorten it and try again.
           </p>

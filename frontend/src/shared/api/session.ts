@@ -1,7 +1,7 @@
 export class SessionExpiredError extends Error {
   constructor() {
-    super("The Pictogram session has expired.");
-    this.name = "SessionExpiredError";
+    super('The Pictogram session has expired.');
+    this.name = 'SessionExpiredError';
   }
 }
 

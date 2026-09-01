@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class FollowListPage {
   readonly heading: Locator;
@@ -7,7 +7,7 @@ export class FollowListPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole("heading", { level: 1 });
+    this.heading = page.getByRole('heading', { level: 1 });
   }
 
   async openFollowers(username: string): Promise<void> {
@@ -19,11 +19,11 @@ export class FollowListPage {
   }
 
   row(username: string): Locator {
-    return this.page.getByRole("listitem").filter({ has: this.page.getByText(`@${username}`) });
+    return this.page.getByRole('listitem').filter({ has: this.page.getByText(`@${username}`) });
   }
 
   accountLink(username: string): Locator {
-    return this.row(username).getByRole("link").first();
+    return this.row(username).getByRole('link').first();
   }
 
   get emptyState(): Locator {

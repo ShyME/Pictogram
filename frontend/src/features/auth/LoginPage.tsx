@@ -1,10 +1,10 @@
-import { useSearchParams } from "react-router";
-import { ContinueWithGoogleButton } from "./ContinueWithGoogleButton";
-import { signInErrorMessage } from "./sign-in-error";
+import { useSearchParams } from 'react-router';
+import { ContinueWithGoogleButton } from './ContinueWithGoogleButton';
+import { signInErrorMessage } from './sign-in-error';
 
 export function LoginPage() {
   const [searchParams] = useSearchParams();
-  const error = signInErrorMessage(searchParams.get("error"));
+  const error = signInErrorMessage(searchParams.get('error'));
 
   return (
     <main className="grid min-h-dvh place-items-center bg-neutral-50 p-6">

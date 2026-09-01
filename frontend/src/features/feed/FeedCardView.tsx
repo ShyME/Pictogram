@@ -1,6 +1,6 @@
-import { Link } from "react-router";
-import { relativeTime } from "./relative-time";
-import type { FeedCard } from "./feed";
+import { Link } from 'react-router';
+import type { FeedCard } from './feed';
+import { relativeTime } from './relative-time';
 
 export function FeedCardView({ card }: { card: FeedCard }) {
   const handle = card.author.username;
@@ -15,7 +15,7 @@ export function FeedCardView({ card }: { card: FeedCard }) {
             <span className="text-sm text-neutral-500">@{handle}</span>
           </Link>
         ) : (
-          <span className="text-sm font-semibold text-neutral-900">{name ?? "Someone"}</span>
+          <span className="text-sm font-semibold text-neutral-900">{name ?? 'Someone'}</span>
         )}
         <time
           dateTime={card.publishedAt}
@@ -28,7 +28,7 @@ export function FeedCardView({ card }: { card: FeedCard }) {
 
       <img
         src={card.imageUrl}
-        alt={card.caption ?? `A post by ${name ?? (handle ? `@${handle}` : "someone")}`}
+        alt={card.caption ?? `A post by ${name ?? (handle ? `@${handle}` : 'someone')}`}
         loading="lazy"
         className="aspect-square w-full bg-neutral-100 object-cover"
       />

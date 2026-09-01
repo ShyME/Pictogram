@@ -1,4 +1,4 @@
-import type { FollowListMode } from "../follow-api";
+import type { FollowListMode } from '../follow-api';
 
 export type { FollowListMode };
 
@@ -8,5 +8,5 @@ export type FollowListTarget = {
 };
 
 export type FollowListData =
-  | { status: "found"; target: FollowListTarget; viewerId: string }
-  | { status: "not-found"; username: string };
+  | { status: 'found'; target: FollowListTarget; viewerId: string }
+  | { status: 'not-found'; username: string };

@@ -1,7 +1,7 @@
-import { api, type components } from "@shared";
-import { clearAccessToken, setAccessToken } from "./session";
+import { api, type components } from '@shared';
+import { clearAccessToken, setAccessToken } from './session';
 
-const REFRESH_ENDPOINT = "/api/auth/refresh";
+const REFRESH_ENDPOINT = '/api/auth/refresh';
 
 let inFlight: Promise<string | null> | null = null;
 
@@ -16,9 +16,9 @@ async function runRefresh(): Promise<string | null> {
   let response: Response;
   try {
     response = await fetch(REFRESH_ENDPOINT, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { Accept: "application/json" },
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
     });
   } catch {
     clearAccessToken();
@@ -30,12 +30,12 @@ async function runRefresh(): Promise<string | null> {
     return null;
   }
 
-  const body = (await response.json()) as components["schemas"]["AccessTokenResponse"];
+  const body = (await response.json()) as components['schemas']['AccessTokenResponse'];
   setAccessToken(body.accessToken);
   return body.accessToken;
 }
 
 export async function signOut(): Promise<void> {
-  await api.POST("/api/auth/logout").catch(() => undefined);
+  await api.POST('/api/auth/logout').catch(() => undefined);
   clearAccessToken();
 }
