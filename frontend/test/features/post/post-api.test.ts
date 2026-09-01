@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { SessionExpiredError } from "@shared";
 import { jsonResponse, pathOf, problemResponse, stubFetch } from "@test-support/mock-fetch";
 import { deletePost, fetchPostsByAuthor, publishPost, uploadPhoto } from "@features/post/post-api";
 
@@ -15,9 +16,15 @@ test("uploadPhoto posts to the media endpoint and returns the media id", async (
 });
 
 test("uploadPhoto throws when the upload fails", async () => {
+  stubFetch(() => new Response(null, { status: 500 }));
+
+  await expect(uploadPhoto(new Blob(["x"]))).rejects.toThrow(/500/);
+});
+
+test("uploadPhoto reports an expired session with the shared error", async () => {
   stubFetch(() => problemResponse("unauthorized", 401));
 
-  await expect(uploadPhoto(new Blob(["x"]))).rejects.toThrow(/401/);
+  await expect(uploadPhoto(new Blob(["x"]))).rejects.toBeInstanceOf(SessionExpiredError);
 });
 
 test("publishPost returns the published post on 201", async () => {
@@ -65,9 +72,17 @@ test("publishPost maps the unusable-media 422 and the caption 400", async () => 
 });
 
 test("publishPost throws on an unexpected failure", async () => {
+  stubFetch(() => new Response(null, { status: 500 }));
+
+  await expect(publishPost({ mediaId: "m-1", caption: "" })).rejects.toThrow(/500/);
+});
+
+test("publishPost reports an expired session with the shared error", async () => {
   stubFetch(() => problemResponse("unauthorized", 401));
 
-  await expect(publishPost({ mediaId: "m-1", caption: "" })).rejects.toThrow(/401/);
+  await expect(publishPost({ mediaId: "m-1", caption: "" })).rejects.toBeInstanceOf(
+    SessionExpiredError,
+  );
 });
 
 test("deletePost issues a DELETE to the post's URL", async () => {

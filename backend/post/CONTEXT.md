@@ -3,6 +3,12 @@
 The unit of content in Pictogram: one image plus an optional caption, published by one
 person. A post does not change after it is published — it is only created or deleted.
 
+## Published interfaces
+
+- `PublishedPosts.byAuthors(authors, cursor, limit)` — a keyset page of the posts by a set
+  of authors, newest first. `feed` calls this to assemble a fan-out-on-read page (ADR-0003).
+- Events `PostPublished` / `PostDeleted` — the module's forward contract, unconsumed in v1.
+
 ## Language
 
 **Post**:

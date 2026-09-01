@@ -1,4 +1,4 @@
-import { api, problemSlug } from "@shared";
+import { api, problemSlug, throwIfSessionExpired } from "@shared";
 import { type Post, toPost } from "./post";
 
 export async function uploadPhoto(image: Blob): Promise<string> {
@@ -10,6 +10,7 @@ export async function uploadPhoto(image: Blob): Promise<string> {
       return form;
     },
   });
+  throwIfSessionExpired(response);
   if (!data) throw new Error(`Photo upload failed: ${response.status}`);
   return data.mediaId;
 }
@@ -27,6 +28,7 @@ export async function publishPost(input: { mediaId: string; caption: string }): 
 
   if (data) return { status: "published", post: toPost(data) };
 
+  throwIfSessionExpired(response);
   switch (problemSlug(error)) {
     case "post-media-unusable":
       return { status: "media-unusable" };
@@ -41,6 +43,7 @@ export async function deletePost(postId: string): Promise<void> {
   const { response } = await api.DELETE("/api/posts/{postId}", {
     params: { path: { postId } },
   });
+  throwIfSessionExpired(response);
   if (!response.ok) throw new Error(`Deleting the post failed: ${response.status}`);
 }
 
@@ -50,6 +53,7 @@ export async function fetchPostsByAuthor(authorId: string, cursor?: string): Pro
   const { data, response } = await api.GET("/api/posts", {
     params: { query: { author: authorId, cursor } },
   });
+  throwIfSessionExpired(response);
   if (!data) throw new Error(`Post grid request failed: ${response.status}`);
 
   return {

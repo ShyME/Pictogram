@@ -4,6 +4,7 @@ export class FeedPage {
   readonly emptyState: Locator;
   readonly signOutButton: Locator;
   readonly newPostLink: Locator;
+  readonly cards: Locator;
 
   private readonly page: Page;
 
@@ -12,6 +13,11 @@ export class FeedPage {
     this.emptyState = page.getByText(/find people to follow/i);
     this.signOutButton = page.getByRole("button", { name: /sign out/i });
     this.newPostLink = page.getByRole("link", { name: /new post/i });
+    this.cards = page.getByRole("article");
+  }
+
+  async open(): Promise<void> {
+    await this.page.goto("/");
   }
 
   myProfileLink(username: string): Locator {

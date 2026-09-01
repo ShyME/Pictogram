@@ -210,6 +210,27 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void theFeedIsDocumentedAsAKeysetPageOfCardsNeedingAToken() {
+        JsonNode feed = spec.at("/paths/~1api~1feed/get");
+
+        JsonNode params = feed.at("/parameters");
+        assertThat(params.findValuesAsString("name")).contains("cursor", "limit");
+
+        String pageRef = feed.at("/responses/200/content/application~1json/schema/$ref").asString();
+        JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
+        String cardRef = page.at("/properties/items/items/$ref").asString();
+        JsonNode card = spec.at("/components/schemas/" + cardRef.substring("#/components/schemas/".length()));
+        assertThat(card.at("/properties/postId")).isNotEmpty();
+        assertThat(card.at("/properties/authorId")).isNotEmpty();
+        assertThat(card.at("/properties/mediaId")).isNotEmpty();
+        assertThat(card.at("/properties/caption")).isNotEmpty();
+        assertThat(card.at("/properties/publishedAt")).isNotEmpty();
+
+        assertThat(feed.at("/responses/401/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void logoutIsDocumentedAs204() {
         JsonNode logout = spec.at("/paths/~1api~1auth~1logout/post/responses");
 

@@ -27,7 +27,7 @@ persistence.
 
 - **All contexts → `shared-kernel`**: depend on it for ID value types. Contexts reference each other's data **by ID only** — never object references, never foreign keys across schemas.
 - **identity → profile**: `identity` emits `UserRegistered` when a person first authenticates. In v1 the `Profile` is not created from that event — it is created by the **onboarding** step when the person picks a username. A user without a profile is a legitimate "not yet onboarded" state.
-- **feed → follow, feed → post**: `feed` calls the published interfaces of `follow` and `post` synchronously to assemble a page (fan-out-on-read).
+- **feed → follow, feed → post**: `feed` calls the published interfaces of `follow` (`FollowGraph`) and `post` (`PublishedPosts`) synchronously to assemble a page (fan-out-on-read), behind its own `FeedQuery` port (ADR-0003). It has no store.
 - **post → media**: a `Post` holds a `MediaId`, and checks ownership via `MediaCatalog` on publish. `media`'s orphan collection needs to know which media a post still references; since the Gradle arrow only runs this way, `media` declares that as a port (`PostReferences`) and `post` provides the adapter.
 - **engagement → post**: a `Like` holds a `PostId`. `post` emits `PostPublished` / `PostDeleted`; no context consumes them in v1 (they are the module's forward contract).
 - **Events emitted, mostly unconsumed in v1**: `UserRegistered`, `UserFollowed`, `UserUnfollowed`, `PostPublished`, `PostDeleted`, `PostLiked`, `PostUnliked`, `ProfileUpdated`. They exist as each module's public contract so consumers (fan-out-on-write feed, notifications, comment counts) can be added later without touching producers.

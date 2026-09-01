@@ -14,11 +14,11 @@
         "required" : [ "accessToken", "expiresInSeconds" ],
         "type" : "object"
       },
-      "ApiPageFeedCard" : {
+      "ApiPageFeedPost" : {
         "properties" : {
           "items" : {
             "items" : {
-              "$ref" : "#/components/schemas/FeedCard"
+              "$ref" : "#/components/schemas/FeedPost"
             },
             "type" : "array"
           },
@@ -71,12 +71,22 @@
         },
         "type" : "object"
       },
-      "FeedCard" : {
+      "FeedPost" : {
         "properties" : {
-          "author" : {
+          "authorId" : {
+            "type" : "string"
+          },
+          "caption" : {
+            "type" : "string"
+          },
+          "mediaId" : {
             "type" : "string"
           },
           "postId" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
             "type" : "string"
           }
         },
@@ -269,16 +279,52 @@
     "/api/feed" : {
       "get" : {
         "operationId" : "feed",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ApiPageFeedCard"
+                  "$ref" : "#/components/schemas/ApiPageFeedPost"
                 }
               }
             },
-            "description" : "OK"
+            "description" : "A page of the viewer's feed, newest post first."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The pagination cursor is malformed."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
           }
         },
         "tags" : [ "feed-controller" ]

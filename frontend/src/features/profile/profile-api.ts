@@ -6,6 +6,8 @@ export type MyProfile =
   | { status: "not-onboarded" }
   | { status: "unauthenticated" };
 
+// A route loader calls this and turns "unauthenticated" into a redirect, so it reports a
+// dead session as a status rather than throwing SessionExpiredError like the data fetches.
 export async function fetchMyProfile(): Promise<MyProfile> {
   const { data, error, response } = await api.GET("/api/profiles/me");
   if (data) return { status: "onboarded", profile: toProfile(data) };

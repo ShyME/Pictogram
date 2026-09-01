@@ -41,6 +41,8 @@ public interface PictogramApi {
         AccountPage following(String userId, String cursor, Integer limit);
 
         FeedPage openFeed();
+
+        FeedPage openFeed(String cursor, Integer limit);
     }
 
     enum DeleteOutcome {
@@ -63,10 +65,14 @@ public interface PictogramApi {
     record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {
     }
 
-    record FeedPage(List<Object> items, String nextCursor) {
+    record FeedPage(List<Post> posts, String nextCursor) {
 
         public boolean isEmpty() {
-            return items.isEmpty() && nextCursor == null;
+            return posts.isEmpty() && nextCursor == null;
+        }
+
+        public List<String> postIds() {
+            return posts.stream().map(Post::postId).toList();
         }
     }
 }

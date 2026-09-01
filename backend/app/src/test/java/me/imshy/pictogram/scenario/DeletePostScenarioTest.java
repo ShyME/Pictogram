@@ -17,11 +17,12 @@ class DeletePostScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void anAuthorDeletesAPostAndItLeavesTheirGridAndEveryViewersReadOfIt() {
+    void anAuthorDeletesAPostAndItLeavesTheirGridEveryViewersReadOfItAndAFollowersFeed() {
         var ada = pictogram.registerViaGoogle("ada@example.com");
         var adaProfile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
         var grace = pictogram.registerViaGoogle("grace@example.com");
         grace.completeOnboarding("grace_hopper", "Grace Hopper", null);
+        grace.follow(adaProfile.userId());
 
         Post keep = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "the one that stays");
         Post drop = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "the one that goes");
@@ -34,6 +35,7 @@ class DeletePostScenarioTest extends ScenarioTest {
         assertThat(grace.postsOf(adaProfile.userId()))
                 .extracting(Post::postId)
                 .containsExactly(keep.postId());
+        assertThat(grace.openFeed().postIds()).containsExactly(keep.postId());
     }
 
     @Test
