@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/follows/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["relationship"];
+        put: operations["follow"];
+        post?: never;
+        delete: operations["unfollow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/media": {
         parameters: {
             query?: never;
@@ -206,6 +222,13 @@ export interface components {
             author?: string;
             postId?: string;
         };
+        FollowRelationship: {
+            followedByViewer?: boolean;
+            /** Format: int64 */
+            followerCount?: number;
+            /** Format: int64 */
+            followingCount?: number;
+        };
         MediaUploadResponse: {
             mediaId: string;
         };
@@ -319,6 +342,77 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiPageFeedCard"];
                 };
+            };
+        };
+    };
+    relationship: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user's follower / following counts and the viewer's relationship. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowRelationship"];
+                };
+            };
+        };
+    };
+    follow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The viewer now follows the user (or already did). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The viewer tried to follow themselves. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    unfollow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The viewer no longer follows the user (or never did). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -55,6 +55,20 @@ public interface PictogramApi {
         /** A user's post grid, newest first — the first page. */
         List<Post> postsOf(String userId);
 
+        /**
+         * Follow another user and report what the server did — {@link FollowOutcome#OK} for
+         * a real or already-satisfied follow, {@link FollowOutcome#SELF_FOLLOW} when the
+         * followed user is the caller — so a scenario asserts on the outcome, not a thrown
+         * error.
+         */
+        FollowOutcome follow(String userId);
+
+        /** Unfollow a user; a no-op when the caller wasn't following them. */
+        void unfollow(String userId);
+
+        /** A user's follower / following counts and whether the caller currently follows them. */
+        FollowRelationship followRelationship(String userId);
+
         /** The viewer's home feed. */
         FeedPage openFeed();
     }
@@ -62,6 +76,14 @@ public interface PictogramApi {
     /** What the server did with a delete request. */
     enum DeleteOutcome {
         DELETED, FORBIDDEN
+    }
+
+    /** What the server did with a follow request. */
+    enum FollowOutcome {
+        OK, SELF_FOLLOW
+    }
+
+    record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
     }
 
     record Profile(String userId, String username, String displayName, String bio) {

@@ -2,7 +2,8 @@ import { createBrowserRouter } from "react-router";
 import { LoginPage, installApiAuth } from "@features/auth";
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from "@features/profile";
 import { FeedPage } from "@features/feed";
-import { OwnPostGrid } from "@features/post";
+import { PostGrid } from "@features/post";
+import { FollowButton, FollowCounts } from "@features/follow";
 import { AppLayout } from "./AppLayout";
 import { NewPostRoute } from "./NewPostRoute";
 import { RouteError } from "./RouteError";
@@ -26,7 +27,15 @@ export const router = createBrowserRouter([
       { path: "/new", element: <NewPostRoute />, loader: newPostLoader },
       {
         path: "/u/:username",
-        element: <ProfilePage renderOwnGrid={(authorId) => <OwnPostGrid authorId={authorId} />} />,
+        element: (
+          <ProfilePage
+            renderGrid={(authorId, isOwnProfile) => (
+              <PostGrid authorId={authorId} manageable={isOwnProfile} />
+            )}
+            renderFollowButton={(userId) => <FollowButton userId={userId} />}
+            renderFollowCounts={(userId) => <FollowCounts userId={userId} />}
+          />
+        ),
         loader: profileLoader,
       },
     ],

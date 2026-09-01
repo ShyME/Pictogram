@@ -5,7 +5,10 @@ import type { Locator, Page } from "@playwright/test";
 export class ProfilePage {
   readonly notFoundHeading: Locator;
   readonly followButton: Locator;
+  readonly followingButton: Locator;
   readonly editProfileLink: Locator;
+  readonly followerCount: Locator;
+  readonly followingCount: Locator;
 
   private readonly page: Page;
 
@@ -13,7 +16,10 @@ export class ProfilePage {
     this.page = page;
     this.notFoundHeading = page.getByRole("heading", { name: /doesn.t exist/i });
     this.followButton = page.getByRole("button", { name: /^follow$/i });
+    this.followingButton = page.getByRole("button", { name: /^following$/i });
     this.editProfileLink = page.getByRole("link", { name: /edit profile/i });
+    this.followerCount = page.getByRole("definition").filter({ hasText: /followers/ });
+    this.followingCount = page.getByRole("definition").filter({ hasText: /following/ });
   }
 
   async open(username: string): Promise<void> {

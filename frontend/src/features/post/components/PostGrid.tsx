@@ -6,12 +6,22 @@ import { thumbnailUrl } from "../model/post";
 import type { Post } from "../model/post";
 
 /**
- * The signed-in author's own post grid on their profile page — newest first, "Load more"
- * paging on the keyset cursor (infinite scroll is the feed's concern, #18). A just-published
- * post appears at the top because the composer invalidates this query before navigating here.
- * Deleting a post is permanent, so its control opens a confirmation first.
+ * An author's post grid on their profile page — newest first, "Load more" paging on the
+ * keyset cursor (infinite scroll is the feed's concern, #18). The underlying read is public
+ * (a profile is shareable by link — spec story 18), so this renders on anyone's profile.
+ *
+ * `manageable` turns on the owner-only affordances: a per-cell "Delete" control that opens a
+ * confirmation first, since deletion is permanent (#15). It is off by default — a visitor
+ * looking at someone else's grid sees the posts and nothing else. A just-published post
+ * appears at the top because the composer invalidates this query before navigating here.
  */
-export function OwnPostGrid({ authorId }: { authorId: string }) {
+export function PostGrid({
+  authorId,
+  manageable = false,
+}: {
+  authorId: string;
+  manageable?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
 
@@ -37,7 +47,7 @@ export function OwnPostGrid({ authorId }: { authorId: string }) {
   if (grid.isError) {
     return (
       <p className="py-10 text-center text-sm text-red-600">
-        We couldn&rsquo;t load your posts. Try again in a moment.
+        We couldn&rsquo;t load these posts. Try again in a moment.
       </p>
     );
   }
@@ -59,16 +69,18 @@ export function OwnPostGrid({ authorId }: { authorId: string }) {
               loading="lazy"
               className="aspect-square w-full rounded-sm object-cover"
             />
-            <button
-              type="button"
-              onClick={() => {
-                remove.reset();
-                setPendingDelete(post);
-              }}
-              className="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
-            >
-              Delete
-            </button>
+            {manageable && (
+              <button
+                type="button"
+                onClick={() => {
+                  remove.reset();
+                  setPendingDelete(post);
+                }}
+                className="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+              >
+                Delete
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -86,7 +98,7 @@ export function OwnPostGrid({ authorId }: { authorId: string }) {
         </div>
       )}
 
-      {pendingDelete && (
+      {manageable && pendingDelete && (
         <ConfirmDelete
           deleting={remove.isPending}
           failed={remove.isError}

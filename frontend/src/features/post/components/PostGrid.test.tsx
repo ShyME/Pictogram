@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../test/render";
 import { jsonResponse, pathOf, problemResponse, stubFetch } from "../../../test/mock-fetch";
-import { OwnPostGrid } from "./OwnPostGrid";
+import { PostGrid } from "./PostGrid";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -10,7 +10,7 @@ afterEach(() => {
 
 test("shows an empty state when the author has no posts", async () => {
   stubFetch(() => jsonResponse({ items: [], nextCursor: null }));
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" />);
 
   expect(await screen.findByText("No posts yet")).toBeInTheDocument();
 });
@@ -25,7 +25,7 @@ test("renders each post's thumbnail, newest first as the server sends them", asy
       nextCursor: null,
     }),
   );
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" />);
 
   const images = await screen.findAllByRole("img");
   expect(images.map((img) => img.getAttribute("src"))).toEqual([
@@ -34,7 +34,17 @@ test("renders each post's thumbnail, newest first as the server sends them", asy
   ]);
 });
 
-test("deletes a post after the author confirms, then refetches the grid", async () => {
+test("a plain viewer sees the posts but no delete controls", async () => {
+  stubFetch(() =>
+    jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", caption: "hi", publishedAt: "t1" }], nextCursor: null }),
+  );
+  renderWithProviders(<PostGrid authorId="u-1" />);
+
+  expect(await screen.findByAltText("hi")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+});
+
+test("the owner deletes a post after confirming, then the grid refetches", async () => {
   const calls = stubFetch((request) => {
     if (request.method === "DELETE") return new Response(null, { status: 204 });
     const seenDelete = calls.some((c) => c.method === "DELETE");
@@ -43,7 +53,7 @@ test("deletes a post after the author confirms, then refetches the grid", async 
       nextCursor: null,
     });
   });
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" manageable />);
 
   fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
 
@@ -60,7 +70,7 @@ test("cancelling the confirmation leaves the post and sends nothing", async () =
   const calls = stubFetch(() =>
     jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", caption: "stay", publishedAt: "t1" }], nextCursor: null }),
   );
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" manageable />);
 
   fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
   fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: /cancel/i }));
@@ -76,7 +86,7 @@ test("a failed delete keeps the dialog open with an error", async () => {
       ? problemResponse("forbidden", 403)
       : jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", publishedAt: "t1" }], nextCursor: null }),
   );
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" manageable />);
 
   fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
   fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }));
@@ -90,7 +100,7 @@ test("pages on the keyset cursor when 'Load more' is clicked", async () => {
       ? jsonResponse({ items: [{ postId: "p-2", mediaId: "m-2", publishedAt: "t2" }], nextCursor: "CURSOR" })
       : jsonResponse({ items: [{ postId: "p-1", mediaId: "m-1", publishedAt: "t1" }], nextCursor: null }),
   );
-  renderWithProviders(<OwnPostGrid authorId="u-1" />);
+  renderWithProviders(<PostGrid authorId="u-1" />);
 
   fireEvent.click(await screen.findByRole("button", { name: /load more/i }));
 

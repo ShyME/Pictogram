@@ -31,34 +31,47 @@ test("marks the profile as the viewer's own when the usernames match", async () 
     status: "found",
     profile: { userId: "u-1", username: "ada", displayName: "Ada", bio: null },
     isOwnProfile: true,
+    viewerCanFollow: false,
   });
 });
 
-test("someone else's profile is not the viewer's own", async () => {
+test("a signed-in viewer looking at someone else can follow them", async () => {
   route({
     profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
     me: () => jsonResponse({ userId: "u-1", username: "ada" }),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({ status: "found", isOwnProfile: false });
+  await expect(load("grace")).resolves.toMatchObject({
+    status: "found",
+    isOwnProfile: false,
+    viewerCanFollow: true,
+  });
 });
 
-test("an unauthenticated visitor still sees the public profile, not as their own", async () => {
+test("an unauthenticated visitor sees the public profile but cannot follow", async () => {
   route({
     profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
     me: () => problemResponse("unauthorized", 401),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({ status: "found", isOwnProfile: false });
+  await expect(load("grace")).resolves.toMatchObject({
+    status: "found",
+    isOwnProfile: false,
+    viewerCanFollow: false,
+  });
 });
 
-test("a failing own-profile check does not sink the page — it renders as someone else's", async () => {
+test("a failing own-profile check does not sink the page — it renders as a visitor's view", async () => {
   route({
     profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
     me: () => new Response(null, { status: 500 }),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({ status: "found", isOwnProfile: false });
+  await expect(load("grace")).resolves.toMatchObject({
+    status: "found",
+    isOwnProfile: false,
+    viewerCanFollow: false,
+  });
 });
 
 test("an unknown username resolves to not-found with the username echoed back", async () => {

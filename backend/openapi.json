@@ -67,6 +67,22 @@
         },
         "type" : "object"
       },
+      "FollowRelationship" : {
+        "properties" : {
+          "followedByViewer" : {
+            "type" : "boolean"
+          },
+          "followerCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "followingCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
       "MediaUploadResponse" : {
         "properties" : {
           "mediaId" : {
@@ -231,6 +247,79 @@
           }
         },
         "tags" : [ "feed-controller" ]
+      }
+    },
+    "/api/follows/{userId}" : {
+      "delete" : {
+        "operationId" : "unfollow",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The viewer no longer follows the user (or never did)."
+          }
+        },
+        "tags" : [ "follow-controller" ]
+      },
+      "get" : {
+        "operationId" : "relationship",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FollowRelationship"
+                }
+              }
+            },
+            "description" : "The user's follower / following counts and the viewer's relationship."
+          }
+        },
+        "tags" : [ "follow-controller" ]
+      },
+      "put" : {
+        "operationId" : "follow",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The viewer now follows the user (or already did)."
+          },
+          "422" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The viewer tried to follow themselves."
+          }
+        },
+        "tags" : [ "follow-controller" ]
       }
     },
     "/api/media" : {

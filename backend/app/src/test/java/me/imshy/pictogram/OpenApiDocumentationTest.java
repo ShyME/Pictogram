@@ -137,6 +137,36 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void followingAUserIsDocumentedAs204WithA422SelfFollowProblemDetail() {
+        JsonNode follow = spec.at("/paths/~1api~1follows~1{userId}/put/responses");
+
+        assertThat(follow.has("204")).isTrue();
+        assertThat(follow.has("200")).as("no phantom 200").isFalse();
+        assertThat(follow.at("/422/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void unfollowingAUserIsDocumentedAs204() {
+        JsonNode unfollow = spec.at("/paths/~1api~1follows~1{userId}/delete/responses");
+
+        assertThat(unfollow.has("204")).isTrue();
+        assertThat(unfollow.has("200")).as("no phantom 200").isFalse();
+    }
+
+    @Test
+    void theFollowRelationshipIsDocumentedWithCountsAndTheViewerFlag() {
+        JsonNode relationship = spec.at(
+                "/paths/~1api~1follows~1{userId}/get/responses/200/content/application~1json/schema/$ref");
+
+        JsonNode body = spec.at("/components/schemas/"
+                + relationship.asString().substring("#/components/schemas/".length()));
+        assertThat(body.at("/properties/followerCount")).isNotEmpty();
+        assertThat(body.at("/properties/followingCount")).isNotEmpty();
+        assertThat(body.at("/properties/followedByViewer")).isNotEmpty();
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 
