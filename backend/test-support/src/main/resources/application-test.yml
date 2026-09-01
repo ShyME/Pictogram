@@ -8,6 +8,12 @@ spring:
     hikari:
       maximum-pool-size: 4
 
+# The orphan-media sweep runs only when a test asks it to, never on the cron.
+pictogram:
+  media:
+    retention:
+      collection-cron: "-"
+
 # Plain-text logs under test; the app enables ECS JSON on other profiles.
 logging:
   structured:

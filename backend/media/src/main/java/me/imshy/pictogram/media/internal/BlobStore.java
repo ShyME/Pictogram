@@ -11,4 +11,7 @@ interface BlobStore {
     void put(String key, byte[] bytes);
 
     byte[] get(String key);
+
+    /** A no-op if nothing is stored at {@code key} (so the orphan sweep needs no pre-check). */
+    void remove(String key);
 }

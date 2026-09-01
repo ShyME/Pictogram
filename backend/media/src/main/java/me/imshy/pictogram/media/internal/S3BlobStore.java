@@ -38,6 +38,13 @@ class S3BlobStore implements BlobStore {
         return s3.getObjectAsBytes(request -> request.bucket(bucket).key(key)).asByteArray();
     }
 
+    @Override
+    public void remove(String key) {
+        // S3 (and MinIO) answer a delete of an absent key with success, so the sweep needs
+        // no existence check and a half-finished previous sweep re-runs cleanly.
+        s3.deleteObject(request -> request.bucket(bucket).key(key));
+    }
+
     private void ensureBucket() {
         if (bucketReady) {
             return;

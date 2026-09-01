@@ -1,4 +1,4 @@
-package me.imshy.pictogram.identity.internal;
+package me.imshy.pictogram.testsupport;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -6,20 +6,25 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
-/** A {@link Clock} tests can wind forward, so token-lifetime assertions need no real waiting (ADR-0007). */
-final class MutableClock extends Clock {
+/**
+ * A {@link Clock} a test winds forward by hand, so assertions about grace periods and token
+ * lifetimes need no real waiting (ADR-0007). Used directly where the code under test takes a
+ * {@code Clock}, or as the delegate of a {@code @MockitoBean Clock} where the real bean has
+ * to be overridden.
+ */
+public final class MutableClock extends Clock {
 
     private Instant now;
 
-    MutableClock(Instant start) {
+    public MutableClock(Instant start) {
         this.now = start;
     }
 
-    static MutableClock at(String instant) {
+    public static MutableClock at(String instant) {
         return new MutableClock(Instant.parse(instant));
     }
 
-    void advance(Duration by) {
+    public void advance(Duration by) {
         now = now.plus(by);
     }
 
