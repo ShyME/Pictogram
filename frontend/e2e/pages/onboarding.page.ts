@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class OnboardingPage {
   readonly heading: Locator;
@@ -8,11 +8,11 @@ export class OnboardingPage {
   readonly usernameError: Locator;
 
   constructor(page: Page) {
-    this.heading = page.getByRole("heading", { name: /pick a username/i });
-    this.username = page.getByLabel("Username");
+    this.heading = page.getByRole('heading', { name: /pick a username/i });
+    this.username = page.getByLabel('Username');
     this.displayName = page.getByLabel(/display name/i);
-    this.createProfile = page.getByRole("button", { name: /create profile/i });
-    this.usernameError = page.getByRole("alert");
+    this.createProfile = page.getByRole('button', { name: /create profile/i });
+    this.usernameError = page.getByRole('alert');
   }
 
   async completeWith(username: string, displayName?: string): Promise<void> {

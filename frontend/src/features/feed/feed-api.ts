@@ -1,10 +1,10 @@
-import { api, throwIfSessionExpired } from "@shared";
-import { type FeedPost, toFeedPost } from "./feed";
+import { api, throwIfSessionExpired } from '@shared';
+import { type FeedPost, toFeedPost } from './feed';
 
 export type FeedPostPage = { posts: FeedPost[]; nextCursor: string | null };
 
 export async function fetchFeedPage(cursor?: string): Promise<FeedPostPage> {
-  const { data, response } = await api.GET("/api/feed", {
+  const { data, response } = await api.GET('/api/feed', {
     params: { query: { cursor } },
   });
   throwIfSessionExpired(response);

@@ -1,13 +1,13 @@
-import { useId, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Link, useLoaderData, useNavigate } from "react-router";
-import { submitProfileEdit } from "./profile-api";
-import type { Profile } from "./profile";
-import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from "./username";
+import { useMutation } from '@tanstack/react-query';
+import { useId, useState } from 'react';
+import { Link, useLoaderData, useNavigate } from 'react-router';
+import type { Profile } from './profile';
+import { submitProfileEdit } from './profile-api';
+import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from './username';
 
 export type EditProfileData = { profile: Profile };
 
-type ServerError = "username-shape" | "username-taken" | "details";
+type ServerError = 'username-shape' | 'username-taken' | 'details';
 
 export function EditProfilePage() {
   const { profile } = useLoaderData() as EditProfileData;
@@ -16,8 +16,8 @@ export function EditProfilePage() {
   const usernameErrorId = useId();
 
   const [username, setUsername] = useState(profile.username);
-  const [displayName, setDisplayName] = useState(profile.displayName ?? "");
-  const [bio, setBio] = useState(profile.bio ?? "");
+  const [displayName, setDisplayName] = useState(profile.displayName ?? '');
+  const [bio, setBio] = useState(profile.bio ?? '');
   const [serverError, setServerError] = useState<ServerError | null>(null);
 
   const shapeValid = isUsernameShapeValid(username);
@@ -28,20 +28,20 @@ export function EditProfilePage() {
     mutationFn: submitProfileEdit,
     onSuccess: (outcome) => {
       switch (outcome.status) {
-        case "updated":
+        case 'updated':
           navigate(`/u/${outcome.profile.username}`, { replace: true });
           break;
-        case "not-onboarded":
-          navigate("/onboarding", { replace: true });
+        case 'not-onboarded':
+          navigate('/onboarding', { replace: true });
           break;
-        case "username-taken":
-          setServerError("username-taken");
+        case 'username-taken':
+          setServerError('username-taken');
           break;
-        case "username-invalid":
-          setServerError("username-shape");
+        case 'username-invalid':
+          setServerError('username-shape');
           break;
-        case "details-invalid":
-          setServerError("details");
+        case 'details-invalid':
+          setServerError('details');
           break;
       }
     },
@@ -72,7 +72,10 @@ export function EditProfilePage() {
           className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
         >
           <div>
-            <label htmlFor={`${fieldId}-username`} className="block text-sm font-medium text-neutral-700">
+            <label
+              htmlFor={`${fieldId}-username`}
+              className="block text-sm font-medium text-neutral-700"
+            >
               Username
             </label>
             <input
@@ -98,7 +101,7 @@ export function EditProfilePage() {
             )}
             {isRenaming && !nameError && (
               <p role="status" className="mt-1.5 text-sm text-amber-700">
-                Changing your username breaks existing links. Anyone who visits your old{" "}
+                Changing your username breaks existing links. Anyone who visits your old{' '}
                 <span className="font-medium">/u/{profile.username}</span> link will see a
                 &ldquo;not found&rdquo; page.
               </p>
@@ -106,7 +109,10 @@ export function EditProfilePage() {
           </div>
 
           <div className="mt-4">
-            <label htmlFor={`${fieldId}-display`} className="block text-sm font-medium text-neutral-700">
+            <label
+              htmlFor={`${fieldId}-display`}
+              className="block text-sm font-medium text-neutral-700"
+            >
               Display name <span className="font-normal text-neutral-400">(optional)</span>
             </label>
             <input
@@ -120,7 +126,10 @@ export function EditProfilePage() {
           </div>
 
           <div className="mt-4">
-            <label htmlFor={`${fieldId}-bio`} className="block text-sm font-medium text-neutral-700">
+            <label
+              htmlFor={`${fieldId}-bio`}
+              className="block text-sm font-medium text-neutral-700"
+            >
               Bio <span className="font-normal text-neutral-400">(optional)</span>
             </label>
             <textarea
@@ -134,7 +143,7 @@ export function EditProfilePage() {
             />
           </div>
 
-          {serverError === "details" && (
+          {serverError === 'details' && (
             <p role="alert" className="mt-4 text-sm text-red-600">
               Your display name or bio is too long. Shorten it and try again.
             </p>

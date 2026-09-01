@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class LoginPage {
   readonly heading: Locator;
@@ -9,13 +9,13 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole("heading", { name: "Pictogram" });
-    this.continueWithGoogle = page.getByRole("link", { name: /continue with google/i });
-    this.errorAlert = page.getByRole("alert");
+    this.heading = page.getByRole('heading', { name: 'Pictogram' });
+    this.continueWithGoogle = page.getByRole('link', { name: /continue with google/i });
+    this.errorAlert = page.getByRole('alert');
   }
 
   async open(): Promise<void> {
-    await this.page.goto("/");
+    await this.page.goto('/');
   }
 
   async openWithError(reason: string): Promise<void> {
@@ -27,7 +27,7 @@ export class LoginPage {
 
     const googleSubject = `e2e-${Date.now().toString(36)}`;
     const username = this.page.locator('input[name="username"]');
-    await username.waitFor({ state: "visible" });
+    await username.waitFor({ state: 'visible' });
     await username.fill(googleSubject);
     await this.page.locator('input[type="submit"]').click();
   }

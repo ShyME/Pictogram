@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class FeedPage {
   readonly emptyState: Locator;
@@ -11,17 +11,17 @@ export class FeedPage {
   constructor(page: Page) {
     this.page = page;
     this.emptyState = page.getByText(/find people to follow/i);
-    this.signOutButton = page.getByRole("button", { name: /sign out/i });
-    this.newPostLink = page.getByRole("link", { name: /new post/i });
-    this.cards = page.getByRole("article");
+    this.signOutButton = page.getByRole('button', { name: /sign out/i });
+    this.newPostLink = page.getByRole('link', { name: /new post/i });
+    this.cards = page.getByRole('article');
   }
 
   async open(): Promise<void> {
-    await this.page.goto("/");
+    await this.page.goto('/');
   }
 
   myProfileLink(username: string): Locator {
-    return this.page.getByRole("link", { name: `@${username}` });
+    return this.page.getByRole('link', { name: `@${username}` });
   }
 
   async signOut(): Promise<void> {

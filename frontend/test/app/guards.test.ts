@@ -1,64 +1,64 @@
-import { afterEach, expect, test, vi } from "vitest";
-import { jsonResponse, problemResponse, stubFetch } from "@test-support/mock-fetch";
-import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from "@app/guards";
+import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from '@app/guards';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { afterEach, expect, test, vi } from 'vitest';
 
 function profileEndpoint(status: number, body: unknown = {}) {
-  const slug = status === 404 ? "profile-not-found" : "unauthorized";
+  const slug = status === 404 ? 'profile-not-found' : 'unauthorized';
   stubFetch(() => (status === 200 ? jsonResponse(body) : problemResponse(slug, status)));
 }
 
 function redirectTarget(result: unknown): string | null {
-  return result instanceof Response ? result.headers.get("Location") : null;
+  return result instanceof Response ? result.headers.get('Location') : null;
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("rootLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile", async () => {
+test('rootLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile', async () => {
   profileEndpoint(401);
-  expect(redirectTarget(await rootLoader())).toBe("/login");
+  expect(redirectTarget(await rootLoader())).toBe('/login');
 
   profileEndpoint(404);
-  expect(redirectTarget(await rootLoader())).toBe("/onboarding");
+  expect(redirectTarget(await rootLoader())).toBe('/onboarding');
 
-  profileEndpoint(200, { userId: "u-1", username: "ada" });
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
   expect(await rootLoader()).toEqual({
-    profile: { userId: "u-1", username: "ada", displayName: null, bio: null },
+    profile: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
   });
 });
 
-test("loginLoader bounces an onboarded user to the feed and a half-onboarded one to onboarding", async () => {
-  profileEndpoint(200, { userId: "u-1", username: "ada" });
-  expect(redirectTarget(await loginLoader())).toBe("/");
+test('loginLoader bounces an onboarded user to the feed and a half-onboarded one to onboarding', async () => {
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
+  expect(redirectTarget(await loginLoader())).toBe('/');
 
   profileEndpoint(404);
-  expect(redirectTarget(await loginLoader())).toBe("/onboarding");
+  expect(redirectTarget(await loginLoader())).toBe('/onboarding');
 
   profileEndpoint(401);
   expect(await loginLoader()).toBeNull();
 });
 
-test("onboardingLoader requires a session and is skipped once a profile exists", async () => {
+test('onboardingLoader requires a session and is skipped once a profile exists', async () => {
   profileEndpoint(401);
-  expect(redirectTarget(await onboardingLoader())).toBe("/login");
+  expect(redirectTarget(await onboardingLoader())).toBe('/login');
 
-  profileEndpoint(200, { userId: "u-1", username: "ada" });
-  expect(redirectTarget(await onboardingLoader())).toBe("/");
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
+  expect(redirectTarget(await onboardingLoader())).toBe('/');
 
   profileEndpoint(404);
   expect(await onboardingLoader()).toBeNull();
 });
 
-test("newPostLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile", async () => {
+test('newPostLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile', async () => {
   profileEndpoint(401);
-  expect(redirectTarget(await newPostLoader())).toBe("/login");
+  expect(redirectTarget(await newPostLoader())).toBe('/login');
 
   profileEndpoint(404);
-  expect(redirectTarget(await newPostLoader())).toBe("/onboarding");
+  expect(redirectTarget(await newPostLoader())).toBe('/onboarding');
 
-  profileEndpoint(200, { userId: "u-1", username: "ada" });
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
   expect(await newPostLoader()).toEqual({
-    profile: { userId: "u-1", username: "ada", displayName: null, bio: null },
+    profile: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
   });
 });

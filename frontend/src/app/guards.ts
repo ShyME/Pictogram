@@ -1,4 +1,4 @@
-import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from "./access-gate";
+import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from './access-gate';
 
 const asLoader =
   <T>(load: () => Promise<T>) =>

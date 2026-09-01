@@ -1,12 +1,12 @@
-import { afterEach, expect, test, vi } from "vitest";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { renderWithProviders } from "@test-support/render";
-import { pathOf, stubFetch } from "@test-support/mock-fetch";
-import { setAccessToken } from "@features/auth/session";
-import { SignOutButton } from "@features/auth/SignOutButton";
+import { setAccessToken } from '@features/auth/session';
+import { SignOutButton } from '@features/auth/SignOutButton';
+import { pathOf, stubFetch } from '@test-support/mock-fetch';
+import { renderWithProviders } from '@test-support/render';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, expect, test, vi } from 'vitest';
 
 const navigate = vi.fn();
-vi.mock("react-router", () => ({ useNavigate: () => navigate }));
+vi.mock('react-router', () => ({ useNavigate: () => navigate }));
 
 afterEach(() => {
   navigate.mockClear();
@@ -14,15 +14,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("ends the session and returns to /login", async () => {
-  setAccessToken("live");
+test('ends the session and returns to /login', async () => {
+  setAccessToken('live');
   const calls = stubFetch(() => new Response(null, { status: 204 }));
   renderWithProviders(<SignOutButton />);
 
-  fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
+  fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
 
   await waitFor(() => {
-    expect(navigate).toHaveBeenCalledWith("/login", { replace: true });
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
-  expect(calls.map(pathOf)).toContain("/api/auth/logout");
+  expect(calls.map(pathOf)).toContain('/api/auth/logout');
 });

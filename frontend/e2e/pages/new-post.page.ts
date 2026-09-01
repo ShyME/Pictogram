@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page } from '@playwright/test';
 
 export class NewPostPage {
   readonly heading: Locator;
@@ -10,10 +10,10 @@ export class NewPostPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole("heading", { name: /new post/i });
+    this.heading = page.getByRole('heading', { name: /new post/i });
     this.caption = page.getByLabel(/caption/i);
-    this.share = page.getByRole("button", { name: /share/i });
-    this.zoom = page.getByRole("slider", { name: /zoom/i });
+    this.share = page.getByRole('button', { name: /share/i });
+    this.zoom = page.getByRole('slider', { name: /zoom/i });
   }
 
   async selectPhoto(filePath: string): Promise<void> {
@@ -21,10 +21,10 @@ export class NewPostPage {
   }
 
   async frameShot(): Promise<void> {
-    await this.zoom.fill("2");
-    const frame = this.page.getByRole("img", { name: /position your photo/i });
+    await this.zoom.fill('2');
+    const frame = this.page.getByRole('img', { name: /position your photo/i });
     const box = await frame.boundingBox();
-    if (!box) throw new Error("crop frame not visible");
+    if (!box) throw new Error('crop frame not visible');
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
     await this.page.mouse.move(cx, cy);

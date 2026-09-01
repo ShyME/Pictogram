@@ -1,11 +1,13 @@
-import { expect, test } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { EditProfilePage } from "./pages/edit-profile.page";
+import { expect, test } from '@playwright/test';
+import { EditProfilePage } from './pages/edit-profile.page';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-test("edit profile: change display name, bio and username; the old handle 404s", async ({ page }) => {
+test('edit profile: change display name, bio and username; the old handle 404s', async ({
+  page,
+}) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
   const feed = new FeedPage(page);
@@ -18,7 +20,7 @@ test("edit profile: change display name, bio and username; the old handle 404s",
   await login.open();
   await login.signInWithGoogle();
   await expect(page).toHaveURL(/\/onboarding$/);
-  await onboarding.completeWith(original, "Edit Tester");
+  await onboarding.completeWith(original, 'Edit Tester');
   await expect(feed.emptyState).toBeVisible();
 
   await feed.myProfileLink(original).click();
@@ -26,8 +28,8 @@ test("edit profile: change display name, bio and username; the old handle 404s",
   await profile.editProfileLink.click();
   await expect(page).toHaveURL(/\/settings\/profile$/);
 
-  await edit.displayName.fill("Edith Tester");
-  await edit.bio.fill("Now with a bio.");
+  await edit.displayName.fill('Edith Tester');
+  await edit.bio.fill('Now with a bio.');
   await expect(edit.renameWarning).toBeHidden();
 
   await edit.username.fill(renamed);
@@ -36,9 +38,9 @@ test("edit profile: change display name, bio and username; the old handle 404s",
   await edit.saveChanges.click();
 
   await expect(page).toHaveURL(new RegExp(`/u/${renamed}$`));
-  await expect(profile.displayName("Edith Tester")).toBeVisible();
+  await expect(profile.displayName('Edith Tester')).toBeVisible();
   await expect(profile.handle(renamed)).toBeVisible();
-  await expect(page.getByText("Now with a bio.")).toBeVisible();
+  await expect(page.getByText('Now with a bio.')).toBeVisible();
 
   await profile.open(original);
   await expect(profile.notFoundHeading).toBeVisible();

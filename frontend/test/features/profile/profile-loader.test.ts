@@ -1,19 +1,16 @@
-import type { LoaderFunctionArgs } from "react-router";
-import { afterEach, expect, test, vi } from "vitest";
-import { jsonResponse, problemResponse, stubFetch } from "@test-support/mock-fetch";
-import { profileLoader } from "@features/profile/profile-loader";
+import { profileLoader } from '@features/profile/profile-loader';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import type { LoaderFunctionArgs } from 'react-router';
+import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function route(handlers: {
-  profile: () => Response;
-  me: () => Response;
-}) {
+function route(handlers: { profile: () => Response; me: () => Response }) {
   stubFetch((request) => {
     const { pathname } = new URL(request.url);
-    if (pathname === "/api/profiles/me") return handlers.me();
+    if (pathname === '/api/profiles/me') return handlers.me();
     return handlers.profile();
   });
 }
@@ -23,39 +20,39 @@ const load = (username: string) =>
 
 test("marks the profile as the viewer's own when the usernames match", async () => {
   route({
-    profile: () => jsonResponse({ userId: "u-1", username: "ada", displayName: "Ada", bio: null }),
-    me: () => jsonResponse({ userId: "u-1", username: "ada", displayName: "Ada", bio: null }),
+    profile: () => jsonResponse({ userId: 'u-1', username: 'ada', displayName: 'Ada', bio: null }),
+    me: () => jsonResponse({ userId: 'u-1', username: 'ada', displayName: 'Ada', bio: null }),
   });
 
-  await expect(load("ada")).resolves.toEqual({
-    status: "found",
-    profile: { userId: "u-1", username: "ada", displayName: "Ada", bio: null },
+  await expect(load('ada')).resolves.toEqual({
+    status: 'found',
+    profile: { userId: 'u-1', username: 'ada', displayName: 'Ada', bio: null },
     isOwnProfile: true,
     viewerCanFollow: false,
   });
 });
 
-test("a signed-in viewer looking at someone else can follow them", async () => {
+test('a signed-in viewer looking at someone else can follow them', async () => {
   route({
-    profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
-    me: () => jsonResponse({ userId: "u-1", username: "ada" }),
+    profile: () => jsonResponse({ userId: 'u-2', username: 'grace' }),
+    me: () => jsonResponse({ userId: 'u-1', username: 'ada' }),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({
-    status: "found",
+  await expect(load('grace')).resolves.toMatchObject({
+    status: 'found',
     isOwnProfile: false,
     viewerCanFollow: true,
   });
 });
 
-test("an unauthenticated visitor sees the public profile but cannot follow", async () => {
+test('an unauthenticated visitor sees the public profile but cannot follow', async () => {
   route({
-    profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
-    me: () => problemResponse("unauthorized", 401),
+    profile: () => jsonResponse({ userId: 'u-2', username: 'grace' }),
+    me: () => problemResponse('unauthorized', 401),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({
-    status: "found",
+  await expect(load('grace')).resolves.toMatchObject({
+    status: 'found',
     isOwnProfile: false,
     viewerCanFollow: false,
   });
@@ -63,22 +60,25 @@ test("an unauthenticated visitor sees the public profile but cannot follow", asy
 
 test("a failing own-profile check does not sink the page — it renders as a visitor's view", async () => {
   route({
-    profile: () => jsonResponse({ userId: "u-2", username: "grace" }),
+    profile: () => jsonResponse({ userId: 'u-2', username: 'grace' }),
     me: () => new Response(null, { status: 500 }),
   });
 
-  await expect(load("grace")).resolves.toMatchObject({
-    status: "found",
+  await expect(load('grace')).resolves.toMatchObject({
+    status: 'found',
     isOwnProfile: false,
     viewerCanFollow: false,
   });
 });
 
-test("an unknown username resolves to not-found with the username echoed back", async () => {
+test('an unknown username resolves to not-found with the username echoed back', async () => {
   route({
-    profile: () => problemResponse("profile-not-found", 404),
-    me: () => problemResponse("unauthorized", 401),
+    profile: () => problemResponse('profile-not-found', 404),
+    me: () => problemResponse('unauthorized', 401),
   });
 
-  await expect(load("ghost_user")).resolves.toEqual({ status: "not-found", username: "ghost_user" });
+  await expect(load('ghost_user')).resolves.toEqual({
+    status: 'not-found',
+    username: 'ghost_user',
+  });
 });

@@ -1,5 +1,5 @@
-import { api, throwIfSessionExpired } from "@shared";
-import { type FeedAuthor, type FeedCard, type FeedPost, imageUrl } from "./feed";
+import { api, throwIfSessionExpired } from '@shared';
+import { type FeedAuthor, type FeedCard, type FeedPost, imageUrl } from './feed';
 
 export async function toFeedCards(posts: FeedPost[]): Promise<FeedCard[]> {
   const authors = await fetchAuthors(unique(posts.map((post) => post.authorId)));
@@ -8,7 +8,7 @@ export async function toFeedCards(posts: FeedPost[]): Promise<FeedCard[]> {
     postId: post.postId,
     author: authors.get(post.authorId) ?? {
       userId: post.authorId,
-      username: "",
+      username: '',
       displayName: null,
     },
     imageUrl: imageUrl(post.mediaId),
@@ -20,7 +20,7 @@ export async function toFeedCards(posts: FeedPost[]): Promise<FeedCard[]> {
 async function fetchAuthors(ids: string[]): Promise<Map<string, FeedAuthor>> {
   if (ids.length === 0) return new Map();
 
-  const { data, response } = await api.GET("/api/profiles", {
+  const { data, response } = await api.GET('/api/profiles', {
     params: { query: { ids } },
   });
   throwIfSessionExpired(response);
@@ -28,10 +28,10 @@ async function fetchAuthors(ids: string[]): Promise<Map<string, FeedAuthor>> {
 
   return new Map(
     data.map((view) => [
-      view.userId ?? "",
+      view.userId ?? '',
       {
-        userId: view.userId ?? "",
-        username: view.username ?? "",
+        userId: view.userId ?? '',
+        username: view.username ?? '',
         displayName: view.displayName ?? null,
       },
     ]),

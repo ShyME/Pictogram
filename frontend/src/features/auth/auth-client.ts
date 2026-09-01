@@ -1,14 +1,14 @@
-import type { Middleware } from "openapi-fetch";
-import { api } from "@shared";
-import { getAccessToken } from "./session";
-import { refreshAccessToken } from "./auth-api";
+import { api } from '@shared';
+import type { Middleware } from 'openapi-fetch';
+import { refreshAccessToken } from './auth-api';
+import { getAccessToken } from './session';
 
 const preFlight = new WeakMap<Request, Request>();
 
 export const authMiddleware: Middleware = {
   onRequest({ request }) {
     const token = getAccessToken();
-    if (token) request.headers.set("Authorization", `Bearer ${token}`);
+    if (token) request.headers.set('Authorization', `Bearer ${token}`);
     preFlight.set(request, request.clone());
     return request;
   },
@@ -22,7 +22,7 @@ export const authMiddleware: Middleware = {
     const token = await refreshAccessToken();
     if (!token) return response;
 
-    original.headers.set("Authorization", `Bearer ${token}`);
+    original.headers.set('Authorization', `Bearer ${token}`);
     return fetch(original);
   },
 };

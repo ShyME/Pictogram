@@ -1,11 +1,11 @@
-import { type ReactNode, useCallback, useRef } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { Navigate } from "react-router";
-import { SessionExpiredError } from "@shared";
-import { fetchFeedPage } from "./feed-api";
-import { toFeedCards } from "./feed-cards";
-import { FeedCardView } from "./FeedCardView";
-import { feedKey } from "./query-keys";
+import { SessionExpiredError } from '@shared';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { type ReactNode, useCallback, useRef } from 'react';
+import { Navigate } from 'react-router';
+import { fetchFeedPage } from './feed-api';
+import { toFeedCards } from './feed-cards';
+import { FeedCardView } from './FeedCardView';
+import { feedKey } from './query-keys';
 
 function FeedShell({ children }: { children: ReactNode }) {
   return <main className="mx-auto min-h-dvh max-w-xl px-4 py-8">{children}</main>;
@@ -81,7 +81,7 @@ export function FeedPage() {
             disabled={feed.isFetchingNextPage}
             className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
           >
-            {feed.isFetchingNextPage ? "Loading…" : "Load more"}
+            {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
           </button>
         </div>
       )}
@@ -98,7 +98,7 @@ function useInfiniteScroll(onReachEnd: () => void) {
   // it only renders once the first page has loaded.
   return useCallback((node: HTMLDivElement | null) => {
     observer.current?.disconnect();
-    if (!node || typeof IntersectionObserver === "undefined") return;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
 
     observer.current = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) callback.current();

@@ -1,6 +1,6 @@
-import { Link, Outlet, useLoaderData } from "react-router";
-import { SignOutButton } from "@features/auth";
-import type { Profile } from "@features/profile";
+import { SignOutButton } from '@features/auth';
+import type { Profile } from '@features/profile';
+import { Link, Outlet, useLoaderData } from 'react-router';
 
 export function AppLayout() {
   const { profile } = useLoaderData() as { profile: Profile };

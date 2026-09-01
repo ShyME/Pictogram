@@ -1,14 +1,14 @@
-import { fileURLToPath } from "node:url";
-import { expect, test } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { NewPostPage } from "./pages/new-post.page";
+import { expect, test } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { NewPostPage } from './pages/new-post.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
+const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
 
-test("delete a post: confirm the permanent delete and it leaves the grid", async ({ page }) => {
+test('delete a post: confirm the permanent delete and it leaves the grid', async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
   const feed = new FeedPage(page);
@@ -21,7 +21,7 @@ test("delete a post: confirm the permanent delete and it leaves the grid", async
   await login.open();
   await login.signInWithGoogle();
   await expect(page).toHaveURL(/\/onboarding$/);
-  await onboarding.completeWith(username, "Delete Tester");
+  await onboarding.completeWith(username, 'Delete Tester');
   await expect(feed.emptyState).toBeVisible();
 
   await feed.newPostLink.click();
@@ -34,9 +34,12 @@ test("delete a post: confirm the permanent delete and it leaves the grid", async
   await expect(page).toHaveURL(new RegExp(`/u/${username}$`));
   await expect(profile.postByCaption(caption)).toBeVisible();
 
-  await profile.postCellByCaption(caption).getByRole("button", { name: /delete/i }).click();
+  await profile
+    .postCellByCaption(caption)
+    .getByRole('button', { name: /delete/i })
+    .click();
   await expect(profile.confirmDeleteDialog).toContainText(/can.t be undone/i);
-  await profile.confirmDeleteDialog.getByRole("button", { name: /delete/i }).click();
+  await profile.confirmDeleteDialog.getByRole('button', { name: /delete/i }).click();
 
   await expect(profile.confirmDeleteDialog).toBeHidden();
   await expect(profile.postByCaption(caption)).toHaveCount(0);

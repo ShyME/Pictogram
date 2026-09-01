@@ -1,4 +1,4 @@
-import type { components } from "@shared";
+import type { components } from '@shared';
 
 export type Account = {
   userId: string;
@@ -6,10 +6,10 @@ export type Account = {
   displayName: string | null;
 };
 
-export function toAccount(view: components["schemas"]["ProfileView"]): Account {
+export function toAccount(view: components['schemas']['ProfileView']): Account {
   return {
-    userId: view.userId ?? "",
-    username: view.username ?? "",
+    userId: view.userId ?? '',
+    username: view.username ?? '',
     displayName: view.displayName ?? null,
   };
 }

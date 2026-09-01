@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import { Link, useLoaderData } from "react-router";
-import type { ProfilePageData } from "./profile-loader";
+import type { ReactNode } from 'react';
+import { Link, useLoaderData } from 'react-router';
+import type { ProfilePageData } from './profile-loader';
 
 function PageChrome({ children }: { children: ReactNode }) {
   return (
@@ -21,8 +21,9 @@ function NotFound({ username }: { username: string }) {
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
         <h1 className="text-lg font-semibold text-neutral-900">This account doesn&rsquo;t exist</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          No one on Pictogram goes by <span className="font-medium text-neutral-700">@{username}</span>.
-          The link may be wrong, or they may have changed their username.
+          No one on Pictogram goes by{' '}
+          <span className="font-medium text-neutral-700">@{username}</span>. The link may be wrong,
+          or they may have changed their username.
         </p>
         <Link to="/" className="mt-6 inline-block text-sm font-medium text-neutral-900 underline">
           Back to Pictogram
@@ -43,20 +44,17 @@ export function ProfilePage({
 } = {}) {
   const data = useLoaderData() as ProfilePageData;
 
-  if (data.status === "not-found") return <NotFound username={data.username} />;
+  if (data.status === 'not-found') return <NotFound username={data.username} />;
 
   const { profile, isOwnProfile, viewerCanFollow } = data;
   const followButtonClass =
-    "rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50";
+    'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50';
 
   return (
     <PageChrome>
       <main className="mx-auto max-w-2xl px-4 py-8">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
-          <div
-            aria-hidden
-            className="size-20 shrink-0 rounded-full bg-neutral-200 sm:size-28"
-          />
+          <div aria-hidden className="size-20 shrink-0 rounded-full bg-neutral-200 sm:size-28" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <h1 className="text-xl font-semibold text-neutral-900">

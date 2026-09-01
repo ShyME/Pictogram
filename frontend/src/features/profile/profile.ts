@@ -1,4 +1,4 @@
-import type { components } from "@shared";
+import type { components } from '@shared';
 
 export type Profile = {
   userId: string;
@@ -7,10 +7,10 @@ export type Profile = {
   bio: string | null;
 };
 
-export function toProfile(view: components["schemas"]["ProfileView"]): Profile {
+export function toProfile(view: components['schemas']['ProfileView']): Profile {
   return {
-    userId: view.userId ?? "",
-    username: view.username ?? "",
+    userId: view.userId ?? '',
+    username: view.username ?? '',
     displayName: view.displayName ?? null,
     bio: view.bio ?? null,
   };

@@ -1,3 +1,3 @@
 export function feedKey() {
-  return ["feed"] as const;
+  return ['feed'] as const;
 }

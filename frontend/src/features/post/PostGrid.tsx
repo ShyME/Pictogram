@@ -1,9 +1,9 @@
-import { useId, useState } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { deletePost, fetchPostsByAuthor } from "./post-api";
-import { postsByAuthorKey } from "./query-keys";
-import { thumbnailUrl } from "./post";
-import type { Post } from "./post";
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useId, useState } from 'react';
+import type { Post } from './post';
+import { thumbnailUrl } from './post';
+import { deletePost, fetchPostsByAuthor } from './post-api';
+import { postsByAuthorKey } from './query-keys';
 
 export function PostGrid({
   authorId,
@@ -55,7 +55,7 @@ export function PostGrid({
           <li key={post.postId} className="group relative">
             <img
               src={thumbnailUrl(post.mediaId)}
-              alt={post.caption ?? "A post"}
+              alt={post.caption ?? 'A post'}
               loading="lazy"
               className="aspect-square w-full rounded-sm object-cover"
             />
@@ -83,7 +83,7 @@ export function PostGrid({
             disabled={grid.isFetchingNextPage}
             className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
           >
-            {grid.isFetchingNextPage ? "Loading…" : "Load more"}
+            {grid.isFetchingNextPage ? 'Loading…' : 'Load more'}
           </button>
         </div>
       )}
@@ -146,7 +146,7 @@ function ConfirmDelete({
             disabled={deleting}
             className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {deleting ? "Deleting…" : "Delete"}
+            {deleting ? 'Deleting…' : 'Delete'}
           </button>
         </div>
       </div>

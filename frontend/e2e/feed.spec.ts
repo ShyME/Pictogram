@@ -1,14 +1,14 @@
-import { fileURLToPath } from "node:url";
-import { expect, test, type Page } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
-import { FeedPage } from "./pages/feed.page";
-import { ProfilePage } from "./pages/profile.page";
-import { NewPostPage } from "./pages/new-post.page";
+import { expect, test, type Page } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { NewPostPage } from './pages/new-post.page';
+import { OnboardingPage } from './pages/onboarding.page';
+import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
+const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
 
-test("the home feed shows the posts of people you follow, newest first", async ({ browser }) => {
+test('the home feed shows the posts of people you follow, newest first', async ({ browser }) => {
   const suffix = Date.now().toString(36);
   const viewer = `e2e_feed_v_${suffix}`;
   const author = `e2e_feed_a_${suffix}`;
@@ -20,12 +20,12 @@ test("the home feed shows the posts of people you follow, newest first", async (
 
   try {
     const authorPage = await authorContext.newPage();
-    await onboard(authorPage, author, "Feed Author");
+    await onboard(authorPage, author, 'Feed Author');
     await publish(authorPage, PHOTO, older);
     await publish(authorPage, PHOTO, newer);
 
     const viewerPage = await viewerContext.newPage();
-    await onboard(viewerPage, viewer, "Feed Viewer");
+    await onboard(viewerPage, viewer, 'Feed Viewer');
 
     const authorProfile = new ProfilePage(viewerPage);
     await authorProfile.open(author);
@@ -38,10 +38,13 @@ test("the home feed shows the posts of people you follow, newest first", async (
     await expect(feed.cards).toHaveCount(2);
     await expect(feed.cards.first()).toContainText(newer);
     await expect(feed.cards.last()).toContainText(older);
-    await expect(feed.cards.first().getByRole("img")).toBeVisible();
-    await expect(feed.cards.first().getByRole("link", { name: /Feed Author/ })).toBeVisible();
+    await expect(feed.cards.first().getByRole('img')).toBeVisible();
+    await expect(feed.cards.first().getByRole('link', { name: /Feed Author/ })).toBeVisible();
 
-    await feed.cards.first().getByRole("link", { name: /Feed Author/ }).click();
+    await feed.cards
+      .first()
+      .getByRole('link', { name: /Feed Author/ })
+      .click();
     await expect(viewerPage).toHaveURL(new RegExp(`/u/${author}$`));
   } finally {
     await viewerContext.close();

@@ -1,9 +1,9 @@
-import { api } from "@shared";
-import { type Account, toAccount } from "./account";
-import { type FollowRelationship, toFollowRelationship } from "./follow";
+import { api } from '@shared';
+import { type Account, toAccount } from './account';
+import { type FollowRelationship, toFollowRelationship } from './follow';
 
 export async function fetchFollowRelationship(userId: string): Promise<FollowRelationship> {
-  const { data, response } = await api.GET("/api/follows/{userId}", {
+  const { data, response } = await api.GET('/api/follows/{userId}', {
     params: { path: { userId } },
   });
   if (data) return toFollowRelationship(data);
@@ -13,7 +13,7 @@ export async function fetchFollowRelationship(userId: string): Promise<FollowRel
 
 async function anonymousFollowRelationship(userId: string): Promise<FollowRelationship> {
   const response = await fetch(`/api/follows/${encodeURIComponent(userId)}`, {
-    headers: { Accept: "application/json" },
+    headers: { Accept: 'application/json' },
   });
   if (!response.ok) {
     throw new Error(`Unexpected /api/follows/${userId} response: ${response.status}`);
@@ -22,16 +22,16 @@ async function anonymousFollowRelationship(userId: string): Promise<FollowRelati
 }
 
 export async function followUser(userId: string): Promise<void> {
-  const { response } = await api.PUT("/api/follows/{userId}", { params: { path: { userId } } });
+  const { response } = await api.PUT('/api/follows/{userId}', { params: { path: { userId } } });
   if (!response.ok) throw new Error(`Following failed: ${response.status}`);
 }
 
 export async function unfollowUser(userId: string): Promise<void> {
-  const { response } = await api.DELETE("/api/follows/{userId}", { params: { path: { userId } } });
+  const { response } = await api.DELETE('/api/follows/{userId}', { params: { path: { userId } } });
   if (!response.ok) throw new Error(`Unfollowing failed: ${response.status}`);
 }
 
-export type FollowListMode = "followers" | "following";
+export type FollowListMode = 'followers' | 'following';
 
 export type FollowRelationshipById = FollowRelationship & { userId: string };
 
@@ -47,11 +47,11 @@ export async function fetchFollowListPage(
   cursor?: string,
 ): Promise<AccountListPage> {
   const { data, response } =
-    mode === "followers"
-      ? await api.GET("/api/follows/{userId}/followers", {
+    mode === 'followers'
+      ? await api.GET('/api/follows/{userId}/followers', {
           params: { path: { userId }, query: { cursor } },
         })
-      : await api.GET("/api/follows/{userId}/following", {
+      : await api.GET('/api/follows/{userId}/following', {
           params: { path: { userId }, query: { cursor } },
         });
   if (!data) throw new Error(`Follow list request failed: ${response.status}`);
@@ -75,7 +75,7 @@ export async function fetchFollowListPage(
 
 async function fetchAccounts(userIds: string[]): Promise<Account[]> {
   if (userIds.length === 0) return [];
-  const { data, response } = await api.GET("/api/profiles", {
+  const { data, response } = await api.GET('/api/profiles', {
     params: { query: { ids: userIds } },
   });
   if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
@@ -86,9 +86,9 @@ export async function fetchFollowRelationships(
   userIds: string[],
 ): Promise<FollowRelationshipById[]> {
   if (userIds.length === 0) return [];
-  const { data, response } = await api.GET("/api/follows", {
+  const { data, response } = await api.GET('/api/follows', {
     params: { query: { ids: userIds } },
   });
   if (!data) throw new Error(`Follow relationship batch request failed: ${response.status}`);
-  return data.map((view) => ({ userId: view.userId ?? "", ...toFollowRelationship(view) }));
+  return data.map((view) => ({ userId: view.userId ?? '', ...toFollowRelationship(view) }));
 }

@@ -1,2 +1,2 @@
-export { NewPostPage } from "./NewPostPage";
-export { PostGrid } from "./PostGrid";
+export { NewPostPage } from './NewPostPage';
+export { PostGrid } from './PostGrid';

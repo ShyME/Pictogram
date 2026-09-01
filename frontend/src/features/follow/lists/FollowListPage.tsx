@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLoaderData } from "react-router";
-import { fetchFollowListPage } from "../follow-api";
-import { AccountList } from "./AccountList";
-import { followListKey } from "../query-keys";
-import { seedFollowRelationships } from "../use-follow-relationship";
-import type { FollowListData, FollowListMode } from "./follow-list";
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import { Link, useLoaderData } from 'react-router';
+import { fetchFollowListPage } from '../follow-api';
+import { followListKey } from '../query-keys';
+import { seedFollowRelationships } from '../use-follow-relationship';
+import { AccountList } from './AccountList';
+import type { FollowListData, FollowListMode } from './follow-list';
 
 function PageChrome({ children }: { children: ReactNode }) {
   return (
@@ -23,23 +23,23 @@ function PageChrome({ children }: { children: ReactNode }) {
 const COPY: Record<FollowListMode, { title: (handle: string) => string; empty: string }> = {
   followers: {
     title: (handle) => `People who follow @${handle}`,
-    empty: "No followers yet",
+    empty: 'No followers yet',
   },
   following: {
     title: (handle) => `Accounts @${handle} follows`,
-    empty: "Not following anyone yet",
+    empty: 'Not following anyone yet',
   },
 };
 
 export function FollowListPage({ mode }: { mode: FollowListMode }) {
   const data = useLoaderData() as FollowListData;
 
-  if (data.status === "not-found") {
+  if (data.status === 'not-found') {
     return (
       <PageChrome>
         <h1 className="text-lg font-semibold text-neutral-900">This account doesn&rsquo;t exist</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          No one on Pictogram goes by{" "}
+          No one on Pictogram goes by{' '}
           <span className="font-medium text-neutral-700">@{data.username}</span>.
         </p>
       </PageChrome>
@@ -77,7 +77,10 @@ function Loaded({
     <PageChrome>
       <div className="flex items-baseline justify-between gap-4">
         <h1 className="text-lg font-semibold text-neutral-900">{copy.title(target.username)}</h1>
-        <Link to={`/u/${target.username}`} className="text-sm font-medium text-neutral-900 underline">
+        <Link
+          to={`/u/${target.username}`}
+          className="text-sm font-medium text-neutral-900 underline"
+        >
           Back to profile
         </Link>
       </div>
@@ -102,7 +105,7 @@ function Loaded({
                   disabled={list.isFetchingNextPage}
                   className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
                 >
-                  {list.isFetchingNextPage ? "Loading…" : "Load more"}
+                  {list.isFetchingNextPage ? 'Loading…' : 'Load more'}
                 </button>
               </div>
             )}

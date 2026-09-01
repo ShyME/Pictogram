@@ -1,4 +1,4 @@
-import type { components } from "@shared";
+import type { components } from '@shared';
 
 export type FollowRelationship = {
   followerCount: number;
@@ -7,7 +7,7 @@ export type FollowRelationship = {
 };
 
 export function toFollowRelationship(
-  view: components["schemas"]["FollowRelationship"],
+  view: components['schemas']['FollowRelationship'],
 ): FollowRelationship {
   return {
     followerCount: view.followerCount ?? 0,

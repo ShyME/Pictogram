@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { followUser, unfollowUser } from "./follow-api";
-import { followRelationshipKey } from "./query-keys";
-import { useFollowRelationship } from "./use-follow-relationship";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { followUser, unfollowUser } from './follow-api';
+import { followRelationshipKey } from './query-keys';
+import { useFollowRelationship } from './use-follow-relationship';
 
 export function FollowButton({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
@@ -27,11 +27,11 @@ export function FollowButton({ userId }: { userId: string }) {
         onClick={() => toggle.mutate()}
         className={
           following
-            ? "rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-            : "rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+            ? 'rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50'
+            : 'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50'
         }
       >
-        {following ? "Following" : "Follow"}
+        {following ? 'Following' : 'Follow'}
       </button>
       {toggle.isError && (
         <p role="alert" className="text-xs text-red-600">

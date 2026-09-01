@@ -1,22 +1,22 @@
-import type { LoaderFunctionArgs } from "react-router";
-import { fetchProfileByUsername } from "@features/profile";
-import type { FollowListData } from "@features/follow";
-import { requireOnboarded } from "./access-gate";
+import type { FollowListData } from '@features/follow';
+import { fetchProfileByUsername } from '@features/profile';
+import type { LoaderFunctionArgs } from 'react-router';
+import { requireOnboarded } from './access-gate';
 
 export async function followListLoader({
   params,
 }: LoaderFunctionArgs): Promise<FollowListData | Response> {
-  const username = params.username ?? "";
+  const username = params.username ?? '';
   try {
     const [viewer, lookup] = await Promise.all([
       requireOnboarded(),
       fetchProfileByUsername(username),
     ]);
 
-    if (lookup.status === "not-found") return { status: "not-found", username };
+    if (lookup.status === 'not-found') return { status: 'not-found', username };
 
     return {
-      status: "found",
+      status: 'found',
       target: { userId: lookup.profile.userId, username: lookup.profile.username },
       viewerId: viewer.userId,
     };

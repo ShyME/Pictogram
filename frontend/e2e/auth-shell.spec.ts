@@ -1,9 +1,9 @@
-import { expect, test } from "@playwright/test";
-import { FeedPage } from "./pages/feed.page";
-import { LoginPage } from "./pages/login.page";
-import { OnboardingPage } from "./pages/onboarding.page";
+import { expect, test } from '@playwright/test';
+import { FeedPage } from './pages/feed.page';
+import { LoginPage } from './pages/login.page';
+import { OnboardingPage } from './pages/onboarding.page';
 
-test("new user: sign in with Google, onboard, land on the empty feed", async ({ page }) => {
+test('new user: sign in with Google, onboard, land on the empty feed', async ({ page }) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
   const feed = new FeedPage(page);
@@ -17,7 +17,7 @@ test("new user: sign in with Google, onboard, land on the empty feed", async ({ 
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(onboarding.heading).toBeVisible();
 
-  await onboarding.completeWith(`e2e_${Date.now().toString(36)}`, "E2E Tester");
+  await onboarding.completeWith(`e2e_${Date.now().toString(36)}`, 'E2E Tester');
 
   await expect(feed.emptyState).toBeVisible();
 
