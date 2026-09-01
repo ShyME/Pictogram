@@ -1,0 +1,8 @@
+# Reformatting commits, skipped by git blame.
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub applies this file automatically.
+
+# Frontend: Prettier (#66)
+6d469a2b26d448a9d137d18464a6d1a6bddb3f0a
