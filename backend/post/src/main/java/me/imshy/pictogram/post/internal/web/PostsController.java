@@ -8,11 +8,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
+import me.imshy.pictogram.post.internal.PostDeletion;
 import me.imshy.pictogram.post.internal.PostTimeline;
 import me.imshy.pictogram.post.internal.PostView;
 import me.imshy.pictogram.post.internal.Publishing;
 import me.imshy.pictogram.post.internal.UnusableMediaException;
 import me.imshy.pictogram.shared.MediaId;
+import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.CurrentUser;
@@ -20,7 +22,9 @@ import me.imshy.pictogram.shared.http.Cursor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,16 +38,22 @@ import org.springframework.web.bind.annotation.RestController;
  * token and always publishes as the caller. The pagination cursor is opaque and comes
  * straight from the previous page, so a malformed one is a client bug, not a documented
  * branch (like the feed's 401): it is left to the shared Problem Detail handler.
+ *
+ * <p>Deleting is authenticated and author-only: a delete of someone else's post is a 403,
+ * and once a post is gone it vanishes from the author's grid and every feed on the next
+ * read (the feed assembles from post fan-out-on-read).
  */
 @RestController
 @RequestMapping("/api/posts")
 class PostsController {
 
     private final Publishing publishing;
+    private final PostDeletion deletion;
     private final PostTimeline timeline;
 
-    PostsController(Publishing publishing, PostTimeline timeline) {
+    PostsController(Publishing publishing, PostDeletion deletion, PostTimeline timeline) {
         this.publishing = publishing;
+        this.deletion = deletion;
         this.timeline = timeline;
     }
 
@@ -72,6 +82,22 @@ class PostsController {
                 .orElseThrow(UnusableMediaException::new);
         PostView post = publishing.publish(author, mediaId, request.caption());
         return ResponseEntity.created(URI.create("/api/posts/" + post.postId())).body(post);
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "The post was permanently deleted."),
+        @ApiResponse(responseCode = "403",
+                description = "The caller is not the author of this post.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "404", description = "No post has that id.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @DeleteMapping("/{postId}")
+    ResponseEntity<Void> delete(@CurrentUser UserId author, @PathVariable("postId") UUID postId) {
+        deletion.delete(author, new PostId(postId));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping(params = "author")

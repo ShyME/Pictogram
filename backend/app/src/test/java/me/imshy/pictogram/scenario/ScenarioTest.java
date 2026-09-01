@@ -1,6 +1,10 @@
 package me.imshy.pictogram.scenario;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import javax.imageio.ImageIO;
 import javax.sql.DataSource;
 import me.imshy.pictogram.PictogramApplication;
 import me.imshy.pictogram.testsupport.DatabaseCleaner;
@@ -55,6 +59,26 @@ public abstract class ScenarioTest {
     @AfterEach
     void truncateAllTables() {
         new DatabaseCleaner(dataSource).truncateAll();
+    }
+
+    /**
+     * A 1200×800 solid-colour JPEG for the scenarios that publish a post — real bytes the
+     * media pipeline can decode and re-encode to the canonical square. Scenarios needing
+     * this also register {@code SharedMinio} via their own {@code @DynamicPropertySource}.
+     */
+    protected static byte[] jpegPhoto() {
+        try {
+            var image = new BufferedImage(1200, 800, BufferedImage.TYPE_INT_RGB);
+            var g = image.createGraphics();
+            g.setColor(new Color(0x33, 0x66, 0x99));
+            g.fillRect(0, 0, 1200, 800);
+            g.dispose();
+            var out = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpeg", out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @DynamicPropertySource

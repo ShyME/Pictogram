@@ -1,6 +1,7 @@
 package me.imshy.pictogram;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -157,6 +158,49 @@ class PostApiTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void deletingNeedsAToken() throws Exception {
+        mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+    }
+
+    @Test
+    void anAuthorDeletesTheirOwnPostAndItLeavesTheirGrid() throws Exception {
+        var author = UUID.randomUUID().toString();
+        String postId = publish(author, uploadPhoto(author), "delete me");
+
+        mvc.perform(delete("/api/posts/{postId}", postId).with(jwt().jwt(jwt -> jwt.subject(author))))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/posts").param("author", author))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void deletingSomeoneElsesPostIsAForbiddenProblemDetail() throws Exception {
+        var author = UUID.randomUUID().toString();
+        var interloper = UUID.randomUUID().toString();
+        String postId = publish(author, uploadPhoto(author), "not yours");
+
+        mvc.perform(delete("/api/posts/{postId}", postId).with(jwt().jwt(jwt -> jwt.subject(interloper))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
+
+        mvc.perform(get("/api/posts").param("author", author))
+                .andExpect(jsonPath("$.items.length()").value(1));
+    }
+
+    @Test
+    void deletingAPostThatDoesNotExistIsANotFoundProblemDetail() throws Exception {
+        var author = UUID.randomUUID().toString();
+
+        mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID()).with(jwt().jwt(jwt -> jwt.subject(author))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-not-found"));
+    }
+
     private String uploadPhoto(String owner) throws Exception {
         var result = mvc.perform(multipart("/api/media").file(imagePart())
                         .with(jwt().jwt(jwt -> jwt.subject(owner))))
@@ -165,11 +209,13 @@ class PostApiTest {
         return JsonPath.read(result.getResponse().getContentAsString(), "$.mediaId");
     }
 
-    private void publish(String author, String mediaId, String caption) throws Exception {
-        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+    private String publish(String author, String mediaId, String caption) throws Exception {
+        var result = mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, caption)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn();
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.postId");
     }
 
     private static MockMultipartFile imagePart() throws Exception {

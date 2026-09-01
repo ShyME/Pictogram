@@ -107,6 +107,18 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void deletingAPostIsDocumentedAs204With403And404ProblemDetails() {
+        JsonNode delete = spec.at("/paths/~1api~1posts~1{postId}/delete/responses");
+
+        assertThat(delete.has("204")).isTrue();
+        assertThat(delete.has("200")).as("no phantom 200").isFalse();
+        assertThat(delete.at("/403/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+        assertThat(delete.at("/404/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void thePostGridIsDocumentedAsAPageOfPostView() {
         JsonNode grid = spec.at("/paths/~1api~1posts/get/responses/200/content/application~1json/schema/$ref");
 

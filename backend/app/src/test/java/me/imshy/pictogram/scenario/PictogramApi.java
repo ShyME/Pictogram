@@ -45,11 +45,23 @@ public interface PictogramApi {
         /** Publish an uploaded photo with an optional caption — it becomes a {@link Post}. */
         Post publishPost(String mediaId, String caption);
 
+        /**
+         * Delete a post and report what the server did — {@link DeleteOutcome#DELETED} for
+         * the author, {@link DeleteOutcome#FORBIDDEN} for anyone else — so a scenario can
+         * assert on the outcome rather than a thrown error.
+         */
+        DeleteOutcome deletePost(String postId);
+
         /** A user's post grid, newest first — the first page. */
         List<Post> postsOf(String userId);
 
         /** The viewer's home feed. */
         FeedPage openFeed();
+    }
+
+    /** What the server did with a delete request. */
+    enum DeleteOutcome {
+        DELETED, FORBIDDEN
     }
 
     record Profile(String userId, String username, String displayName, String bio) {
