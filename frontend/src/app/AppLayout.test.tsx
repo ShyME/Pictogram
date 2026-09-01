@@ -26,3 +26,9 @@ test("the signed-in handle links to the viewer's own profile page", () => {
 
   expect(screen.getByRole("link", { name: "@ada" })).toHaveAttribute("href", "/u/ada");
 });
+
+test("offers a link to the post composer", () => {
+  renderWithProviders(<AppLayout />);
+
+  expect(screen.getByRole("link", { name: /new post/i })).toHaveAttribute("href", "/new");
+});

@@ -15,6 +15,12 @@ export function AppLayout() {
         </Link>
         <div className="flex items-center gap-3 text-sm text-neutral-500">
           <Link
+            to="/new"
+            className="rounded-lg bg-neutral-900 px-3 py-1.5 font-medium text-white hover:bg-neutral-700"
+          >
+            New post
+          </Link>
+          <Link
             to={`/u/${profile.username}`}
             className="font-medium text-neutral-700 hover:text-neutral-900"
           >

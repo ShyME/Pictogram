@@ -24,6 +24,15 @@ export class ProfilePage {
     return this.page.getByText(`@${username}`, { exact: true });
   }
 
+  /** A post in the grid, found by its caption (its image's alt text). */
+  postByCaption(caption: string): Locator {
+    return this.page.getByRole("img", { name: caption });
+  }
+
+  get emptyGrid(): Locator {
+    return this.page.getByText("No posts yet");
+  }
+
   displayName(name: string): Locator {
     return this.page.getByRole("heading", { name });
   }

@@ -32,12 +32,22 @@ function NotFound({ username }: { username: string }) {
   );
 }
 
-export function ProfilePage() {
+/**
+ * `renderOwnGrid` is supplied by the app layer for the signed-in viewer's own profile —
+ * the real post grid (the `post` feature owns it; feature slices can't import each other).
+ * Anyone else's profile keeps the placeholder until public grids land.
+ */
+export function ProfilePage({
+  renderOwnGrid,
+}: {
+  renderOwnGrid?: (authorId: string) => ReactNode;
+} = {}) {
   const data = useLoaderData() as ProfilePageData;
 
   if (data.status === "not-found") return <NotFound username={data.username} />;
 
   const { profile, isOwnProfile } = data;
+  const ownGrid = isOwnProfile && renderOwnGrid ? renderOwnGrid(profile.userId) : null;
 
   return (
     <PageChrome>
@@ -95,14 +105,18 @@ export function ProfilePage() {
           </div>
         </section>
 
-        {/* The square post grid fills in when publishing lands (#17, spec story 13). */}
         <section aria-label="Posts" className="mt-8 border-t border-neutral-200 pt-6">
-          <div className="grid grid-cols-3 gap-1">
-            {Array.from({ length: 9 }, (_, i) => (
-              <div key={i} aria-hidden className="aspect-square rounded-sm bg-neutral-100" />
-            ))}
-          </div>
-          <p className="mt-4 text-center text-sm text-neutral-400">No posts yet</p>
+          {ownGrid ?? (
+            <>
+              {/* Someone else's grid is still a placeholder — public grids land later. */}
+              <div className="grid grid-cols-3 gap-1">
+                {Array.from({ length: 9 }, (_, i) => (
+                  <div key={i} aria-hidden className="aspect-square rounded-sm bg-neutral-100" />
+                ))}
+              </div>
+              <p className="mt-4 text-center text-sm text-neutral-400">No posts yet</p>
+            </>
+          )}
         </section>
       </main>
     </PageChrome>

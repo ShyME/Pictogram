@@ -94,6 +94,28 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void publishingAPostIsDocumentedAs201WithLocationAnd400And422ProblemDetails() {
+        JsonNode publish = spec.at("/paths/~1api~1posts/post/responses");
+
+        assertThat(publish.has("200")).as("no phantom 200").isFalse();
+        assertThat(publish.at("/201/headers/Location")).isNotEmpty();
+        assertThat(publish.at("/201/content/application~1json/schema/$ref").asString()).endsWith("/PostView");
+        assertThat(publish.at("/400/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+        assertThat(publish.at("/422/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void thePostGridIsDocumentedAsAPageOfPostView() {
+        JsonNode grid = spec.at("/paths/~1api~1posts/get/responses/200/content/application~1json/schema/$ref");
+
+        JsonNode page = spec.at("/components/schemas/" + grid.asString().substring("#/components/schemas/".length()));
+        assertThat(page.at("/properties/items/items/$ref").asString()).endsWith("/PostView");
+        assertThat(page.at("/properties/nextCursor")).isNotEmpty();
+    }
+
+    @Test
     void servingAMediaRenditionIsDocumentedAsBinaryJpegWith404() {
         JsonNode original = spec.at("/paths/~1api~1media~1{mediaId}~1original/get/responses");
 
