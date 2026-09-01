@@ -118,3 +118,17 @@ always succeeds. Two rough edges are closed:
   until it timed out — `AuthController.logout` is on the stateless chain and never touches
   it. The authorization-code flow's mid-handshake session is unaffected because this runs
   only on success. `AuthController.logout` needs no change and carries a comment saying so.
+
+## Amendment (#50): one place decides how the handshake ends
+
+The three bullets above were implemented as three Spring hooks, each re-deriving part of the
+decision — and they had drifted: the failure handler redirected without ending the handshake
+session, so a declined consent left a `JSESSIONID` lingering. `SignInCompletion`
+(`identity/internal/web`) is now the single place the handshake outcome becomes an HTTP
+response: `succeeded` (refresh cookie + post-login redirect), `unusable` (sign-in-error
+redirect with the reason slug), `failed` (generic sign-in-error redirect). Every path ends
+the handshake session exactly once, and `succeeded` is the only writer of the refresh cookie
+on this chain. `OidcSignInSuccessHandler`, `SignInFailureHandler`, and `OidcChainErrorFilter`
+are one-line delegations; the filter keeps only its "no `DispatcherServlet` behind me, render
+an unhandled throwable as problem+json" backstop. No behaviour change at the HTTP edge beyond
+the failure-handler asymmetry being fixed.

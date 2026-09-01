@@ -48,24 +48,29 @@ class IdentitySecurityConfiguration {
     SecurityFilterChain googleSignInSecurity(HttpSecurity http,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations,
             ObjectProvider<OidcSignInSuccessHandler> successHandler,
-            AuthProperties properties, ObjectProvider<ObjectMapper> objectMapper) throws Exception {
+            SignInCompletion completion, ObjectProvider<ObjectMapper> objectMapper) throws Exception {
         http.securityMatcher("/oauth2/**", "/login/oauth2/**");
         if (clientRegistrations.getIfAvailable() == null) {
             return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll()).build();
         }
         return http
-                .addFilterBefore(new OidcChainErrorFilter(objectMapper.getObject(), properties),
+                .addFilterBefore(new OidcChainErrorFilter(objectMapper.getObject(), completion),
                         OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
                 .oauth2Login(login -> login
                         .successHandler(successHandler.getObject())
-                        .failureHandler(new SignInFailureHandler(properties)))
+                        .failureHandler(new SignInFailureHandler(completion)))
                 .build();
     }
 
     @Bean
+    SignInCompletion signInCompletion(AuthProperties properties) {
+        return new SignInCompletion(properties);
+    }
+
+    @Bean
     OidcSignInSuccessHandler oidcSignInSuccessHandler(IdentityAuthentication authentication,
-            GoogleIdentityProvider google, AuthProperties properties) {
-        return new OidcSignInSuccessHandler(authentication, google, properties);
+            GoogleIdentityProvider google, SignInCompletion completion) {
+        return new OidcSignInSuccessHandler(authentication, google, completion);
     }
 }
