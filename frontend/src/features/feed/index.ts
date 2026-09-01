@@ -1,2 +1,2 @@
-export { FeedPage } from "./routes/FeedPage";
-export { fetchFeed } from "./api/feed-api";
+export { FeedPage } from "./FeedPage";
+export { fetchFeed } from "./feed-api";
