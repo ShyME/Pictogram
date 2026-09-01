@@ -1,4 +1,4 @@
--- profile owns the `profile` schema (ADR-0009, module ordinal 2). A profile is keyed by
+-- profile owns the `profile` schema (ADR-0009). A profile is keyed by
 -- the user's UserId value; there is no foreign key to identity.app_user — contexts
 -- reference each other by ID value only (ADR-0002).
 create schema if not exists profile;

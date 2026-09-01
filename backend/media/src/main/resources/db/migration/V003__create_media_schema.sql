@@ -1,4 +1,4 @@
--- media owns the `media` schema (ADR-0009, module ordinal 3). A media is keyed by its
+-- media owns the `media` schema (ADR-0009). A media is keyed by its
 -- MediaId value; there is no foreign key to identity.app_user — contexts reference each
 -- other by ID value only (ADR-0002).
 create schema if not exists media;

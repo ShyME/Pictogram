@@ -1,4 +1,4 @@
--- post owns the `post` schema (ADR-0009, module ordinal 4). A post is keyed by its own
+-- post owns the `post` schema (ADR-0009). A post is keyed by its own
 -- PostId; `author_id` and `media_id` are UserId / MediaId values with no foreign key to
 -- identity or media — contexts reference each other by ID value only (ADR-0002).
 create schema if not exists post;

@@ -117,9 +117,21 @@ Structured ECS-JSON console logging is on by default (plain text on the `test` p
 ## Database migrations
 
 Flyway runs on startup. Each module owns its schema and ships its own migrations under
-`<module>/src/main/resources/db/migration/`, version-prefixed by a module ordinal
-(`V1_…` identity, `V2_…` profile, …) so they share one ordered history — see
-[ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
+`<module>/src/main/resources/db/migration/`. Version numbers are a single flat sequence
+shared across every module — `V001__…`, `V002__…`, … `V999__…`, zero-padded to three
+digits — so they merge into one ordered `flyway_schema_history`. The owning module is told
+by the file's path and the migration description, not by the number. A new migration always
+takes the next free number, so it always sorts last and applies cleanly with validation on.
+See [ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
+
+**One-time step when you pick up this change** (issue #45 renamed `V1_001…`/`V2_001…`/… to
+the flat `V001…`/`V002…`/… scheme): an existing local database still records the old
+version strings in `flyway_schema_history` and will fail Flyway validation against the
+renamed files. Run `task clean` from the repo root once — it drops the Postgres volumes of
+both compose projects (`pictogram` and the `pictogram-dev` host-loop one) — and Flyway
+replays the full `V001…V004` sequence on the fresh volumes. (`docker compose -f
+compose.yaml down -v` only covers the container stack, not `task dev` / `task backend`.)
+Fresh checkouts and CI are unaffected.
 
 ## CI
 
