@@ -11,7 +11,9 @@ import me.imshy.pictogram.shared.ViewerId;
  * (ADR-0003, fan-out-on-read); the SPA reads the counts and {@link #isFollowing} to render
  * a profile page (ADR-0005, client-side composition).
  *
- * <p>No follower or following <em>lists</em> — v1 exposes counts only (spec story 41).
+ * <p>The paged follower / following <em>lists</em> (#57) are not here: {@code feed} only
+ * needs the flat {@link #usersFollowedBy} list to fan out over, so those reads stay
+ * internal to {@code follow}'s web layer ({@code FollowList}).
  */
 public interface FollowGraph {
 

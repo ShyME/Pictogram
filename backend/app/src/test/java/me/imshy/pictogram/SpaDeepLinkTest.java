@@ -71,6 +71,31 @@ class SpaDeepLinkTest {
     }
 
     @Test
+    void aDirectGetOnAProfileFollowerListServesTheSpaShell() {
+        HttpResponse<String> response = http.get("/u/ada_lovelace/followers");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(contentType(response)).contains("text/html");
+        assertThat(response.body()).contains(SPA_SHELL_MARKER);
+    }
+
+    @Test
+    void aDirectGetOnAProfileFollowingListServesTheSpaShell() {
+        HttpResponse<String> response = http.get("/u/ada_lovelace/following");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains(SPA_SHELL_MARKER);
+    }
+
+    @Test
+    void anUnknownNestedProfileRouteIsNotForwarded() {
+        HttpResponse<String> response = http.get("/u/ada_lovelace/settings");
+
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.body()).doesNotContain(SPA_SHELL_MARKER);
+    }
+
+    @Test
     void anUnknownClientRouteStillServesTheSpaShellForTheRouterToHandle() {
         HttpResponse<String> response = http.get("/not-a-real-route");
 

@@ -1,6 +1,7 @@
 package me.imshy.pictogram.follow.internal;
 
 import java.time.Clock;
+import java.time.Instant;
 import me.imshy.pictogram.follow.UserFollowed;
 import me.imshy.pictogram.follow.UserUnfollowed;
 import me.imshy.pictogram.shared.UserId;
@@ -40,14 +41,15 @@ public class Following {
             return;
         }
 
+        Instant followedAt = clock.instant();
         try {
-            follows.save(Follow.of(viewer.asUserId(), followed));
+            follows.save(Follow.of(viewer.asUserId(), followed, followedAt));
         } catch (DataIntegrityViolationException alreadyFollowing) {
             // A concurrent follow of the same pair won the unique constraint — the edge
             // exists either way, so this call still changed nothing.
             return;
         }
-        events.publishEvent(new UserFollowed(viewer.asUserId(), followed, clock.instant()));
+        events.publishEvent(new UserFollowed(viewer.asUserId(), followed, followedAt));
     }
 
     public void unfollow(ViewerId viewer, UserId followed) {

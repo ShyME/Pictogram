@@ -175,6 +175,33 @@ class HttpPictogramApi implements PictogramApi {
         }
 
         @Override
+        public AccountPage followers(String userId, String cursor, Integer limit) {
+            return accountPage("/api/follows/" + userId + "/followers", cursor, limit);
+        }
+
+        @Override
+        public AccountPage following(String userId, String cursor, Integer limit) {
+            return accountPage("/api/follows/" + userId + "/following", cursor, limit);
+        }
+
+        private AccountPage accountPage(String path, String cursor, Integer limit) {
+            var query = new StringBuilder();
+            if (cursor != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("cursor=").append(cursor);
+            }
+            if (limit != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("limit=").append(limit);
+            }
+            HttpResponse<String> response = call("GET", path + query, null);
+            require(response, 200, "read a follow list");
+            JsonNode page = json.readTree(response.body());
+            List<String> userIds = new ArrayList<>();
+            page.path("items").forEach(id -> userIds.add(id.asString()));
+            JsonNode next = page.path("nextCursor");
+            return new AccountPage(userIds, next.isNull() || next.isMissingNode() ? null : next.asString());
+        }
+
+        @Override
         public FollowRelationship followRelationship(String userId) {
             HttpResponse<String> response = call("GET", "/api/follows/" + userId, null);
             require(response, 200, "read a follow relationship");

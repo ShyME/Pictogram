@@ -167,6 +167,29 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void theFollowerListIsDocumentedAsAPageOfUserIdsNeedingAToken() {
+        JsonNode followers = spec.at("/paths/~1api~1follows~1{userId}~1followers/get/responses");
+
+        String pageRef = followers.at("/200/content/application~1json/schema/$ref").asString();
+        JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
+        assertThat(page.at("/properties/items/items/type").asString()).isEqualTo("string");
+        assertThat(page.at("/properties/nextCursor")).isNotEmpty();
+        assertThat(followers.at("/401/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void theFollowingListIsDocumentedAsAPageOfUserIdsNeedingAToken() {
+        JsonNode following = spec.at("/paths/~1api~1follows~1{userId}~1following/get/responses");
+
+        String pageRef = following.at("/200/content/application~1json/schema/$ref").asString();
+        JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
+        assertThat(page.at("/properties/items/items/type").asString()).isEqualTo("string");
+        assertThat(following.at("/401/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 

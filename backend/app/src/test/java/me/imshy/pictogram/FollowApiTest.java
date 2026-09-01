@@ -1,5 +1,8 @@
 package me.imshy.pictogram;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -111,5 +114,63 @@ class FollowApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followerCount").value(1))
                 .andExpect(jsonPath("$.followedByViewer").value(false));
+    }
+
+    @Test
+    void theFollowerAndFollowingListsNeedAToken() throws Exception {
+        var user = UUID.randomUUID();
+
+        mvc.perform(get("/api/follows/" + user + "/followers"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/follows/" + user + "/following"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aSignedInViewerReadsWhoFollowsAUserAndWhoTheyFollow() throws Exception {
+        var ada = UUID.randomUUID().toString();
+        var bob = UUID.randomUUID().toString();
+        var carol = UUID.randomUUID();
+
+        mvc.perform(put("/api/follows/" + carol).with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isNoContent());
+        mvc.perform(put("/api/follows/" + carol).with(jwt().jwt(jwt -> jwt.subject(bob))))
+                .andExpect(status().isNoContent());
+
+        // Order (newest follow first) is asserted deterministically in follow's FollowListTest,
+        // which controls the clock; here the two follows race the real clock, so assert membership.
+        mvc.perform(get("/api/follows/" + carol + "/followers").with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(2)))
+                .andExpect(jsonPath("$.items", containsInAnyOrder(ada, bob)))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+
+        mvc.perform(get("/api/follows/" + ada + "/following").with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(1)))
+                .andExpect(jsonPath("$.items[0]").value(carol.toString()));
+    }
+
+    @Test
+    void theFollowerListPagesOnAnOpaqueCursor() throws Exception {
+        var target = UUID.randomUUID();
+        for (int i = 0; i < 3; i++) {
+            mvc.perform(put("/api/follows/" + target)
+                            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                    .andExpect(status().isNoContent());
+        }
+        var viewer = jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()));
+
+        String firstPage = mvc.perform(get("/api/follows/" + target + "/followers?limit=2").with(viewer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(2)))
+                .andExpect(jsonPath("$.nextCursor").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        String cursor = com.jayway.jsonpath.JsonPath.read(firstPage, "$.nextCursor");
+
+        mvc.perform(get("/api/follows/" + target + "/followers?limit=2&cursor=" + cursor).with(viewer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(1)))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
     }
 }

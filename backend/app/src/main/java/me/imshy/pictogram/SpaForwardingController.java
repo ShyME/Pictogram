@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
  *
  * <p>The mapping is deliberately narrow: a single extension-less path segment outside
  * {@link #RESERVED_PREFIXES} (the API, actuator, OIDC and OpenAPI roots — everything that
- * has its own handler or filter chain), plus the one nested route the SPA has —
- * {@code /u/<username>}, the public profile page. Nothing else is touched: {@code /api/**}
+ * has its own handler or filter chain), plus the SPA's nested routes — {@code /u/<username>}
+ * (the public profile page) and its {@code /followers} and {@code /following} list screens
+ * (#57). Nothing else is touched: {@code /api/**}
  * stays a Problem Detail 404, {@code /login/oauth2/**} stays with the identity filter
  * chain, the static resource handler serves {@code /assets/*} and {@code /favicon.*}
  * (their file extensions keep them out of these patterns), and {@code GET /} keeps going
@@ -28,7 +29,8 @@ class SpaForwardingController {
 
     @GetMapping({
         "/{route:(?!(?:" + RESERVED_PREFIXES + ")$)[^.]+}",
-        "/u/{username:[^.]+}"
+        "/u/{username:[^.]+}",
+        "/u/{username:[^.]+}/{list:followers|following}"
     })
     String forwardToSpaShell() {
         return "forward:/index.html";

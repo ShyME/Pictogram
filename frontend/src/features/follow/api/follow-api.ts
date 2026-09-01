@@ -1,4 +1,5 @@
 import { api } from "@shared";
+import { type Account, toAccount } from "../model/account";
 import { type FollowRelationship, toFollowRelationship } from "../model/follow";
 
 /**
@@ -44,4 +45,51 @@ export async function followUser(userId: string): Promise<void> {
 export async function unfollowUser(userId: string): Promise<void> {
   const { response } = await api.DELETE("/api/follows/{userId}", { params: { path: { userId } } });
   if (!response.ok) throw new Error(`Unfollowing failed: ${response.status}`);
+}
+
+export type FollowListMode = "followers" | "following";
+
+export type AccountListPage = { accounts: Account[]; nextCursor: string | null };
+
+/**
+ * One page of a user's follower or following list, resolved to renderable rows (#57). Two
+ * calls, per ADR-0005: the follow list (a page of ids + a cursor), then one
+ * `GET /api/profiles?ids=` batch to turn those ids into handles and names. Rows keep the
+ * follow-list order — newest relationship first — and any id the profile batch doesn't
+ * return (a deleted profile) is dropped. Both endpoints are authenticated.
+ */
+export async function fetchFollowListPage(
+  mode: FollowListMode,
+  userId: string,
+  cursor?: string,
+): Promise<AccountListPage> {
+  const { data, response } =
+    mode === "followers"
+      ? await api.GET("/api/follows/{userId}/followers", {
+          params: { path: { userId }, query: { cursor } },
+        })
+      : await api.GET("/api/follows/{userId}/following", {
+          params: { path: { userId }, query: { cursor } },
+        });
+  if (!data) throw new Error(`Follow list request failed: ${response.status}`);
+
+  const ids = data.items ?? [];
+  const byId = new Map((await fetchAccounts(ids)).map((account) => [account.userId, account]));
+
+  return {
+    accounts: ids.flatMap((id) => {
+      const account = byId.get(id);
+      return account ? [account] : [];
+    }),
+    nextCursor: data.nextCursor ?? null,
+  };
+}
+
+async function fetchAccounts(userIds: string[]): Promise<Account[]> {
+  if (userIds.length === 0) return [];
+  const { data, response } = await api.GET("/api/profiles", {
+    params: { query: { ids: userIds } },
+  });
+  if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
+  return data.map(toAccount);
 }
