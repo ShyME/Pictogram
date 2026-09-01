@@ -22,8 +22,11 @@ import org.springframework.security.web.SecurityFilterChain;
  * <p>GET carve-outs are reachable without a token: the profile lookup by username (a
  * profile page is shareable by link — spec story 18), the two media rendition paths
  * ("original" and "thumbnail"), whose bytes back a public profile grid and feed cards
- * (stories 13, 18, 35), and {@code GET /api/posts?author=} — the grid of an author's posts
- * that renders on that shareable profile page. {@code /api/profiles/me} keeps its own line ahead of the wildcard
+ * (stories 13, 18, 35), {@code GET /api/posts?author=} — the grid of an author's posts
+ * that renders on that shareable profile page — and {@code GET /api/follows/{userId}}, the
+ * follower / following counts that page shows (story 41). Following and unfollowing
+ * ({@code PUT} / {@code DELETE}) stay authenticated; they are not GETs.
+ * {@code /api/profiles/me} keeps its own line ahead of the wildcard
  * because it must stay authenticated, and the batch {@code GET /api/profiles?ids=} stays
  * authenticated too — only the signed-in feed composes from it (ADR-0005), and an anonymous
  * unbounded id list is not something to hand out. Uploading media stays authenticated (it
@@ -49,6 +52,7 @@ class ApiSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/profiles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/follows/*").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .authenticationEntryPoint(entryPoint)

@@ -26,3 +26,16 @@ _Avoid_: Current user, actor, me, principal
 **Self-follow**:
 A follow where follower and followed user are the same. Rejected.
 _Avoid_: Loop, reflexive follow
+
+**Follower count / following count**:
+How many follows point at a user, and how many point away from them. Derived live from the
+graph — there is no stored total. Exposed as counts only; there are no follower or
+following _lists_ in v1 (spec story 41).
+_Avoid_: Reach, popularity, stats
+
+## Published interface
+
+`FollowGraph` answers, for other contexts (queries only — ADR-0002): the users a viewer
+follows (feed's fan-out-on-read input — ADR-0003), the follower and following counts, and
+whether one user follows another. `follow` emits `UserFollowed` / `UserUnfollowed` on a real
+state change; an idempotent no-op emits nothing.

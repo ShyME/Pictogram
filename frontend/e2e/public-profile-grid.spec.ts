@@ -1,0 +1,57 @@
+import { fileURLToPath } from "node:url";
+import { expect, test } from "@playwright/test";
+import { LoginPage } from "./pages/login.page";
+import { OnboardingPage } from "./pages/onboarding.page";
+import { FeedPage } from "./pages/feed.page";
+import { ProfilePage } from "./pages/profile.page";
+import { NewPostPage } from "./pages/new-post.page";
+
+const PHOTO = fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url));
+
+// Spec story 18: "As any visitor, I want to open /u/<username> and see that user's public
+// profile and post grid." Against `task up`: one user publishes a post, then a signed-out
+// visitor in a fresh context opens that profile and sees the post in the grid.
+test("a signed-out visitor sees another user's posts on their profile", async ({ browser }) => {
+  const caption = `public grid ${Date.now().toString(36)}`;
+  const username = `e2e_pg_${Date.now().toString(36)}`;
+
+  const authorContext = await browser.newContext();
+  const visitorContext = await browser.newContext();
+
+  try {
+    const authorPage = await authorContext.newPage();
+    const login = new LoginPage(authorPage);
+    const onboarding = new OnboardingPage(authorPage);
+    const feed = new FeedPage(authorPage);
+    const compose = new NewPostPage(authorPage);
+
+    await login.open();
+    await login.signInWithGoogle();
+    await expect(authorPage).toHaveURL(/\/onboarding$/);
+    await onboarding.completeWith(username, "Grid Author");
+    await expect(feed.emptyState).toBeVisible();
+
+    await feed.newPostLink.click();
+    await compose.selectPhoto(PHOTO);
+    await expect(compose.zoom).toBeVisible();
+    await compose.frameShot();
+    await compose.caption.fill(caption);
+    await compose.share.click();
+    await expect(authorPage).toHaveURL(new RegExp(`/u/${username}$`));
+    await expect(new ProfilePage(authorPage).postByCaption(caption)).toBeVisible();
+
+    // A visitor with no session opens the same profile by link.
+    const visitorPage = await visitorContext.newPage();
+    const visitorView = new ProfilePage(visitorPage);
+    await visitorView.open(username);
+
+    await expect(visitorView.displayName("Grid Author")).toBeVisible();
+    await expect(visitorView.postByCaption(caption)).toBeVisible();
+    await expect(visitorView.emptyGrid).toBeHidden();
+    // ...and no delete control on someone else's grid.
+    await expect(visitorPage.getByRole("button", { name: "Delete" })).toBeHidden();
+  } finally {
+    await authorContext.close();
+    await visitorContext.close();
+  }
+});

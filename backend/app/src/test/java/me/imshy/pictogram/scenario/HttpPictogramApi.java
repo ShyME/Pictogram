@@ -159,6 +159,33 @@ class HttpPictogramApi implements PictogramApi {
         }
 
         @Override
+        public FollowOutcome follow(String userId) {
+            HttpResponse<String> response = call("PUT", "/api/follows/" + userId, null);
+            return switch (response.statusCode()) {
+                case 204 -> FollowOutcome.OK;
+                case 422 -> FollowOutcome.SELF_FOLLOW;
+                default -> throw new AssertionError(
+                        "Unexpected status following a user: " + response.statusCode() + ": " + response.body());
+            };
+        }
+
+        @Override
+        public void unfollow(String userId) {
+            require(call("DELETE", "/api/follows/" + userId, null), 204, "unfollow a user");
+        }
+
+        @Override
+        public FollowRelationship followRelationship(String userId) {
+            HttpResponse<String> response = call("GET", "/api/follows/" + userId, null);
+            require(response, 200, "read a follow relationship");
+            JsonNode node = json.readTree(response.body());
+            return new FollowRelationship(
+                    node.path("followerCount").asLong(),
+                    node.path("followingCount").asLong(),
+                    node.path("followedByViewer").asBoolean());
+        }
+
+        @Override
         public FeedPage openFeed() {
             HttpResponse<String> response = call("GET", "/api/feed", null);
             require(response, 200, "open feed");

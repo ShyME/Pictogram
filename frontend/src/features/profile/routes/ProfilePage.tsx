@@ -33,21 +33,32 @@ function NotFound({ username }: { username: string }) {
 }
 
 /**
- * `renderOwnGrid` is supplied by the app layer for the signed-in viewer's own profile —
- * the real post grid (the `post` feature owns it; feature slices can't import each other).
- * Anyone else's profile keeps the placeholder until public grids land.
+ * `renderGrid`, `renderFollowButton` and `renderFollowCounts` are supplied by the app
+ * layer, which composes the `post` and `follow` feature slices this one can't import.
+ * `renderGrid` is the real post grid, shown on every profile (a profile is shareable by
+ * link — spec story 18); its second argument is whether the viewer owns it, which turns on
+ * the delete controls. `renderFollowButton` is the follow / unfollow control, shown only
+ * when the loader says a signed-in viewer is looking at someone else (`viewerCanFollow`);
+ * a signed-out visitor gets a sign-in link in its place. `renderFollowCounts` is the live
+ * count row, shown on every profile. Each falls back to a static placeholder when not
+ * supplied (a bare `<ProfilePage />` still renders).
  */
 export function ProfilePage({
-  renderOwnGrid,
+  renderGrid,
+  renderFollowButton,
+  renderFollowCounts,
 }: {
-  renderOwnGrid?: (authorId: string) => ReactNode;
+  renderGrid?: (authorId: string, isOwnProfile: boolean) => ReactNode;
+  renderFollowButton?: (followedUserId: string) => ReactNode;
+  renderFollowCounts?: (followedUserId: string) => ReactNode;
 } = {}) {
   const data = useLoaderData() as ProfilePageData;
 
   if (data.status === "not-found") return <NotFound username={data.username} />;
 
-  const { profile, isOwnProfile } = data;
-  const ownGrid = isOwnProfile && renderOwnGrid ? renderOwnGrid(profile.userId) : null;
+  const { profile, isOwnProfile, viewerCanFollow } = data;
+  const followButtonClass =
+    "rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50";
 
   return (
     <PageChrome>
@@ -69,13 +80,15 @@ export function ProfilePage({
                 >
                   Edit profile
                 </Link>
+              ) : !viewerCanFollow ? (
+                // A signed-out visitor can view the profile but needs an account to follow.
+                <Link to="/login" className={followButtonClass}>
+                  Follow
+                </Link>
+              ) : renderFollowButton ? (
+                renderFollowButton(profile.userId)
               ) : (
-                <button
-                  type="button"
-                  disabled
-                  title="Following is coming soon"
-                  className="rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                >
+                <button type="button" disabled className={followButtonClass}>
                   Follow
                 </button>
               )}
@@ -85,19 +98,22 @@ export function ProfilePage({
               <p className="mt-1 text-sm text-neutral-500">@{profile.username}</p>
             )}
 
-            {/* Real follower/following counts arrive with the follow graph (spec story 41). */}
-            <dl className="mt-3 flex gap-6 text-sm text-neutral-700">
-              <div className="flex gap-1">
-                <dt className="sr-only">Followers</dt>
-                <dd className="font-semibold">0</dd>
-                <span className="text-neutral-500">followers</span>
-              </div>
-              <div className="flex gap-1">
-                <dt className="sr-only">Following</dt>
-                <dd className="font-semibold">0</dd>
-                <span className="text-neutral-500">following</span>
-              </div>
-            </dl>
+            {renderFollowCounts ? (
+              renderFollowCounts(profile.userId)
+            ) : (
+              <dl className="mt-3 flex gap-6 text-sm text-neutral-700">
+                <div className="flex gap-1">
+                  <dt className="sr-only">Followers</dt>
+                  <dd className="font-semibold">0</dd>
+                  <span className="text-neutral-500">followers</span>
+                </div>
+                <div className="flex gap-1">
+                  <dt className="sr-only">Following</dt>
+                  <dd className="font-semibold">0</dd>
+                  <span className="text-neutral-500">following</span>
+                </div>
+              </dl>
+            )}
 
             {profile.bio && (
               <p className="mt-3 whitespace-pre-line text-sm text-neutral-800">{profile.bio}</p>
@@ -106,9 +122,11 @@ export function ProfilePage({
         </section>
 
         <section aria-label="Posts" className="mt-8 border-t border-neutral-200 pt-6">
-          {ownGrid ?? (
+          {renderGrid ? (
+            renderGrid(profile.userId, isOwnProfile)
+          ) : (
+            // Fallback for a bare <ProfilePage /> (tests); the app always supplies the grid.
             <>
-              {/* Someone else's grid is still a placeholder — public grids land later. */}
               <div className="grid grid-cols-3 gap-1">
                 {Array.from({ length: 9 }, (_, i) => (
                   <div key={i} aria-hidden className="aspect-square rounded-sm bg-neutral-100" />
