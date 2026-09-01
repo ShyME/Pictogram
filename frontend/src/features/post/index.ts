@@ -1,2 +1,2 @@
-export { NewPostPage } from "./routes/NewPostPage";
-export { PostGrid } from "./components/PostGrid";
+export { NewPostPage } from "./NewPostPage";
+export { PostGrid } from "./PostGrid";

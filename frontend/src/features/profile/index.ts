@@ -1,7 +1,7 @@
-export { fetchMyProfile, fetchProfileByUsername } from "./api/profile-api";
-export type { MyProfile, ProfileLookup } from "./api/profile-api";
-export type { Profile } from "./model/profile";
-export { OnboardingPage } from "./routes/OnboardingPage";
-export { ProfilePage } from "./routes/ProfilePage";
-export { profileLoader } from "./routes/profile-loader";
-export { EditProfilePage } from "./routes/EditProfilePage";
+export { fetchMyProfile, fetchProfileByUsername } from "./profile-api";
+export type { MyProfile, ProfileLookup } from "./profile-api";
+export type { Profile } from "./profile";
+export { OnboardingPage } from "./OnboardingPage";
+export { ProfilePage } from "./ProfilePage";
+export { profileLoader } from "./profile-loader";
+export { EditProfilePage } from "./EditProfilePage";

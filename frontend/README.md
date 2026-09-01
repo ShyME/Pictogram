@@ -62,12 +62,22 @@ src/
   app/               composition root: providers, router, route table
   shared/            cross-cutting building blocks (may import shared only)
   features/<name>/   one vertical slice:
-    api/             calls to backend REST resources
-    components/      slice-local components
-    model/           types and pure logic
-    routes/          route components
+    *-api.ts         calls to backend REST resources
+    *.ts             types and pure logic
+    use-*.ts         hooks
+    *Page.tsx        route components
+    *.tsx            slice-local components
     index.ts         the slice's public surface
 ```
+
+Files sit directly under the slice. A subfolder appears only for a genuine
+cluster — a set of files you would extract, move, or delete as a unit — and is
+named for the idea, not the layer (`follow/lists/`, `post/cropper/`). No
+`api/`/`components/`/`model/` split: a four-file slice and a twelve-file slice
+are allowed to look different.
+
+`test/` mirrors `src/` directory-for-directory; `test/structure.test.ts` fails
+if that drifts. Renaming a slice folder means renaming both.
 
 Import rules are enforced by `eslint-plugin-boundaries` (`pnpm lint`):
 
