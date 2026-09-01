@@ -27,13 +27,11 @@ class FollowingTest extends FollowModuleIntegrationTest {
         following.follow(ada, bob);
 
         assertThat(graph.isFollowing(ada, bob)).isTrue();
-        assertThat(events.ofType(UserFollowed.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.follower()).isEqualTo(ada.asUserId());
-                    assertThat(event.followed()).isEqualTo(bob);
-                    assertThat(event.followedAt()).isNotNull();
-                });
+        assertThat(events.ofType(UserFollowed.class)).singleElement().satisfies(event -> {
+            assertThat(event.follower()).isEqualTo(ada.asUserId());
+            assertThat(event.followed()).isEqualTo(bob);
+            assertThat(event.followedAt()).isNotNull();
+        });
     }
 
     @Test
@@ -53,12 +51,10 @@ class FollowingTest extends FollowModuleIntegrationTest {
         following.unfollow(ada, bob);
 
         assertThat(graph.isFollowing(ada, bob)).isFalse();
-        assertThat(events.ofType(UserUnfollowed.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.follower()).isEqualTo(ada.asUserId());
-                    assertThat(event.followed()).isEqualTo(bob);
-                });
+        assertThat(events.ofType(UserUnfollowed.class)).singleElement().satisfies(event -> {
+            assertThat(event.follower()).isEqualTo(ada.asUserId());
+            assertThat(event.followed()).isEqualTo(bob);
+        });
     }
 
     @Test
@@ -73,8 +69,7 @@ class FollowingTest extends FollowModuleIntegrationTest {
     void aUserCannotFollowThemselves(AssertablePublishedEvents events) {
         var self = ViewerId.random();
 
-        assertThatExceptionOfType(SelfFollowException.class)
-                .isThrownBy(() -> following.follow(self, self.asUserId()));
+        assertThatExceptionOfType(SelfFollowException.class).isThrownBy(() -> following.follow(self, self.asUserId()));
 
         assertThat(graph.followingCount(self.asUserId())).isZero();
         assertThat(events.ofType(UserFollowed.class)).isEmpty();

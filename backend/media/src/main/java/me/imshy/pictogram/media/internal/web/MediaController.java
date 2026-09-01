@@ -36,31 +36,44 @@ class MediaController {
     }
 
     record MediaUploadResponse(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) MediaId mediaId) {
-    }
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            MediaId mediaId) {}
 
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "The image was accepted and re-encoded.",
+        @ApiResponse(
+                responseCode = "201",
+                description = "The image was accepted and re-encoded.",
                 content = @Content(schema = @Schema(implementation = MediaUploadResponse.class))),
-        @ApiResponse(responseCode = "400", description = "The upload is missing, empty, or not a readable image.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+        @ApiResponse(
+                responseCode = "400",
+                description = "The upload is missing, empty, or not a readable image.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    ResponseEntity<MediaUploadResponse> upload(@CurrentUser UserId owner,
-            @RequestParam("file") MultipartFile file) {
+    ResponseEntity<MediaUploadResponse> upload(@CurrentUser UserId owner, @RequestParam("file") MultipartFile file) {
         MediaId mediaId = library.upload(owner, bytesOf(file));
         return ResponseEntity.created(URI.create("/api/media/" + mediaId + "/original"))
                 .body(new MediaUploadResponse(mediaId));
     }
 
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "The full-size canonical JPEG.",
-                content = @Content(mediaType = MediaType.IMAGE_JPEG_VALUE,
-                        schema = @Schema(type = "string", format = "binary"))),
-        @ApiResponse(responseCode = "404", description = "No media has that id.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+        @ApiResponse(
+                responseCode = "200",
+                description = "The full-size canonical JPEG.",
+                content =
+                        @Content(
+                                mediaType = MediaType.IMAGE_JPEG_VALUE,
+                                schema = @Schema(type = "string", format = "binary"))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "No media has that id.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @GetMapping("/{mediaId}/original")
     ResponseEntity<byte[]> original(@PathVariable("mediaId") UUID mediaId) {
@@ -68,12 +81,20 @@ class MediaController {
     }
 
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "The square thumbnail JPEG.",
-                content = @Content(mediaType = MediaType.IMAGE_JPEG_VALUE,
-                        schema = @Schema(type = "string", format = "binary"))),
-        @ApiResponse(responseCode = "404", description = "No media has that id.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+        @ApiResponse(
+                responseCode = "200",
+                description = "The square thumbnail JPEG.",
+                content =
+                        @Content(
+                                mediaType = MediaType.IMAGE_JPEG_VALUE,
+                                schema = @Schema(type = "string", format = "binary"))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "No media has that id.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @GetMapping("/{mediaId}/thumbnail")
     ResponseEntity<byte[]> thumbnail(@PathVariable("mediaId") UUID mediaId) {
@@ -83,7 +104,8 @@ class MediaController {
     private static ResponseEntity<byte[]> jpeg(byte[] bytes) {
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG)
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
+                .cacheControl(
+                        CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
                 .body(bytes);
     }
 

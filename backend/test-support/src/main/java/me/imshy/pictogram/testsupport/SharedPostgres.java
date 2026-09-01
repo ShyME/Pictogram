@@ -7,15 +7,13 @@ public final class SharedPostgres {
 
     private static final boolean REUSE = System.getenv("CI") == null;
 
-    public static final PostgreSQLContainer INSTANCE =
-            new PostgreSQLContainer("postgres:17-alpine").withReuse(REUSE);
+    public static final PostgreSQLContainer INSTANCE = new PostgreSQLContainer("postgres:17-alpine").withReuse(REUSE);
 
     static {
         INSTANCE.start();
     }
 
-    private SharedPostgres() {
-    }
+    private SharedPostgres() {}
 
     public static void registerTo(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", INSTANCE::getJdbcUrl);

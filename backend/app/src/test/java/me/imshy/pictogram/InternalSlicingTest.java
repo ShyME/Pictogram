@@ -15,8 +15,7 @@ class InternalSlicingTest {
 
     @Test
     void internalSubpackagesDoNotDependOnEachOther() {
-        slices()
-                .matching("me.imshy.pictogram.(*).internal.(*)..")
+        slices().matching("me.imshy.pictogram.(*).internal.(*)..")
                 .should()
                 .notDependOnEachOther()
                 .check(CLASSES);

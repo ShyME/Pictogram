@@ -37,7 +37,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> handleUnexpected(Exception ex) {
         log.error("Unhandled exception serving an API request", ex);
-        var body = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+        var body = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "The server could not process the request. The failure has been logged.");
         body.setType(ProblemType.INTERNAL_ERROR.uri());
         body.setTitle(ProblemType.INTERNAL_ERROR.title());

@@ -66,14 +66,13 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
     @Test
     void anOverlongBioIsRejected() {
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-                .isThrownBy(() -> onboarding.completeOnboarding(
-                        UserId.random(), "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
+                .isThrownBy(() ->
+                        onboarding.completeOnboarding(UserId.random(), "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
     }
 
     @Test
     void anEmojiCountsAsOneCharacterNotTwo() {
-        var created = onboarding.completeOnboarding(
-                UserId.random(), "ada", "🎨".repeat(DisplayName.MAX_LENGTH), null);
+        var created = onboarding.completeOnboarding(UserId.random(), "ada", "🎨".repeat(DisplayName.MAX_LENGTH), null);
 
         assertThat(created.displayName()).hasSize(DisplayName.MAX_LENGTH * 2);
     }
@@ -83,10 +82,13 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         var user = UserId.random();
         onboarding.completeOnboarding(user, "ada", "Ada", null);
 
-        var racing = Profile.onboard(user, new Username("mallory"),
-                DisplayName.of(null), Bio.of(null), Instant.parse("2026-08-31T00:00:00Z"));
-        assertThatExceptionOfType(DataIntegrityViolationException.class)
-                .isThrownBy(() -> profiles.save(racing));
+        var racing = Profile.onboard(
+                user,
+                new Username("mallory"),
+                DisplayName.of(null),
+                Bio.of(null),
+                Instant.parse("2026-08-31T00:00:00Z"));
+        assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> profiles.save(racing));
 
         assertThat(onboarding.profileOf(user).username()).isEqualTo("ada");
     }

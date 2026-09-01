@@ -29,9 +29,11 @@ class OpenApiDocumentationTest {
         assertThat(onboard.at("/201/headers/Location")).isNotEmpty();
         assertThat(onboard.at("/201/content/application~1json/schema/$ref").asString())
                 .endsWith("/ProfileView");
-        assertThat(onboard.at("/400/content/application~1problem+json/schema/$ref").asString())
+        assertThat(onboard.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
-        assertThat(onboard.at("/409/content/application~1problem+json/schema/$ref").asString())
+        assertThat(onboard.at("/409/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -39,7 +41,8 @@ class OpenApiDocumentationTest {
     void ownProfileIsDocumentedWith200And404() {
         JsonNode me = spec.at("/paths/~1api~1profiles~1me/get/responses");
 
-        assertThat(me.at("/200/content/application~1json/schema/$ref").asString()).endsWith("/ProfileView");
+        assertThat(me.at("/200/content/application~1json/schema/$ref").asString())
+                .endsWith("/ProfileView");
         assertThat(me.at("/404/content/application~1problem+json/schema/$ref").asString())
                 .endsWith("/ProblemDetail");
     }
@@ -48,7 +51,8 @@ class OpenApiDocumentationTest {
     void editingOwnProfileIsDocumentedWith200AndProblemDetailErrors() {
         JsonNode edit = spec.at("/paths/~1api~1profiles~1me/put/responses");
 
-        assertThat(edit.at("/200/content/application~1json/schema/$ref").asString()).endsWith("/ProfileView");
+        assertThat(edit.at("/200/content/application~1json/schema/$ref").asString())
+                .endsWith("/ProfileView");
         assertThat(edit.at("/400/content/application~1problem+json/schema/$ref").asString())
                 .endsWith("/ProblemDetail");
         assertThat(edit.at("/404/content/application~1problem+json/schema/$ref").asString())
@@ -61,8 +65,11 @@ class OpenApiDocumentationTest {
     void profileByUsernameIsDocumentedWith200And404() {
         JsonNode byUsername = spec.at("/paths/~1api~1profiles~1{username}/get/responses");
 
-        assertThat(byUsername.at("/200/content/application~1json/schema/$ref").asString()).endsWith("/ProfileView");
-        assertThat(byUsername.at("/404/content/application~1problem+json/schema/$ref").asString())
+        assertThat(byUsername.at("/200/content/application~1json/schema/$ref").asString())
+                .endsWith("/ProfileView");
+        assertThat(byUsername
+                        .at("/404/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -70,8 +77,10 @@ class OpenApiDocumentationTest {
     void theBatchProfileLookupIsDocumentedAsAnArrayOfProfileView() {
         JsonNode byIds = spec.at("/paths/~1api~1profiles/get/responses");
 
-        assertThat(byIds.at("/200/content/application~1json/schema/type").asString()).isEqualTo("array");
-        assertThat(byIds.at("/200/content/application~1json/schema/items/$ref").asString()).endsWith("/ProfileView");
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
+                .isEqualTo("array");
+        assertThat(byIds.at("/200/content/application~1json/schema/items/$ref").asString())
+                .endsWith("/ProfileView");
     }
 
     @Test
@@ -80,7 +89,8 @@ class OpenApiDocumentationTest {
 
         assertThat(upload.at("/201/content/application~1json/schema/$ref").asString())
                 .endsWith("/MediaUploadResponse");
-        assertThat(upload.at("/400/content/application~1problem+json/schema/$ref").asString())
+        assertThat(upload.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -90,10 +100,13 @@ class OpenApiDocumentationTest {
 
         assertThat(publish.has("200")).as("no phantom 200").isFalse();
         assertThat(publish.at("/201/headers/Location")).isNotEmpty();
-        assertThat(publish.at("/201/content/application~1json/schema/$ref").asString()).endsWith("/PostView");
-        assertThat(publish.at("/400/content/application~1problem+json/schema/$ref").asString())
+        assertThat(publish.at("/201/content/application~1json/schema/$ref").asString())
+                .endsWith("/PostView");
+        assertThat(publish.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
-        assertThat(publish.at("/422/content/application~1problem+json/schema/$ref").asString())
+        assertThat(publish.at("/422/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -103,9 +116,11 @@ class OpenApiDocumentationTest {
 
         assertThat(delete.has("204")).isTrue();
         assertThat(delete.has("200")).as("no phantom 200").isFalse();
-        assertThat(delete.at("/403/content/application~1problem+json/schema/$ref").asString())
+        assertThat(delete.at("/403/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
-        assertThat(delete.at("/404/content/application~1problem+json/schema/$ref").asString())
+        assertThat(delete.at("/404/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -122,8 +137,10 @@ class OpenApiDocumentationTest {
     void servingAMediaRenditionIsDocumentedAsBinaryJpegWith404() {
         JsonNode original = spec.at("/paths/~1api~1media~1{mediaId}~1original/get/responses");
 
-        assertThat(original.at("/200/content/image~1jpeg/schema/format").asString()).isEqualTo("binary");
-        assertThat(original.at("/404/content/application~1problem+json/schema/$ref").asString())
+        assertThat(original.at("/200/content/image~1jpeg/schema/format").asString())
+                .isEqualTo("binary");
+        assertThat(original.at("/404/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -133,7 +150,8 @@ class OpenApiDocumentationTest {
 
         assertThat(follow.has("204")).isTrue();
         assertThat(follow.has("200")).as("no phantom 200").isFalse();
-        assertThat(follow.at("/422/content/application~1problem+json/schema/$ref").asString())
+        assertThat(follow.at("/422/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -147,11 +165,11 @@ class OpenApiDocumentationTest {
 
     @Test
     void theFollowRelationshipIsDocumentedWithCountsAndTheViewerFlag() {
-        JsonNode relationship = spec.at(
-                "/paths/~1api~1follows~1{userId}/get/responses/200/content/application~1json/schema/$ref");
+        JsonNode relationship =
+                spec.at("/paths/~1api~1follows~1{userId}/get/responses/200/content/application~1json/schema/$ref");
 
-        JsonNode body = spec.at("/components/schemas/"
-                + relationship.asString().substring("#/components/schemas/".length()));
+        JsonNode body =
+                spec.at("/components/schemas/" + relationship.asString().substring("#/components/schemas/".length()));
         assertThat(body.at("/properties/followerCount")).isNotEmpty();
         assertThat(body.at("/properties/followingCount")).isNotEmpty();
         assertThat(body.at("/properties/followedByViewer")).isNotEmpty();
@@ -161,26 +179,35 @@ class OpenApiDocumentationTest {
     void theBatchRelationshipReadIsDocumentedAsAnArrayOfRecordsNeedingAToken() {
         JsonNode byIds = spec.at("/paths/~1api~1follows/get/responses");
 
-        assertThat(byIds.at("/200/content/application~1json/schema/type").asString()).isEqualTo("array");
-        String itemRef = byIds.at("/200/content/application~1json/schema/items/$ref").asString();
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
+                .isEqualTo("array");
+        String itemRef =
+                byIds.at("/200/content/application~1json/schema/items/$ref").asString();
         JsonNode item = spec.at("/components/schemas/" + itemRef.substring("#/components/schemas/".length()));
         assertThat(item.at("/properties/userId")).isNotEmpty();
         assertThat(item.at("/properties/followerCount")).isNotEmpty();
         assertThat(item.at("/properties/followingCount")).isNotEmpty();
         assertThat(item.at("/properties/followedByViewer")).isNotEmpty();
-        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref").asString()).endsWith("/ProblemDetail");
-        assertThat(byIds.at("/401/content/application~1problem+json/schema/$ref").asString()).endsWith("/ProblemDetail");
+        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+        assertThat(byIds.at("/401/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
     }
 
     @Test
     void theFollowerListIsDocumentedAsAPageOfUserIdsNeedingAToken() {
         JsonNode followers = spec.at("/paths/~1api~1follows~1{userId}~1followers/get/responses");
 
-        String pageRef = followers.at("/200/content/application~1json/schema/$ref").asString();
+        String pageRef =
+                followers.at("/200/content/application~1json/schema/$ref").asString();
         JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
         assertThat(page.at("/properties/items/items/type").asString()).isEqualTo("string");
         assertThat(page.at("/properties/nextCursor")).isNotEmpty();
-        assertThat(followers.at("/401/content/application~1problem+json/schema/$ref").asString())
+        assertThat(followers
+                        .at("/401/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -188,10 +215,13 @@ class OpenApiDocumentationTest {
     void theFollowingListIsDocumentedAsAPageOfUserIdsNeedingAToken() {
         JsonNode following = spec.at("/paths/~1api~1follows~1{userId}~1following/get/responses");
 
-        String pageRef = following.at("/200/content/application~1json/schema/$ref").asString();
+        String pageRef =
+                following.at("/200/content/application~1json/schema/$ref").asString();
         JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
         assertThat(page.at("/properties/items/items/type").asString()).isEqualTo("string");
-        assertThat(following.at("/401/content/application~1problem+json/schema/$ref").asString())
+        assertThat(following
+                        .at("/401/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -200,12 +230,15 @@ class OpenApiDocumentationTest {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 
         String okRef = refresh.at("/200/content/application~1json/schema/$ref").asString();
-        assertThat(okRef).describedAs("200 body is a named schema, not type:object").endsWith("/AccessTokenResponse");
+        assertThat(okRef)
+                .describedAs("200 body is a named schema, not type:object")
+                .endsWith("/AccessTokenResponse");
         JsonNode body = spec.at("/components/schemas/AccessTokenResponse");
         assertThat(body.at("/properties/accessToken")).isNotEmpty();
         assertThat(body.at("/properties/expiresInSeconds")).isNotEmpty();
 
-        assertThat(refresh.at("/401/content/application~1problem+json/schema/$ref").asString())
+        assertThat(refresh.at("/401/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 
@@ -216,7 +249,8 @@ class OpenApiDocumentationTest {
         JsonNode params = feed.at("/parameters");
         assertThat(params.findValuesAsString("name")).contains("cursor", "limit");
 
-        String pageRef = feed.at("/responses/200/content/application~1json/schema/$ref").asString();
+        String pageRef =
+                feed.at("/responses/200/content/application~1json/schema/$ref").asString();
         JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
         String cardRef = page.at("/properties/items/items/$ref").asString();
         JsonNode card = spec.at("/components/schemas/" + cardRef.substring("#/components/schemas/".length()));
@@ -226,7 +260,8 @@ class OpenApiDocumentationTest {
         assertThat(card.at("/properties/caption")).isNotEmpty();
         assertThat(card.at("/properties/publishedAt")).isNotEmpty();
 
-        assertThat(feed.at("/responses/401/content/application~1problem+json/schema/$ref").asString())
+        assertThat(feed.at("/responses/401/content/application~1problem+json/schema/$ref")
+                        .asString())
                 .endsWith("/ProblemDetail");
     }
 

@@ -56,15 +56,15 @@ class MediaApiTest {
     void uploadingNeedsAToken() throws Exception {
         mvc.perform(multipart("/api/media").file(imagePart()))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
     void aSignedInUserUploadsAnImageAndCanFetchBothRenditionsAnonymously() throws Exception {
         var user = UUID.randomUUID().toString();
 
-        var upload = mvc.perform(multipart("/api/media").file(imagePart())
-                        .with(jwt().jwt(jwt -> jwt.subject(user))))
+        var upload = mvc.perform(multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(user))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mediaId").exists())
                 .andExpect(header().exists("Location"))
@@ -85,7 +85,8 @@ class MediaApiTest {
     void bytesThatAreNotAnImageAreABadRequestProblemDetail() throws Exception {
         var notAnImage = new MockMultipartFile("file", "notes.txt", "text/plain", "hello".getBytes());
 
-        mvc.perform(multipart("/api/media").file(notAnImage)
+        mvc.perform(multipart("/api/media")
+                        .file(notAnImage)
                         .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-undecodable"));

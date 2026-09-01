@@ -40,16 +40,24 @@ class AuthController {
     }
 
     record AccessTokenResponse(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String accessToken,
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long expiresInSeconds) {
-    }
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String accessToken,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            long expiresInSeconds) {}
 
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "A fresh access token; the refresh cookie is rotated.",
+        @ApiResponse(
+                responseCode = "200",
+                description = "A fresh access token; the refresh cookie is rotated.",
                 content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))),
-        @ApiResponse(responseCode = "401", description = "The refresh cookie is missing, already used, or expired.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+        @ApiResponse(
+                responseCode = "401",
+                description = "The refresh cookie is missing, already used, or expired.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @PostMapping("/refresh")
     ResponseEntity<?> refresh(HttpServletRequest request) {
@@ -63,7 +71,8 @@ class AuthController {
         } catch (InvalidRefreshTokenException invalid) {
             return sessionInvalid();
         }
-        long expiresIn = Duration.between(clock.instant(), session.accessTokenExpiresAt()).toSeconds();
+        long expiresIn = Duration.between(clock.instant(), session.accessTokenExpiresAt())
+                .toSeconds();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(session).toString())
                 .body(new AccessTokenResponse(session.accessToken(), expiresIn));
@@ -74,7 +83,9 @@ class AuthController {
     ResponseEntity<Void> logout(HttpServletRequest request) {
         RefreshCookie.readFrom(request).ifPresent(authentication::signOut);
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, RefreshCookie.expired(properties.cookieSecure()).toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        RefreshCookie.expired(properties.cookieSecure()).toString())
                 .build();
     }
 
@@ -83,13 +94,14 @@ class AuthController {
     }
 
     private ResponseEntity<ProblemDetail> sessionInvalid() {
-        var problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,
-                "Sign in again to continue.");
+        var problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Sign in again to continue.");
         problem.setType(SESSION_INVALID.uri());
         problem.setTitle(SESSION_INVALID.title());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .header(HttpHeaders.SET_COOKIE, RefreshCookie.expired(properties.cookieSecure()).toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        RefreshCookie.expired(properties.cookieSecure()).toString())
                 .body(problem);
     }
 }

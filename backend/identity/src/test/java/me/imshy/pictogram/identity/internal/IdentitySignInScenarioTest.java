@@ -34,12 +34,10 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
                 .get()
                 .extracting(AppUser::userId)
                 .isEqualTo(registered);
-        assertThat(events.ofType(UserRegistered.class))
-                .singleElement()
-                .satisfies(event -> {
-                    assertThat(event.userId()).isEqualTo(registered);
-                    assertThat(event.email()).isEqualTo("ada@example.com");
-                });
+        assertThat(events.ofType(UserRegistered.class)).singleElement().satisfies(event -> {
+            assertThat(event.userId()).isEqualTo(registered);
+            assertThat(event.email()).isEqualTo("ada@example.com");
+        });
     }
 
     @Test
@@ -55,8 +53,7 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
 
     @Test
     void anExpiredAccessTokenIsExchangedForAFreshOneViaRefresh() {
-        var session = authentication.authenticate(
-                new ExternalAccount("google", "google-sub-003", "lin@example.com"));
+        var session = authentication.authenticate(new ExternalAccount("google", "google-sub-003", "lin@example.com"));
         UserId user = accessTokens.resolve(session.accessToken());
 
         time.advance(Duration.ofMinutes(20));
@@ -70,8 +67,7 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
 
     @Test
     void replayingARotatedRefreshTokenAfterTheGraceWindowKillsTheWholeChain() {
-        var session = authentication.authenticate(
-                new ExternalAccount("google", "google-sub-004", "mae@example.com"));
+        var session = authentication.authenticate(new ExternalAccount("google", "google-sub-004", "mae@example.com"));
         var rotated = authentication.refresh(session.refreshToken());
 
         time.advance(Duration.ofMinutes(1).plusSeconds(1));

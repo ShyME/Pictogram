@@ -12,9 +12,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
 
-@SpringBootTest(
-        classes = PictogramApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class ApplicationSmokeTest {
 
@@ -30,9 +28,17 @@ class ApplicationSmokeTest {
     void livenessAndReadinessProbesReportUp() {
         var client = RestClient.create("http://localhost:" + port);
 
-        assertThat(client.get().uri("/actuator/health/liveness").retrieve()
-                .toBodilessEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(client.get().uri("/actuator/health/readiness").retrieve()
-                .toBodilessEntity().getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(client.get()
+                        .uri("/actuator/health/liveness")
+                        .retrieve()
+                        .toBodilessEntity()
+                        .getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+        assertThat(client.get()
+                        .uri("/actuator/health/readiness")
+                        .retrieve()
+                        .toBodilessEntity()
+                        .getStatusCode())
+                .isEqualTo(HttpStatus.OK);
     }
 }

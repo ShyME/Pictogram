@@ -21,8 +21,8 @@ import me.imshy.pictogram.shared.http.ProblemType;
 import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -54,7 +54,8 @@ class ApiEdgeTest {
         mvc.perform(get("/api/_probe/current-user"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()))
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.title").value("Authentication required"))
                 .andExpect(jsonPath("$.properties").doesNotExist());
@@ -65,7 +66,8 @@ class ApiEdgeTest {
         mvc.perform(get("/api/_probe/current-user").header("Authorization", "Bearer not-a-real-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -109,9 +111,12 @@ class ApiEdgeTest {
 
     @Test
     void aMalformedCursorRendersAsA400ProblemDetail() throws Exception {
-        mvc.perform(get("/api/_probe/by-cursor").param("cursor", "!!not-a-cursor!!").with(jwt()))
+        mvc.perform(get("/api/_probe/by-cursor")
+                        .param("cursor", "!!not-a-cursor!!")
+                        .with(jwt()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ProblemType.INVALID_CURSOR.uri().toString()));
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.INVALID_CURSOR.uri().toString()));
     }
 
     @Test
@@ -134,8 +139,7 @@ class ApiEdgeTest {
 
         static final UUID PAGE_TAIL = UUID.fromString("00000000-0000-0000-0000-0000000000ff");
 
-        record Clock(Instant at) {
-        }
+        record Clock(Instant at) {}
 
         @GetMapping("/current-user")
         UserId currentUser(@CurrentUser UserId user) {
@@ -154,8 +158,8 @@ class ApiEdgeTest {
 
         @GetMapping("/boom")
         void boom() {
-            throw new ApiException(HttpStatus.CONFLICT, new ProblemType("probe-conflict", "Probe conflict"),
-                    "the probe blew up");
+            throw new ApiException(
+                    HttpStatus.CONFLICT, new ProblemType("probe-conflict", "Probe conflict"), "the probe blew up");
         }
 
         @GetMapping("/by-cursor")

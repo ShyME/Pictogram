@@ -31,7 +31,8 @@ public class FollowRelationships {
         Set<UUID> followed = Set.copyOf(follows.followedByViewerAmong(viewer.value(), ids));
 
         return ids.stream()
-                .map(id -> new Relationship(new UserId(id),
+                .map(id -> new Relationship(
+                        new UserId(id),
                         followers.getOrDefault(id, 0L),
                         following.getOrDefault(id, 0L),
                         followed.contains(id)))
@@ -42,6 +43,5 @@ public class FollowRelationships {
         return counts.stream().collect(toMap(FollowCount::userId, FollowCount::count));
     }
 
-    public record Relationship(UserId user, long followerCount, long followingCount, boolean followedByViewer) {
-    }
+    public record Relationship(UserId user, long followerCount, long followingCount, boolean followedByViewer) {}
 }

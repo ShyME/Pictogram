@@ -92,10 +92,12 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
                 .map(RefreshTokenService.Issued.class::cast)
                 .toList();
         assertThat(winner).hasSize(1);
-        assertThat(outcomes).anySatisfy(outcome -> assertThat(outcome)
-                .isInstanceOf(InvalidRefreshTokenException.class)
-                .isNotInstanceOf(RefreshTokenReuseException.class));
-        assertThatNoException().isThrownBy(() -> refreshTokens.rotate(winner.getFirst().token()));
+        assertThat(outcomes)
+                .anySatisfy(outcome -> assertThat(outcome)
+                        .isInstanceOf(InvalidRefreshTokenException.class)
+                        .isNotInstanceOf(RefreshTokenReuseException.class));
+        assertThatNoException()
+                .isThrownBy(() -> refreshTokens.rotate(winner.getFirst().token()));
     }
 
     @Test
@@ -103,8 +105,8 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         var first = refreshTokens.startSession(UserId.random());
         var tx = new TransactionTemplate(txManager);
 
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() ->
-                tx.executeWithoutResult(status -> refreshTokens.rotate(first.token())));
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> tx.executeWithoutResult(status -> refreshTokens.rotate(first.token())));
     }
 
     private static Object valueOf(Future<Object> future) {

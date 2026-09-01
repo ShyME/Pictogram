@@ -29,8 +29,7 @@ class Media implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Media() {
-    }
+    protected Media() {}
 
     private Media(UUID id, UUID ownerId, Instant createdAt) {
         this.id = id;

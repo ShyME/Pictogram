@@ -19,8 +19,7 @@ class IdentitySecurityConfiguration {
     @Bean
     @Order(-2)
     SecurityFilterChain sessionEndpointsSecurity(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher("/api/auth/**")
+        return http.securityMatcher("/api/auth/**")
                 .authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
@@ -29,20 +28,23 @@ class IdentitySecurityConfiguration {
 
     @Bean
     @Order(-1)
-    SecurityFilterChain googleSignInSecurity(HttpSecurity http,
+    SecurityFilterChain googleSignInSecurity(
+            HttpSecurity http,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations,
             ObjectProvider<OidcSignInSuccessHandler> successHandler,
-            SignInCompletion completion, ObjectProvider<ObjectMapper> objectMapper) throws Exception {
+            SignInCompletion completion,
+            ObjectProvider<ObjectMapper> objectMapper)
+            throws Exception {
         http.securityMatcher("/oauth2/**", "/login/oauth2/**");
         if (clientRegistrations.getIfAvailable() == null) {
-            return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll()).build();
+            return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll())
+                    .build();
         }
-        return http
-                .addFilterBefore(new OidcChainErrorFilter(objectMapper.getObject(), completion),
+        return http.addFilterBefore(
+                        new OidcChainErrorFilter(objectMapper.getObject(), completion),
                         OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
-                .oauth2Login(login -> login
-                        .successHandler(successHandler.getObject())
+                .oauth2Login(login -> login.successHandler(successHandler.getObject())
                         .failureHandler(new SignInFailureHandler(completion)))
                 .build();
     }
@@ -53,8 +55,8 @@ class IdentitySecurityConfiguration {
     }
 
     @Bean
-    OidcSignInSuccessHandler oidcSignInSuccessHandler(IdentityAuthentication authentication,
-            GoogleIdentityProvider google, SignInCompletion completion) {
+    OidcSignInSuccessHandler oidcSignInSuccessHandler(
+            IdentityAuthentication authentication, GoogleIdentityProvider google, SignInCompletion completion) {
         return new OidcSignInSuccessHandler(authentication, google, completion);
     }
 }

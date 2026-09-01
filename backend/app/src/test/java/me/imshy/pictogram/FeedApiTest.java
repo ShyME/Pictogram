@@ -45,12 +45,14 @@ class FeedApiTest {
     void theFeedNeedsAToken() throws Exception {
         mvc.perform(get("/api/feed"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
     void aSignedInViewerWhoFollowsNobodyGetsAnEmptyLastPage() throws Exception {
-        mvc.perform(get("/api/feed").with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+        mvc.perform(get("/api/feed")
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isEmpty())
                 .andExpect(jsonPath("$.nextCursor").doesNotExist());
@@ -61,6 +63,7 @@ class FeedApiTest {
         mvc.perform(get("/api/feed?cursor=not-a-cursor")
                         .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ProblemType.INVALID_CURSOR.uri().toString()));
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.INVALID_CURSOR.uri().toString()));
     }
 }

@@ -25,7 +25,11 @@ public class RefreshTokenService {
     private final TransactionTemplate tx;
     private final SecureRandom random = new SecureRandom();
 
-    public RefreshTokenService(RefreshTokens tokens, Clock clock, Duration ttl, Duration rotationGrace,
+    public RefreshTokenService(
+            RefreshTokens tokens,
+            Clock clock,
+            Duration ttl,
+            Duration rotationGrace,
             PlatformTransactionManager txManager) {
         this.tokens = tokens;
         this.clock = clock;
@@ -34,8 +38,7 @@ public class RefreshTokenService {
         this.tx = new TransactionTemplate(txManager);
     }
 
-    public record Issued(UserId user, String token, Instant expiresAt) {
-    }
+    public record Issued(UserId user, String token, Instant expiresAt) {}
 
     public Issued startSession(UserId user) {
         return tx.execute(status -> issue(user, UUID.randomUUID()));
@@ -118,13 +121,10 @@ public class RefreshTokenService {
     }
 
     private sealed interface Rotation {
-        record Ok(Issued issued) implements Rotation {
-        }
+        record Ok(Issued issued) implements Rotation {}
 
-        record BenignReplay() implements Rotation {
-        }
+        record BenignReplay() implements Rotation {}
 
-        record Reuse(UUID familyId) implements Rotation {
-        }
+        record Reuse(UUID familyId) implements Rotation {}
     }
 }

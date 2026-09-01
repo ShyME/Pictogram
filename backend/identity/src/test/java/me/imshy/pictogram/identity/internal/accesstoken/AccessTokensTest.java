@@ -8,7 +8,6 @@ import me.imshy.pictogram.identity.InvalidAccessTokenException;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.testsupport.MutableClock;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 class AccessTokensTest {
@@ -21,7 +20,9 @@ class AccessTokensTest {
     private final AccessTokens accessTokens = new AccessTokens(
             new NimbusJwtEncoder(key.jwkSource()),
             AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock),
-            clock, TTL, ISSUER);
+            clock,
+            TTL,
+            ISSUER);
 
     @Test
     void resolvesAFreshTokenBackToItsUser() {
@@ -36,8 +37,7 @@ class AccessTokensTest {
 
         clock.advance(TTL.plusMinutes(5));
 
-        assertThatExceptionOfType(InvalidAccessTokenException.class)
-                .isThrownBy(() -> accessTokens.resolve(token));
+        assertThatExceptionOfType(InvalidAccessTokenException.class).isThrownBy(() -> accessTokens.resolve(token));
     }
 
     @Test
@@ -45,7 +45,9 @@ class AccessTokensTest {
         var otherIssuer = new AccessTokens(
                 new NimbusJwtEncoder(SigningKey.generate().jwkSource()),
                 AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock),
-                clock, TTL, ISSUER);
+                clock,
+                TTL,
+                ISSUER);
         String foreignToken = otherIssuer.issue(UserId.random());
 
         assertThatExceptionOfType(InvalidAccessTokenException.class)

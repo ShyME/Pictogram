@@ -24,8 +24,11 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-            NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public Object resolveArgument(
+            MethodParameter parameter,
+            ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest,
+            WebDataBinderFactory binderFactory) {
         boolean optional = Optional.class.equals(parameter.getParameterType());
 
         if (optional && !hasPictogramToken()) {
@@ -52,13 +55,15 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
     private static boolean hasPictogramToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated()
+        return authentication != null
+                && authentication.isAuthenticated()
                 && authentication.getPrincipal() instanceof Jwt;
     }
 
     private static UserId currentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()
+        if (authentication == null
+                || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             throw new UnauthenticatedException("The request carries no Pictogram access token.");
         }

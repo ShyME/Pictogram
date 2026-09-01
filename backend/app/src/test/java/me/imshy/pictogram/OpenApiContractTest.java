@@ -22,8 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
 @ActiveProfiles("test")
 class OpenApiContractTest {
 
-    private static final Path SPEC_FILE =
-            Path.of(System.getProperty("pictogram.openapi.file", "../openapi.json"));
+    private static final Path SPEC_FILE = Path.of(System.getProperty("pictogram.openapi.file", "../openapi.json"));
 
     private static final JsonMapper CANONICAL = JsonMapper.builder()
             .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
@@ -41,7 +40,10 @@ class OpenApiContractTest {
     @Test
     void committedSpecMatchesTheRunningApp() throws IOException {
         String published = canonicalize(RestClient.create("http://localhost:" + port)
-                .get().uri("/v3/api-docs").retrieve().body(String.class));
+                .get()
+                .uri("/v3/api-docs")
+                .retrieve()
+                .body(String.class));
 
         if (Boolean.getBoolean("pictogram.openapi.generate")) {
             Files.writeString(SPEC_FILE, published, StandardCharsets.UTF_8);

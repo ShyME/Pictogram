@@ -19,14 +19,12 @@ class ImagePipelineTest {
     void bytesThatAreNotAnImageAreRejected() {
         var junk = "this is not an image".getBytes(StandardCharsets.UTF_8);
 
-        assertThatExceptionOfType(UndecodableImageException.class)
-                .isThrownBy(() -> pipeline.transcode(junk));
+        assertThatExceptionOfType(UndecodableImageException.class).isThrownBy(() -> pipeline.transcode(junk));
     }
 
     @Test
     void anEmptyUploadIsRejected() {
-        assertThatExceptionOfType(UndecodableImageException.class)
-                .isThrownBy(() -> pipeline.transcode(new byte[0]));
+        assertThatExceptionOfType(UndecodableImageException.class).isThrownBy(() -> pipeline.transcode(new byte[0]));
     }
 
     @Test
@@ -41,7 +39,8 @@ class ImagePipelineTest {
     @Test
     void theWebpReaderPluginIsOnTheClasspath() {
         assertThat(ImageIO.getImageReadersByFormatName("webp").hasNext())
-                .as("imageio-webp must be registered for WebP uploads to decode").isTrue();
+                .as("imageio-webp must be registered for WebP uploads to decode")
+                .isTrue();
     }
 
     @Test
@@ -79,7 +78,8 @@ class ImagePipelineTest {
     void theCanonicalRenditionIsUprightWhenTheUploadCarriesAnOrientationTag() throws Exception {
         byte[] rotated = TestImages.markedTopLeft(900, 600, 6);
 
-        var original = ImageIO.read(new ByteArrayInputStream(pipeline.transcode(rotated).original()));
+        var original = ImageIO.read(
+                new ByteArrayInputStream(pipeline.transcode(rotated).original()));
 
         assertThat(brightnessTopRight(original)).isLessThan(brightnessTopLeft(original));
     }
@@ -88,7 +88,8 @@ class ImagePipelineTest {
     void anUploadWithNoMeaningfulOrientationTagIsLeftAsItIs() throws Exception {
         byte[] plain = TestImages.markedTopLeft(900, 600, 1);
 
-        var original = ImageIO.read(new ByteArrayInputStream(pipeline.transcode(plain).original()));
+        var original =
+                ImageIO.read(new ByteArrayInputStream(pipeline.transcode(plain).original()));
 
         assertThat(brightnessTopLeft(original)).isLessThan(brightnessTopRight(original));
     }

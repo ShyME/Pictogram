@@ -38,8 +38,7 @@ class ProfileDirectoryTest extends ProfileModuleIntegrationTest {
 
     @Test
     void anUnknownUsernameIsNotFound() {
-        assertThatExceptionOfType(ProfileNotFoundException.class)
-                .isThrownBy(() -> directory.byUsername("nobody_here"));
+        assertThatExceptionOfType(ProfileNotFoundException.class).isThrownBy(() -> directory.byUsername("nobody_here"));
     }
 
     @Test
@@ -52,8 +51,7 @@ class ProfileDirectoryTest extends ProfileModuleIntegrationTest {
 
         var profiles = directory.byIds(List.of(ada, missing, grace));
 
-        assertThat(profiles).extracting(ProfileView::username)
-                .containsExactlyInAnyOrder("ada", "grace");
+        assertThat(profiles).extracting(ProfileView::username).containsExactlyInAnyOrder("ada", "grace");
     }
 
     @Test

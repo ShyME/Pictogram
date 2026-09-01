@@ -45,6 +45,5 @@ public class PostTimeline {
         return Math.clamp(limit, 1, MAX_LIMIT);
     }
 
-    public record Page(List<PostView> items, Cursor nextCursor) {
-    }
+    public record Page(List<PostView> items, Cursor nextCursor) {}
 }

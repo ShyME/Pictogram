@@ -46,7 +46,8 @@ class ProfileReadApiTest {
 
     private String onboard(String username, String displayName) throws Exception {
         var user = UUID.randomUUID().toString();
-        mvc.perform(post("/api/profiles").with(jwt().jwt(jwt -> jwt.subject(user)))
+        mvc.perform(post("/api/profiles")
+                        .with(jwt().jwt(jwt -> jwt.subject(user)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"%s\",\"displayName\":\"%s\"}".formatted(username, displayName)))
                 .andExpect(status().isCreated());
@@ -86,8 +87,7 @@ class ProfileReadApiTest {
         var grace = onboard("grace", "Grace");
         var missing = UUID.randomUUID().toString();
 
-        mvc.perform(get("/api/profiles").param("ids", ada, missing, grace)
-                        .with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(get("/api/profiles").param("ids", ada, missing, grace).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[?(@.username == 'ada')]").exists())
@@ -100,17 +100,20 @@ class ProfileReadApiTest {
                 .mapToObj(i -> UUID.randomUUID().toString())
                 .toArray(String[]::new);
 
-        mvc.perform(get("/api/profiles").param("ids", tooMany)
+        mvc.perform(get("/api/profiles")
+                        .param("ids", tooMany)
                         .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 
     @Test
     void theCarveOutIsOneSegmentWideSoBatchAndMeStillNeedAToken() throws Exception {
         mvc.perform(get("/api/profiles/me"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
 
         mvc.perform(get("/api/profiles").param("ids", UUID.randomUUID().toString()))
                 .andExpect(status().isUnauthorized());

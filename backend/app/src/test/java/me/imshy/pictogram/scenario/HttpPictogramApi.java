@@ -35,10 +35,12 @@ class HttpPictogramApi implements PictogramApi {
     @Override
     public Actor registerViaGoogle(String email) {
         String refreshCookie = signIn.authenticate(email);
-        HttpResponse<String> redeemed = send(HttpClient.newHttpClient(), HttpRequest.newBuilder(uri("/api/auth/refresh"))
-                .header("Cookie", REFRESH_COOKIE + "=" + refreshCookie)
-                .POST(BodyPublishers.noBody())
-                .build());
+        HttpResponse<String> redeemed = send(
+                HttpClient.newHttpClient(),
+                HttpRequest.newBuilder(uri("/api/auth/refresh"))
+                        .header("Cookie", REFRESH_COOKIE + "=" + refreshCookie)
+                        .POST(BodyPublishers.noBody())
+                        .build());
         require(redeemed, 200, "redeem refresh cookie");
         return new HttpActor(field(redeemed.body(), "accessToken"));
     }
@@ -113,8 +115,8 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public Post publishPost(String mediaId, String caption) {
-            String body = json.writeValueAsString(Map.of("mediaId", mediaId, "caption",
-                    Optional.ofNullable(caption).orElse("")));
+            String body = json.writeValueAsString(Map.of(
+                    "mediaId", mediaId, "caption", Optional.ofNullable(caption).orElse("")));
             HttpResponse<String> response = call("POST", "/api/posts", body);
             require(response, 201, "publish a post");
             return post(response.body());
@@ -126,8 +128,9 @@ class HttpPictogramApi implements PictogramApi {
             return switch (response.statusCode()) {
                 case 204 -> DeleteOutcome.DELETED;
                 case 403 -> DeleteOutcome.FORBIDDEN;
-                default -> throw new AssertionError(
-                        "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
             };
         }
 
@@ -146,8 +149,9 @@ class HttpPictogramApi implements PictogramApi {
             return switch (response.statusCode()) {
                 case 204 -> FollowOutcome.OK;
                 case 422 -> FollowOutcome.SELF_FOLLOW;
-                default -> throw new AssertionError(
-                        "Unexpected status following a user: " + response.statusCode() + ": " + response.body());
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status following a user: " + response.statusCode() + ": " + response.body());
             };
         }
 
@@ -200,10 +204,13 @@ class HttpPictogramApi implements PictogramApi {
             HttpResponse<String> response = call("GET", "/api/follows?" + query, null);
             require(response, 200, "read a batch of follow relationships");
             Map<String, FollowRelationship> byId = new LinkedHashMap<>();
-            json.readTree(response.body()).forEach(node -> byId.put(node.path("userId").asString(),
-                    new FollowRelationship(node.path("followerCount").asLong(),
-                            node.path("followingCount").asLong(),
-                            node.path("followedByViewer").asBoolean())));
+            json.readTree(response.body())
+                    .forEach(node -> byId.put(
+                            node.path("userId").asString(),
+                            new FollowRelationship(
+                                    node.path("followerCount").asLong(),
+                                    node.path("followingCount").asLong(),
+                                    node.path("followedByViewer").asBoolean())));
             return byId;
         }
 
@@ -265,8 +272,9 @@ class HttpPictogramApi implements PictogramApi {
 
     private static byte[] multipartBody(String boundary, byte[] file) {
         var head = ("--" + boundary + "\r\n"
-                + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
-                + "Content-Type: image/jpeg\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+                        + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
+                        + "Content-Type: image/jpeg\r\n\r\n")
+                .getBytes(StandardCharsets.UTF_8);
         var tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
         var body = new byte[head.length + file.length + tail.length];
         System.arraycopy(head, 0, body, 0, head.length);

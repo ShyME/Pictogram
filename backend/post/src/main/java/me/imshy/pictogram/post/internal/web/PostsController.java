@@ -45,40 +45,57 @@ class PostsController {
         this.timeline = timeline;
     }
 
-    record PublishPostRequest(UUID mediaId, String caption) {
-    }
+    record PublishPostRequest(UUID mediaId, String caption) {}
 
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "The post was published.",
-                headers = @Header(name = "Location",
-                        description = "The post's URL — id-based, live once a post-detail read lands.",
-                        schema = @Schema(type = "string")),
+        @ApiResponse(
+                responseCode = "201",
+                description = "The post was published.",
+                headers =
+                        @Header(
+                                name = "Location",
+                                description = "The post's URL — id-based, live once a post-detail read lands.",
+                                schema = @Schema(type = "string")),
                 content = @Content(schema = @Schema(implementation = PostView.class))),
-        @ApiResponse(responseCode = "400", description = "The caption is longer than 2200 characters.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(responseCode = "422",
+        @ApiResponse(
+                responseCode = "400",
+                description = "The caption is longer than 2200 characters.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "422",
                 description = "The image can't be used — no such media, or it belongs to someone else.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @PostMapping
     ResponseEntity<PostView> publish(@CurrentUser UserId author, @RequestBody PublishPostRequest request) {
-        MediaId mediaId = Optional.ofNullable(request.mediaId()).map(MediaId::new)
-                .orElseThrow(UnusableMediaException::new);
+        MediaId mediaId =
+                Optional.ofNullable(request.mediaId()).map(MediaId::new).orElseThrow(UnusableMediaException::new);
         PostView post = publishing.publish(author, mediaId, request.caption());
         return ResponseEntity.created(URI.create("/api/posts/" + post.postId())).body(post);
     }
 
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "The post was permanently deleted."),
-        @ApiResponse(responseCode = "403",
+        @ApiResponse(
+                responseCode = "403",
                 description = "The caller is not the author of this post.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(responseCode = "404", description = "No post has that id.",
-                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                        schema = @Schema(implementation = ProblemDetail.class)))
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "No post has that id.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
     })
     @DeleteMapping("/{postId}")
     ResponseEntity<Void> delete(@CurrentUser UserId author, @PathVariable("postId") UUID postId) {
@@ -87,7 +104,8 @@ class PostsController {
     }
 
     @GetMapping(params = "author")
-    ApiPage<PostView> timeline(@RequestParam("author") UUID author,
+    ApiPage<PostView> timeline(
+            @RequestParam("author") UUID author,
             @RequestParam(name = "cursor", required = false) String cursor,
             @RequestParam(name = "limit", required = false) Integer limit) {
         Cursor after = cursor == null ? null : Cursor.decode(cursor);

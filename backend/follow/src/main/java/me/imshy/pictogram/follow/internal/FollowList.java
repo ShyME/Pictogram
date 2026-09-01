@@ -20,15 +20,21 @@ public class FollowList {
     }
 
     public Page followersOf(UserId user, Cursor after, Integer limit) {
-        return page(limit, Follow::follower, fetch -> after == null
-                ? follows.followersNewest(user.value(), fetch)
-                : follows.followersBefore(user.value(), after.at(), after.id(), fetch));
+        return page(
+                limit,
+                Follow::follower,
+                fetch -> after == null
+                        ? follows.followersNewest(user.value(), fetch)
+                        : follows.followersBefore(user.value(), after.at(), after.id(), fetch));
     }
 
     public Page followingOf(UserId user, Cursor after, Integer limit) {
-        return page(limit, Follow::followed, fetch -> after == null
-                ? follows.followingNewest(user.value(), fetch)
-                : follows.followingBefore(user.value(), after.at(), after.id(), fetch));
+        return page(
+                limit,
+                Follow::followed,
+                fetch -> after == null
+                        ? follows.followingNewest(user.value(), fetch)
+                        : follows.followingBefore(user.value(), after.at(), after.id(), fetch));
     }
 
     private Page page(Integer limit, Function<Follow, UserId> listedUser, Function<Limit, List<Follow>> rows) {
@@ -51,6 +57,5 @@ public class FollowList {
         return limit == null ? DEFAULT_LIMIT : Math.clamp(limit, 1, MAX_LIMIT);
     }
 
-    public record Page(List<UserId> items, Cursor nextCursor) {
-    }
+    public record Page(List<UserId> items, Cursor nextCursor) {}
 }

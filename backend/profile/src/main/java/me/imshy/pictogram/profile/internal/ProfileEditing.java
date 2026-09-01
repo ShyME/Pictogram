@@ -25,8 +25,7 @@ public class ProfileEditing {
         DisplayName name = DisplayName.of(displayName);
         Bio about = Bio.of(bio);
 
-        Profile profile = profiles.findById(user.value())
-                .orElseThrow(ProfileNotFoundException::new);
+        Profile profile = profiles.findById(user.value()).orElseThrow(ProfileNotFoundException::new);
 
         boolean renaming = !handle.value().equals(profile.username());
         if (renaming && profiles.existsByUsername(handle.value())) {

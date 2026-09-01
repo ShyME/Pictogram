@@ -42,9 +42,7 @@ class OrphanMediaCollectionScenarioTest extends ScenarioTest {
         assertThat(media.exists(mediaId(kept.mediaId()))).isTrue();
         assertThat(media.exists(mediaId(neverPosted))).isFalse();
         assertThat(media.exists(mediaId(doomed.mediaId()))).isFalse();
-        assertThat(ada.postsOf(adaProfile.userId()))
-                .extracting(Post::postId)
-                .containsExactly(kept.postId());
+        assertThat(ada.postsOf(adaProfile.userId())).extracting(Post::postId).containsExactly(kept.postId());
     }
 
     private static MediaId mediaId(String value) {

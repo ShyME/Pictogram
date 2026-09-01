@@ -59,7 +59,10 @@ class HttpPictogramApiTest {
 
     @Test
     void completeOnboardingSendsProfileJsonAndMapsThe201BodyToAProfile() {
-        stub("POST", "/api/profiles", 201,
+        stub(
+                "POST",
+                "/api/profiles",
+                201,
                 "{\"userId\":\"u-1\",\"username\":\"ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
 
         Profile profile = actor().completeOnboarding("ada_lovelace", "Ada Lovelace", "Countess");
@@ -161,8 +164,7 @@ class HttpPictogramApiTest {
         exchange.close();
     }
 
-    private record Stub(int status, String body) {
-    }
+    private record Stub(int status, String body) {}
 
     private static final class RecordingSignIn implements SignIn {
 

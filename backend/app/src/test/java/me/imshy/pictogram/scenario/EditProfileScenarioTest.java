@@ -20,10 +20,10 @@ class EditProfileScenarioTest extends ScenarioTest {
         var bob = pictogram.registerViaGoogle("bob@example.com");
         bob.completeOnboarding("ada", "Bob", null);
 
-        assertThat(bob.viewProfile("ada")).hasValueSatisfying(profile ->
-                assertThat(profile.displayName()).isEqualTo("Bob"));
-        assertThat(ada.viewProfile("ada_lovelace")).hasValueSatisfying(profile ->
-                assertThat(profile.displayName()).isEqualTo("Ada Lovelace"));
+        assertThat(bob.viewProfile("ada"))
+                .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Bob"));
+        assertThat(ada.viewProfile("ada_lovelace"))
+                .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Ada Lovelace"));
     }
 
     @Test
@@ -39,7 +39,7 @@ class EditProfileScenarioTest extends ScenarioTest {
         });
 
         ada.editProfile("ada", "Ada Lovelace", "Writer of the first algorithm");
-        assertThat(ada.currentProfile()).hasValueSatisfying(profile ->
-                assertThat(profile.bio()).isEqualTo("Writer of the first algorithm"));
+        assertThat(ada.currentProfile())
+                .hasValueSatisfying(profile -> assertThat(profile.bio()).isEqualTo("Writer of the first algorithm"));
     }
 }

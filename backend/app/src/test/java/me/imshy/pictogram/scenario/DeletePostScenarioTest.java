@@ -29,12 +29,8 @@ class DeletePostScenarioTest extends ScenarioTest {
 
         assertThat(ada.deletePost(drop.postId())).isEqualTo(DeleteOutcome.DELETED);
 
-        assertThat(ada.postsOf(adaProfile.userId()))
-                .extracting(Post::postId)
-                .containsExactly(keep.postId());
-        assertThat(grace.postsOf(adaProfile.userId()))
-                .extracting(Post::postId)
-                .containsExactly(keep.postId());
+        assertThat(ada.postsOf(adaProfile.userId())).extracting(Post::postId).containsExactly(keep.postId());
+        assertThat(grace.postsOf(adaProfile.userId())).extracting(Post::postId).containsExactly(keep.postId());
         assertThat(grace.openFeed().postIds()).containsExactly(keep.postId());
     }
 
@@ -49,8 +45,6 @@ class DeletePostScenarioTest extends ScenarioTest {
 
         assertThat(grace.deletePost(post.postId())).isEqualTo(DeleteOutcome.FORBIDDEN);
 
-        assertThat(ada.postsOf(adaProfile.userId()))
-                .extracting(Post::postId)
-                .containsExactly(post.postId());
+        assertThat(ada.postsOf(adaProfile.userId())).extracting(Post::postId).containsExactly(post.postId());
     }
 }

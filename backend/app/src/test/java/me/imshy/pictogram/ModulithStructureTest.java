@@ -12,8 +12,7 @@ import org.springframework.modulith.docs.Documenter;
 class ModulithStructureTest {
 
     private static final ApplicationModules MODULES = ApplicationModules.of(
-            PictogramApplication.class,
-            JavaClass.Predicates.resideInAPackage("me.imshy.pictogram.testsupport.."));
+            PictogramApplication.class, JavaClass.Predicates.resideInAPackage("me.imshy.pictogram.testsupport.."));
 
     @Test
     void everyBoundedContextIsAModule() {
@@ -21,8 +20,9 @@ class ModulithStructureTest {
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
 
-        assertThat(names).containsExactlyInAnyOrder(
-                "identity", "profile", "media", "post", "follow", "feed", "engagement", "shared");
+        assertThat(names)
+                .containsExactlyInAnyOrder(
+                        "identity", "profile", "media", "post", "follow", "feed", "engagement", "shared");
     }
 
     @Test
@@ -32,9 +32,7 @@ class ModulithStructureTest {
 
     @Test
     void writesModuleDocumentation() {
-        new Documenter(MODULES)
-                .writeModulesAsPlantUml()
-                .writeIndividualModulesAsPlantUml();
+        new Documenter(MODULES).writeModulesAsPlantUml().writeIndividualModulesAsPlantUml();
 
         assertThat(Path.of("build", "spring-modulith-docs", "components.puml")).exists();
     }

@@ -49,7 +49,8 @@ class ProfileEditApiTest {
     }
 
     private void onboard(String subject, String username) throws Exception {
-        mvc.perform(post("/api/profiles").with(asUser(subject))
+        mvc.perform(post("/api/profiles")
+                        .with(asUser(subject))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"%s\"}".formatted(username)))
                 .andExpect(status().isCreated());
@@ -60,9 +61,12 @@ class ProfileEditApiTest {
         var user = UUID.randomUUID().toString();
         onboard(user, "ada");
 
-        mvc.perform(put("/api/profiles/me").with(asUser(user))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}"))
+        mvc.perform(
+                        put("/api/profiles/me")
+                                .with(asUser(user))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"username\":\"ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("ada_lovelace"))
                 .andExpect(jsonPath("$.displayName").value("Ada Lovelace"))
@@ -74,7 +78,8 @@ class ProfileEditApiTest {
 
     @Test
     void editingBeforeOnboardingIsAProfileNotFoundProblemDetail() throws Exception {
-        mvc.perform(put("/api/profiles/me").with(asUser(UUID.randomUUID().toString()))
+        mvc.perform(put("/api/profiles/me")
+                        .with(asUser(UUID.randomUUID().toString()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"ada\"}"))
                 .andExpect(status().isNotFound())
@@ -87,13 +92,15 @@ class ProfileEditApiTest {
         onboard(ada, "ada");
         onboard(UUID.randomUUID().toString(), "grace");
 
-        mvc.perform(put("/api/profiles/me").with(asUser(ada))
+        mvc.perform(put("/api/profiles/me")
+                        .with(asUser(ada))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"No Good\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.type").value(ProblemType.BASE + "username-invalid"));
 
-        mvc.perform(put("/api/profiles/me").with(asUser(ada))
+        mvc.perform(put("/api/profiles/me")
+                        .with(asUser(ada))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"grace\"}"))
                 .andExpect(status().isConflict())
@@ -105,7 +112,8 @@ class ProfileEditApiTest {
         var ada = UUID.randomUUID().toString();
         onboard(ada, "ada");
 
-        mvc.perform(put("/api/profiles/me").with(asUser(ada))
+        mvc.perform(put("/api/profiles/me")
+                        .with(asUser(ada))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"ada_lovelace\"}"))
                 .andExpect(status().isOk());
@@ -113,7 +121,6 @@ class ProfileEditApiTest {
         mvc.perform(get("/api/profiles/ada"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type").value(ProblemType.BASE + "profile-not-found"));
-        mvc.perform(get("/api/profiles/ada_lovelace"))
-                .andExpect(status().isOk());
+        mvc.perform(get("/api/profiles/ada_lovelace")).andExpect(status().isOk());
     }
 }
