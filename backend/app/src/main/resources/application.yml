@@ -32,6 +32,10 @@ pictogram:
     refresh-token-rotation-grace: 60s
     signing-key: ${PICTOGRAM_AUTH_SIGNING_KEY:}
     post-login-redirect: /
+    # Where the browser lands when Google sign-in can't complete (#27). The ?error= reason
+    # is generic here; identity swaps in email-unverified / email-missing for an unusable
+    # Google account so the SPA can show a tailored message.
+    sign-in-error-redirect: /login?error=sign-in-failed
   # Object storage for image bytes (ADR-0006). Defaults target a local MinIO (compose.dev.yaml);
   # prod overrides the endpoint and credentials from the environment. The bucket is created
   # on first upload, so no provisioning step is needed.

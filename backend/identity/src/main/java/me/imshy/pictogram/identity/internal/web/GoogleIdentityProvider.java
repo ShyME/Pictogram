@@ -1,6 +1,7 @@
 package me.imshy.pictogram.identity.internal.web;
 
 import me.imshy.pictogram.identity.internal.IdentityProvider;
+import me.imshy.pictogram.identity.internal.web.UnusableGoogleAccountException.Reason;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Component;
 
@@ -23,11 +24,13 @@ class GoogleIdentityProvider implements IdentityProvider {
     VerifiedGoogleAccount verify(OidcUser user) {
         String email = user.getEmail();
         if (email == null || email.isBlank()) {
-            throw new IllegalStateException("Google returned no email for subject " + user.getSubject());
+            throw new UnusableGoogleAccountException(Reason.EMAIL_MISSING,
+                    "Google returned no email for subject " + user.getSubject());
         }
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
             // The email rides along in UserRegistered; downstream contexts must be able to trust it.
-            throw new IllegalStateException("Google has not verified the email for subject " + user.getSubject());
+            throw new UnusableGoogleAccountException(Reason.EMAIL_UNVERIFIED,
+                    "Google has not verified the email for subject " + user.getSubject());
         }
         return new VerifiedGoogleAccount(user.getSubject(), email);
     }

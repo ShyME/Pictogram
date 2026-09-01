@@ -5,6 +5,7 @@ import type { Locator, Page } from "@playwright/test";
 export class LoginPage {
   readonly heading: Locator;
   readonly continueWithGoogle: Locator;
+  readonly errorAlert: Locator;
 
   private readonly page: Page;
 
@@ -12,10 +13,16 @@ export class LoginPage {
     this.page = page;
     this.heading = page.getByRole("heading", { name: "Pictogram" });
     this.continueWithGoogle = page.getByRole("link", { name: /continue with google/i });
+    this.errorAlert = page.getByRole("alert");
   }
 
   async open(): Promise<void> {
     await this.page.goto("/");
+  }
+
+  /** The screen the backend redirects to when Google sign-in can't complete (#27). */
+  async openWithError(reason: string): Promise<void> {
+    await this.page.goto(`/login?error=${reason}`);
   }
 
   /**

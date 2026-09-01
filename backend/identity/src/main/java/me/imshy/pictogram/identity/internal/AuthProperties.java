@@ -16,6 +16,10 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param signingKey       the private EC JWK (JSON) used to sign; a process-lifetime key is
  *                          generated when blank — acceptable for local and test, not production
  * @param postLoginRedirect where the browser lands after a successful Google sign-in
+ * @param signInErrorRedirect where the browser lands when Google sign-in can't complete —
+ *                          an unusable Google account, a declined consent, an unexpected
+ *                          failure. Carries a generic {@code ?error=} reason the SPA shows a
+ *                          message for; a specific failure swaps in its own slug (#27)
  * @param cookieSecure     whether the refresh-token cookie carries {@code Secure}; only turn
  *                          it off for plain-HTTP local development
  */
@@ -27,5 +31,6 @@ public record AuthProperties(
         @DefaultValue("pictogram") String issuer,
         String signingKey,
         @DefaultValue("/") String postLoginRedirect,
+        @DefaultValue("/login?error=sign-in-failed") String signInErrorRedirect,
         @DefaultValue("true") boolean cookieSecure) {
 }

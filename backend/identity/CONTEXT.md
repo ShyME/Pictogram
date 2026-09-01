@@ -45,5 +45,7 @@ _Avoid_: Grace period (that name is media's retention window)
 
 **Session**:
 The `(access token, refresh token)` pair a caller holds after signing in or refreshing.
-Not a server-side object — Pictogram keeps no session state; the term names the pair.
+Not a server-side object — Pictogram keeps no session state; the term names the pair. (The
+Google sign-in handshake needs a short-lived servlet session to hold the authorization
+request; it is invalidated the moment the Pictogram session is minted — ADR-0004 #27.)
 _Avoid_: Login, ticket
