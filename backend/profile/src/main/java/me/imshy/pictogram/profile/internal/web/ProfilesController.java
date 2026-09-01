@@ -15,6 +15,7 @@ import me.imshy.pictogram.profile.internal.ProfileDirectory;
 import me.imshy.pictogram.profile.internal.ProfileEditing;
 import me.imshy.pictogram.profile.internal.ProfileView;
 import me.imshy.pictogram.shared.UserId;
+import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -106,11 +107,14 @@ class ProfilesController {
 
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "The batch of profiles for the ids that have one.",
-                content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProfileView.class))))
+                content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProfileView.class)))),
+        @ApiResponse(responseCode = "400", description = "The request asked for more ids than the batch limit.",
+                content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = @Schema(implementation = ProblemDetail.class)))
     })
     @GetMapping(params = "ids")
     List<ProfileView> byIds(@RequestParam("ids") Set<UUID> ids) {
-        return directory.byIds(ids.stream().map(UserId::new).toList());
+        return directory.byIds(BatchIds.checked(ids).stream().map(UserId::new).toList());
     }
 
     @ApiResponses({

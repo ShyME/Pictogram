@@ -167,6 +167,21 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void theBatchRelationshipReadIsDocumentedAsAnArrayOfRecordsNeedingAToken() {
+        JsonNode byIds = spec.at("/paths/~1api~1follows/get/responses");
+
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString()).isEqualTo("array");
+        String itemRef = byIds.at("/200/content/application~1json/schema/items/$ref").asString();
+        JsonNode item = spec.at("/components/schemas/" + itemRef.substring("#/components/schemas/".length()));
+        assertThat(item.at("/properties/userId")).isNotEmpty();
+        assertThat(item.at("/properties/followerCount")).isNotEmpty();
+        assertThat(item.at("/properties/followingCount")).isNotEmpty();
+        assertThat(item.at("/properties/followedByViewer")).isNotEmpty();
+        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref").asString()).endsWith("/ProblemDetail");
+        assertThat(byIds.at("/401/content/application~1problem+json/schema/$ref").asString()).endsWith("/ProblemDetail");
+    }
+
+    @Test
     void theFollowerListIsDocumentedAsAPageOfUserIdsNeedingAToken() {
         JsonNode followers = spec.at("/paths/~1api~1follows~1{userId}~1followers/get/responses");
 

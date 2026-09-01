@@ -98,6 +98,26 @@
         },
         "type" : "object"
       },
+      "FollowRelationshipView" : {
+        "properties" : {
+          "followedByViewer" : {
+            "type" : "boolean"
+          },
+          "followerCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "followingCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "userId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "MediaUploadResponse" : {
         "properties" : {
           "mediaId" : {
@@ -262,6 +282,60 @@
           }
         },
         "tags" : [ "feed-controller" ]
+      }
+    },
+    "/api/follows" : {
+      "get" : {
+        "operationId" : "relationshipsByIds",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "ids",
+          "required" : true,
+          "schema" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/FollowRelationshipView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The viewer's follow standing with each requested user."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The request asked for more ids than the batch limit."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "follow-controller" ]
       }
     },
     "/api/follows/{userId}" : {
@@ -727,6 +801,16 @@
               }
             },
             "description" : "The batch of profiles for the ids that have one."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The request asked for more ids than the batch limit."
           }
         },
         "tags" : [ "profiles-controller" ]

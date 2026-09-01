@@ -8,10 +8,13 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -210,6 +213,21 @@ class HttpPictogramApi implements PictogramApi {
                     node.path("followerCount").asLong(),
                     node.path("followingCount").asLong(),
                     node.path("followedByViewer").asBoolean());
+        }
+
+        @Override
+        public Map<String, FollowRelationship> followRelationships(String... userIds) {
+            // Repeated ids= params, like the frontend and the OpenAPI schema send — not the
+            // comma-joined form, so a scenario failure looks like a real client's request.
+            String query = Arrays.stream(userIds).map(id -> "ids=" + id).collect(Collectors.joining("&"));
+            HttpResponse<String> response = call("GET", "/api/follows?" + query, null);
+            require(response, 200, "read a batch of follow relationships");
+            Map<String, FollowRelationship> byId = new LinkedHashMap<>();
+            json.readTree(response.body()).forEach(node -> byId.put(node.path("userId").asString(),
+                    new FollowRelationship(node.path("followerCount").asLong(),
+                            node.path("followingCount").asLong(),
+                            node.path("followedByViewer").asBoolean())));
+            return byId;
         }
 
         @Override

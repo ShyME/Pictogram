@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/follows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["relationshipsByIds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/follows/{userId}": {
         parameters: {
             query?: never;
@@ -265,6 +281,15 @@ export interface components {
             /** Format: int64 */
             followingCount?: number;
         };
+        FollowRelationshipView: {
+            followedByViewer?: boolean;
+            /** Format: int64 */
+            followerCount?: number;
+            /** Format: int64 */
+            followingCount?: number;
+            /** Format: uuid */
+            userId?: string;
+        };
         MediaUploadResponse: {
             mediaId: string;
         };
@@ -377,6 +402,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiPageFeedCard"];
+                };
+            };
+        };
+    };
+    relationshipsByIds: {
+        parameters: {
+            query: {
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The viewer's follow standing with each requested user. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowRelationshipView"][];
+                };
+            };
+            /** @description The request asked for more ids than the batch limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The caller has no valid access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -742,6 +807,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileView"][];
+                };
+            };
+            /** @description The request asked for more ids than the batch limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
         };

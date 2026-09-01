@@ -1,5 +1,6 @@
 package me.imshy.pictogram;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import me.imshy.pictogram.shared.http.ProblemType;
 import me.imshy.pictogram.testsupport.DatabaseCleaner;
@@ -149,6 +151,45 @@ class FollowApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(1)))
                 .andExpect(jsonPath("$.items[0]").value(carol.toString()));
+    }
+
+    @Test
+    void theBatchRelationshipReadNeedsAToken() throws Exception {
+        mvc.perform(get("/api/follows").param("ids", UUID.randomUUID().toString()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void theBatchRelationshipReadReturnsARecordPerIdWithCountsAndTheViewerFlag() throws Exception {
+        var ada = UUID.randomUUID().toString();
+        var bob = UUID.randomUUID().toString();
+        var carol = UUID.randomUUID().toString();
+
+        mvc.perform(put("/api/follows/" + bob).with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isNoContent());
+        mvc.perform(put("/api/follows/" + carol).with(jwt().jwt(jwt -> jwt.subject(bob))))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/follows").param("ids", bob, carol).with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followerCount").value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followingCount").value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + bob + "')].followedByViewer").value(contains(true)))
+                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followerCount").value(contains(1)))
+                .andExpect(jsonPath("$[?(@.userId == '" + carol + "')].followedByViewer").value(contains(false)));
+    }
+
+    @Test
+    void theBatchRelationshipReadRejectsMoreIdsThanTheBatchLimit() throws Exception {
+        String[] tooMany = IntStream.rangeClosed(0, 100)
+                .mapToObj(i -> UUID.randomUUID().toString())
+                .toArray(String[]::new);
+
+        mvc.perform(get("/api/follows").param("ids", tooMany)
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 
     @Test

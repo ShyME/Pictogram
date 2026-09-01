@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import me.imshy.pictogram.shared.http.ProblemType;
 import me.imshy.pictogram.testsupport.DatabaseCleaner;
@@ -97,6 +98,18 @@ class ProfileReadApiTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[?(@.username == 'ada')]").exists())
                 .andExpect(jsonPath("$[?(@.username == 'grace')]").exists());
+    }
+
+    @Test
+    void theBatchLookupRejectsMoreIdsThanTheBatchLimit() throws Exception {
+        String[] tooMany = IntStream.rangeClosed(0, 100)
+                .mapToObj(i -> UUID.randomUUID().toString())
+                .toArray(String[]::new);
+
+        mvc.perform(get("/api/profiles").param("ids", tooMany)
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 
     @Test

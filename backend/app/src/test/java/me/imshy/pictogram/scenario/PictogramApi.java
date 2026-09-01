@@ -1,6 +1,7 @@
 package me.imshy.pictogram.scenario;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -68,6 +69,12 @@ public interface PictogramApi {
 
         /** A user's follower / following counts and whether the caller currently follows them. */
         FollowRelationship followRelationship(String userId);
+
+        /**
+         * The viewer's follow standing with each of {@code userIds} in one call (#59), keyed
+         * by id — what a follower / following list screen fires once to render its rows.
+         */
+        Map<String, FollowRelationship> followRelationships(String... userIds);
 
         /**
          * One page of the users who follow {@code userId}, newest follow first. {@code cursor}
