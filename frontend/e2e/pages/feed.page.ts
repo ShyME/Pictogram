@@ -3,6 +3,7 @@ import type { Locator, Page } from "@playwright/test";
 export class FeedPage {
   readonly emptyState: Locator;
   readonly signOutButton: Locator;
+  readonly newPostLink: Locator;
 
   private readonly page: Page;
 
@@ -10,6 +11,7 @@ export class FeedPage {
     this.page = page;
     this.emptyState = page.getByText(/find people to follow/i);
     this.signOutButton = page.getByRole("button", { name: /sign out/i });
+    this.newPostLink = page.getByRole("link", { name: /new post/i });
   }
 
   /** The signed-in handle in the app header — the way to reach your own profile. */

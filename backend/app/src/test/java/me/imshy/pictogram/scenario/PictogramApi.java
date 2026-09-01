@@ -39,11 +39,23 @@ public interface PictogramApi {
         /** Open someone's public profile by username — empty when no such user exists. */
         Optional<Profile> viewProfile(String username);
 
+        /** Upload one photo; comes back as the {@code MediaId} a post is published against. */
+        String uploadPhoto(byte[] image);
+
+        /** Publish an uploaded photo with an optional caption — it becomes a {@link Post}. */
+        Post publishPost(String mediaId, String caption);
+
+        /** A user's post grid, newest first — the first page. */
+        List<Post> postsOf(String userId);
+
         /** The viewer's home feed. */
         FeedPage openFeed();
     }
 
     record Profile(String userId, String username, String displayName, String bio) {
+    }
+
+    record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {
     }
 
     record FeedPage(List<Object> items, String nextCursor) {

@@ -19,10 +19,11 @@ import org.springframework.security.web.SecurityFilterChain;
  * else — the actuator probes, the bundled SPA, and identity's own sign-in endpoints — is
  * handled by other filter chains.
  *
- * <p>Two GET carve-outs are reachable without a token: the profile lookup by username (a
- * profile page is shareable by link — spec story 18) and the two media rendition paths
+ * <p>GET carve-outs are reachable without a token: the profile lookup by username (a
+ * profile page is shareable by link — spec story 18), the two media rendition paths
  * ("original" and "thumbnail"), whose bytes back a public profile grid and feed cards
- * (stories 13, 18, 35). {@code /api/profiles/me} keeps its own line ahead of the wildcard
+ * (stories 13, 18, 35), and {@code GET /api/posts?author=} — the grid of an author's posts
+ * that renders on that shareable profile page. {@code /api/profiles/me} keeps its own line ahead of the wildcard
  * because it must stay authenticated, and the batch {@code GET /api/profiles?ids=} stays
  * authenticated too — only the signed-in feed composes from it (ADR-0005), and an anonymous
  * unbounded id list is not something to hand out. Uploading media stays authenticated (it
@@ -47,6 +48,7 @@ class ApiSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/profiles/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/profiles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .authenticationEntryPoint(entryPoint)

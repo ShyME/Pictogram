@@ -28,6 +28,20 @@
         },
         "type" : "object"
       },
+      "ApiPagePostView" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PostView"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "EditProfileRequest" : {
         "properties" : {
           "bio" : {
@@ -76,6 +90,27 @@
         },
         "type" : "object"
       },
+      "PostView" : {
+        "properties" : {
+          "authorId" : {
+            "type" : "string"
+          },
+          "caption" : {
+            "type" : "string"
+          },
+          "mediaId" : {
+            "type" : "string"
+          },
+          "postId" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ProblemDetail" : {
         "properties" : {
           "detail" : {
@@ -115,6 +150,18 @@
             "type" : "string"
           },
           "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PublishPostRequest" : {
+        "properties" : {
+          "caption" : {
+            "type" : "string"
+          },
+          "mediaId" : {
+            "format" : "uuid",
             "type" : "string"
           }
         },
@@ -304,6 +351,103 @@
           }
         },
         "tags" : [ "media-controller" ]
+      }
+    },
+    "/api/posts" : {
+      "get" : {
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "author",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPagePostView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "posts-controller" ]
+      },
+      "post" : {
+        "operationId" : "publish",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PublishPostRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostView"
+                }
+              }
+            },
+            "description" : "The post was published.",
+            "headers" : {
+              "Location" : {
+                "description" : "The post's URL — id-based, live once a post-detail read lands.",
+                "schema" : {
+                  "type" : "string"
+                },
+                "style" : "simple"
+              }
+            }
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caption is longer than 2200 characters."
+          },
+          "422" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The image can't be used — no such media, or it belongs to someone else."
+          }
+        },
+        "tags" : [ "posts-controller" ]
       }
     },
     "/api/profiles" : {

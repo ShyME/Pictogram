@@ -58,6 +58,19 @@ test("the viewer's own profile shows an edit link to the settings page, not a fo
   expect(screen.queryByRole("button", { name: /follow/i })).not.toBeInTheDocument();
 });
 
+test("renders the app-supplied grid on the viewer's own profile, the placeholder on others'", () => {
+  loaderData = found({ isOwnProfile: true });
+  const { rerender } = renderWithProviders(
+    <ProfilePage renderOwnGrid={(authorId) => <div>grid for {authorId}</div>} />,
+  );
+  expect(screen.getByText("grid for u-1")).toBeInTheDocument();
+
+  loaderData = found({ isOwnProfile: false });
+  rerender(<ProfilePage renderOwnGrid={(authorId) => <div>grid for {authorId}</div>} />);
+  expect(screen.queryByText(/grid for/)).not.toBeInTheDocument();
+  expect(screen.getByText("No posts yet")).toBeInTheDocument();
+});
+
 test("an unknown username renders a clear not-found page", () => {
   loaderData = { status: "not-found", username: "ghost_user" };
   renderWithProviders(<ProfilePage />);

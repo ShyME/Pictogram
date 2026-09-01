@@ -26,3 +26,11 @@ export async function onboardingLoader() {
   if (me.status === "onboarded") return redirect("/");
   return null;
 }
+
+/** Loads the post composer: you can only post as a profile you have (same fork as the root guard). */
+export async function newPostLoader() {
+  const me = await fetchMyProfile();
+  if (me.status === "unauthenticated") return redirect("/login");
+  if (me.status === "not-onboarded") return redirect("/onboarding");
+  return { profile: me.profile };
+}

@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { jsonResponse, problemResponse, stubFetch } from "../test/mock-fetch";
-import { loginLoader, onboardingLoader, rootLoader } from "./guards";
+import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from "./guards";
 
 function profileEndpoint(status: number, body: unknown = {}) {
   const slug = status === 404 ? "profile-not-found" : "unauthorized";
@@ -48,4 +48,17 @@ test("onboardingLoader requires a session and is skipped once a profile exists",
 
   profileEndpoint(404);
   expect(await onboardingLoader()).toBeNull();
+});
+
+test("newPostLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile", async () => {
+  profileEndpoint(401);
+  expect(redirectTarget(await newPostLoader())).toBe("/login");
+
+  profileEndpoint(404);
+  expect(redirectTarget(await newPostLoader())).toBe("/onboarding");
+
+  profileEndpoint(200, { userId: "u-1", username: "ada" });
+  expect(await newPostLoader()).toEqual({
+    profile: { userId: "u-1", username: "ada", displayName: null, bio: null },
+  });
 });

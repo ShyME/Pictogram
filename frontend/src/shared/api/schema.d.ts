@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timeline"];
+        put?: never;
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profiles": {
         parameters: {
             query?: never;
@@ -161,6 +177,10 @@ export interface components {
             items?: components["schemas"]["FeedCard"][];
             nextCursor?: string;
         };
+        ApiPagePostView: {
+            items?: components["schemas"]["PostView"][];
+            nextCursor?: string;
+        };
         EditProfileRequest: {
             bio?: string;
             displayName?: string;
@@ -177,6 +197,14 @@ export interface components {
             bio?: string;
             displayName?: string;
             username?: string;
+        };
+        PostView: {
+            authorId?: string;
+            caption?: string;
+            mediaId?: string;
+            postId?: string;
+            /** Format: date-time */
+            publishedAt?: string;
         };
         ProblemDetail: {
             detail?: string;
@@ -196,6 +224,11 @@ export interface components {
             displayName?: string;
             userId?: string;
             username?: string;
+        };
+        PublishPostRequest: {
+            caption?: string;
+            /** Format: uuid */
+            mediaId?: string;
         };
     };
     responses: never;
@@ -362,6 +395,74 @@ export interface operations {
             };
             /** @description No media has that id. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    timeline: {
+        parameters: {
+            query: {
+                author: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiPagePostView"];
+                };
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishPostRequest"];
+            };
+        };
+        responses: {
+            /** @description The post was published. */
+            201: {
+                headers: {
+                    /** @description The post's URL — id-based, live once a post-detail read lands. */
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostView"];
+                };
+            };
+            /** @description The caption is longer than 2200 characters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The image can't be used — no such media, or it belongs to someone else. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

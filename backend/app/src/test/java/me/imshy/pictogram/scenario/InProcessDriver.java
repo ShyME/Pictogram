@@ -3,6 +3,7 @@ package me.imshy.pictogram.scenario;
 import com.nimbusds.jose.JOSEObjectType;
 import java.net.CookieManager;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
@@ -118,6 +119,37 @@ public final class InProcessDriver implements PictogramApi {
         }
 
         @Override
+        public String uploadPhoto(byte[] image) {
+            String boundary = "----pictogram" + UUID.randomUUID();
+            var request = HttpRequest.newBuilder(uri("/api/media"))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(BodyPublishers.ofByteArray(multipartBody(boundary, image)))
+                    .build();
+            HttpResponse<String> response = send(http, request);
+            require(response, 201, "upload a photo");
+            return field(response.body(), "mediaId");
+        }
+
+        @Override
+        public Post publishPost(String mediaId, String caption) {
+            String body = json.writeValueAsString(Map.of("mediaId", mediaId, "caption",
+                    Optional.ofNullable(caption).orElse("")));
+            HttpResponse<String> response = call("POST", "/api/posts", body);
+            require(response, 201, "publish a post");
+            return post(response.body());
+        }
+
+        @Override
+        public List<Post> postsOf(String userId) {
+            HttpResponse<String> response = call("GET", "/api/posts?author=" + userId, null);
+            require(response, 200, "read a post grid");
+            List<Post> posts = new ArrayList<>();
+            json.readTree(response.body()).path("items").forEach(item -> posts.add(post(item)));
+            return posts;
+        }
+
+        @Override
         public FeedPage openFeed() {
             HttpResponse<String> response = call("GET", "/api/feed", null);
             require(response, 200, "open feed");
@@ -146,6 +178,31 @@ public final class InProcessDriver implements PictogramApi {
                 node.path("username").asString(),
                 textOrNull(node, "displayName"),
                 textOrNull(node, "bio"));
+    }
+
+    private Post post(String body) {
+        return post(json.readTree(body));
+    }
+
+    private static Post post(JsonNode node) {
+        return new Post(
+                node.path("postId").asString(),
+                node.path("authorId").asString(),
+                node.path("mediaId").asString(),
+                textOrNull(node, "caption"),
+                node.path("publishedAt").asString());
+    }
+
+    private static byte[] multipartBody(String boundary, byte[] file) {
+        var head = ("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
+                + "Content-Type: image/jpeg\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+        var tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+        var body = new byte[head.length + file.length + tail.length];
+        System.arraycopy(head, 0, body, 0, head.length);
+        System.arraycopy(file, 0, body, head.length, file.length);
+        System.arraycopy(tail, 0, body, head.length + file.length, tail.length);
+        return body;
     }
 
     private static String textOrNull(JsonNode node, String field) {
