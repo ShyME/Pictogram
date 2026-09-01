@@ -9,6 +9,8 @@ export class ProfilePage {
   readonly editProfileLink: Locator;
   readonly followerCount: Locator;
   readonly followingCount: Locator;
+  readonly followersLink: Locator;
+  readonly followingLink: Locator;
 
   private readonly page: Page;
 
@@ -20,6 +22,8 @@ export class ProfilePage {
     this.editProfileLink = page.getByRole("link", { name: /edit profile/i });
     this.followerCount = page.getByRole("definition").filter({ hasText: /followers/ });
     this.followingCount = page.getByRole("definition").filter({ hasText: /following/ });
+    this.followersLink = page.getByRole("link", { name: /followers/ });
+    this.followingLink = page.getByRole("link", { name: /following/ });
   }
 
   async open(username: string): Promise<void> {

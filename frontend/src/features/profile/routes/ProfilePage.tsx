@@ -40,8 +40,9 @@ function NotFound({ username }: { username: string }) {
  * the delete controls. `renderFollowButton` is the follow / unfollow control, shown only
  * when the loader says a signed-in viewer is looking at someone else (`viewerCanFollow`);
  * a signed-out visitor gets a sign-in link in its place. `renderFollowCounts` is the live
- * count row, shown on every profile. Each falls back to a static placeholder when not
- * supplied (a bare `<ProfilePage />` still renders).
+ * count row (whose numbers link to the follower / following list screens — #57), shown on
+ * every profile. Each falls back to a static placeholder when not supplied (a bare
+ * `<ProfilePage />` still renders).
  */
 export function ProfilePage({
   renderGrid,
@@ -50,7 +51,7 @@ export function ProfilePage({
 }: {
   renderGrid?: (authorId: string, isOwnProfile: boolean) => ReactNode;
   renderFollowButton?: (followedUserId: string) => ReactNode;
-  renderFollowCounts?: (followedUserId: string) => ReactNode;
+  renderFollowCounts?: (followedUserId: string, handle: string) => ReactNode;
 } = {}) {
   const data = useLoaderData() as ProfilePageData;
 
@@ -99,7 +100,7 @@ export function ProfilePage({
             )}
 
             {renderFollowCounts ? (
-              renderFollowCounts(profile.userId)
+              renderFollowCounts(profile.userId, profile.username)
             ) : (
               <dl className="mt-3 flex gap-6 text-sm text-neutral-700">
                 <div className="flex gap-1">

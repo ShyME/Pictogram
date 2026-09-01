@@ -35,7 +35,7 @@ public class PostTimeline {
         Limit fetch = Limit.of(pageSize + 1);
         List<Post> rows = after == null
                 ? posts.newestBy(author.value(), fetch)
-                : posts.pageBy(author.value(), after.publishedAt(), after.id(), fetch);
+                : posts.pageBy(author.value(), after.at(), after.id(), fetch);
 
         boolean hasMore = rows.size() > pageSize;
         List<Post> page = hasMore ? rows.subList(0, pageSize) : rows;

@@ -42,6 +42,21 @@
         },
         "type" : "object"
       },
+      "ApiPageUUID" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "EditProfileRequest" : {
         "properties" : {
           "bio" : {
@@ -317,6 +332,110 @@
               }
             },
             "description" : "The viewer tried to follow themselves."
+          }
+        },
+        "tags" : [ "follow-controller" ]
+      }
+    },
+    "/api/follows/{userId}/followers" : {
+      "get" : {
+        "operationId" : "followers",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPageUUID"
+                }
+              }
+            },
+            "description" : "A page of the users who follow this user, newest follow first."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "follow-controller" ]
+      }
+    },
+    "/api/follows/{userId}/following" : {
+      "get" : {
+        "operationId" : "following",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPageUUID"
+                }
+              }
+            },
+            "description" : "A page of the users this user follows, newest follow first."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
           }
         },
         "tags" : [ "follow-controller" ]

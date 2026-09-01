@@ -3,10 +3,11 @@ import { LoginPage, installApiAuth } from "@features/auth";
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from "@features/profile";
 import { FeedPage } from "@features/feed";
 import { PostGrid } from "@features/post";
-import { FollowButton, FollowCounts } from "@features/follow";
+import { FollowButton, FollowCounts, FollowListPage } from "@features/follow";
 import { AppLayout } from "./AppLayout";
 import { NewPostRoute } from "./NewPostRoute";
 import { RouteError } from "./RouteError";
+import { followListLoader } from "./follow-list-loader";
 import { editProfileLoader, loginLoader, newPostLoader, onboardingLoader, rootLoader } from "./guards";
 
 // Register the access-token / silent-refresh middleware before any loader runs.
@@ -33,10 +34,20 @@ export const router = createBrowserRouter([
               <PostGrid authorId={authorId} manageable={isOwnProfile} />
             )}
             renderFollowButton={(userId) => <FollowButton userId={userId} />}
-            renderFollowCounts={(userId) => <FollowCounts userId={userId} />}
+            renderFollowCounts={(userId, handle) => <FollowCounts userId={userId} username={handle} />}
           />
         ),
         loader: profileLoader,
+      },
+      {
+        path: "/u/:username/followers",
+        element: <FollowListPage mode="followers" />,
+        loader: followListLoader,
+      },
+      {
+        path: "/u/:username/following",
+        element: <FollowListPage mode="following" />,
+        loader: followListLoader,
       },
     ],
   },

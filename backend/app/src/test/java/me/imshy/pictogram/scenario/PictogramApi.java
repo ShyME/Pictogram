@@ -69,6 +69,16 @@ public interface PictogramApi {
         /** A user's follower / following counts and whether the caller currently follows them. */
         FollowRelationship followRelationship(String userId);
 
+        /**
+         * One page of the users who follow {@code userId}, newest follow first. {@code cursor}
+         * is {@code null} for the first page, otherwise the previous page's {@code nextCursor};
+         * {@code limit} is the page size, or {@code null} for the default.
+         */
+        AccountPage followers(String userId, String cursor, Integer limit);
+
+        /** One page of the users {@code userId} follows, newest follow first — see {@link #followers}. */
+        AccountPage following(String userId, String cursor, Integer limit);
+
         /** The viewer's home feed. */
         FeedPage openFeed();
     }
@@ -84,6 +94,9 @@ public interface PictogramApi {
     }
 
     record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
+    }
+
+    record AccountPage(List<String> userIds, String nextCursor) {
     }
 
     record Profile(String userId, String username, String displayName, String bio) {

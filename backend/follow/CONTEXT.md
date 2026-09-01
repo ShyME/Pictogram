@@ -29,9 +29,15 @@ _Avoid_: Loop, reflexive follow
 
 **Follower count / following count**:
 How many follows point at a user, and how many point away from them. Derived live from the
-graph — there is no stored total. Exposed as counts only; there are no follower or
-following _lists_ in v1 (spec story 41).
+graph — there is no stored total.
 _Avoid_: Reach, popularity, stats
+
+**Follower list / following list**:
+The paged list of the users who follow someone, or of the users someone follows — newest
+follow first, keyset-paged on the edge's `followedAt` (#57). A web-layer read only, not
+part of the published `FollowGraph`: `feed` needs the flat "who does this viewer follow"
+list, not a page of it.
+_Avoid_: Followers page (the screen), connections
 
 ## Published interface
 
@@ -39,3 +45,7 @@ _Avoid_: Reach, popularity, stats
 follows (feed's fan-out-on-read input — ADR-0003), the follower and following counts, and
 whether one user follows another. `follow` emits `UserFollowed` / `UserUnfollowed` on a real
 state change; an idempotent no-op emits nothing.
+
+The paged **follower list / following list** reads (#57) are deliberately *not* on
+`FollowGraph` — they serve the SPA's list screens through `follow`'s own web layer
+(`GET /api/follows/{userId}/followers`, `/following`), and `feed` has no use for them.
