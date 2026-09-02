@@ -3,7 +3,13 @@ import type { Profile } from './profile';
 import { fetchMyProfile, fetchProfileByUsername } from './profileApi';
 
 export type ProfilePageData =
-  | { status: 'found'; profile: Profile; isOwnProfile: boolean; viewerCanFollow: boolean }
+  | {
+      status: 'found';
+      profile: Profile;
+      isOwnProfile: boolean;
+      viewerCanFollow: boolean;
+      viewerIsAuthenticated: boolean;
+    }
   | { status: 'not-found'; username: string };
 
 export async function profileLoader({ params }: LoaderFunctionArgs): Promise<ProfilePageData> {
@@ -21,5 +27,6 @@ export async function profileLoader({ params }: LoaderFunctionArgs): Promise<Pro
     profile: lookup.profile,
     isOwnProfile,
     viewerCanFollow: me.status === 'onboarded' && !isOwnProfile,
+    viewerIsAuthenticated: me.status !== 'unauthenticated',
   };
 }

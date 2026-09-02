@@ -1,5 +1,5 @@
 import { LoginPage, installApiAuth } from '@features/auth';
-import { LikeButton, prefetchPostLikes } from '@features/engagement';
+import { LikeButton, LikeCount, prefetchPostLikes } from '@features/engagement';
 import { FeedPage } from '@features/feed';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
 import { PostGrid } from '@features/post';
@@ -46,11 +46,17 @@ export const router = createBrowserRouter([
         path: '/u/:username',
         element: (
           <ProfilePage
-            renderGrid={(authorId, isOwnProfile) => (
+            renderGrid={(authorId, isOwnProfile, isViewerAuthenticated) => (
               <PostGrid
                 authorId={authorId}
                 manageable={isOwnProfile}
-                renderLike={(postId) => <LikeButton postId={postId} />}
+                renderLike={(postId) =>
+                  isViewerAuthenticated ? (
+                    <LikeButton postId={postId} />
+                  ) : (
+                    <LikeCount postId={postId} />
+                  )
+                }
                 preloadLikes={prefetchPostLikes}
               />
             )}

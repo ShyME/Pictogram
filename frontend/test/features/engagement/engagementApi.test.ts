@@ -1,5 +1,5 @@
 import { fetchPostLikesBatch, likePost, unlikePost } from '@features/engagement/engagementApi';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
+import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {
@@ -21,6 +21,21 @@ test('fetchPostLikesBatch maps the batch to seedable records, one GET with repea
   expect(calls).toHaveLength(1);
   expect(pathOf(calls[0])).toBe('/api/engagement/likes');
   expect(new URL(calls[0].url).searchParams.getAll('postIds')).toEqual(['p-1', 'p-2']);
+});
+
+test('fetchPostLikesBatch retries anonymously when a stale token makes the public read 401', async () => {
+  stubFetch((request, hits) => {
+    if (new URL(request.url).pathname === '/api/auth/refresh') {
+      return problemResponse('unauthorized', 401);
+    }
+    return hits === 0
+      ? problemResponse('unauthorized', 401)
+      : jsonResponse([{ postId: 'p-1', likeCount: 7, likedByViewer: false }]);
+  });
+
+  await expect(fetchPostLikesBatch(['p-1'])).resolves.toEqual([
+    { postId: 'p-1', likeCount: 7, likedByViewer: false },
+  ]);
 });
 
 test('fetchPostLikesBatch makes no call for an empty id set', async () => {

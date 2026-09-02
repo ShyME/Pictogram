@@ -29,6 +29,7 @@ test("marks the profile as the viewer's own when the usernames match", async () 
     profile: { userId: 'u-1', username: 'ada', displayName: 'Ada', bio: null },
     isOwnProfile: true,
     viewerCanFollow: false,
+    viewerIsAuthenticated: true,
   });
 });
 
@@ -42,10 +43,11 @@ test('a signed-in viewer looking at someone else can follow them', async () => {
     status: 'found',
     isOwnProfile: false,
     viewerCanFollow: true,
+    viewerIsAuthenticated: true,
   });
 });
 
-test('an unauthenticated visitor sees the public profile but cannot follow', async () => {
+test('an unauthenticated visitor sees the public profile but cannot follow or like', async () => {
   route({
     profile: () => jsonResponse({ userId: 'u-2', username: 'grace' }),
     me: () => problemResponse('unauthorized', 401),
@@ -55,6 +57,7 @@ test('an unauthenticated visitor sees the public profile but cannot follow', asy
     status: 'found',
     isOwnProfile: false,
     viewerCanFollow: false,
+    viewerIsAuthenticated: false,
   });
 });
 

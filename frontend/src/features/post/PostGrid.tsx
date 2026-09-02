@@ -36,8 +36,8 @@ export function PostGrid({
           page.posts.map((post) => post.postId),
         );
       } catch {
-        // Best-effort: like state is decoration seeded ahead of the buttons. Whatever went
-        // wrong (a signed-out visitor on a public profile can't read it), still show the grid.
+        // Best-effort: like state is decoration seeded ahead of the like controls. If the
+        // batch read fails for any reason, still show the grid.
       }
       return page;
     },
