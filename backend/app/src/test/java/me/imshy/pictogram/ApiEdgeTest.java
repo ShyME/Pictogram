@@ -18,36 +18,23 @@ import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
 import me.imshy.pictogram.shared.http.ProblemType;
-import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@SpringBootTest(classes = PictogramApplication.class)
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@AppIntegrationTest
 @Import(ApiEdgeTest.ProbeController.class)
 class ApiEdgeTest {
 
     @Autowired
     MockMvc mvc;
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-    }
 
     @Test
     void missingAccessTokenIsA401ProblemDetail() throws Exception {

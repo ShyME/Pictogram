@@ -37,12 +37,46 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Runs Modulith verify(), the unit + @ApplicationModuleTest + @Tag("fast") scenario
-      # suites, and the openapi.json drift check. SharedPostgres drops withReuse because CI
-      # is set, so Testcontainers starts a fresh Postgres.
-      - name: Build
+      # Testcontainers pulls postgres + minio cold on every fresh runner (~20-40s). Cache a
+      # `docker save` of both, keyed on the SharedPostgres / SharedMinio sources that pin the
+      # tags (bumping a pin invalidates the cache) plus an ISO week — `postgres:17-alpine` is a
+      # moving tag, so the week suffix forces a weekly re-pull rather than freezing one patch
+      # release until someone edits a pin.
+      - name: Testcontainers image key
+        id: tc-key
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Testcontainers images
+        id: testcontainers-images
+        uses: actions/cache@v4
+        with:
+          path: ~/testcontainers-images
+          key: >-
+            testcontainers-images-${{ hashFiles('backend/test-support/src/main/java/me/imshy/pictogram/testsupport/SharedPostgres.java',
+            'backend/test-support/src/main/java/me/imshy/pictogram/testsupport/SharedMinio.java') }}-${{ steps.tc-key.outputs.week }}
+
+      - name: Load cached Testcontainers images
+        if: steps.testcontainers-images.outputs.cache-hit == 'true'
+        run: |
+          docker load -i ~/testcontainers-images/postgres.tar
+          docker load -i ~/testcontainers-images/minio.tar
+
+      - name: Pull and save Testcontainers images
+        if: steps.testcontainers-images.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/testcontainers-images
+          docker pull postgres:17-alpine
+          docker pull minio/minio:RELEASE.2025-09-07T16-13-09Z
+          docker save postgres:17-alpine -o ~/testcontainers-images/postgres.tar
+          docker save minio/minio:RELEASE.2025-09-07T16-13-09Z -o ~/testcontainers-images/minio.tar
+
+      # `check`, not `build`: nothing on the PR path consumes pictogram.jar (the Blackbox job
+      # builds its own image), so `bootJar` is dead weight here. Runs Modulith verify(), the
+      # unit + @ApplicationModuleTest + @Tag("fast") scenario suites, Spotless, and the
+      # openapi.json drift check. SharedPostgres drops withReuse because CI is set.
+      - name: Check
         working-directory: backend
-        run: ./gradlew build
+        run: ./gradlew check
 
       - name: Upload test reports
         if: failure()

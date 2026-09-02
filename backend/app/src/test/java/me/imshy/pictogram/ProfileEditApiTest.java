@@ -8,41 +8,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
-import javax.sql.DataSource;
 import me.imshy.pictogram.shared.http.ProblemType;
-import me.imshy.pictogram.testsupport.DatabaseCleaner;
-import me.imshy.pictogram.testsupport.SharedPostgres;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(classes = PictogramApplication.class)
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@AppIntegrationTest
 class ProfileEditApiTest {
 
     @Autowired
     MockMvc mvc;
-
-    @Autowired
-    DataSource dataSource;
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-    }
-
-    @AfterEach
-    void truncateAllTables() {
-        new DatabaseCleaner(dataSource).truncateAll();
-    }
 
     private static org.springframework.test.web.servlet.request.RequestPostProcessor asUser(String subject) {
         return jwt().jwt(jwt -> jwt.subject(subject));

@@ -14,29 +14,16 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import me.imshy.pictogram.identity.internal.IdentityAuthentication;
-import me.imshy.pictogram.testsupport.SharedPostgres;
-import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@AppOAuthWebIntegrationTest
 class GoogleSignInChainErrorWebTest {
 
-    private static final String ISSUER_ID = "google";
-    private static final String CLIENT_ID = "pictogram-test";
-    private static final MockOAuth2Server GOOGLE = new MockOAuth2Server();
-
-    static {
-        GOOGLE.start();
-    }
+    private static final String ISSUER_ID = SharedGoogle.ISSUER_ID;
+    private static final String CLIENT_ID = SharedGoogle.CLIENT_ID;
 
     @LocalServerPort
     int port;
@@ -44,27 +31,10 @@ class GoogleSignInChainErrorWebTest {
     @MockitoBean
     IdentityAuthentication authentication;
 
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-        registry.add("spring.security.oauth2.client.registration.google.client-id", () -> CLIENT_ID);
-        registry.add("spring.security.oauth2.client.registration.google.client-secret", () -> "pictogram-test-secret");
-        registry.add("spring.security.oauth2.client.registration.google.scope", () -> "openid,email");
-        registry.add(
-                "spring.security.oauth2.client.provider.google.issuer-uri",
-                () -> GOOGLE.issuerUrl(ISSUER_ID).toString());
-        registry.add("pictogram.auth.cookie-secure", () -> false);
-    }
-
-    @AfterAll
-    static void stopGoogle() {
-        GOOGLE.shutdown();
-    }
-
     @Test
     void anUnexpectedFailureInTheOidcChainRendersAsProblemJsonAndLeavesNoAuthenticatedSession() throws Exception {
         when(authentication.authenticate(any())).thenThrow(new IllegalStateException("boom"));
-        GOOGLE.enqueueCallback(new DefaultOAuth2TokenCallback(
+        SharedGoogle.INSTANCE.enqueueCallback(new DefaultOAuth2TokenCallback(
                 ISSUER_ID,
                 "chain-error-subject",
                 JOSEObjectType.JWT.getType(),

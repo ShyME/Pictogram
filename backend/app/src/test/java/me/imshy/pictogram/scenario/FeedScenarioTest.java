@@ -7,17 +7,9 @@ import java.util.List;
 import me.imshy.pictogram.scenario.PictogramApi.Actor;
 import me.imshy.pictogram.scenario.PictogramApi.FeedPage;
 import me.imshy.pictogram.scenario.PictogramApi.Post;
-import me.imshy.pictogram.testsupport.SharedMinio;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 class FeedScenarioTest extends ScenarioTest {
-
-    @DynamicPropertySource
-    static void objectStorage(DynamicPropertyRegistry registry) {
-        SharedMinio.registerTo(registry);
-    }
 
     @Test
     void aViewerFollowsTwoPeopleAndSeesTheirInterleavedPostsNewestFirstPagingWithoutGaps() {
