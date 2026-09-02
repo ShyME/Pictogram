@@ -1,0 +1,102 @@
+# Weekly dependency scans. Non-major bumps are grouped into one PR per
+# ecosystem; majors open individual PRs (groups only match minor/patch).
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # buildSrc is a separate Gradle build with its own build.gradle.kts (plugin
+  # deps); it is not covered by the "/backend" scan.
+  - package-ecosystem: "gradle"
+    directories:
+      - "/backend"
+      - "/backend/buildSrc"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      gradle:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # "/" scans the repo-root action.yml and .github/workflows/*; it does not
+  # recurse, so the composite actions under .github/actions/* are listed too.
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      docker:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # The "docker" ecosystem only reads Dockerfiles; Compose files need the
+  # dedicated "docker-compose" ecosystem. "/" picks up every compose*.yaml at
+  # the repo root.
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      docker-compose:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Upstream repo is archived; a replacement is tracked separately.
+      - dependency-name: "minio/minio"
+      # A Postgres major bump is its own ticket; minor/patch still flow.
+      - dependency-name: "postgres"
+        update-types:
+          - "version-update:semver-major"
