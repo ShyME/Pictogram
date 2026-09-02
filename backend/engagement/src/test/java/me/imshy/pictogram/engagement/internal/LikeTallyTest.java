@@ -49,6 +49,26 @@ class LikeTallyTest extends EngagementModuleIntegrationTest {
         assertThat(tally.of(ViewerId.random(), List.of())).isEmpty();
     }
 
+    @Test
+    void withoutAViewerReportsEachCountAndNeverAViewerLike() {
+        var bob = ViewerId.random();
+        var liked = PostId.random();
+        var untouched = PostId.random();
+
+        liking.like(bob, liked);
+        liking.like(ViewerId.random(), liked);
+
+        Map<PostId, PostLikes> byId = index(tally.of(List.of(liked, untouched)));
+
+        assertThat(byId.get(liked)).isEqualTo(new PostLikes(liked, 2, false));
+        assertThat(byId.get(untouched)).isEqualTo(new PostLikes(untouched, 0, false));
+    }
+
+    @Test
+    void anEmptyRequestWithoutAViewerReturnsNothing() {
+        assertThat(tally.of(List.of())).isEmpty();
+    }
+
     private static Map<PostId, PostLikes> index(List<PostLikes> rows) {
         return rows.stream().collect(toMap(PostLikes::post, identity()));
     }

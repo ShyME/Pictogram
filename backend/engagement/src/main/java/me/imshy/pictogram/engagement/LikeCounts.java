@@ -9,5 +9,7 @@ public interface LikeCounts {
 
     List<PostLikes> of(ViewerId viewer, Collection<PostId> posts);
 
+    List<PostLikes> of(Collection<PostId> posts);
+
     record PostLikes(PostId post, long likeCount, boolean likedByViewer) {}
 }

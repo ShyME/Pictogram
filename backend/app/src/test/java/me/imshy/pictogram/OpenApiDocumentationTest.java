@@ -242,7 +242,7 @@ class OpenApiDocumentationTest {
     }
 
     @Test
-    void theBatchLikeReadIsDocumentedAsAnArrayOfRecordsNeedingAToken() {
+    void theBatchLikeReadIsDocumentedAsAnArrayOfRecordsToleratingAnAnonymousCaller() {
         JsonNode byIds = spec.at("/paths/~1api~1engagement~1likes/get/responses");
 
         assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
@@ -256,9 +256,9 @@ class OpenApiDocumentationTest {
         assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref")
                         .asString())
                 .endsWith("/ProblemDetail");
-        assertThat(byIds.at("/401/content/application~1problem+json/schema/$ref")
-                        .asString())
-                .endsWith("/ProblemDetail");
+        assertThat(byIds.has("401"))
+                .as("the batch read no longer requires a token")
+                .isFalse();
     }
 
     @Test

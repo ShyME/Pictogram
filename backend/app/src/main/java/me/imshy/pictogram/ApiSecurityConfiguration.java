@@ -35,6 +35,8 @@ class ApiSecurityConfiguration {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/follows/*")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/engagement/likes")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
