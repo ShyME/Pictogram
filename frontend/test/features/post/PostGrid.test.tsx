@@ -50,9 +50,9 @@ test('a plain viewer sees the posts but no delete controls', async () => {
 test('the owner deletes a post after confirming, then the grid refetches', async () => {
   const calls = stubFetch((request) => {
     if (request.method === 'DELETE') return new Response(null, { status: 204 });
-    const seenDelete = calls.some((c) => c.method === 'DELETE');
+    const hasSeenDelete = calls.some((c) => c.method === 'DELETE');
     return jsonResponse({
-      items: seenDelete
+      items: hasSeenDelete
         ? []
         : [{ postId: 'p-1', mediaId: 'm-1', caption: 'bye', publishedAt: 't1' }],
       nextCursor: null,
@@ -110,15 +110,11 @@ test('a failed delete keeps the dialog open with an error', async () => {
 
 test("pages on the keyset cursor when 'Load more' is clicked", async () => {
   const calls = stubFetch((_request, hits) =>
-    hits === 0
-      ? jsonResponse({
-          items: [{ postId: 'p-2', mediaId: 'm-2', publishedAt: 't2' }],
-          nextCursor: 'CURSOR',
-        })
-      : jsonResponse({
-          items: [{ postId: 'p-1', mediaId: 'm-1', publishedAt: 't1' }],
-          nextCursor: null,
-        }),
+    jsonResponse(
+      hits === 0
+        ? { items: [{ postId: 'p-2', mediaId: 'm-2', publishedAt: 't2' }], nextCursor: 'CURSOR' }
+        : { items: [{ postId: 'p-1', mediaId: 'm-1', publishedAt: 't1' }], nextCursor: null },
+    ),
   );
   renderWithProviders(<PostGrid authorId="u-1" />);
 

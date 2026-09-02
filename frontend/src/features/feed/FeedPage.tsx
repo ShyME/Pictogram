@@ -1,6 +1,6 @@
 import { SessionExpiredError } from '@shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { type ReactNode, useCallback, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router';
 import { fetchFeedPage } from './feedApi';
 import { toFeedCards } from './feedCards';
@@ -91,7 +91,9 @@ export function FeedPage() {
 
 function useInfiniteScroll(onReachEnd: () => void) {
   const callback = useRef(onReachEnd);
-  callback.current = onReachEnd;
+  useEffect(() => {
+    callback.current = onReachEnd;
+  });
   const observer = useRef<IntersectionObserver | null>(null);
 
   // A callback ref, so the observer re-attaches whenever the sentinel mounts —

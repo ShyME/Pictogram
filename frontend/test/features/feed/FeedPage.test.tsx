@@ -32,9 +32,7 @@ afterEach(() => {
 
 test("shows a friendly 'find people to follow' empty state", async () => {
   stubFetch((request) =>
-    pathOf(request) === '/api/feed'
-      ? jsonResponse({ items: [], nextCursor: null })
-      : jsonResponse([]),
+    jsonResponse(pathOf(request) === '/api/feed' ? { items: [], nextCursor: null } : []),
   );
   renderFeed();
 
@@ -59,12 +57,11 @@ test('surfaces a load failure without crashing', async () => {
 
 test('renders a card per post with the author and a relative timestamp', async () => {
   stubFetch((request) =>
-    pathOf(request) === '/api/feed'
-      ? jsonResponse({
-          items: [card({ postId: 'p-1' }), card({ postId: 'p-2' })],
-          nextCursor: null,
-        })
-      : jsonResponse([{ userId: 'u-1', username: 'ada', displayName: 'Ada Lovelace' }]),
+    jsonResponse(
+      pathOf(request) === '/api/feed'
+        ? { items: [card({ postId: 'p-1' }), card({ postId: 'p-2' })], nextCursor: null }
+        : [{ userId: 'u-1', username: 'ada', displayName: 'Ada Lovelace' }],
+    ),
   );
   renderFeed();
 
@@ -83,12 +80,11 @@ test('loads the next page on demand', async () => {
       return jsonResponse([{ userId: 'u-1', username: 'ada', displayName: 'Ada' }]);
     }
     const cursor = new URL(request.url).searchParams.get('cursor');
-    return cursor === 'PAGE2'
-      ? jsonResponse({ items: [card({ postId: 'p-2', caption: 'second page' })], nextCursor: null })
-      : jsonResponse({
-          items: [card({ postId: 'p-1', caption: 'first page' })],
-          nextCursor: 'PAGE2',
-        });
+    return jsonResponse(
+      cursor === 'PAGE2'
+        ? { items: [card({ postId: 'p-2', caption: 'second page' })], nextCursor: null }
+        : { items: [card({ postId: 'p-1', caption: 'first page' })], nextCursor: 'PAGE2' },
+    );
   });
   renderFeed();
 

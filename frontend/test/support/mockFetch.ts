@@ -8,9 +8,7 @@ export function stubFetch(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request =
-        input instanceof Request
-          ? input
-          : new Request(new URL(String(input), globalThis.location.href), init);
+        input instanceof Request ? input : new Request(new URL(String(input), location.href), init);
       const path = new URL(request.url).pathname;
       const hits = calls.filter((c) => new URL(c.url).pathname === path).length;
       calls.push(request);

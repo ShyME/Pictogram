@@ -27,7 +27,9 @@ const render = (over: Partial<EditProfileData['profile']> = {}) => {
 };
 
 const usernameField = () => screen.getByLabelText('Username');
-const save = () => fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+const save = () => {
+  fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+};
 
 test('pre-fills the form with the current profile', () => {
   render();

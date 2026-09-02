@@ -17,7 +17,6 @@ async function runRefresh(): Promise<string | null> {
   try {
     response = await fetch(REFRESH_ENDPOINT, {
       method: 'POST',
-      credentials: 'same-origin',
       headers: { Accept: 'application/json' },
     });
   } catch {

@@ -9,31 +9,31 @@ export function FollowButton({ userId }: { userId: string }) {
 
   const { data, isPending: loading } = useFollowRelationship(userId);
 
-  const following = data?.followedByViewer ?? false;
+  const isFollowing = data?.followedByViewer ?? false;
 
   const toggle = useMutation({
-    mutationFn: () => (following ? unfollowUser(userId) : followUser(userId)),
+    mutationFn: () => (isFollowing ? unfollowUser(userId) : followUser(userId)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 
-  const busy = loading || toggle.isPending;
+  const isBusy = loading || toggle.isPending;
 
   return (
     <div className="flex flex-col items-start gap-1">
       <button
         type="button"
-        aria-pressed={following}
-        disabled={busy}
+        aria-pressed={isFollowing}
+        disabled={isBusy}
         onClick={() => {
           toggle.mutate();
         }}
         className={
-          following
+          isFollowing
             ? 'rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50'
             : 'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50'
         }
       >
-        {following ? 'Following' : 'Follow'}
+        {isFollowing ? 'Following' : 'Follow'}
       </button>
       {toggle.isError && (
         <p role="alert" className="text-xs text-red-600">
