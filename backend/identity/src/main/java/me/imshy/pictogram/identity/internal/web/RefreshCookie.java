@@ -39,7 +39,7 @@ final class RefreshCookie {
         return ResponseCookie.from(NAME, value)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Lax")
+                .sameSite("Strict")
                 .path(PATH);
     }
 }
