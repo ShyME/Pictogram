@@ -1,5 +1,8 @@
 # No BFF: feed-card composition on the client
 
+- **Status:** Accepted
+- **Relates to:** ADR-0008 (the shared HTTP edge every module's REST layer sits on)
+
 A feed card needs data from three contexts — the post and its image (`post`, `media`), the
 author's username and display name (`profile`), and the like count plus "did I like it"
 (`engagement`). We are **not** building a backend-for-frontend module to stitch this

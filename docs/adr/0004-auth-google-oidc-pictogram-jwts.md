@@ -1,10 +1,24 @@
 # Authentication: Google-only OIDC, backend-driven, Pictogram-issued JWTs
 
+- **Status:** Accepted; amended (see Change log)
+- **Amended by:** [#8](https://github.com/ShyME/pictogram/issues/8), [#26](https://github.com/ShyME/pictogram/issues/26), [#27](https://github.com/ShyME/pictogram/issues/27), [#50](https://github.com/ShyME/pictogram/issues/50)
+- **Relates to:** ADR-0001 (stateless tokens fit the service-extraction goal), ADR-0008 (the `:app` resource-server chain)
+
+## Change log
+
+| Issue | Change |
+|---|---|
+| [#8](https://github.com/ShyME/pictogram/issues/8) | Access token signs with **ES256** (ECDSA on P-256), not EdDSA/Ed25519 — Spring Security's `NimbusJwtEncoder` still rejects EdDSA. Both are asymmetric, so every property this ADR relies on is unchanged. Signing key, rotation mechanics, and the `JwtDecoder` wiring are detailed in the amendment below. |
+| [#26](https://github.com/ShyME/pictogram/issues/26) | A rotation grace window (default 60s): a consumed refresh token re-presented within the window is a benign concurrent refresh (401, family intact), not theft. Reuse detection past the window is unchanged. |
+| [#27](https://github.com/ShyME/pictogram/issues/27) | Sign-in failure paths: an unusable Google account or a failed handshake redirects to the sign-in-error route instead of 500ing; the handshake servlet session is invalidated on success. |
+| [#50](https://github.com/ShyME/pictogram/issues/50) | `SignInCompletion` (`identity/internal/web`) is the single place the handshake outcome becomes an HTTP response — `succeeded` / `unusable` / `failed` — replacing three drifting Spring hooks. No HTTP-edge behaviour change beyond fixing the failure-handler asymmetry. |
+
 Users authenticate **only via Google** in v1, using the OIDC Authorization Code flow with
 PKCE handled **server-side** by Spring Security's OAuth2 Client — the browser just follows a
 "Continue with Google" link and the client secret never leaves the backend. After verifying
 the Google identity, the `identity` module mints **Pictogram's own** access and refresh
-JWTs, signed with **EdDSA (Ed25519)**; no other module ever sees a Google token. An
+JWTs. The access token is signed with **ES256** (ECDSA on the P-256 curve) — see the #8
+amendment below for why not EdDSA. No other module ever sees a Google token. An
 `IdentityProvider` seam in `identity` allows adding email/password later.
 
 Chosen because it removes all password-handling surface (hashing, resets, verification,

@@ -1,5 +1,15 @@
 # Feed is fan-out-on-read, behind a port
 
+- **Status:** Accepted; amended (see Change log)
+- **Amended by:** [#18](https://github.com/ShyME/pictogram/issues/18)
+- **Relates to:** ADR-0002 (the synchronous published-interface query path)
+
+## Change log
+
+| Issue | Change |
+|---|---|
+| [#18](https://github.com/ShyME/pictogram/issues/18) | Port landed as `FeedQuery` with `FanOutOnReadFeed`; reads `follow.FollowGraph.usersFollowedBy` then a new `post.PublishedPosts.byAuthors` keyset query. Cursor is `shared.http.Cursor` (keyset on `publishedAt, id`), so `GET /api/feed` stays stable across a later switch to fan-out-on-write. Detail in the amendment below. |
+
 The feed can be built two ways: compute it on demand from the follow graph and posts
 (fan-out-on-read), or maintain a materialised per-user feed updated by events
 (fan-out-on-write). We are doing **fan-out-on-read** in v1, exposed through a `FeedQuery`
