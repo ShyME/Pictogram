@@ -8,7 +8,7 @@ palantir-java-format = "2.97.0"
 
 # BOM-managed platforms
 spring-modulith = "2.0.8"
-awssdk = "2.54.7"
+awssdk = "2.54.10"
 
 # Directly-pinned libraries
 twelvemonkeys-imageio = "3.14.0"
@@ -16,7 +16,7 @@ metadata-extractor = "2.21.0"
 commons-imaging = "1.0.0-alpha6"
 springdoc-openapi = "3.1.0"
 mock-oauth2-server = "5.0.2"
-swagger-annotations = "2.2.52"
+swagger-annotations = "2.2.55"
 
 [libraries]
 # Consumed by buildSrc/build.gradle.kts as convention-plugin implementation dependencies
