@@ -8,7 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-interface Likes extends CrudRepository<Like, UUID> {
+interface Likes extends CrudRepository<Like, LikeId> {
 
     boolean existsByPostIdAndViewerId(UUID postId, UUID viewerId);
 
