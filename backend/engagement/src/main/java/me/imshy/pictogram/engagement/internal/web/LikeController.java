@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import me.imshy.pictogram.engagement.LikeCounts;
@@ -62,7 +63,8 @@ class LikeController {
     @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
-                description = "The like count and the viewer's like state for each requested post.",
+                description =
+                        "The like count for each requested post, plus the viewer's own like state when signed in.",
                 content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostLikesView.class)))),
         @ApiResponse(
                 responseCode = "400",
@@ -70,18 +72,13 @@ class LikeController {
                 content =
                         @Content(
                                 mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(
-                responseCode = "401",
-                description = "The caller has no valid access token.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                                 schema = @Schema(implementation = ProblemDetail.class)))
     })
     @GetMapping(params = "postIds")
-    List<PostLikesView> likesByPostIds(@CurrentUser ViewerId viewer, @RequestParam("postIds") Set<UUID> postIds) {
+    List<PostLikesView> likesByPostIds(
+            @CurrentUser Optional<ViewerId> viewer, @RequestParam("postIds") Set<UUID> postIds) {
         List<PostId> posts = BatchIds.checked(postIds).stream().map(PostId::new).toList();
-        return counts.of(viewer, posts).stream().map(PostLikesView::of).toList();
+        List<LikeCounts.PostLikes> likes = viewer.map(v -> counts.of(v, posts)).orElseGet(() -> counts.of(posts));
+        return likes.stream().map(PostLikesView::of).toList();
     }
 }

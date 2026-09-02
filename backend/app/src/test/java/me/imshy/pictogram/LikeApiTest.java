@@ -66,10 +66,19 @@ class LikeApiTest {
     }
 
     @Test
-    void theBatchReadRequiresAToken() throws Exception {
-        mvc.perform(get("/api/engagement/likes")
-                        .param("postIds", UUID.randomUUID().toString()))
-                .andExpect(status().isUnauthorized());
+    void theBatchReadServesAnAnonymousCallerTheCountWithLikedByViewerFalse() throws Exception {
+        var ada = UUID.randomUUID().toString();
+        var post = UUID.randomUUID().toString();
+
+        mvc.perform(put("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/engagement/likes").param("postIds", post))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].postId").value(post))
+                .andExpect(jsonPath("$[0].likeCount").value(1))
+                .andExpect(jsonPath("$[0].likedByViewer").value(false));
     }
 
     @Test
