@@ -1,6 +1,6 @@
 # Code formatting and static analysis: autoformat both stacks, gate formatting, keep hint-linters advisory
 
-- **Status:** Accepted; both hint-linters have since graduated to gating (see the Backend and Frontend sections)
+- **Status:** Accepted
 
 Both the Java backend and the TypeScript frontend get an autoformatter and a
 modernisation linter. Formatting is enforced — CI and the local check command both fail on

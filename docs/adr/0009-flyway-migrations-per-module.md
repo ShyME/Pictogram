@@ -1,14 +1,7 @@
 # Database schema: Flyway, one schema per module, one global migration sequence
 
-- **Status:** Accepted; amended (see Change log)
-- **Amended by:** [#45](https://github.com/ShyME/pictogram/issues/45)
+- **Status:** Accepted
 - **Relates to:** ADR-0002 (schema per module, no cross-schema FKs), ADR-0006 (media keeps its row here, bytes in MinIO)
-
-## Change log
-
-| Issue | Change |
-|---|---|
-| [#45](https://github.com/ShyME/pictogram/issues/45) | Switched from a module-ordinal version prefix (`V1_001`, `V2_001`, …) to a **flat zero-padded sequence** (`V001`, `V002`, …). The ordinal scheme stayed globally monotonic only while modules gained migrations in ordinal order; a late migration on an already-integrated lower module sorted before applied higher-module migrations and tripped `validateOnMigrate`. Rationale in the amendment below. |
 
 Each bounded context owns its own PostgreSQL **schema** and never a foreign key across a
 schema boundary (ADR-0002 — contexts reference each other by ID value only). Schema changes
@@ -36,31 +29,19 @@ it always sorts after everything already applied.
 Each migration does `create schema if not exists <module>;` and qualifies every object with
 that schema. A module with no persistence ships no migrations.
 
-The alternative — a Flyway location and history table per module — was rejected: Spring Boot
-auto-configures a single `Flyway` bean against the single `DataSource`, and per-schema
-histories would mean either multiple `Flyway` beans and `DataSource`s or a custom callback,
-which is a lot of machinery for a monolith whose modules already deploy together.
+Two alternatives were rejected:
 
-## Amendment (#45): a flat sequence, not a module-ordinal prefix
-
-The original scheme fixed the first version segment to a **module ordinal**
-(`identity`→`V1_`, `profile`→`V2_`, `media`→`V3_`, `post`→`V4_`, …), with each module
-running its own `_NNN` sub-sequence. That keeps versions globally monotonic **only while
-modules gain migrations in ordinal order**. The moment an already-integrated lower module
-needs a *new* migration, its version sorts *before* higher modules' migrations that are
-already applied, and Flyway's default `validateOnMigrate` aborts startup on any non-fresh
-database:
-
-```
-Validate failed: Detected resolved migration not applied to database: 3.002.
-```
-
-This surfaced in #16, which would have needed `media`'s `V3_002__index_media_created_at.sql`
-while running databases were already at `V4_001` (post). #16 avoided it by not adding the
-index, but the next genuine late migration on a lower module — a real column, a backfill, a
-constraint — has no such escape. Issue #45 records the decision to switch to a flat
-sequence, where every new migration takes the highest number and always applies cleanly
-with validation left on.
+- **A Flyway location and history table per module.** Spring Boot auto-configures a single
+  `Flyway` bean against the single `DataSource`, and per-schema histories would mean either
+  multiple `Flyway` beans and `DataSource`s or a custom callback — a lot of machinery for a
+  monolith whose modules already deploy together.
+- **A module-ordinal version prefix** (`identity`→`V1_`, `profile`→`V2_`, …, each module
+  running its own `_NNN` sub-sequence). It stays globally monotonic **only while modules
+  gain migrations in ordinal order**. The moment an already-integrated lower module needs a
+  *new* migration, its version sorts *before* higher modules' migrations that are already
+  applied, and Flyway's default `validateOnMigrate` aborts startup on any non-fresh database
+  (`Detected resolved migration not applied to database: 3.002`). The flat sequence has no
+  such failure mode — the next number is always the highest — so validation stays on.
 
 ## Consequences
 
@@ -73,15 +54,6 @@ with validation left on.
   fails with a duplicate-version error. It is a runtime footgun, not a merge-time one.
   Judged acceptable at current scale; the timestamp-prefix variant (`V20260901__…`) is the
   fallback if it becomes frequent.
-- **Transition cost** (one-time, now past): renaming the four existing files changed their
-  version strings, so any local database whose `flyway_schema_history` still recorded
-  `1.001`/`2.001`/`3.001`/`4.001` failed validation against the renamed files. There was no
-  production database. The fix was a single `task clean` — it tears down both compose
-  projects (`pictogram` from `compose.yaml` and `pictogram-dev` from `compose.dev.yaml`,
-  each with its own Postgres volume), after which Flyway replayed the full `V001…V004`
-  sequence on the fresh volumes. (`docker compose -f compose.yaml down -v` alone only drops
-  the container-stack volume, not the `task dev` / `task backend` host-loop one.) Fresh
-  databases (CI blackbox, anyone starting clean) were unaffected.
 - `@ApplicationModuleTest` for a module with migrations runs Flyway against the shared
   Testcontainers Postgres; `DatabaseCleaner` truncates the data but leaves the schema and
   `flyway_schema_history` in place between tests.
