@@ -9,3 +9,6 @@
 
 # Backend: Spotless + palantir-java-format (#65)
 8c772978aca21f0cb6829391af7b21d5db2d3b32
+
+# Frontend: filename-case rename to camelCase (#75)
+62447e1ea741b0ae9655af98c450de1054edb9a2
