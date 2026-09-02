@@ -47,6 +47,52 @@ test('a plain viewer sees the posts but no delete controls', async () => {
   expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
 });
 
+test('clicking a thumbnail opens the post detail with the full-size image and the injected like control', async () => {
+  stubFetch(() =>
+    jsonResponse({
+      items: [{ postId: 'p-1', mediaId: 'm-1', caption: 'sunrise', publishedAt: 't1' }],
+      nextCursor: null,
+    }),
+  );
+  renderWithProviders(
+    <PostGrid
+      authorId="u-1"
+      renderLike={(postId) => <button type="button">heart {postId}</button>}
+    />,
+  );
+
+  fireEvent.click(await screen.findByRole('button', { name: 'sunrise' }));
+
+  const dialog = screen.getByRole('dialog');
+  expect(within(dialog).getByRole('img')).toHaveAttribute('src', '/api/media/m-1/original');
+  expect(within(dialog).getByRole('button', { name: 'heart p-1' })).toBeInTheDocument();
+});
+
+test('preloads like state for every post on the grid in one pass', async () => {
+  stubFetch(() =>
+    jsonResponse({
+      items: [
+        { postId: 'p-1', mediaId: 'm-1', publishedAt: 't1' },
+        { postId: 'p-2', mediaId: 'm-2', publishedAt: 't2' },
+      ],
+      nextCursor: null,
+    }),
+  );
+  const preloaded: string[][] = [];
+  renderWithProviders(
+    <PostGrid
+      authorId="u-1"
+      preloadLikes={(_client, postIds) => {
+        preloaded.push(postIds);
+        return Promise.resolve();
+      }}
+    />,
+  );
+
+  await screen.findAllByAltText('A post');
+  expect(preloaded).toEqual([['p-1', 'p-2']]);
+});
+
 test('the owner deletes a post after confirming, then the grid refetches', async () => {
   const calls = stubFetch((request) => {
     if (request.method === 'DELETE') return new Response(null, { status: 204 });

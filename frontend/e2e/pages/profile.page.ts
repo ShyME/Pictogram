@@ -44,6 +44,14 @@ export class ProfilePage {
     return this.page.getByRole('alertdialog', { name: /delete this post/i });
   }
 
+  get postDetail(): Locator {
+    return this.page.getByRole('dialog');
+  }
+
+  async openPostDetail(caption: string): Promise<void> {
+    await this.postCellByCaption(caption).getByRole('button').first().click();
+  }
+
   get emptyGrid(): Locator {
     return this.page.getByText('No posts yet');
   }

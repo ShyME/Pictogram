@@ -39,7 +39,7 @@ jobs:
 
       # Testcontainers pulls postgres + minio cold on every fresh runner (~20-40s). Cache a
       # `docker save` of both, keyed on the SharedPostgres / SharedMinio sources that pin the
-      # tags (bumping a pin invalidates the cache) plus an ISO week — `postgres:18-alpine` is a
+      # tags (bumping a pin invalidates the cache) plus an ISO week — `postgres:17-alpine` is a
       # moving tag, so the week suffix forces a weekly re-pull rather than freezing one patch
       # release until someone edits a pin.
       - name: Testcontainers image key
@@ -65,9 +65,9 @@ jobs:
         if: steps.testcontainers-images.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/testcontainers-images
-          docker pull postgres:18-alpine
+          docker pull postgres:17-alpine
           docker pull minio/minio:RELEASE.2025-09-07T16-13-09Z
-          docker save postgres:18-alpine -o ~/testcontainers-images/postgres.tar
+          docker save postgres:17-alpine -o ~/testcontainers-images/postgres.tar
           docker save minio/minio:RELEASE.2025-09-07T16-13-09Z -o ~/testcontainers-images/minio.tar
 
       # `check`, not `build`: nothing on the PR path consumes pictogram.jar (the Blackbox job
