@@ -1,6 +1,6 @@
 import { api } from '@shared';
 import type { Middleware } from 'openapi-fetch';
-import { refreshAccessToken } from './auth-api';
+import { refreshAccessToken } from './authApi';
 import { getAccessToken } from './session';
 
 const preFlight = new WeakMap<Request, Request>();

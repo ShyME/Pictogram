@@ -1,5 +1,5 @@
 import { FeedPage } from '@features/feed/FeedPage';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';

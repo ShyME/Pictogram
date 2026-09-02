@@ -7,7 +7,7 @@ import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
 import { NewPostRoute } from './NewPostRoute';
 import { RouteError } from './RouteError';
-import { followListLoader } from './follow-list-loader';
+import { followListLoader } from './followListLoader';
 import {
   editProfileLoader,
   loginLoader,

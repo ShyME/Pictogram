@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { EditProfilePage } from './pages/edit-profile.page';
+import { EditProfilePage } from './pages/editProfile.page';
 import { FeedPage } from './pages/feed.page';
 import { LoginPage } from './pages/login.page';
 import { OnboardingPage } from './pages/onboarding.page';

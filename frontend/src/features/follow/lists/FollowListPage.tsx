@@ -1,11 +1,11 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import { fetchFollowListPage } from '../follow-api';
-import { followListKey } from '../query-keys';
-import { seedFollowRelationships } from '../use-follow-relationship';
+import { fetchFollowListPage } from '../followApi';
+import { followListKey } from '../queryKeys';
+import { seedFollowRelationships } from '../useFollowRelationship';
 import { AccountList } from './AccountList';
-import type { FollowListData, FollowListMode } from './follow-list';
+import type { FollowListData, FollowListMode } from './followList';
 
 function PageChrome({ children }: { children: ReactNode }) {
   return (

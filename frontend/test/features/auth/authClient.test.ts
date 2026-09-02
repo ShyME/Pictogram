@@ -1,7 +1,7 @@
-import { authMiddleware } from '@features/auth/auth-client';
+import { authMiddleware } from '@features/auth/authClient';
 import { getAccessToken, setAccessToken } from '@features/auth/session';
 import { api } from '@shared';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 beforeEach(() => {

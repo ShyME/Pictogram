@@ -1,7 +1,7 @@
 import type { FeedPost } from '@features/feed/feed';
-import { toFeedCards } from '@features/feed/feed-cards';
+import { toFeedCards } from '@features/feed/feedCards';
 import { SessionExpiredError } from '@shared';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {

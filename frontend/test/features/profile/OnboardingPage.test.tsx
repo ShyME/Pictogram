@@ -1,5 +1,5 @@
 import { OnboardingPage } from '@features/profile/OnboardingPage';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { Link, useLoaderData, useNavigate } from 'react-router';
 import type { Profile } from './profile';
-import { submitProfileEdit } from './profile-api';
+import { submitProfileEdit } from './profileApi';
 import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from './username';
 
 export type EditProfileData = { profile: Profile };

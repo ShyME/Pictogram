@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FeedPage } from './pages/feed.page';
-import { FollowListPage } from './pages/follow-list.page';
+import { FollowListPage } from './pages/followList.page';
 import { LoginPage } from './pages/login.page';
 import { OnboardingPage } from './pages/onboarding.page';
 import { ProfilePage } from './pages/profile.page';

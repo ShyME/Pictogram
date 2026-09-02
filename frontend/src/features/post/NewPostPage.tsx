@@ -3,8 +3,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { CAPTION_MAX_LENGTH, captionLength, isCaptionWithinLimit } from './caption';
 import { SquareCropper, type CropperHandle } from './cropper/SquareCropper';
-import { publishPost, uploadPhoto } from './post-api';
-import { postsByAuthorKey } from './query-keys';
+import { publishPost, uploadPhoto } from './postApi';
+import { postsByAuthorKey } from './queryKeys';
 
 export function NewPostPage({
   authorId,

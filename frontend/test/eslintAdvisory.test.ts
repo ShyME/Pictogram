@@ -18,7 +18,9 @@ const introducedRules = [
   unicorn.configs.recommended,
 ]
   .flatMap((config) => Object.keys(config.rules ?? {}))
-  .filter((name) => !baseline.has(name));
+  .filter((name) => !baseline.has(name))
+  // #75 promotes filename-case ahead of the rest, alongside the camelCase rename.
+  .filter((name) => name !== 'unicorn/filename-case');
 
 test('no rule introduced by the strict/unicorn sets is an error', async () => {
   const config = (await new ESLint().calculateConfigForFile('src/main.tsx')) as Linter.Config;

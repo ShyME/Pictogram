@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { submitOnboarding } from './profile-api';
+import { submitOnboarding } from './profileApi';
 import { USERNAME_MESSAGE, isUsernameShapeValid, usernameError } from './username';
 
 type ServerError = 'username-shape' | 'username-taken' | 'details';

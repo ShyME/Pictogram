@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { followUser, unfollowUser } from './follow-api';
-import { followRelationshipKey } from './query-keys';
-import { useFollowRelationship } from './use-follow-relationship';
+import { followUser, unfollowUser } from './followApi';
+import { followRelationshipKey } from './queryKeys';
+import { useFollowRelationship } from './useFollowRelationship';
 
 export function FollowButton({ userId }: { userId: string }) {
   const queryClient = useQueryClient();

@@ -1,5 +1,5 @@
 import { ProfilePage } from '@features/profile/ProfilePage';
-import type { ProfilePageData } from '@features/profile/profile-loader';
+import type { ProfilePageData } from '@features/profile/profileLoader';
 import { renderWithProviders } from '@test-support/render';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';

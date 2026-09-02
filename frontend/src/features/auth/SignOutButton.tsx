@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { signOut } from './auth-api';
+import { signOut } from './authApi';
 
 export function SignOutButton() {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { FeedCard } from './feed';
-import { relativeTime } from './relative-time';
+import { relativeTime } from './relativeTime';
 
 export function FeedCardView({ card }: { card: FeedCard }) {
   const handle = card.author.username;

@@ -1,4 +1,4 @@
-import { signInErrorMessage } from '@features/auth/sign-in-error';
+import { signInErrorMessage } from '@features/auth/signInError';
 
 test('no reason -> no message', () => {
   expect(signInErrorMessage(null)).toBeNull();

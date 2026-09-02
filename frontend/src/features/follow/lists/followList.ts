@@ -1,4 +1,4 @@
-import type { FollowListMode } from '../follow-api';
+import type { FollowListMode } from '../followApi';
 
 export type { FollowListMode };
 

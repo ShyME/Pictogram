@@ -1,6 +1,6 @@
-import { fetchFeedPage } from '@features/feed/feed-api';
+import { fetchFeedPage } from '@features/feed/feedApi';
 import { SessionExpiredError } from '@shared';
-import { jsonResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {

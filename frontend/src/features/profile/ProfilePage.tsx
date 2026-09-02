@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import type { ProfilePageData } from './profile-loader';
+import type { ProfilePageData } from './profileLoader';
 
 function PageChrome({ children }: { children: ReactNode }) {
   return (

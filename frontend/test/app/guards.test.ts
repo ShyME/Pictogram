@@ -1,5 +1,5 @@
 import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from '@app/guards';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 function profileEndpoint(status: number, body: unknown = {}) {

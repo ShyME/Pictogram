@@ -1,6 +1,6 @@
 import { setAccessToken } from '@features/auth/session';
 import { SignOutButton } from '@features/auth/SignOutButton';
-import { pathOf, stubFetch } from '@test-support/mock-fetch';
+import { pathOf, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';

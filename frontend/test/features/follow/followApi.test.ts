@@ -4,8 +4,8 @@ import {
   fetchFollowRelationships,
   followUser,
   unfollowUser,
-} from '@features/follow/follow-api';
-import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mock-fetch';
+} from '@features/follow/followApi';
+import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {

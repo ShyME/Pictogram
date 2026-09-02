@@ -4,7 +4,7 @@ const baseURL = process.env.PICTOGRAM_BASE_URL ?? 'http://localhost:8080';
 
 export default defineConfig({
   testDir: './e2e',
-  globalSetup: './e2e/global-setup.ts',
+  globalSetup: './e2e/globalSetup.ts',
   workers: 1,
   forbidOnly: !!process.env.CI,
   retries: 0,

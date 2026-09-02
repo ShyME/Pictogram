@@ -1,6 +1,6 @@
-import { deletePost, fetchPostsByAuthor, publishPost, uploadPhoto } from '@features/post/post-api';
+import { deletePost, fetchPostsByAuthor, publishPost, uploadPhoto } from '@features/post/postApi';
 import { SessionExpiredError } from '@shared';
-import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {
