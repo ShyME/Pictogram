@@ -138,6 +138,10 @@ replays the full `V001…V004` sequence on the fresh volumes. (`docker compose -
 compose.yaml down -v` only covers the container stack, not `task dev` / `task backend`.)
 Fresh checkouts and CI are unaffected.
 
+The compose stacks and `SharedPostgres` run `postgres:18-alpine`; the named `pgdata` volume
+mounts at `/var/lib/postgresql` (Postgres 18 keeps `PGDATA` in a version-specific subdirectory
+below that). A fresh `task up` provisions a PG18-format volume — nothing to migrate.
+
 ## CI
 
 `.github/workflows/ci.yml` runs `./gradlew build` on every PR — Modulith `verify()`, the
