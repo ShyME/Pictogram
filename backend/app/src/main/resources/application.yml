@@ -37,8 +37,9 @@ pictogram:
     # Google account so the SPA can show a tailored message.
     sign-in-error-redirect: /login?error=sign-in-failed
   # Object storage for image bytes (ADR-0006). Defaults target a local MinIO (compose.dev.yaml);
-  # prod overrides the endpoint and credentials from the environment. The bucket is created
-  # on first upload, so no provisioning step is needed.
+  # prod overrides the endpoint and credentials from the environment. S3BlobStore creates the
+  # bucket on first upload — a dev convenience only; a real deployment pre-creates it during
+  # provisioning and withholds s3:CreateBucket from the runtime role (ADR-0011 / SEC-8).
   media:
     storage:
       endpoint: ${PICTOGRAM_MEDIA_ENDPOINT:http://localhost:9000}
