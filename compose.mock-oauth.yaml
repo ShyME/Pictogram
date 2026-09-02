@@ -53,6 +53,9 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: pictogram-mock-secret
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,email
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_ISSUER_URI: http://localhost:8095/google
+      # This overlay is the plain-HTTP localhost e2e stack. The refresh cookie can't carry
+      # Secure here; compose.yaml (the deployable base) keeps the secure-by-default.
+      PICTOGRAM_AUTH_COOKIE_SECURE: "false"
     depends_on:
       mock-oauth2-server:
         condition: service_started

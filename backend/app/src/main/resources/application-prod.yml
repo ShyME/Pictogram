@@ -15,3 +15,7 @@ management:
   endpoint:
     health:
       show-details: never
+  tracing:
+    sampling:
+      # Full sampling (application.yml) is for local/dev; a deployed instance samples a fraction.
+      probability: 0.1
