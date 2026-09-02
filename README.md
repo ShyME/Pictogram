@@ -173,6 +173,24 @@ This setting cannot be read or enforced from the repository. A maintainer must c
 **Settings → Branches → `main`** that "Require branches to be up to date before merging" is
 enabled (and keep it enabled).
 
+## Before serving real traffic
+
+<!-- Localized deployment-hardening notes (#112). The rest of the README is being reworked in #109. -->
+
+- **Signing key.** Set `PICTOGRAM_AUTH_SIGNING_KEY` (a P-256 private JWK). The `prod` profile
+  refuses to start without it — an ephemeral key breaks multi-replica token verification and
+  logs everyone out on restart.
+- **Cookie transport.** `compose.yaml` keeps the refresh cookie `Secure` by default; only the
+  plain-HTTP localhost stacks (`compose.mock-oauth.yaml`, the `local` profile) opt out. Serve
+  the deployed app over TLS.
+- **Rate limiting.** The app itself does none. The public unauthenticated surface —
+  `GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`, `GET /api/posts`,
+  `GET /api/follows/*`, `POST /api/auth/refresh`, and the OIDC start at
+  `/oauth2/authorization/google` — must sit behind a reverse proxy or platform rate limit
+  before it takes real traffic.
+- **Media bucket.** `S3BlobStore` auto-creates the bucket on first upload for local dev only.
+  Pre-create it during provisioning and withhold `s3:CreateBucket` from the runtime role.
+
 ## Contributing
 
 Formatting is machine-enforced — run `task format` before you push. IDE setup and the
