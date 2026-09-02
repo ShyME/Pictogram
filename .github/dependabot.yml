@@ -74,6 +74,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Node 24 is the newest Active LTS; 26 goes LTS 2026-10-28. Hold the major
+      # until then — minor/patch still flow.
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
 
   # The "docker" ecosystem only reads Dockerfiles; Compose files need the
   # dedicated "docker-compose" ecosystem. "/" picks up every compose*.yaml at
