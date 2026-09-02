@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router';
 import { ContinueWithGoogleButton } from './ContinueWithGoogleButton';
-import { signInErrorMessage } from './sign-in-error';
+import { signInErrorMessage } from './signInError';
 
 export function LoginPage() {
   const [searchParams] = useSearchParams();

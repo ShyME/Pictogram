@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { FeedPage } from './pages/feed.page';
 import { LoginPage } from './pages/login.page';
-import { NewPostPage } from './pages/new-post.page';
+import { NewPostPage } from './pages/newPost.page';
 import { OnboardingPage } from './pages/onboarding.page';
 import { ProfilePage } from './pages/profile.page';
 

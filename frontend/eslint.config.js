@@ -110,6 +110,7 @@ export default tseslint.config(
       'unicorn/no-null': 'off',
       'unicorn/no-array-reduce': 'off',
       'no-nested-ternary': 'off',
+      'unicorn/filename-case': ['error', { cases: { camelCase: true, pascalCase: true } }],
     },
   },
   {

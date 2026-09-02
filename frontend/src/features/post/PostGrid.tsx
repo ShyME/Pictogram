@@ -2,8 +2,8 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { useId, useState } from 'react';
 import type { Post } from './post';
 import { thumbnailUrl } from './post';
-import { deletePost, fetchPostsByAuthor } from './post-api';
-import { postsByAuthorKey } from './query-keys';
+import { deletePost, fetchPostsByAuthor } from './postApi';
+import { postsByAuthorKey } from './queryKeys';
 
 export function PostGrid({
   authorId,

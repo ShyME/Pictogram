@@ -1,7 +1,7 @@
 import type { FollowListData } from '@features/follow';
 import { fetchProfileByUsername } from '@features/profile';
 import type { LoaderFunctionArgs } from 'react-router';
-import { requireOnboarded } from './access-gate';
+import { requireOnboarded } from './accessGate';
 
 export async function followListLoader({
   params,

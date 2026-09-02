@@ -1,5 +1,5 @@
 import { EditProfilePage, type EditProfileData } from '@features/profile/EditProfilePage';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';

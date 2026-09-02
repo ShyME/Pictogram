@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import type { Profile } from './profile';
-import { fetchMyProfile, fetchProfileByUsername } from './profile-api';
+import { fetchMyProfile, fetchProfileByUsername } from './profileApi';
 
 export type ProfilePageData =
   | { status: 'found'; profile: Profile; isOwnProfile: boolean; viewerCanFollow: boolean }

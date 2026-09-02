@@ -1,5 +1,5 @@
-import { followListLoader } from '@app/follow-list-loader';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { followListLoader } from '@app/followListLoader';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import type { LoaderFunctionArgs } from 'react-router';
 import { afterEach, expect, test, vi } from 'vitest';
 

@@ -3,8 +3,8 @@ import {
   fetchProfileByUsername,
   submitOnboarding,
   submitProfileEdit,
-} from '@features/profile/profile-api';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+} from '@features/profile/profileApi';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {

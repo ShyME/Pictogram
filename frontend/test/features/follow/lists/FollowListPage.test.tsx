@@ -1,6 +1,6 @@
 import type { Account } from '@features/follow/account';
 import { FollowListPage } from '@features/follow/lists/FollowListPage';
-import type { FollowListData } from '@features/follow/lists/follow-list';
+import type { FollowListData } from '@features/follow/lists/followList';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -14,7 +14,7 @@ vi.mock('react-router', () => ({
 }));
 
 const fetchFollowListPage = vi.fn();
-vi.mock('@features/follow/follow-api', () => ({
+vi.mock('@features/follow/followApi', () => ({
   fetchFollowListPage: (...args: unknown[]) => fetchFollowListPage(...args),
 }));
 

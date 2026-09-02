@@ -1,6 +1,6 @@
-import { refreshAccessToken, signOut } from '@features/auth/auth-api';
+import { refreshAccessToken, signOut } from '@features/auth/authApi';
 import { getAccessToken, setAccessToken } from '@features/auth/session';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 afterEach(() => {

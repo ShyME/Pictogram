@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { useFollowRelationship } from './use-follow-relationship';
+import { useFollowRelationship } from './useFollowRelationship';
 
 export function FollowCounts({ userId, username }: { userId: string; username: string }) {
   const { data } = useFollowRelationship(userId);

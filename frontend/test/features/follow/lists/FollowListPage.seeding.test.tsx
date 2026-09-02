@@ -1,6 +1,6 @@
 import { FollowListPage } from '@features/follow/lists/FollowListPage';
-import type { FollowListData } from '@features/follow/lists/follow-list';
-import { jsonResponse, pathOf, stubFetch } from '@test-support/mock-fetch';
+import type { FollowListData } from '@features/follow/lists/followList';
+import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';

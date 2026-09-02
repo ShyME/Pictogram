@@ -1,5 +1,5 @@
 import { FollowCounts } from '@features/follow/FollowCounts';
-import { jsonResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { screen } from '@testing-library/react';
 import type { ReactNode } from 'react';

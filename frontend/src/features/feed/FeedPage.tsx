@@ -2,10 +2,10 @@ import { SessionExpiredError } from '@shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { type ReactNode, useCallback, useRef } from 'react';
 import { Navigate } from 'react-router';
-import { fetchFeedPage } from './feed-api';
-import { toFeedCards } from './feed-cards';
+import { fetchFeedPage } from './feedApi';
+import { toFeedCards } from './feedCards';
 import { FeedCardView } from './FeedCardView';
-import { feedKey } from './query-keys';
+import { feedKey } from './queryKeys';
 
 function FeedShell({ children }: { children: ReactNode }) {
   return <main className="mx-auto min-h-dvh max-w-xl px-4 py-8">{children}</main>;

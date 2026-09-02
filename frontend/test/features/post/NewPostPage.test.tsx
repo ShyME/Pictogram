@@ -1,6 +1,6 @@
 import type { CropperHandle } from '@features/post/cropper/SquareCropper';
 import { NewPostPage } from '@features/post/NewPostPage';
-import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { ReactNode, Ref } from 'react';

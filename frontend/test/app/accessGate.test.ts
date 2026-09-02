@@ -1,5 +1,5 @@
-import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from '@app/access-gate';
-import { jsonResponse, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from '@app/accessGate';
+import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
 function profileEndpoint(status: number, body: unknown = {}) {

@@ -1,6 +1,6 @@
 import { type QueryClient, useQuery } from '@tanstack/react-query';
-import { type FollowRelationshipById, fetchFollowRelationship } from './follow-api';
-import { followRelationshipKey } from './query-keys';
+import { type FollowRelationshipById, fetchFollowRelationship } from './followApi';
+import { followRelationshipKey } from './queryKeys';
 
 const SEEDED_STALE_TIME_MS = 30_000;
 

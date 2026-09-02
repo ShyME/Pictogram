@@ -62,13 +62,17 @@ src/
   app/               composition root: providers, router, route table
   shared/            cross-cutting building blocks (may import shared only)
   features/<name>/   one vertical slice:
-    *-api.ts         calls to backend REST resources
+    *Api.ts          calls to backend REST resources
     *.ts             types and pure logic
-    use-*.ts         hooks
+    use*.ts          hooks
     *Page.tsx        route components
     *.tsx            slice-local components
     index.ts         the slice's public surface
 ```
+
+Component files are `PascalCase.tsx`, named after the component they export;
+every other file is `camelCase` (`feedApi.ts`, `useFollowRelationship.ts`).
+`unicorn/filename-case` enforces this.
 
 Files sit directly under the slice. A subfolder appears only for a genuine
 cluster — a set of files you would extract, move, or delete as a unit — and is

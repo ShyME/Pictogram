@@ -1,5 +1,5 @@
 import { PostGrid } from '@features/post/PostGrid';
-import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mock-fetch';
+import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
