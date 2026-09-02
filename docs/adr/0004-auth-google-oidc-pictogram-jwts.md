@@ -17,7 +17,7 @@ in for Google in tests.
 
 - Every reviewer of the deployed app needs a Google account or the mock.
 - Access token: ~15 min, held in memory by the SPA. Refresh token: rotating, in an
-  httpOnly/Secure/SameSite=Lax cookie.
+  httpOnly/Secure/SameSite=Strict (ADR-0011) cookie.
 - We run a small token issuer: key management, refresh-token rotation with reuse detection,
   a short access-token TTL as the revocation strategy.
 

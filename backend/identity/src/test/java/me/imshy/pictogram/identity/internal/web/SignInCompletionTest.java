@@ -55,6 +55,7 @@ class SignInCompletionTest {
                 .anySatisfy(header -> assertThat(header)
                         .startsWith("pictogram_refresh=refresh-token-abc")
                         .contains("Max-Age=" + Duration.ofDays(30).toSeconds())
+                        .contains("SameSite=Strict")
                         .contains("Path=/api/auth"));
         assertThat(response.getRedirectedUrl()).isEqualTo("/home");
     }
