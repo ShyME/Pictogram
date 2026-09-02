@@ -2,8 +2,8 @@ package me.imshy.pictogram;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.boot.web.server.ConfigurableWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -11,14 +11,20 @@ import org.springframework.util.StringUtils;
 /**
  * The {@code local} profile exposes every actuator endpoint in full detail (application-local.yml).
  * That is safe only while the app is reachable from the developer's machine alone, so refuse to
- * finish starting if {@code local} is active on an explicit non-loopback bind address.
+ * start if {@code local} is active on an explicit non-loopback bind address. Runs as a web-server
+ * factory customizer so the check fails the context before the listen socket is ever opened.
  */
 @Component
-class LocalProfileBindGuard implements ApplicationListener<ApplicationStartedEvent> {
+class LocalProfileBindGuard implements WebServerFactoryCustomizer<ConfigurableWebServerFactory> {
+
+    private final Environment environment;
+
+    LocalProfileBindGuard(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
-    public void onApplicationEvent(ApplicationStartedEvent event) {
-        Environment environment = event.getApplicationContext().getEnvironment();
+    public void customize(ConfigurableWebServerFactory factory) {
         verify(environment.matchesProfiles("local"), environment.getProperty("server.address"));
     }
 
