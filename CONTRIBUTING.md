@@ -31,6 +31,18 @@ Development here is IntelliJ-only, so there is no committed IDE config — set i
   *Optimize imports*; under JavaScript → Code Quality Tools → ESLint enable *Run eslint
   --fix on save*. This mirrors `spotlessApply` / `pnpm format`.
 
+## Linting
+
+**Frontend — ESLint.** `pnpm lint` (a frontend CI step, and part of `task test`). Beyond the
+slice-boundary rules, the flat config runs type-aware `typescript-eslint`
+(`strict-type-checked` + `stylistic-type-checked`, via `projectService`) and a curated
+`eslint-plugin-unicorn` `recommended`. Every rule those sets add on top of
+`typescript-eslint`'s `recommended` is forced to `warn`, so `pnpm lint` exits 0 with
+warnings and CI stays green. [#75](https://github.com/ShyME/pictogram/issues/75) tracks
+clearing the backlog and promoting them to `error`; don't add new warnings in the meantime
+(`pnpm lint --fix` clears most). The `recommended` rules and the boundary rules are `error`
+and do gate.
+
 ## Blame across the formatting cutover
 
 Each one-time mechanical reformat is a single commit listed in
