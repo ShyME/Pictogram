@@ -10,7 +10,7 @@ dependencies {
     api("tools.jackson.core:jackson-databind")
     api("org.springframework.boot:spring-boot-autoconfigure")
 
-    api("io.swagger.core.v3:swagger-annotations-jakarta:2.2.52")
+    api("io.swagger.core.v3:swagger-annotations-jakarta:2.2.54")
 
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     compileOnly("org.springframework.modulith:spring-modulith-core")
