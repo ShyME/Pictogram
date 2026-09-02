@@ -12,9 +12,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const typeUsername = (value: string) =>
+const typeUsername = (value: string) => {
   fireEvent.change(screen.getByLabelText('Username'), { target: { value } });
-const clickCreate = () => fireEvent.click(screen.getByRole('button', { name: /create profile/i }));
+};
+const clickCreate = () => {
+  fireEvent.click(screen.getByRole('button', { name: /create profile/i }));
+};
 
 test('shows an inline shape hint and blocks submit while the username is malformed', () => {
   stubFetch(() => new Response(null, { status: 500 }));

@@ -12,6 +12,12 @@ vi.mock('react-router', () => ({
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
+const gridStub = (authorId: string, isOwn: boolean) => (
+  <div>
+    grid for {authorId} ({isOwn ? 'own' : 'visitor'})
+  </div>
+);
+
 const found = (
   over: Partial<Extract<ProfilePageData, { status: 'found' }>> = {},
 ): ProfilePageData => ({
@@ -77,18 +83,12 @@ test("the viewer's own profile shows an edit link to the settings page, not a fo
 });
 
 test('renders the app-supplied grid on every profile, telling it whether the viewer owns it', () => {
-  const grid = (authorId: string, isOwn: boolean) => (
-    <div>
-      grid for {authorId} ({isOwn ? 'own' : 'visitor'})
-    </div>
-  );
-
   loaderData = found({ isOwnProfile: true });
-  const { rerender } = renderWithProviders(<ProfilePage renderGrid={grid} />);
+  const { rerender } = renderWithProviders(<ProfilePage renderGrid={gridStub} />);
   expect(screen.getByText('grid for u-1 (own)')).toBeInTheDocument();
 
   loaderData = found({ isOwnProfile: false });
-  rerender(<ProfilePage renderGrid={grid} />);
+  rerender(<ProfilePage renderGrid={gridStub} />);
   expect(screen.getByText('grid for u-1 (visitor)')).toBeInTheDocument();
 });
 

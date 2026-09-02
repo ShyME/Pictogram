@@ -23,13 +23,11 @@ export function NewPostPage({
   const [caption, setCaption] = useState('');
 
   useEffect(() => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+    if (!previewUrl) return;
     return () => {
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(previewUrl);
     };
-  }, [file]);
+  }, [previewUrl]);
 
   const publish = useMutation({
     mutationFn: async () => {
@@ -39,20 +37,21 @@ export function NewPostPage({
       return publishPost({ mediaId, caption });
     },
     onSuccess: (outcome) => {
-      if (outcome.status === 'published') {
-        void queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
-        void navigate(`/u/${profileUsername}`, { replace: true });
-      }
+      if (outcome.status !== 'published') return;
+      void queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
+      void navigate(`/u/${profileUsername}`, { replace: true });
     },
   });
 
   function onPickFile(event: React.ChangeEvent<HTMLInputElement>) {
     const picked = event.target.files?.[0] ?? null;
-    if (picked) setFile(picked);
+    if (!picked) return;
+    setFile(picked);
+    setPreviewUrl(URL.createObjectURL(picked));
   }
 
   const captionCount = captionLength(caption);
-  const captionValid = isCaptionWithinLimit(caption);
+  const isCaptionValid = isCaptionWithinLimit(caption);
   const outcome = publish.data;
 
   return (
@@ -76,7 +75,7 @@ export function NewPostPage({
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              if (captionValid) publish.mutate();
+              if (isCaptionValid) publish.mutate();
             }}
             className="mt-6"
           >
@@ -98,10 +97,10 @@ export function NewPostPage({
                 }}
                 rows={3}
                 className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none aria-[invalid=true]:border-red-500"
-                aria-invalid={!captionValid}
+                aria-invalid={!isCaptionValid}
               />
               <p
-                className={`mt-1 text-right text-xs ${captionValid ? 'text-neutral-400' : 'text-red-600'}`}
+                className={`mt-1 text-right text-xs ${isCaptionValid ? 'text-neutral-400' : 'text-red-600'}`}
               >
                 {captionCount} / {CAPTION_MAX_LENGTH}
               </p>
@@ -126,7 +125,7 @@ export function NewPostPage({
             <div className="mt-4 flex items-center gap-3">
               <button
                 type="submit"
-                disabled={!captionValid || publish.isPending}
+                disabled={!isCaptionValid || publish.isPending}
                 className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
               >
                 {publish.isPending ? 'Sharing…' : 'Share'}
@@ -135,6 +134,7 @@ export function NewPostPage({
                 type="button"
                 onClick={() => {
                   setFile(null);
+                  setPreviewUrl(null);
                   publish.reset();
                 }}
                 className="text-sm font-medium text-neutral-500 hover:text-neutral-900"

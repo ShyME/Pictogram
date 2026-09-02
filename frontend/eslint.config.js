@@ -63,27 +63,53 @@ export default tseslint.config(
         { type: 'entrypoint', pattern: 'src/main.tsx', mode: 'file' },
       ],
       'import/resolver': {
-        typescript: { project: ['./tsconfig.app.json', './tsconfig.test.json'] },
+        typescript: {
+          project: ['./tsconfig.app.json', './tsconfig.test.json'],
+          noWarnOnMultipleProjects: true,
+        },
       },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      'boundaries/no-unknown': 'error',
+      'boundaries/no-unknown-dependencies': 'error',
       'boundaries/no-unknown-files': 'error',
-      'boundaries/element-types': [
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
-          rules: [
-            { from: 'testkit', allow: ['app', 'shared', 'feature', 'testkit'] },
-            { from: 'entrypoint', allow: ['app', 'shared'] },
-            { from: 'app', allow: ['app', 'shared', 'feature', 'testkit'] },
+          policies: [
             {
-              from: 'feature',
-              allow: ['shared', 'testkit', ['feature', { feature: '${from.feature}' }]],
+              from: { element: { type: 'testkit' } },
+              allow: { to: { element: { types: ['app', 'shared', 'feature', 'testkit'] } } },
             },
-            { from: 'shared', allow: ['shared'] },
+            {
+              from: { element: { type: 'entrypoint' } },
+              allow: { to: { element: { types: ['app', 'shared'] } } },
+            },
+            {
+              from: { element: { type: 'app' } },
+              allow: { to: { element: { types: ['app', 'shared', 'feature', 'testkit'] } } },
+            },
+            {
+              from: { element: { type: 'feature' } },
+              allow: { to: { element: { types: ['shared', 'testkit'] } } },
+            },
+            {
+              from: { element: { type: 'feature' } },
+              allow: {
+                to: {
+                  element: {
+                    type: 'feature',
+                    captured: { feature: '{{ from.element.captured.feature }}' },
+                  },
+                },
+              },
+            },
+            {
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { type: 'shared' } } },
+            },
           ],
         },
       ],
@@ -94,6 +120,17 @@ export default tseslint.config(
       'unicorn/no-null': 'off',
       'unicorn/no-array-reduce': 'off',
       'no-nested-ternary': 'off',
+      // Added to unicorn's `recommended` in v66-v74; dropped per ADR-0010 for the same
+      // reasons as the rules above. `name-replacements` is `prevent-abbreviations` by
+      // another name (`ref` -> `reference`, `searchParams` -> `searchParameters`);
+      // member order, module-scoped mutable state set from a function (in-flight guards,
+      // per-test fixtures), promise chaining, and the routes.tsx composition-root
+      // `installApiAuth()` call are all deliberate here.
+      'unicorn/name-replacements': 'off',
+      'unicorn/consistent-class-member-order': 'off',
+      'unicorn/no-top-level-assignment-in-function': 'off',
+      'unicorn/prefer-await': 'off',
+      'unicorn/no-top-level-side-effects': 'off',
       'unicorn/filename-case': ['error', { cases: { camelCase: true, pascalCase: true } }],
       // Deviations from strict/stylistic-type-checked, recorded in ADR-0010: this codebase
       // models its domain with `type` unions, not interfaces; and interpolating a numeric

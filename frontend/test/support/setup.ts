@@ -25,5 +25,9 @@ if (!('IntersectionObserver' in globalThis)) {
       return [];
     }
   }
-  globalThis.IntersectionObserver = NoopIntersectionObserver;
+  Object.defineProperty(globalThis, 'IntersectionObserver', {
+    value: NoopIntersectionObserver,
+    configurable: true,
+    writable: true,
+  });
 }

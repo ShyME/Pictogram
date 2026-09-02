@@ -8,8 +8,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const relationship = (followedByViewer: boolean, followerCount = followedByViewer ? 1 : 0) =>
-  jsonResponse({ followerCount, followingCount: 0, followedByViewer });
+const relationship = (isFollowedByViewer: boolean, followerCount = isFollowedByViewer ? 1 : 0) =>
+  jsonResponse({ followerCount, followingCount: 0, followedByViewer: isFollowedByViewer });
 
 async function findEnabledButton(name: string) {
   const button = await screen.findByRole('button', { name });
@@ -42,8 +42,8 @@ test('shows Following when the viewer already follows the user', async () => {
 test('clicking Follow PUTs the follow and flips the label once the count reloads', async () => {
   const calls = stubFetch((request) => {
     if (request.method === 'PUT') return new Response(null, { status: 204 });
-    const followed = calls.some((c) => c.method === 'PUT');
-    return relationship(followed);
+    const isFollowed = calls.some((c) => c.method === 'PUT');
+    return relationship(isFollowed);
   });
   renderWithProviders(<FollowButton userId="u-1" />);
 
@@ -58,8 +58,8 @@ test('clicking Follow PUTs the follow and flips the label once the count reloads
 test('clicking Following DELETEs the follow', async () => {
   const calls = stubFetch((request) => {
     if (request.method === 'DELETE') return new Response(null, { status: 204 });
-    const unfollowed = calls.some((c) => c.method === 'DELETE');
-    return relationship(!unfollowed);
+    const isUnfollowed = calls.some((c) => c.method === 'DELETE');
+    return relationship(!isUnfollowed);
   });
   renderWithProviders(<FollowButton userId="u-1" />);
 

@@ -17,7 +17,7 @@ export const authMiddleware: Middleware = {
     const original = preFlight.get(request);
     preFlight.delete(request);
 
-    if (response.status !== 401 || !original) return response;
+    if (!original || response.status !== 401) return response;
 
     const token = await refreshAccessToken();
     if (!token) return response;
@@ -27,10 +27,10 @@ export const authMiddleware: Middleware = {
   },
 };
 
-let installed = false;
+let isInstalled = false;
 
 export function installApiAuth(): void {
-  if (installed) return;
+  if (isInstalled) return;
   api.use(authMiddleware);
-  installed = true;
+  isInstalled = true;
 }

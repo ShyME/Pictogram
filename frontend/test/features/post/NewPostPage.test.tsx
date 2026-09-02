@@ -51,12 +51,12 @@ test('starts on a file picker and moves to the cropper once a photo is chosen', 
 
 test("uploads the framed bytes, publishes with the caption, and lands on the author's profile", async () => {
   const calls = stubFetch((request) =>
-    pathOf(request) === '/api/media'
-      ? jsonResponse({ mediaId: 'm-9' }, 201)
-      : jsonResponse(
-          { postId: 'p-9', authorId: 'u-1', mediaId: 'm-9', caption: 'hello', publishedAt: 't' },
-          201,
-        ),
+    jsonResponse(
+      pathOf(request) === '/api/media'
+        ? { mediaId: 'm-9' }
+        : { postId: 'p-9', authorId: 'u-1', mediaId: 'm-9', caption: 'hello', publishedAt: 't' },
+      201,
+    ),
   );
   const { container } = renderComposer();
   pickAPhoto(container);

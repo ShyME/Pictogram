@@ -20,7 +20,7 @@ export function EditProfilePage() {
   const [bio, setBio] = useState(profile.bio ?? '');
   const [serverError, setServerError] = useState<ServerError | null>(null);
 
-  const shapeValid = isUsernameShapeValid(username);
+  const isShapeValid = isUsernameShapeValid(username);
   const isRenaming = username !== profile.username;
   const nameError = usernameError(username, serverError);
 
@@ -49,7 +49,7 @@ export function EditProfilePage() {
 
   function submit() {
     setServerError(null);
-    if (!shapeValid) return;
+    if (!isShapeValid) return;
     mutation.mutate({ username, displayName, bio });
   }
 
@@ -161,7 +161,7 @@ export function EditProfilePage() {
           <div className="mt-6 flex items-center gap-3">
             <button
               type="submit"
-              disabled={!shapeValid || mutation.isPending}
+              disabled={!isShapeValid || mutation.isPending}
               className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
               Save changes

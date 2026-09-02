@@ -12,6 +12,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const byText = (a: string, b: string) => a.localeCompare(b);
+
 test('fetchFollowRelationship maps the counts and viewer flag', async () => {
   stubFetch(() => jsonResponse({ followerCount: 3, followingCount: 1, followedByViewer: true }));
 
@@ -113,8 +115,8 @@ test('fetchFollowListPage composes the list with a profile batch and a relations
     nextCursor: 'CURSOR',
   });
 
-  expect(calls.map((request) => pathOf(request)).toSorted()).toEqual(
-    ['/api/follows', '/api/follows/u-1/followers', '/api/profiles'].toSorted(),
+  expect(calls.map((request) => pathOf(request)).toSorted(byText)).toEqual(
+    ['/api/follows', '/api/follows/u-1/followers', '/api/profiles'].toSorted(byText),
   );
 });
 
