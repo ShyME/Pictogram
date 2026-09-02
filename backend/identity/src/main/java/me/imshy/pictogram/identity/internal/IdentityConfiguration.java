@@ -7,8 +7,6 @@ import me.imshy.pictogram.identity.internal.accesstoken.AccessTokens;
 import me.imshy.pictogram.identity.internal.accesstoken.SigningKey;
 import me.imshy.pictogram.identity.internal.refreshtoken.RefreshTokenService;
 import me.imshy.pictogram.identity.internal.refreshtoken.RefreshTokens;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,23 +14,10 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.util.StringUtils;
 
 @Configuration
 @EnableConfigurationProperties(AuthProperties.class)
 class IdentityConfiguration {
-
-    private static final Log log = LogFactory.getLog(IdentityConfiguration.class);
-
-    @Bean
-    SigningKey accessTokenSigningKey(AuthProperties properties) {
-        if (StringUtils.hasText(properties.signingKey())) {
-            return SigningKey.fromJwkJson(properties.signingKey());
-        }
-        log.warn("pictogram.auth.signing-key is not set — generating a process-lifetime access-token "
-                + "key. Access tokens will not survive a restart; set the property in production.");
-        return SigningKey.generate();
-    }
 
     @Bean
     @Primary
