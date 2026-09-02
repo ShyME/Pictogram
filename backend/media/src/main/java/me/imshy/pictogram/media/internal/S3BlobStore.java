@@ -39,6 +39,8 @@ class S3BlobStore implements BlobStore {
         s3.deleteObject(request -> request.bucket(bucket).key(key));
     }
 
+    // Dev convenience only. A real deployment pre-creates the bucket and drops s3:CreateBucket
+    // from this role, so in prod the branch below never runs (ADR-0011 / SEC-8).
     private void ensureBucket() {
         if (bucketReady) {
             return;
