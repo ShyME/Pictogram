@@ -3,6 +3,23 @@
 Authenticates people and issues the tokens the rest of Pictogram trusts. It knows nothing
 about profiles, posts, or the social graph.
 
+## Published interface
+
+`PictogramAccessTokens.resolve(accessToken)` returns the `UserId` a Pictogram access token
+stands for, for in-process or future-extracted callers that need to trust a token without
+the HTTP resource-server chain (queries only — ADR-0002).
+
+Identity also contributes two Spring beans consumed at the composition root: the `JwtDecoder`
+that `:app`'s resource-server chain verifies `/api/**` bearer tokens with (ES256, identity's
+signing key — ADR-0004 #8), and the `IdentityProvider` seam that Google auth plugs into.
+
+## Events
+
+`UserRegistered` (`userId`, `email`, `registeredAt`) fires the first time a person
+authenticates. In v1 no context consumes it — `profile` is created by the onboarding step,
+not this event (CONTEXT-MAP.md) — so it is the module's forward contract for later consumers
+(a welcome email, analytics).
+
 ## Language
 
 **User**:
@@ -22,7 +39,7 @@ _Avoid_: Auth provider, IdP (in prose), broker
 
 **Access token**:
 A short-lived, Pictogram-issued token a client sends with each request. Signed by Pictogram
-(EdDSA), never a Google token.
+(ES256), never a Google token.
 _Avoid_: Bearer token, JWT (when the audience matters), session
 
 **Refresh token**:
