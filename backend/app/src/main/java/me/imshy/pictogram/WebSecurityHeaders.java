@@ -7,14 +7,16 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 final class WebSecurityHeaders {
 
     // Self-contained SPA: the Vite build emits only external, same-origin scripts and styles
-    // (frontend/dist/index.html carries no inline <script>), so script-src stays strict.
-    // style-src keeps 'unsafe-inline' as a margin for runtime style injection; img-src allows
-    // blob:/data: for the client-side crop preview (post/NewPostPage).
+    // (frontend/dist/index.html carries no inline <script>) and Tailwind v4 compiles to a
+    // static stylesheet, so script-src and style-src both stay strict — no 'unsafe-inline'.
+    // The one runtime-computed style, the crop image's position in SquareCropper, is written
+    // property-by-property on the element's style object, which style-src does not govern.
+    // img-src allows blob:/data: for the client-side crop preview (post/NewPostPage).
     private static final String CONTENT_SECURITY_POLICY = String.join(
             "; ",
             "default-src 'self'",
             "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",
+            "style-src 'self'",
             "img-src 'self' blob: data:",
             "font-src 'self'",
             "connect-src 'self'",

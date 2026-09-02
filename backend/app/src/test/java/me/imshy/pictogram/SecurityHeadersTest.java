@@ -44,6 +44,8 @@ class SecurityHeadersTest {
                 .hasValueSatisfying(csp -> assertThat(csp)
                         .contains("default-src 'self'")
                         .contains("script-src 'self'")
+                        .contains("style-src 'self'")
+                        .doesNotContain("'unsafe-inline'")
                         .contains("object-src 'none'")
                         .contains("frame-ancestors 'none'"));
         assertThat(headers.firstValue("Referrer-Policy")).hasValue("strict-origin-when-cross-origin");

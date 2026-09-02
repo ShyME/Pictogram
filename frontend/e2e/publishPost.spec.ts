@@ -18,6 +18,16 @@ test('publish a post: pick a photo, crop, caption, and see it in the grid', asyn
   const username = `e2e_post_${Date.now().toString(36)}`;
   const caption = `first light ${Date.now().toString(36)}`;
 
+  // The cropper positions the image via imperative style-property writes so that CSP
+  // style-src can stay 'self'. A style={} prop or setAttribute('style') would trip a
+  // violation here (reported as a console error) — see SquareCropper / WebSecurityHeaders.
+  const cspViolations: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /content security policy/i.test(message.text())) {
+      cspViolations.push(message.text());
+    }
+  });
+
   await login.open();
   await login.signInWithGoogle();
   await expect(page).toHaveURL(/\/onboarding$/);
@@ -31,6 +41,7 @@ test('publish a post: pick a photo, crop, caption, and see it in the grid', asyn
   await compose.selectPhoto(PHOTO);
   await expect(compose.zoom).toBeVisible();
   await compose.frameShot();
+  expect(cspViolations).toEqual([]);
 
   await compose.caption.fill(caption);
   await compose.share.click();
