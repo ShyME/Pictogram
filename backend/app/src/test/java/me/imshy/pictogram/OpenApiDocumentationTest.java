@@ -226,6 +226,42 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void likingAPostIsDocumentedAs204() {
+        JsonNode like = spec.at("/paths/~1api~1engagement~1likes~1{postId}/put/responses");
+
+        assertThat(like.has("204")).isTrue();
+        assertThat(like.has("200")).as("no phantom 200").isFalse();
+    }
+
+    @Test
+    void unlikingAPostIsDocumentedAs204() {
+        JsonNode unlike = spec.at("/paths/~1api~1engagement~1likes~1{postId}/delete/responses");
+
+        assertThat(unlike.has("204")).isTrue();
+        assertThat(unlike.has("200")).as("no phantom 200").isFalse();
+    }
+
+    @Test
+    void theBatchLikeReadIsDocumentedAsAnArrayOfRecordsNeedingAToken() {
+        JsonNode byIds = spec.at("/paths/~1api~1engagement~1likes/get/responses");
+
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
+                .isEqualTo("array");
+        String itemRef =
+                byIds.at("/200/content/application~1json/schema/items/$ref").asString();
+        JsonNode item = spec.at("/components/schemas/" + itemRef.substring("#/components/schemas/".length()));
+        assertThat(item.at("/properties/postId")).isNotEmpty();
+        assertThat(item.at("/properties/likeCount")).isNotEmpty();
+        assertThat(item.at("/properties/likedByViewer")).isNotEmpty();
+        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+        assertThat(byIds.at("/401/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 

@@ -23,3 +23,23 @@ _Avoid_: Reply, note, annotation, thread
 The user performing the like or unlike. Carried as a `ViewerId` so it is never confused
 with the post's author.
 _Avoid_: Current user, actor, me
+
+## Published interface
+
+`LikeCounts.of(ViewerId, Collection<PostId>)` — the like count and the viewer's own like
+state for every requested post, in one call (ADR-0005, no N+1). A post nobody has liked
+reads as `(id, 0, false)`; the batch never omits a requested id. Exposed over HTTP as
+`GET /api/engagement/likes?postIds=` plus `PUT`/`DELETE /api/engagement/likes/{postId}`.
+
+## Events
+
+`PostLiked` / `PostUnliked` fire only on a real state change — liking an already-liked
+post or unliking one that was never liked is a silent no-op. No context consumes them in
+v1; they are the module's forward contract (comment counts, notifications).
+
+## Rules
+
+At most one like per `(viewer, post)` — the DB unique constraint is what enforces it and
+makes a concurrent double-like idempotent. There is **no self-like rule**: liking your own
+post is allowed, because engagement has no notion of a post's author (contrast the
+self-follow guard in `follow`).
