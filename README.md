@@ -142,3 +142,7 @@ Formatting is machine-enforced — run `task format` before you push. IDE setup 
 
 `task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,
 `frontend`, `format`, `test`, `test:e2e`, `test:blackbox`, `logs`, `clean`.
+
+## License
+
+[MIT](./LICENSE).
