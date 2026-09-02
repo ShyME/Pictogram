@@ -10,15 +10,12 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import me.imshy.pictogram.SharedGoogle;
 import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
 import tools.jackson.databind.ObjectMapper;
 
 public final class InProcessDriver implements PictogramApi {
-
-    static final String ISSUER_ID = "google";
-    static final String CLIENT_ID = "pictogram-test";
-    static final String CLIENT_SECRET = "pictogram-test-secret";
 
     private final HttpPictogramApi api;
 
@@ -44,10 +41,10 @@ public final class InProcessDriver implements PictogramApi {
         @Override
         public String authenticate(String email) {
             google.enqueueCallback(new DefaultOAuth2TokenCallback(
-                    ISSUER_ID,
+                    SharedGoogle.ISSUER_ID,
                     UUID.randomUUID().toString(),
                     JOSEObjectType.JWT.getType(),
-                    List.of(CLIENT_ID),
+                    List.of(SharedGoogle.CLIENT_ID),
                     Map.of("email", email, "email_verified", true),
                     3600L));
 

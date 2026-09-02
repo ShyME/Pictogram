@@ -6,17 +6,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import me.imshy.pictogram.shared.http.ProblemType;
-import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@AppWebIntegrationTest
 class SpaDeepLinkTest {
 
     private static final String SPA_SHELL_MARKER = "<div id=\"root\">";
@@ -29,11 +23,6 @@ class SpaDeepLinkTest {
     @BeforeEach
     void bindProbe() {
         http = new HttpProbe("http://localhost:" + port);
-    }
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
     }
 
     @Test

@@ -13,44 +13,18 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
 import javax.imageio.ImageIO;
-import javax.sql.DataSource;
 import me.imshy.pictogram.shared.http.ProblemType;
-import me.imshy.pictogram.testsupport.DatabaseCleaner;
-import me.imshy.pictogram.testsupport.SharedMinio;
-import me.imshy.pictogram.testsupport.SharedPostgres;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(classes = PictogramApplication.class)
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@AppIntegrationTest
 class MediaApiTest {
 
     @Autowired
     MockMvc mvc;
-
-    @Autowired
-    DataSource dataSource;
-
-    @DynamicPropertySource
-    static void infra(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-        SharedMinio.registerTo(registry);
-    }
-
-    @AfterEach
-    void truncateAllTables() {
-        new DatabaseCleaner(dataSource).truncateAll();
-    }
 
     @Test
     void uploadingNeedsAToken() throws Exception {

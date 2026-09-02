@@ -13,11 +13,8 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import java.time.Instant;
 import java.util.UUID;
 import me.imshy.pictogram.identity.PictogramAccessTokens;
-import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -25,7 +22,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,9 +32,7 @@ class ResourceServerDecoderContractTest {
     private static final ECKey SIGNING_KEY = generateSigningKey();
     private static final String ARBITRARY_URI = "https://accounts.example.test/not-pictogram";
 
-    @SpringBootTest(classes = PictogramApplication.class)
-    @AutoConfigureMockMvc
-    @ActiveProfiles("test")
+    @AppIntegrationTest
     static class WithIssuerUri extends Fixture {
 
         @DynamicPropertySource
@@ -48,9 +42,7 @@ class ResourceServerDecoderContractTest {
         }
     }
 
-    @SpringBootTest(classes = PictogramApplication.class)
-    @AutoConfigureMockMvc
-    @ActiveProfiles("test")
+    @AppIntegrationTest
     static class WithJwkSetUri extends Fixture {
 
         @DynamicPropertySource
@@ -72,7 +64,6 @@ class ResourceServerDecoderContractTest {
         PictogramAccessTokens accessTokens;
 
         static void commonProperties(DynamicPropertyRegistry registry) {
-            SharedPostgres.registerTo(registry);
             registry.add("pictogram.auth.signing-key", SIGNING_KEY::toJSONString);
         }
 

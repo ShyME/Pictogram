@@ -7,19 +7,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@AppWebIntegrationTest
 class OpenApiContractTest {
 
     private static final Path SPEC_FILE = Path.of(System.getProperty("pictogram.openapi.file", "../openapi.json"));
@@ -31,11 +25,6 @@ class OpenApiContractTest {
 
     @LocalServerPort
     private int port;
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-    }
 
     @Test
     void committedSpecMatchesTheRunningApp() throws IOException {

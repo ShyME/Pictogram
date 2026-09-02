@@ -6,7 +6,6 @@ import me.imshy.pictogram.media.MediaCatalog;
 import me.imshy.pictogram.media.OrphanCollection;
 import me.imshy.pictogram.scenario.PictogramApi.Post;
 import me.imshy.pictogram.shared.MediaId;
-import me.imshy.pictogram.testsupport.SharedMinio;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -22,7 +21,6 @@ class OrphanMediaCollectionScenarioTest extends ScenarioTest {
 
     @DynamicPropertySource
     static void retention(DynamicPropertyRegistry registry) {
-        SharedMinio.registerTo(registry);
         registry.add("pictogram.media.retention.grace-period", () -> "0s");
     }
 

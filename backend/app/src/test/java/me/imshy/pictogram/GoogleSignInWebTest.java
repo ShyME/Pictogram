@@ -18,31 +18,18 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import me.imshy.pictogram.testsupport.SharedPostgres;
-import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@AppOAuthWebIntegrationTest
 class GoogleSignInWebTest {
 
-    private static final String ISSUER_ID = "google";
-    private static final String CLIENT_ID = "pictogram-test";
+    private static final String ISSUER_ID = SharedGoogle.ISSUER_ID;
+    private static final String CLIENT_ID = SharedGoogle.CLIENT_ID;
     private static final String REFRESH_COOKIE = "pictogram_refresh";
-    private static final MockOAuth2Server GOOGLE = new MockOAuth2Server();
-
-    static {
-        GOOGLE.start();
-    }
 
     @LocalServerPort
     int port;
@@ -50,26 +37,9 @@ class GoogleSignInWebTest {
     @Autowired
     JwtDecoder resourceServerJwtDecoder;
 
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-        registry.add("spring.security.oauth2.client.registration.google.client-id", () -> CLIENT_ID);
-        registry.add("spring.security.oauth2.client.registration.google.client-secret", () -> "pictogram-test-secret");
-        registry.add("spring.security.oauth2.client.registration.google.scope", () -> "openid,email");
-        registry.add(
-                "spring.security.oauth2.client.provider.google.issuer-uri",
-                () -> GOOGLE.issuerUrl(ISSUER_ID).toString());
-        registry.add("pictogram.auth.cookie-secure", () -> false);
-    }
-
-    @AfterAll
-    static void stopGoogle() {
-        GOOGLE.shutdown();
-    }
-
     @Test
     void signingInWithGoogleYieldsARefreshCookieRedeemableForAnAccessToken() throws Exception {
-        GOOGLE.enqueueCallback(googleUser("google-subject-web-1", "ada@example.com"));
+        SharedGoogle.INSTANCE.enqueueCallback(googleUser("google-subject-web-1", "ada@example.com"));
         var cookies = new CookieManager();
 
         signInThroughGoogle(cookies);
@@ -85,7 +55,7 @@ class GoogleSignInWebTest {
 
     @Test
     void replayingAConsumedRefreshCookieIsRejected() throws Exception {
-        GOOGLE.enqueueCallback(googleUser("google-subject-web-2", "grace@example.com"));
+        SharedGoogle.INSTANCE.enqueueCallback(googleUser("google-subject-web-2", "grace@example.com"));
         var cookies = new CookieManager();
         signInThroughGoogle(cookies);
         String presented = refreshCookie(cookies).orElseThrow();
@@ -102,7 +72,7 @@ class GoogleSignInWebTest {
 
     @Test
     void twoConcurrentRefreshesOfTheSameCookieKeepTheSessionAlive() throws Exception {
-        GOOGLE.enqueueCallback(googleUser("google-subject-web-3", "linus@example.com"));
+        SharedGoogle.INSTANCE.enqueueCallback(googleUser("google-subject-web-3", "linus@example.com"));
         var cookies = new CookieManager();
         signInThroughGoogle(cookies);
         String presented = refreshCookie(cookies).orElseThrow();
@@ -134,7 +104,7 @@ class GoogleSignInWebTest {
 
     @Test
     void anUnverifiedGoogleEmailEndsAtTheSignInErrorRouteWithNoSession() throws Exception {
-        GOOGLE.enqueueCallback(googleUserWithClaims(
+        SharedGoogle.INSTANCE.enqueueCallback(googleUserWithClaims(
                 "google-subject-web-unverified", Map.of("email", "unverified@example.com", "email_verified", false)));
         var cookies = new CookieManager();
 
@@ -152,7 +122,8 @@ class GoogleSignInWebTest {
 
     @Test
     void aGoogleResponseWithNoEmailClaimEndsAtTheSignInErrorRoute() throws Exception {
-        GOOGLE.enqueueCallback(googleUserWithClaims("google-subject-web-no-email", Map.of("email_verified", true)));
+        SharedGoogle.INSTANCE.enqueueCallback(
+                googleUserWithClaims("google-subject-web-no-email", Map.of("email_verified", true)));
         var cookies = new CookieManager();
 
         HttpResponse<Void> landing = browser(cookies)
@@ -182,7 +153,7 @@ class GoogleSignInWebTest {
 
     @Test
     void aSuccessfulSignInInvalidatesTheHandshakeServletSession() throws Exception {
-        GOOGLE.enqueueCallback(googleUser("google-subject-web-session", "hedy@example.com"));
+        SharedGoogle.INSTANCE.enqueueCallback(googleUser("google-subject-web-session", "hedy@example.com"));
         var cookies = new CookieManager();
 
         String handshakeSession = signInCapturingHandshakeSession(cookies);

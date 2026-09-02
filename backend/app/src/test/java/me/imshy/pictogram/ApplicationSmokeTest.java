@@ -2,27 +2,16 @@ package me.imshy.pictogram;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import me.imshy.pictogram.testsupport.SharedPostgres;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
 
-@SpringBootTest(classes = PictogramApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@AppWebIntegrationTest
 class ApplicationSmokeTest {
 
     @LocalServerPort
     int port;
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        SharedPostgres.registerTo(registry);
-    }
 
     @Test
     void livenessAndReadinessProbesReportUp() {

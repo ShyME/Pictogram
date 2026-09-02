@@ -3,17 +3,9 @@ package me.imshy.pictogram.scenario;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import me.imshy.pictogram.scenario.PictogramApi.Post;
-import me.imshy.pictogram.testsupport.SharedMinio;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 class PublishPostScenarioTest extends ScenarioTest {
-
-    @DynamicPropertySource
-    static void objectStorage(DynamicPropertyRegistry registry) {
-        SharedMinio.registerTo(registry);
-    }
 
     @Test
     void aUserUploadsAPhotoPublishesItWithACaptionAndSeesItOnTheirProfile() {
