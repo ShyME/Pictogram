@@ -66,34 +66,31 @@ Encoded in `RefreshCookieTest` and `SignInCompletionTest`.
   the default (`pictogram.auth.cookie-secure`), opted out of only on the plain-HTTP
   localhost stacks.
 - CSP is served on the app chains (`SEC-5`): `script-src 'self'` (the Vite build emits no
-  inline scripts), `style-src 'self' 'unsafe-inline'`, `img-src 'self' blob: data:`,
-  `object-src 'none'`, `frame-ancestors 'none'`, `form-action 'self'`, plus `Referrer-Policy`
-  and `Permissions-Policy`. The identity chains (`/api/auth/**`, `/oauth2/**`) do not yet
-  carry these headers — a follow-up.
+  inline scripts), `style-src 'self'` (no `'unsafe-inline'` — see decision 3),
+  `img-src 'self' blob: data:`, `object-src 'none'`, `frame-ancestors 'none'`,
+  `form-action 'self'`, plus `Referrer-Policy` and `Permissions-Policy`. The identity chains
+  (`/api/auth/**`, `/oauth2/**`) do not yet carry these headers — a follow-up.
 - If the SPA ever adds a cookie-authenticated, non-rotating mutation, or a same-site
   subdomain that could host it, revisit CSRF for the `/api/auth/**` chain specifically.
 
-## DECISION MADE — please confirm
+## Decisions
 
 The ticket owner's comments on #112 asked to *enable CSRF* and *add rate limiting*
-outright. This ADR implements the parts that are self-contained and low-risk
-(`SameSite=Strict`, security headers, the `prod` signing-key gate, the actuator bind guard)
-and asks for a decision on the rest:
+outright. This ADR implemented the self-contained, low-risk parts (`SameSite=Strict`,
+security headers, the `prod` signing-key gate, the actuator bind guard). The rest was
+carried into #123 and settled there:
 
-1. **CSRF** — recommendation: treat `SameSite=Strict` + the in-memory bearer token as the
-   CSRF defense for v1 and keep Spring's `CsrfFilter` off. If defense-in-depth on the
-   cookie endpoints is still wanted, the smallest version is a `CookieCsrfTokenRepository`
-   on the identity `/api/auth/**` chain only, with the SPA echoing `X-XSRF-TOKEN` on
-   `refresh` / `logout` — a dedicated follow-up ticket (backend + frontend + tests), not
-   part of #112. **Confirm: accept SameSite=Strict for v1, or schedule the follow-up?**
-2. **Rate limiting** — recommendation: enforce it at the edge (reverse proxy / platform),
-   which is where per-IP limits belong and which protects the process before a request
-   reaches the JVM. An in-app limiter (e.g. a bucket4j filter on `/api/auth/refresh` and
-   the OIDC start) would be a separate ticket with its own tuning and tests. **Confirm:
-   edge-only for v1, or also build the in-app limiter?**
-3. **CSP `style-src`** — kept `'unsafe-inline'` for styles (scripts are strict). Removing it
-   needs a nonce/hash pipeline in the Vite build. **Confirm `'unsafe-inline'` for styles is
-   acceptable for v1.**
-4. **Media bucket (`SEC-8`)** — documented only; there is no IaC to change. **Confirm the
-   provisioning runbook will pre-create the bucket and drop `s3:CreateBucket` from the
-   runtime role.**
+1. **CSRF** — `SameSite=Strict` + the in-memory bearer token is the CSRF defense for v1.
+   Defense-in-depth on the `/api/auth/**` chain (a `CookieCsrfTokenRepository` plus the SPA
+   echoing `X-XSRF-TOKEN` on `refresh` / `logout`) is scheduled as #125, to land before the
+   repo and app go public.
+2. **Rate limiting** — edge-only for v1: the reverse proxy / platform enforces per-IP
+   limits on the public unauthenticated surface, with the numbers recorded in the deploy
+   runbook. An in-app bucket4j limiter is deferred (#126) — picked up only if the deploy
+   target lacks an edge limiter or a concrete abuse pattern appears.
+3. **CSP `style-src`** — tightened to `'self'`; `'unsafe-inline'` is gone. The one
+   runtime-computed style (the crop image position in `SquareCropper`) is applied by
+   individual `style` property assignments, which `style-src` does not govern, so no
+   nonce/hash pipeline was needed. Pinned by `SecurityHeadersTest` and `publishPost.spec.ts`.
+4. **Media bucket (`SEC-8`)** — documented only; provisioning pre-creates the bucket and
+   withholds `s3:CreateBucket` from the runtime role.

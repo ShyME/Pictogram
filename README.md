@@ -160,15 +160,17 @@ merged tree already passed them on the PR, so re-running is wasted work.
 ### The `main`-push safety net depends on a branch-protection setting
 
 Skipping the full suites on the `main` push is only sound while **"Require branches to be
-up to date before merging"** stays enabled on the `main` branch-protection rule — that
-setting is what guarantees the merged tree is byte-identical to the one the PR gate tested.
-If it is ever unchecked, a PR can merge against a stale base and reach `main` with code
-that no full run ever saw; the `check` job is the floor that still runs in that case, but
-it deliberately skips Testcontainers and Playwright.
+up to date before merging"** is enforced on `main` — that is what guarantees the merged tree
+is byte-identical to the one the PR gate tested. Without it, a PR can merge against a stale
+base and reach `main` with code that no full run ever saw; the `check` job is the floor that
+still runs in that case, but it deliberately skips Testcontainers and Playwright.
 
-This setting cannot be read or enforced from the repository. A maintainer must confirm in
-**Settings → Branches → `main`** that "Require branches to be up to date before merging" is
-enabled (and keep it enabled).
+Branch protection and rulesets are **not available on this repository's plan** (free +
+private) — the API returns `403 "Upgrade to GitHub Pro or make this repository public"`. So
+today the guarantee rests on discipline (always rebase onto `main` before a rebase-merge)
+plus the `check` floor. When the repo goes public — branch protection is free for public
+repos — enable **Settings → Branches → `main` → "Require branches to be up to date before
+merging"** and this gap closes (tracked in #123).
 
 ## Before serving real traffic
 
