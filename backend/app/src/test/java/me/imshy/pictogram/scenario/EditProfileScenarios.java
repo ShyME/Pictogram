@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class EditProfileScenarioTest extends ScenarioTest {
+interface EditProfileScenarios extends PictogramScenario {
 
     @Test
-    void aRenameFreesTheOldHandleForAnotherUserAndBreaksTheOldLink() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aRenameFreesTheOldHandleForAnotherUserAndBreaksTheOldLink() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada", "Ada", "mathematician");
 
         var renamed = ada.editProfile("ada_lovelace", "Ada Lovelace", "Countess of Lovelace");
@@ -17,7 +17,7 @@ class EditProfileScenarioTest extends ScenarioTest {
         assertThat(renamed.bio()).isEqualTo("Countess of Lovelace");
 
         assertThat(ada.viewProfile("ada")).isEmpty();
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("ada", "Bob", null);
 
         assertThat(bob.viewProfile("ada"))
@@ -27,8 +27,8 @@ class EditProfileScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void aUserEditsEachFieldOfTheirProfile() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aUserEditsEachFieldOfTheirProfile() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada");
 
         ada.editProfile("ada", "Ada Lovelace", null);

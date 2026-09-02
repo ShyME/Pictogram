@@ -2,7 +2,6 @@ package me.imshy.pictogram.scenario;
 
 import com.nimbusds.jose.JOSEObjectType;
 import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -63,12 +62,9 @@ public final class InProcessDriver implements PictogramApi {
                 throw new IllegalStateException("Google sign-in redirect dance failed", e);
             }
 
-            return cookies.getCookieStore().getCookies().stream()
-                    .filter(cookie -> HttpPictogramApi.REFRESH_COOKIE.equals(cookie.getName()))
-                    .map(HttpCookie::getValue)
-                    .findFirst()
+            return ScenarioHttp.refreshCookie(cookies)
                     .orElseThrow(() -> new AssertionError(
-                            "No " + HttpPictogramApi.REFRESH_COOKIE + " cookie after the Google redirect dance"));
+                            "No " + ScenarioHttp.REFRESH_COOKIE + " cookie after the Google redirect dance"));
         }
     }
 }

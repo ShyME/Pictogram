@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
+/**
+ * The one scenario with no {@link ContainerDriver} twin: it drives {@code media}'s scheduled
+ * orphan sweep and a zero grace-period property directly, neither of which is HTTP-observable.
+ */
 class OrphanMediaCollectionScenarioTest extends ScenarioTest {
 
     @Autowired
@@ -26,7 +30,7 @@ class OrphanMediaCollectionScenarioTest extends ScenarioTest {
 
     @Test
     void sweepsTheNeverPostedAndTheDeletedPostsImageButKeepsTheLiveOne() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         var adaProfile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
 
         Post kept = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "the one that stays");

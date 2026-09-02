@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import me.imshy.pictogram.scenario.PictogramApi.Post;
 import org.junit.jupiter.api.Test;
 
-class PublishPostScenarioTest extends ScenarioTest {
+interface PublishPostScenarios extends PictogramScenario {
 
     @Test
-    void aUserUploadsAPhotoPublishesItWithACaptionAndSeesItOnTheirProfile() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aUserUploadsAPhotoPublishesItWithACaptionAndSeesItOnTheirProfile() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         var profile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
 
         String mediaId = ada.uploadPhoto(jpegPhoto());

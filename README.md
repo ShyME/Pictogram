@@ -100,17 +100,26 @@ cd backend && ./gradlew build    # backend + module-boundary check
 cd frontend && pnpm test         # frontend
 ```
 
-### Blackbox journeys
+### Blackbox tier
 
-Playwright drives the whole stack in containers (the `compose.mock-oauth.yaml` overlay
-stands in for Google). `main`-only in CI; run it locally with:
+The whole stack in containers (the `compose.mock-oauth.yaml` overlay stands in for Google),
+exercised two ways: the **`@Tag("blackbox")` backend scenarios** — every `*Scenarios` mixin
+that the in-process suite runs, re-run through `ContainerDriver` over HTTP against the built
+image — and the **Playwright journeys**. `main`-only in CI. A nondeterministic failure here
+is a defect to fix, never a retry: Playwright runs `retries: 0` and the Gradle suite has no
+retry.
 
 ```bash
-task test:e2e     # builds + starts the stack, runs the journeys, tears it down
+task test:blackbox   # both: builds + starts the stack, runs backend blackbox + Playwright, tears down
+task test:e2e        # Playwright only
 ```
 
-Or against a stack you keep running (`task up`), `cd frontend && pnpm test:e2e`
-(after `pnpm exec playwright install` once).
+Against a stack you keep running (`task up`):
+
+```bash
+cd backend  && ./gradlew build -PincludeBlackbox   # backend blackbox scenarios (PICTOGRAM_BASE_URL, default :8080)
+cd frontend && pnpm test:e2e                        # Playwright (after `pnpm exec playwright install` once)
+```
 
 ## Continuous integration
 
@@ -132,4 +141,4 @@ Formatting is machine-enforced — run `task format` before you push. IDE setup 
 ## Task reference
 
 `task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,
-`frontend`, `format`, `test`, `logs`, `clean`.
+`frontend`, `format`, `test`, `test:e2e`, `test:blackbox`, `logs`, `clean`.

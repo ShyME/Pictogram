@@ -108,6 +108,16 @@ tasks:
       - defer: docker compose down -v
       - pnpm test:e2e
 
+  test:blackbox:
+    desc: The full main-only tier — backend @Tag("blackbox") scenarios + Playwright journeys against the built image
+    env:
+      COMPOSE_FILE: compose.yaml:compose.mock-oauth.yaml
+    cmds:
+      - docker compose up --build -d --wait
+      - defer: docker compose down -v
+      - cd backend && ./gradlew build -PincludeBlackbox
+      - cd frontend && pnpm install && pnpm exec playwright install --with-deps chromium && pnpm test:e2e
+
   openapi:
     desc: Regenerate backend/openapi.json and the frontend's typed client from it
     cmds:

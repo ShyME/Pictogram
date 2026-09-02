@@ -88,9 +88,24 @@ Run configs under `.run/` (repo root):
   (`SharedMinio`) for the object store.
 - **Application smoke** — `ApplicationSmokeTest` boots the whole app and checks the health
   probes.
+- **Scenarios** — user-goal journeys in `app` test `scenario/`, each written once as a
+  `*Scenarios` mixin against the `PictogramApi` interface and run through two transports
+  (ADR-0007): `InProcessScenarioTest` (`@Tag("fast")`, full boot + `InProcessDriver`, every
+  build) and `BlackboxScenarioTest` (`@Tag("blackbox")`, `ContainerDriver` over the built
+  image, `main` only — see below). `OrphanMediaCollectionScenarioTest` is in-process only
+  (it drives a scheduled job, not an HTTP endpoint).
 
 For container reuse across local runs, put `testcontainers.reuse.enable=true` in
 `~/.testcontainers.properties`.
+
+### Blackbox scenarios locally
+
+`./gradlew build -PincludeBlackbox` swaps the tag filter to `@Tag("blackbox")` and runs
+`BlackboxScenarioTest` against `PICTOGRAM_BASE_URL` (default `http://localhost:8080`). It
+needs the container stack up — `task test:blackbox` from the repo root builds it, runs the
+backend blackbox scenarios and the Playwright journeys, and tears it down; or point it at a
+`task up` stack yourself. See the `scenario` package docs for how it stays isolated on the
+un-truncated container DB.
 
 ## OpenAPI
 
