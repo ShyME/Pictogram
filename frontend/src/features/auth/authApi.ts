@@ -36,6 +36,8 @@ async function runRefresh(): Promise<string | null> {
 }
 
 export async function signOut(): Promise<void> {
-  await api.POST('/api/auth/logout').catch(() => undefined);
+  await api.POST('/api/auth/logout').catch(() => {
+    // A failed logout call still clears the local token below.
+  });
   clearAccessToken();
 }

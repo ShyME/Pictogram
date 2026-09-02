@@ -1,6 +1,4 @@
-import type { FollowListMode } from '../followApi';
-
-export type { FollowListMode };
+export type { FollowListMode } from '../followApi';
 
 export type FollowListTarget = {
   userId: string;

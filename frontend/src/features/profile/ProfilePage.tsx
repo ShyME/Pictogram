@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import type { ProfilePageData } from './profileLoader';
+import type { profileLoader } from './profileLoader';
 
 function PageChrome({ children }: { children: ReactNode }) {
   return (
@@ -42,7 +42,7 @@ export function ProfilePage({
   renderFollowButton?: (followedUserId: string) => ReactNode;
   renderFollowCounts?: (followedUserId: string, handle: string) => ReactNode;
 } = {}) {
-  const data = useLoaderData() as ProfilePageData;
+  const data = useLoaderData<typeof profileLoader>();
 
   if (data.status === 'not-found') return <NotFound username={data.username} />;
 
@@ -67,16 +67,18 @@ export function ProfilePage({
                 >
                   Edit profile
                 </Link>
-              ) : !viewerCanFollow ? (
+              ) : viewerCanFollow ? (
+                renderFollowButton ? (
+                  renderFollowButton(profile.userId)
+                ) : (
+                  <button type="button" disabled className={followButtonClass}>
+                    Follow
+                  </button>
+                )
+              ) : (
                 <Link to="/login" className={followButtonClass}>
                   Follow
                 </Link>
-              ) : renderFollowButton ? (
-                renderFollowButton(profile.userId)
-              ) : (
-                <button type="button" disabled className={followButtonClass}>
-                  Follow
-                </button>
               )}
             </div>
 

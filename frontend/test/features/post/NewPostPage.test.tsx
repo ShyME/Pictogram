@@ -17,7 +17,7 @@ vi.mock('react-router', () => ({
 vi.mock('@features/post/cropper/SquareCropper', () => ({
   SquareCropper: ({ ref }: { ref: Ref<CropperHandle> }) => {
     useImperativeHandle(ref, () => ({
-      getCroppedBlob: async () => new Blob(['framed'], { type: 'image/jpeg' }),
+      getCroppedBlob: () => Promise.resolve(new Blob(['framed'], { type: 'image/jpeg' })),
     }));
     return <div data-testid="cropper" />;
   },
@@ -33,7 +33,8 @@ function renderComposer() {
 }
 
 function pickAPhoto(container: HTMLElement) {
-  const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+  const input = container.querySelector('input[type="file"]');
+  if (!input) throw new Error('file input not rendered');
   const file = new File(['bytes'], 'photo.png', { type: 'image/png' });
   fireEvent.change(input, { target: { files: [file] } });
 }
@@ -63,9 +64,11 @@ test("uploads the framed bytes, publishes with the caption, and lands on the aut
   fireEvent.change(screen.getByLabelText(/caption/i), { target: { value: 'hello' } });
   fireEvent.click(screen.getByRole('button', { name: /share/i }));
 
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/u/ada', { replace: true }));
-  expect(calls.map(pathOf)).toEqual(['/api/media', '/api/posts']);
-  const publishBody = await calls[1].clone().json();
+  await waitFor(() => {
+    expect(navigate).toHaveBeenCalledWith('/u/ada', { replace: true });
+  });
+  expect(calls.map((request) => pathOf(request))).toEqual(['/api/media', '/api/posts']);
+  const publishBody = (await calls[1].clone().json()) as unknown;
   expect(publishBody).toEqual({ mediaId: 'm-9', caption: 'hello' });
 });
 

@@ -24,7 +24,7 @@ export function FeedPage() {
   });
 
   const loadMore = () => {
-    if (feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
+    if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
   };
 
   const sentinel = useInfiniteScroll(loadMore);

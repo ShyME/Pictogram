@@ -101,7 +101,7 @@ test('fetchFollowListPage composes the list with a profile batch and a relations
     throw new Error(`unexpected ${url.pathname}`);
   });
 
-  await expect(fetchFollowListPage('followers', 'u-1', undefined)).resolves.toEqual({
+  await expect(fetchFollowListPage('followers', 'u-1')).resolves.toEqual({
     accounts: [
       { userId: 'u-9', username: 'ada', displayName: null },
       { userId: 'u-3', username: 'carol', displayName: 'Carol' },
@@ -113,8 +113,8 @@ test('fetchFollowListPage composes the list with a profile batch and a relations
     nextCursor: 'CURSOR',
   });
 
-  expect(calls.map(pathOf).sort()).toEqual(
-    ['/api/follows', '/api/follows/u-1/followers', '/api/profiles'].sort(),
+  expect(calls.map((request) => pathOf(request)).toSorted()).toEqual(
+    ['/api/follows', '/api/follows/u-1/followers', '/api/profiles'].toSorted(),
   );
 });
 
@@ -143,7 +143,7 @@ test('fetchFollowListPage makes no batch calls for an empty page', async () => {
 
   const page = await fetchFollowListPage('followers', 'u-1');
   expect(page).toEqual({ accounts: [], relationships: [], nextCursor: null });
-  expect(calls.map(pathOf)).toEqual(['/api/follows/u-1/followers']);
+  expect(calls.map((request) => pathOf(request))).toEqual(['/api/follows/u-1/followers']);
 });
 
 test('followUser throws when the write fails', async () => {

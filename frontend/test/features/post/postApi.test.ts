@@ -60,7 +60,7 @@ test('publishPost omits a blank caption from the request body', async () => {
     return jsonResponse({ postId: 'p-1', mediaId: 'm-1', publishedAt: 't' }, 201);
   });
 
-  await publishPost({ mediaId: 'm-1', caption: '   ' });
+  await publishPost({ mediaId: 'm-1', caption: ' '.repeat(3) });
 
   expect(sentBody).toEqual({ mediaId: 'm-1' });
 });

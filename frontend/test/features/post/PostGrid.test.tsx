@@ -67,7 +67,8 @@ test('the owner deletes a post after confirming, then the grid refetches', async
   fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
   expect(await screen.findByText('No posts yet')).toBeInTheDocument();
-  const del = calls.find((c) => c.method === 'DELETE')!;
+  const del = calls.find((c) => c.method === 'DELETE');
+  if (!del) throw new Error('expected a DELETE request');
   expect(pathOf(del)).toBe('/api/posts/p-1');
 });
 

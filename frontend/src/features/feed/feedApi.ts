@@ -11,7 +11,7 @@ export async function fetchFeedPage(cursor?: string): Promise<FeedPostPage> {
   if (!data) throw new Error(`Feed request failed: ${response.status}`);
 
   return {
-    posts: (data.items ?? []).map(toFeedPost),
+    posts: (data.items ?? []).map((item) => toFeedPost(item)),
     nextCursor: data.nextCursor ?? null,
   };
 }

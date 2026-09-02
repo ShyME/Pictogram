@@ -1,4 +1,4 @@
-import { api, problemSlug } from '@shared';
+import { api, type components, problemSlug } from '@shared';
 import { type Profile, toProfile } from './profile';
 
 export type MyProfile =
@@ -33,7 +33,10 @@ async function anonymousProfileLookup(username: string): Promise<ProfileLookup> 
     headers: { Accept: 'application/json' },
   });
   if (response.ok) {
-    return { status: 'found', profile: toProfile(await response.json()) };
+    return {
+      status: 'found',
+      profile: toProfile((await response.json()) as components['schemas']['ProfileView']),
+    };
   }
   if (response.status === 404) return { status: 'not-found' };
   throw new Error(`Unexpected /api/profiles/${username} response: ${response.status}`);
@@ -106,5 +109,5 @@ function fieldError(error: unknown): ProfileFieldError | null {
 
 function emptyToUndefined(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
+  return trimmed === '' ? undefined : trimmed;
 }

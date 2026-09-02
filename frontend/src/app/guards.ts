@@ -5,9 +5,9 @@ const asLoader =
   async (): Promise<T | Response> => {
     try {
       return await load();
-    } catch (thrown) {
-      if (thrown instanceof Response) return thrown;
-      throw thrown;
+    } catch (error) {
+      if (error instanceof Response) return error;
+      throw error;
     }
   };
 

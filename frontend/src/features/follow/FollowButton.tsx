@@ -24,7 +24,9 @@ export function FollowButton({ userId }: { userId: string }) {
         type="button"
         aria-pressed={following}
         disabled={busy}
-        onClick={() => toggle.mutate()}
+        onClick={() => {
+          toggle.mutate();
+        }}
         className={
           following
             ? 'rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50'

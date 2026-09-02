@@ -13,7 +13,9 @@ const relationship = (followedByViewer: boolean, followerCount = followedByViewe
 
 async function findEnabledButton(name: string) {
   const button = await screen.findByRole('button', { name });
-  await waitFor(() => expect(button).toBeEnabled());
+  await waitFor(() => {
+    expect(button).toBeEnabled();
+  });
   return button;
 }
 
@@ -48,7 +50,8 @@ test('clicking Follow PUTs the follow and flips the label once the count reloads
   fireEvent.click(await findEnabledButton('Follow'));
 
   expect(await screen.findByRole('button', { name: 'Following' })).toBeInTheDocument();
-  const put = calls.find((c) => c.method === 'PUT')!;
+  const put = calls.find((c) => c.method === 'PUT');
+  if (!put) throw new Error('expected a PUT request');
   expect(pathOf(put)).toBe('/api/follows/u-1');
 });
 
@@ -75,5 +78,7 @@ test('surfaces an error when the follow write fails', async () => {
 
   fireEvent.click(await findEnabledButton('Follow'));
 
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/didn.t work/i));
+  await waitFor(() => {
+    expect(screen.getByRole('alert')).toHaveTextContent(/didn.t work/i);
+  });
 });

@@ -24,5 +24,5 @@ test('ends the session and returns to /login', async () => {
   await waitFor(() => {
     expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
   });
-  expect(calls.map(pathOf)).toContain('/api/auth/logout');
+  expect(calls.map((request) => pathOf(request))).toContain('/api/auth/logout');
 });

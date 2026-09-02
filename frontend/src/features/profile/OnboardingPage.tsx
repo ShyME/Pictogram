@@ -25,7 +25,7 @@ export function OnboardingPage() {
       switch (outcome.status) {
         case 'created':
         case 'already-onboarded':
-          navigate('/', { replace: true });
+          void navigate('/', { replace: true });
           break;
         case 'username-taken':
           setServerError('username-taken');
@@ -98,7 +98,9 @@ export function OnboardingPage() {
             id={`${usernameFieldId}-display`}
             name="displayName"
             value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            onChange={(event) => {
+              setDisplayName(event.target.value);
+            }}
             maxLength={50}
             className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
           />
@@ -115,7 +117,9 @@ export function OnboardingPage() {
             id={`${usernameFieldId}-bio`}
             name="bio"
             value={bio}
-            onChange={(event) => setBio(event.target.value)}
+            onChange={(event) => {
+              setBio(event.target.value);
+            }}
             maxLength={160}
             rows={3}
             className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"

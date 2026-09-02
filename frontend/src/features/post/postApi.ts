@@ -60,7 +60,7 @@ export async function fetchPostsByAuthor(authorId: string, cursor?: string): Pro
   if (!data) throw new Error(`Post grid request failed: ${response.status}`);
 
   return {
-    posts: (data.items ?? []).map(toPost),
+    posts: (data.items ?? []).map((item) => toPost(item)),
     nextCursor: data.nextCursor ?? null,
   };
 }
