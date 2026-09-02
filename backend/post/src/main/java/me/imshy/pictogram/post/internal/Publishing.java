@@ -1,7 +1,6 @@
 package me.imshy.pictogram.post.internal;
 
 import java.time.Clock;
-import java.util.Optional;
 import me.imshy.pictogram.media.MediaCatalog;
 import me.imshy.pictogram.post.PostPublished;
 import me.imshy.pictogram.shared.MediaId;
@@ -27,8 +26,7 @@ public class Publishing {
     public PostView publish(UserId author, MediaId mediaId, String caption) {
         Caption text = Caption.of(caption);
 
-        Optional<UserId> owner = media.ownerOf(mediaId);
-        if (owner.isEmpty() || !owner.get().equals(author)) {
+        if (media.ownerOf(mediaId).filter(author::equals).isEmpty()) {
             throw new UnusableMediaException();
         }
 

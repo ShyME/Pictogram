@@ -1,5 +1,7 @@
 plugins {
+    java
     id("com.diffplug.spotless")
+    id("io.github.andygoossens.modernizer")
 }
 
 spotless {
@@ -12,4 +14,10 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+}
+
+modernizer {
+    failOnViolations = true
+    includeTestClasses = true
+    javaVersion = "25"
 }

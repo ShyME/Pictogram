@@ -17,8 +17,10 @@ formatter: remove unused imports, order imports, format annotations, trim traili
 whitespace, end with newline.
 
 **Modernisation linter: gradle-modernizer-plugin.** Bytecode-based, flags use of outdated
-APIs where a JDK equivalent exists. Runs as part of `check` with `failOnViolations = false`
-initially, target Java 25, including test classes.
+APIs where a JDK equivalent exists. Runs as part of `check`, target Java 25, including test
+classes. Gating (`failOnViolations = true`) from adoption: the backlog was a single
+`Optional.get()` in `post`, fixed in the adopting change, so there was nothing to clear over
+follow-ups.
 
 The `getLast()`-style hints that motivated this are IntelliJ *inspections*; no plain linter
 reproduces them. **OpenRewrite** with a curated recipe list would (its `SequencedCollection`
@@ -76,4 +78,5 @@ backlog is cleared.
   conflict in formatted code, not a silent runtime footgun.
 - Promoting either linter from advisory to gating is a follow-up decision, made once its
   backlog count is known — small backlog: clear it in the adopting PR and gate immediately;
-  large: clear over follow-ups, then flip.
+  large: clear over follow-ups, then flip. Modernizer's backlog was one violation, so it
+  gates from adoption.
