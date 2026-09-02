@@ -10,7 +10,7 @@ that routes a visitor by `GET /api/profiles/me`, `/onboarding`, and the (empty) 
 pnpm install          # Node >= 24 (see .nvmrc); pnpm via corepack
 pnpm dev              # dev server
 pnpm build            # tsc -b && vite build
-pnpm lint             # eslint, incl. slice-boundary enforcement
+pnpm lint             # eslint: slice boundaries + type-aware strict/unicorn (advisory)
 pnpm test             # vitest run
 pnpm typecheck        # tsc -b --noEmit
 pnpm generate:api     # regenerate src/shared/api/schema.d.ts from ../backend/openapi.json
