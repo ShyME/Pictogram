@@ -1,5 +1,8 @@
 # Cross-module integration: events as contract, published-interface queries, no broker
 
+- **Status:** Accepted
+- **Relates to:** ADR-0003 (feed uses the query path), ADR-0009 (schema per module, no cross-schema FKs)
+
 Modules must stay decoupled, but v1 has almost no genuine cross-context reactions. We are
 integrating modules two ways: **Spring Modulith application events** for state-change
 notifications (each module's forward-facing public contract), and **synchronous calls to

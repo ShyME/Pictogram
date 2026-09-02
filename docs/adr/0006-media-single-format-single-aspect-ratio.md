@@ -1,5 +1,8 @@
 # Media: one format, one aspect ratio, backend-authoritative transcode
 
+- **Status:** Accepted
+- **Relates to:** ADR-0009 (the `Media` row lives in Postgres; the bytes live in MinIO)
+
 Every uploaded image is re-encoded **server-side** to JPEG at a fixed square size, plus a
 square thumbnail. The client may crop (to let the user choose what lands in the square) and
 may downscale a very large photo before upload to save bandwidth, but the backend is the

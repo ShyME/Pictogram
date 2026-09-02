@@ -1,5 +1,8 @@
 # Modular monolith with Spring Modulith
 
+- **Status:** Accepted
+- **Relates to:** ADR-0007 (all work is test-first)
+
 Pictogram is a portfolio project for practising DDD and TDD, and we want strong module
 isolation now plus a credible path to microservices later without paying for distribution
 today. We are building a **single Spring Boot deployable** with one Gradle subproject per
