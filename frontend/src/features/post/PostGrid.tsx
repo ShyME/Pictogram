@@ -1,23 +1,41 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useId, useState } from 'react';
+import {
+  type QueryClient,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { type ReactNode, useId, useState } from 'react';
 import type { Post } from './post';
 import { thumbnailUrl } from './post';
 import { deletePost, fetchPostsByAuthor } from './postApi';
+import { PostDetailDialog } from './PostDetailDialog';
 import { postsByAuthorKey } from './queryKeys';
 
 export function PostGrid({
   authorId,
   manageable = false,
+  renderLike,
+  preloadLikes,
 }: {
   authorId: string;
   manageable?: boolean;
+  renderLike?: (postId: string) => ReactNode;
+  preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
 }) {
   const queryClient = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
+  const [openPost, setOpenPost] = useState<Post | null>(null);
 
   const grid = useInfiniteQuery({
     queryKey: postsByAuthorKey(authorId),
-    queryFn: ({ pageParam }) => fetchPostsByAuthor(authorId, pageParam),
+    queryFn: async ({ pageParam }) => {
+      const page = await fetchPostsByAuthor(authorId, pageParam);
+      await preloadLikes?.(
+        queryClient,
+        page.posts.map((post) => post.postId),
+      );
+      return page;
+    },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
@@ -53,12 +71,20 @@ export function PostGrid({
       <ul className="grid grid-cols-3 gap-1">
         {posts.map((post) => (
           <li key={post.postId} className="group relative">
-            <img
-              src={thumbnailUrl(post.mediaId)}
-              alt={post.caption ?? 'A post'}
-              loading="lazy"
-              className="aspect-square w-full rounded-sm object-cover"
-            />
+            <button
+              type="button"
+              onClick={() => {
+                setOpenPost(post);
+              }}
+              className="block w-full"
+            >
+              <img
+                src={thumbnailUrl(post.mediaId)}
+                alt={post.caption ?? 'A post'}
+                loading="lazy"
+                className="aspect-square w-full rounded-sm object-cover"
+              />
+            </button>
             {manageable && (
               <button
                 type="button"
@@ -86,6 +112,16 @@ export function PostGrid({
             {grid.isFetchingNextPage ? 'Loading…' : 'Load more'}
           </button>
         </div>
+      )}
+
+      {openPost && (
+        <PostDetailDialog
+          post={openPost}
+          renderLike={renderLike}
+          onClose={() => {
+            setOpenPost(null);
+          }}
+        />
       )}
 
       {manageable && pendingDelete && (

@@ -1,5 +1,5 @@
 import { SessionExpiredError } from '@shared';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { type QueryClient, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router';
 import { fetchFeedPage } from './feedApi';
@@ -11,12 +11,24 @@ function FeedShell({ children }: { children: ReactNode }) {
   return <main className="mx-auto min-h-dvh max-w-xl px-4 py-8">{children}</main>;
 }
 
-export function FeedPage() {
+export function FeedPage({
+  renderLike,
+  preloadLikes,
+}: {
+  renderLike?: (postId: string) => ReactNode;
+  preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
+} = {}) {
+  const queryClient = useQueryClient();
   const feed = useInfiniteQuery({
     queryKey: feedKey(),
     queryFn: async ({ pageParam }) => {
       const page = await fetchFeedPage(pageParam);
-      return { cards: await toFeedCards(page.posts), nextCursor: page.nextCursor };
+      const cards = await toFeedCards(page.posts);
+      await preloadLikes?.(
+        queryClient,
+        cards.map((card) => card.postId),
+      );
+      return { cards, nextCursor: page.nextCursor };
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -67,7 +79,7 @@ export function FeedPage() {
     <FeedShell>
       <div className="space-y-6">
         {cards.map((card) => (
-          <FeedCardView key={card.postId} card={card} />
+          <FeedCardView key={card.postId} card={card} renderLike={renderLike} />
         ))}
       </div>
 

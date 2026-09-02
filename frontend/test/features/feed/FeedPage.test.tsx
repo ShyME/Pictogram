@@ -74,6 +74,39 @@ test('renders a card per post with the author and a relative timestamp', async (
   expect(within(articles[0]).getByText(/a caption/)).toBeInTheDocument();
 });
 
+test('renders the injected like control per card and preloads every post id in one pass', async () => {
+  stubFetch((request) =>
+    jsonResponse(
+      pathOf(request) === '/api/feed'
+        ? { items: [card({ postId: 'p-1' }), card({ postId: 'p-2' })], nextCursor: null }
+        : [{ userId: 'u-1', username: 'ada', displayName: 'Ada' }],
+    ),
+  );
+  const preloaded: string[][] = [];
+  renderWithProviders(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <FeedPage
+              renderLike={(postId) => <button type="button">heart {postId}</button>}
+              preloadLikes={(_client, postIds) => {
+                preloaded.push(postIds);
+                return Promise.resolve();
+              }}
+            />
+          }
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(await screen.findByRole('button', { name: 'heart p-1' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'heart p-2' })).toBeInTheDocument();
+  expect(preloaded).toEqual([['p-1', 'p-2']]);
+});
+
 test('loads the next page on demand', async () => {
   stubFetch((request) => {
     if (pathOf(request) === '/api/profiles') {

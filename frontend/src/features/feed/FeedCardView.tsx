@@ -1,8 +1,15 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { FeedCard } from './feed';
 import { relativeTime } from './relativeTime';
 
-export function FeedCardView({ card }: { card: FeedCard }) {
+export function FeedCardView({
+  card,
+  renderLike,
+}: {
+  card: FeedCard;
+  renderLike?: (postId: string) => ReactNode;
+}) {
   const handle = card.author.username;
   const name = card.author.displayName;
 
@@ -34,17 +41,7 @@ export function FeedCardView({ card }: { card: FeedCard }) {
       />
 
       <div className="flex items-center gap-2 px-4 pb-1 pt-3 text-neutral-400">
-        <svg
-          viewBox="0 0 24 24"
-          className="size-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
-        </svg>
-        <span className="text-sm">0 likes</span>
+        {renderLike?.(card.postId)}
       </div>
 
       {card.caption && (

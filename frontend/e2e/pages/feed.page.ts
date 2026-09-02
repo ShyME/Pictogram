@@ -20,6 +20,10 @@ export class FeedPage {
     await this.page.goto('/');
   }
 
+  cardByCaption(caption: string): Locator {
+    return this.cards.filter({ hasText: caption });
+  }
+
   myProfileLink(username: string): Locator {
     return this.page.getByRole('link', { name: `@${username}` });
   }
