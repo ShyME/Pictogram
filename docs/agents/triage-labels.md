@@ -2,6 +2,8 @@
 
 The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label strings used in this repo's issue tracker.
 
+> "The skills" here means the maintainer's local Claude Code tooling, not part of this repo. This file is just the label vocabulary that tooling expects.
+
 | Label in mattpocock/skills | Label in our tracker | Meaning                                  |
 | -------------------------- | -------------------- | ---------------------------------------- |
 | `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |

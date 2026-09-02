@@ -2,6 +2,10 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
+> The slash-commands named here (`/domain-modeling`, `/grill-with-docs`, …) are the
+> maintainer's local Claude Code tooling, not part of this repo. What matters to a reader is
+> the documents they produce and the conventions below.
+
 ## Before exploring, read these
 
 Pictogram is a **multi-context** repo.
@@ -40,4 +44,4 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders), but worth reopening because…_
+> _Contradicts ADR-0003 (feed is fan-out-on-read), but worth reopening because…_

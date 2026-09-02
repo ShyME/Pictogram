@@ -2,6 +2,10 @@
 
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+> The slash-commands named in this file (`/triage`, `/wayfinder`, …) are the maintainer's
+> local Claude Code tooling, not part of this repo. The `gh` conventions they rely on are
+> what this document pins down.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
