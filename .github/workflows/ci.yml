@@ -33,9 +33,9 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@v6
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # Testcontainers pulls postgres + minio cold on every fresh runner (~20-40s). Cache a
       # `docker save` of both, keyed on the SharedPostgres / SharedMinio sources that pin the
@@ -131,7 +131,7 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - uses: ./.github/actions/setup-frontend
 
       - name: Install Playwright browser
