@@ -11,9 +11,9 @@ async function redirectFrom(gate: Promise<unknown>): Promise<string | null> {
   try {
     await gate;
     throw new Error('expected the gate to redirect');
-  } catch (thrown) {
-    if (thrown instanceof Response) return thrown.headers.get('Location');
-    throw thrown;
+  } catch (error) {
+    if (error instanceof Response) return error.headers.get('Location');
+    throw error;
   }
 }
 

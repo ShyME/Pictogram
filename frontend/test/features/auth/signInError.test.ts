@@ -2,6 +2,7 @@ import { signInErrorMessage } from '@features/auth/signInError';
 
 test('no reason -> no message', () => {
   expect(signInErrorMessage(null)).toBeNull();
+  // eslint-disable-next-line unicorn/no-useless-undefined -- the parameter is required; this covers the undefined branch
   expect(signInErrorMessage(undefined)).toBeNull();
   expect(signInErrorMessage('')).toBeNull();
 });

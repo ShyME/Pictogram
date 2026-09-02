@@ -26,7 +26,9 @@ export function NewPostPage({
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
   }, [file]);
 
   const publish = useMutation({
@@ -38,8 +40,8 @@ export function NewPostPage({
     },
     onSuccess: (outcome) => {
       if (outcome.status === 'published') {
-        queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
-        navigate(`/u/${profileUsername}`, { replace: true });
+        void queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
+        void navigate(`/u/${profileUsername}`, { replace: true });
       }
     },
   });
@@ -70,13 +72,7 @@ export function NewPostPage({
       <main className="mx-auto max-w-md px-4 py-8">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-900">New post</h1>
 
-        {!file ? (
-          <label className="mt-6 flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 bg-white text-sm text-neutral-500 hover:border-neutral-400">
-            <span className="text-base font-medium text-neutral-700">Select a photo</span>
-            <span>It&rsquo;ll be cropped to a square.</span>
-            <input type="file" accept="image/*" onChange={onPickFile} className="sr-only" />
-          </label>
-        ) : (
+        {file ? (
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -97,7 +93,9 @@ export function NewPostPage({
                 id={captionFieldId}
                 name="caption"
                 value={caption}
-                onChange={(event) => setCaption(event.target.value)}
+                onChange={(event) => {
+                  setCaption(event.target.value);
+                }}
                 rows={3}
                 className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none aria-[invalid=true]:border-red-500"
                 aria-invalid={!captionValid}
@@ -145,6 +143,12 @@ export function NewPostPage({
               </button>
             </div>
           </form>
+        ) : (
+          <label className="mt-6 flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 bg-white text-sm text-neutral-500 hover:border-neutral-400">
+            <span className="text-base font-medium text-neutral-700">Select a photo</span>
+            <span>It&rsquo;ll be cropped to a square.</span>
+            <input type="file" accept="image/*" onChange={onPickFile} className="sr-only" />
+          </label>
         )}
       </main>
     </div>

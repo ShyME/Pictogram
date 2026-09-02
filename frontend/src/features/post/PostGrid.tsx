@@ -79,7 +79,7 @@ export function PostGrid({
         <div className="mt-4 text-center">
           <button
             type="button"
-            onClick={() => grid.fetchNextPage()}
+            onClick={() => void grid.fetchNextPage()}
             disabled={grid.isFetchingNextPage}
             className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
           >
@@ -92,8 +92,12 @@ export function PostGrid({
         <ConfirmDelete
           deleting={remove.isPending}
           failed={remove.isError}
-          onConfirm={() => remove.mutate(pendingDelete)}
-          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => {
+            remove.mutate(pendingDelete);
+          }}
+          onCancel={() => {
+            setPendingDelete(null);
+          }}
         />
       )}
     </>

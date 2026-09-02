@@ -24,7 +24,7 @@ test('clampCrop keeps the window inside the image', () => {
 });
 
 test('clampCrop refuses to zoom past the frame or past MAX_ZOOM', () => {
-  const tooBig = clampCrop({ x: 0, y: 0, size: 99999 }, landscape);
+  const tooBig = clampCrop({ x: 0, y: 0, size: 99_999 }, landscape);
   expect(tooBig.size).toBe(1200);
 
   const tooSmall = clampCrop({ x: 0, y: 0, size: 1 }, landscape);
@@ -46,6 +46,6 @@ test('panCrop converts a screen drag into image pixels and re-clamps', () => {
   const panned = panCrop(start, 30, 0, 300, landscape);
   expect(panned.x).toBe(440);
 
-  expect(panCrop(start, 100000, 0, 300, landscape).x).toBe(0);
-  expect(panCrop(start, -100000, 0, 300, landscape).x).toBe(landscape.width - 600);
+  expect(panCrop(start, 100_000, 0, 300, landscape).x).toBe(0);
+  expect(panCrop(start, -100_000, 0, 300, landscape).x).toBe(landscape.width - 600);
 });

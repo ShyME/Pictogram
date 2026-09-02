@@ -20,8 +20,8 @@ export async function followListLoader({
       target: { userId: lookup.profile.userId, username: lookup.profile.username },
       viewerId: viewer.userId,
     };
-  } catch (thrown) {
-    if (thrown instanceof Response) return thrown;
-    throw thrown;
+  } catch (error) {
+    if (error instanceof Response) return error;
+    throw error;
   }
 }

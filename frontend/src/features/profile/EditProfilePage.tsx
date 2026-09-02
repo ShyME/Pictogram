@@ -10,7 +10,7 @@ export type EditProfileData = { profile: Profile };
 type ServerError = 'username-shape' | 'username-taken' | 'details';
 
 export function EditProfilePage() {
-  const { profile } = useLoaderData() as EditProfileData;
+  const { profile } = useLoaderData<EditProfileData>();
   const navigate = useNavigate();
   const fieldId = useId();
   const usernameErrorId = useId();
@@ -29,10 +29,10 @@ export function EditProfilePage() {
     onSuccess: (outcome) => {
       switch (outcome.status) {
         case 'updated':
-          navigate(`/u/${outcome.profile.username}`, { replace: true });
+          void navigate(`/u/${outcome.profile.username}`, { replace: true });
           break;
         case 'not-onboarded':
-          navigate('/onboarding', { replace: true });
+          void navigate('/onboarding', { replace: true });
           break;
         case 'username-taken':
           setServerError('username-taken');
@@ -119,7 +119,9 @@ export function EditProfilePage() {
               id={`${fieldId}-display`}
               name="displayName"
               value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
+              onChange={(event) => {
+                setDisplayName(event.target.value);
+              }}
               maxLength={50}
               className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
             />
@@ -136,7 +138,9 @@ export function EditProfilePage() {
               id={`${fieldId}-bio`}
               name="bio"
               value={bio}
-              onChange={(event) => setBio(event.target.value)}
+              onChange={(event) => {
+                setBio(event.target.value);
+              }}
               maxLength={160}
               rows={3}
               className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"

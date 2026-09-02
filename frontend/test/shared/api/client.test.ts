@@ -13,7 +13,7 @@ test('reads GET /api/profiles/me through the generated client', async () => {
   const stubFetch: typeof fetch = (input) => {
     requests.push(input as Request);
     return Promise.resolve(
-      new Response(JSON.stringify(profile), {
+      Response.json(profile, {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }),

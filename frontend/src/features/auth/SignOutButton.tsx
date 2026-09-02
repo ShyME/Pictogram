@@ -12,13 +12,13 @@ export function SignOutButton() {
     setSigningOut(true);
     await signOut();
     queryClient.clear();
-    navigate('/login', { replace: true });
+    await navigate('/login', { replace: true });
   }
 
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => void handleClick()}
       disabled={signingOut}
       className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 disabled:opacity-50"
     >

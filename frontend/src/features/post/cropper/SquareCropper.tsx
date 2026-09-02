@@ -36,12 +36,16 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
   useLayoutEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
-    const measure = () => setFrameSize(frame.clientWidth);
+    const measure = () => {
+      setFrameSize(frame.clientWidth);
+    };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   useImperativeHandle(
@@ -70,7 +74,10 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
 
         return await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
-            (blob) => (blob ? resolve(blob) : reject(new Error('Could not read the crop.'))),
+            (blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Could not read the crop.'));
+            },
             'image/jpeg',
             0.9,
           );

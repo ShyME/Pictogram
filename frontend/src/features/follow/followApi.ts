@@ -1,4 +1,4 @@
-import { api } from '@shared';
+import { api, type components } from '@shared';
 import { type Account, toAccount } from './account';
 import { type FollowRelationship, toFollowRelationship } from './follow';
 
@@ -18,7 +18,9 @@ async function anonymousFollowRelationship(userId: string): Promise<FollowRelati
   if (!response.ok) {
     throw new Error(`Unexpected /api/follows/${userId} response: ${response.status}`);
   }
-  return toFollowRelationship(await response.json());
+  return toFollowRelationship(
+    (await response.json()) as components['schemas']['FollowRelationship'],
+  );
 }
 
 export async function followUser(userId: string): Promise<void> {
@@ -79,7 +81,7 @@ async function fetchAccounts(userIds: string[]): Promise<Account[]> {
     params: { query: { ids: userIds } },
   });
   if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
-  return data.map(toAccount);
+  return data.map((view) => toAccount(view));
 }
 
 export async function fetchFollowRelationships(

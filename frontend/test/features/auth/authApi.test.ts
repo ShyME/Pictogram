@@ -29,7 +29,7 @@ test('signOut posts to the logout endpoint and drops the local token', async () 
 
   await signOut();
 
-  expect(calls.map(pathOf)).toContain('/api/auth/logout');
+  expect(calls.map((request) => pathOf(request))).toContain('/api/auth/logout');
   expect(calls[0].method).toBe('POST');
   expect(getAccessToken()).toBeNull();
 });

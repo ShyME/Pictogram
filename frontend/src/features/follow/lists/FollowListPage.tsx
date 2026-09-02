@@ -32,7 +32,7 @@ const COPY: Record<FollowListMode, { title: (handle: string) => string; empty: s
 };
 
 export function FollowListPage({ mode }: { mode: FollowListMode }) {
-  const data = useLoaderData() as FollowListData;
+  const data = useLoaderData<FollowListData>();
 
   if (data.status === 'not-found') {
     return (
@@ -101,7 +101,7 @@ function Loaded({
               <div className="mt-4 text-center">
                 <button
                   type="button"
-                  onClick={() => list.fetchNextPage()}
+                  onClick={() => void list.fetchNextPage()}
                   disabled={list.isFetchingNextPage}
                   className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
                 >

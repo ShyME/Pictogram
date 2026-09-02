@@ -6,7 +6,7 @@ import { NewPostPage } from './pages/newPost.page';
 import { OnboardingPage } from './pages/onboarding.page';
 import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
+const PHOTO = fileURLToPath(new URL('fixtures/photo.jpg', import.meta.url));
 
 test('the home feed shows the posts of people you follow, newest first', async ({ browser }) => {
   const suffix = Date.now().toString(36);

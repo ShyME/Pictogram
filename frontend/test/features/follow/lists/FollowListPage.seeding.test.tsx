@@ -47,7 +47,7 @@ test("seeds every row's relationship so the real FollowButtons never fetch one a
   expect(await screen.findByRole('button', { name: 'Following' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument();
 
-  const paths = calls.map(pathOf);
+  const paths = calls.map((request) => pathOf(request));
   expect(paths.filter((p) => p === '/api/follows/u-1/followers')).toHaveLength(1);
   expect(paths.filter((p) => p === '/api/profiles')).toHaveLength(1);
   expect(paths.filter((p) => p === '/api/follows')).toHaveLength(1);

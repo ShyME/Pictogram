@@ -15,7 +15,7 @@ vi.mock('react-router', () => ({
 
 const fetchFollowListPage = vi.fn();
 vi.mock('@features/follow/followApi', () => ({
-  fetchFollowListPage: (...args: unknown[]) => fetchFollowListPage(...args),
+  fetchFollowListPage: (...args: unknown[]): unknown => fetchFollowListPage(...args),
 }));
 
 vi.mock('@features/follow/lists/AccountList', () => ({
@@ -107,9 +107,9 @@ test('Load more pages on the cursor', async () => {
 
   expect(await screen.findByText('bob · viewer viewer-7')).toBeInTheDocument();
   expect(fetchFollowListPage).toHaveBeenLastCalledWith('followers', 'u-1', 'CURSOR');
-  await waitFor(() =>
-    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument(),
-  );
+  await waitFor(() => {
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+  });
 });
 
 test('an unknown username renders a not-found page', () => {

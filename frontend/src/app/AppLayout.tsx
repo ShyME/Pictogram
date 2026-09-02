@@ -1,9 +1,9 @@
 import { SignOutButton } from '@features/auth';
-import type { Profile } from '@features/profile';
 import { Link, Outlet, useLoaderData } from 'react-router';
+import type { rootLoader } from './guards';
 
 export function AppLayout() {
-  const { profile } = useLoaderData() as { profile: Profile };
+  const { profile } = useLoaderData<typeof rootLoader>();
 
   return (
     <div className="min-h-dvh bg-neutral-50">

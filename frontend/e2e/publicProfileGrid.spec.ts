@@ -6,7 +6,7 @@ import { NewPostPage } from './pages/newPost.page';
 import { OnboardingPage } from './pages/onboarding.page';
 import { ProfilePage } from './pages/profile.page';
 
-const PHOTO = fileURLToPath(new URL('./fixtures/photo.jpg', import.meta.url));
+const PHOTO = fileURLToPath(new URL('fixtures/photo.jpg', import.meta.url));
 
 test("a signed-out visitor sees another user's posts on their profile", async ({ browser }) => {
   const caption = `public grid ${Date.now().toString(36)}`;

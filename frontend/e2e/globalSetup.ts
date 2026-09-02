@@ -2,7 +2,7 @@ const BASE_URL = process.env.PICTOGRAM_BASE_URL ?? 'http://localhost:8080';
 const WARMUP_BUDGET_MS = 90_000;
 const POLL_INTERVAL_MS = 500;
 
-const probes: ReadonlyArray<{ path: string; accept: string; expected: number }> = [
+const probes: readonly { path: string; accept: string; expected: number }[] = [
   { path: '/', accept: 'text/html', expected: 200 },
   { path: '/api/profiles/warmup_probe', accept: 'application/json', expected: 404 },
 ];

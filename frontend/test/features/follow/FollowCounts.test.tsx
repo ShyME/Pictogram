@@ -40,7 +40,12 @@ test('each count links to the matching list screen', async () => {
 });
 
 test('shows zeros before the counts have loaded', () => {
-  stubFetch(() => new Promise(() => {}));
+  stubFetch(
+    () =>
+      new Promise(() => {
+        // never resolves: the counts stay in their loading state
+      }),
+  );
   renderWithProviders(<FollowCounts userId="u-1" username="ada" />);
 
   expect(screen.getAllByText('0')).toHaveLength(2);
