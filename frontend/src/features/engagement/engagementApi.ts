@@ -1,4 +1,4 @@
-import { api } from '@shared';
+import { api, type components } from '@shared';
 import { type PostLikesById, toPostLikes } from './engagement';
 
 export async function fetchPostLikesBatch(postIds: string[]): Promise<PostLikesById[]> {
@@ -6,8 +6,25 @@ export async function fetchPostLikesBatch(postIds: string[]): Promise<PostLikesB
   const { data, response } = await api.GET('/api/engagement/likes', {
     params: { query: { postIds } },
   });
-  if (!data) throw new Error(`Post likes batch request failed: ${response.status}`);
-  return data.map((view) => ({ postId: view.postId ?? '', ...toPostLikes(view) }));
+  if (data) return data.map((view) => toRecord(view));
+  if (response.status === 401) return anonymousPostLikesBatch(postIds);
+  throw new Error(`Post likes batch request failed: ${response.status}`);
+}
+
+async function anonymousPostLikesBatch(postIds: string[]): Promise<PostLikesById[]> {
+  const query = postIds.map((id) => `postIds=${encodeURIComponent(id)}`).join('&');
+  const response = await fetch(`/api/engagement/likes?${query}`, {
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) {
+    throw new Error(`Post likes batch request failed: ${response.status}`);
+  }
+  const views = (await response.json()) as components['schemas']['PostLikesView'][];
+  return views.map((view) => toRecord(view));
+}
+
+function toRecord(view: components['schemas']['PostLikesView']): PostLikesById {
+  return { postId: view.postId ?? '', ...toPostLikes(view) };
 }
 
 export async function likePost(postId: string): Promise<void> {

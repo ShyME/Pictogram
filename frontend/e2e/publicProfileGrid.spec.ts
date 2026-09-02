@@ -45,6 +45,10 @@ test("a signed-out visitor sees another user's posts on their profile", async ({
     await expect(visitorView.postByCaption(caption)).toBeVisible();
     await expect(visitorView.emptyGrid).toBeHidden();
     await expect(visitorPage.getByRole('button', { name: 'Delete' })).toBeHidden();
+
+    await visitorView.openPostDetail(caption);
+    await expect(visitorView.postDetail.getByText('0 likes')).toBeVisible();
+    await expect(visitorView.postDetail.getByRole('button', { name: /^(un)?like$/i })).toBeHidden();
   } finally {
     await authorContext.close();
     await visitorContext.close();
