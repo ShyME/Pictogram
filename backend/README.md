@@ -1,13 +1,17 @@
 # Pictogram backend
 
 A modular monolith: one Spring Boot deployable (`:app`), one Gradle subproject per bounded
-context, boundaries enforced by Spring Modulith.
+context, boundaries enforced by Spring Modulith. All seven contexts — `identity`, `profile`,
+`media`, `post`, `follow`, `feed`, `engagement` — are built, each with `@ApplicationModuleTest`
+coverage and a user-goal scenario suite run both in-process and black-box (see
+[`CONTEXT-MAP.md`](../CONTEXT-MAP.md) and the Tests section below).
 
 The Gradle build lives in this directory — `frontend/` is a separate build. Run every
 command below from `backend/` (`cd backend` first).
 
 ```
-shared-kernel   whitelisted shared module — ID value types only (UserId, PostId, MediaId)
+shared-kernel   whitelisted shared module — ID value types (UserId, PostId, MediaId,
+                ViewerId) plus the shared HTTP edge (ADR-0008)
 identity        profile        media        post
 follow          feed           engagement
 app             the deployable — depends on every context
@@ -62,9 +66,9 @@ The committed run configs assume the **repo root** is open as the project (so
    window → pick `backend`).
 2. **Settings → Build, Execution, Deployment → Build Tools → Gradle**:
    - *Distribution* / "Use Gradle from" → **`gradle-wrapper.properties`** (this repo needs
-     Gradle 9.7.1; IntelliJ's bundled Gradle is older and won't import under JDK 26).
-   - *Gradle JVM* → any installed JDK 21–26 (e.g. the Homebrew `openjdk@25`). A stale entry
-     here is the other common "can't import" cause.
+     Gradle 9.7.1; IntelliJ's bundled Gradle is older and won't import under JDK 25).
+   - *Gradle JVM* → JDK 25 (e.g. the Homebrew `openjdk@25`). A stale entry here is the other
+     common "can't import" cause.
 3. **Reload All Gradle Projects** (⟳). When it's green the modules show as
    `pictogram.<subproject>.main` / `.test`.
 
@@ -142,16 +146,8 @@ shared across every module — `V001__…`, `V002__…`, … `V999__…`, zero-p
 digits — so they merge into one ordered `flyway_schema_history`. The owning module is told
 by the file's path and the migration description, not by the number. A new migration always
 takes the next free number, so it always sorts last and applies cleanly with validation on.
-See [ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
-
-**One-time step when you pick up this change** (issue #45 renamed `V1_001…`/`V2_001…`/… to
-the flat `V001…`/`V002…`/… scheme): an existing local database still records the old
-version strings in `flyway_schema_history` and will fail Flyway validation against the
-renamed files. Run `task clean` from the repo root once — it drops the Postgres volumes of
-both compose projects (`pictogram` and the `pictogram-dev` host-loop one) — and Flyway
-replays the full `V001…V004` sequence on the fresh volumes. (`docker compose -f
-compose.yaml down -v` only covers the container stack, not `task dev` / `task backend`.)
-Fresh checkouts and CI are unaffected.
+See [ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md) — its change log records
+the #45 switch from the old `V1_001…`/`V2_001…` module-ordinal scheme to the flat sequence.
 
 The compose stacks and `SharedPostgres` run `postgres:18-alpine`; the named `pgdata` volume
 mounts at `/var/lib/postgresql` (Postgres 18 keeps `PGDATA` in a version-specific subdirectory
@@ -163,8 +159,3 @@ below that). A fresh `task up` provisions a PG18-format volume — nothing to mi
 unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenario suites, and the
 `openapi.json` drift check. `@Tag("blackbox")` tests (the `ContainerDriver` over the built
 image) are excluded by default and run only on `main`, selected with `-PincludeBlackbox`.
-
-## Not in this skeleton
-
-Security and the first schema landed with the identity slice (#8); the OpenAPI export with
-#6; CI with #7.

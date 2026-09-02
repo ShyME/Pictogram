@@ -8,12 +8,33 @@ TDD. Architecture lives in [`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`
 the backend build is described in [`backend/README.md`](./backend/README.md), the frontend
 in [`frontend/README.md`](./frontend/README.md).
 
+## What's built
+
+Seven bounded contexts, each a Spring Modulith module with its own schema, published
+interface, and `CONTEXT.md` glossary (indexed from [`CONTEXT-MAP.md`](./CONTEXT-MAP.md)):
+
+| Context | What it does |
+|---|---|
+| `identity` | Google OIDC sign-in (backend-driven), then Pictogram's own ES256 access + rotating refresh tokens (ADR-0004) |
+| `profile` | Username, display name, bio, and the onboarding step that first creates a profile |
+| `media` | Uploaded images re-encoded server-side to one canonical square JPEG + thumbnail (ADR-0006); orphan collection |
+| `post` | A post — one image plus an optional caption, published by an author; immutable, delete-only |
+| `follow` | The directed follow graph, follower / following counts and lists |
+| `feed` | A viewer's home feed, assembled fan-out-on-read from `follow` + `post` behind a port (ADR-0003) |
+| `engagement` | Likes on a post — batch counts and per-viewer state (comments designed, not built) |
+
+The frontend is a React SPA that composes feed cards client-side from batched calls, with no
+BFF (ADR-0005). Every context has `@ApplicationModuleTest` coverage; user journeys are
+written once as `*Scenarios` and run both in-process and black-box against the built image,
+plus a matching set of Playwright browser journeys (ADR-0007).
+
 ## How to run it
 
 ### Prerequisites
 
 - **Docker** (Compose v2) — for the full stack and for the Testcontainers-backed tests.
-- A JVM 21+ on `PATH` — only to *launch* Gradle; the JDK 25 toolchain is auto-provisioned.
+- A JDK on `PATH` — only to *launch* Gradle; the Java 25 toolchain the build targets is
+  provisioned automatically.
 - **Node 24** + Corepack (`corepack enable`) — only for host frontend development.
 - Optional: [go-task](https://taskfile.dev) (`brew install go-task`) for the shortcuts below.
 
