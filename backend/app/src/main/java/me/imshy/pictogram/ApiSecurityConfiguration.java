@@ -43,6 +43,7 @@ class ApiSecurityConfiguration {
                         .jwt(jwt -> jwt.decoder(identityJwtDecoder)))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
+                .headers(WebSecurityHeaders::apply)
                 .exceptionHandling(handling ->
                         handling.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
                 .build();
@@ -53,6 +54,7 @@ class ApiSecurityConfiguration {
     SecurityFilterChain openEndpoints(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable())
+                .headers(WebSecurityHeaders::apply)
                 .build();
     }
 }
