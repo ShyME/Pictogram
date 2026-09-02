@@ -4,7 +4,9 @@
 
 An Instagram-like portfolio app — square image posts, a follow graph, and a feed —
 built as a **modular monolith** (React 19 + Spring Boot 4 / Java 25) to practise DDD and
-TDD. Architecture lives in [`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`](./docs/adr/);
+TDD. It is built end-to-end with [Claude Code](https://claude.com/claude-code), so every
+commit is `Co-Authored-By: Claude` and the history is dated 2026. Architecture lives in
+[`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`](./docs/adr/);
 the backend build is described in [`backend/README.md`](./backend/README.md), the frontend
 in [`frontend/README.md`](./frontend/README.md).
 
