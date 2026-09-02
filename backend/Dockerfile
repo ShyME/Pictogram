@@ -3,7 +3,7 @@
 # The Pictogram deployable: one image serving the API and the built SPA at one port.
 # Build context is the repo root (see compose.yaml) so both builds are in scope.
 
-FROM node:24-alpine AS frontend
+FROM node:26-alpine AS frontend
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /frontend
