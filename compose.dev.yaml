@@ -8,7 +8,7 @@ name: pictogram-dev
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: pictogram
       POSTGRES_USER: pictogram
@@ -16,7 +16,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Postgres 18 moved PGDATA to /var/lib/postgresql/18/docker and the image VOLUME up to
+      # /var/lib/postgresql — mounting the old /data path leaves the cluster off the volume.
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pictogram -d pictogram"]
       interval: 5s
