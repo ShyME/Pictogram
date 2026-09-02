@@ -55,3 +55,13 @@ returns the viewer's standing — counts and follow flag — with each of a set 
 list screen renders its follow buttons from a warmed cache instead of one
 `GET /api/follows/{id}` per row. Web-layer only (`FollowRelationships` in `follow.internal`);
 `feed` fans out over the flat `usersFollowedBy` list, not a batch.
+
+## The edge row
+
+The real identity of a follow edge is the `(follower_id, followed_id)` pair, which is
+unique. The row also carries a surrogate `id`: unlike `engagement.post_like`, it is **not**
+dead weight — it is the stable tie-breaker for the `#57` follower/following keyset pages
+(`order by followed_at desc, id desc`, and the matching `Cursor` component). Collapsing the
+edge onto a composite `(follower_id, followed_id)` key is possible but would mean rewriting
+those four keyset queries, their covering indexes and the cursor shape; it is left for the
+day `follow` is actually extracted.
