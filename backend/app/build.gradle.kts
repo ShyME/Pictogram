@@ -18,7 +18,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.0")
+    implementation(libs.springdoc.openapi.starter.webmvc.api)
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-actuator")
     implementation("org.springframework.modulith:spring-modulith-observability")
@@ -30,7 +30,7 @@ dependencies {
     testImplementation(project(":test-support"))
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("no.nav.security:mock-oauth2-server:5.0.2")
+    testImplementation(libs.mock.oauth2.server)
 }
 
 base {

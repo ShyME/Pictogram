@@ -1,0 +1,38 @@
+[versions]
+# buildSrc convention-plugin toolchain
+spring-boot = "4.0.8"
+dependency-management = "1.1.7"
+spotless = "8.10.1"
+modernizer = "2.0.0"
+palantir-java-format = "2.97.0"
+
+# BOM-managed platforms
+spring-modulith = "2.0.8"
+awssdk = "2.54.7"
+
+# Directly-pinned libraries
+twelvemonkeys-imageio = "3.14.0"
+metadata-extractor = "2.21.0"
+commons-imaging = "1.0.0-alpha6"
+springdoc-openapi = "3.1.0"
+mock-oauth2-server = "5.0.2"
+swagger-annotations = "2.2.52"
+
+[libraries]
+# Consumed by buildSrc/build.gradle.kts as convention-plugin implementation dependencies
+spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
+dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }
+spotless-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+modernizer-plugin = { module = "io.github.andygoossens.modernizer:io.github.andygoossens.modernizer.gradle.plugin", version.ref = "modernizer" }
+
+# BOMs
+awssdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awssdk" }
+
+# Directly-pinned libraries
+twelvemonkeys-imageio-jpeg = { module = "com.twelvemonkeys.imageio:imageio-jpeg", version.ref = "twelvemonkeys-imageio" }
+twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys-imageio" }
+metadata-extractor = { module = "com.drewnoakes:metadata-extractor", version.ref = "metadata-extractor" }
+commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref = "commons-imaging" }
+springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc-openapi" }
+mock-oauth2-server = { module = "no.nav.security:mock-oauth2-server", version.ref = "mock-oauth2-server" }
+swagger-annotations-jakarta = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger-annotations" }

@@ -5,12 +5,10 @@ plugins {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-gradle-plugin:4.0.8")
-    implementation("io.spring.gradle:dependency-management-plugin:1.1.7")
-    implementation("com.diffplug.spotless:spotless-plugin-gradle:8.10.1")
-    implementation(
-        "io.github.andygoossens.modernizer:io.github.andygoossens.modernizer.gradle.plugin:2.0.0"
-    )
+    implementation(libs.spring.boot.gradle.plugin)
+    implementation(libs.dependency.management.plugin)
+    implementation(libs.spotless.plugin)
+    implementation(libs.modernizer.plugin)
 }
 
 kotlin {
