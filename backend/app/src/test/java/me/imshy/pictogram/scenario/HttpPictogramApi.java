@@ -1,11 +1,13 @@
 package me.imshy.pictogram.scenario;
 
+import static me.imshy.pictogram.scenario.ScenarioHttp.require;
+import static me.imshy.pictogram.scenario.ScenarioHttp.send;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +21,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 class HttpPictogramApi implements PictogramApi {
-
-    static final String REFRESH_COOKIE = "pictogram_refresh";
 
     private final URI baseUri;
     private final ObjectMapper json;
@@ -38,7 +38,7 @@ class HttpPictogramApi implements PictogramApi {
         HttpResponse<String> redeemed = send(
                 HttpClient.newHttpClient(),
                 HttpRequest.newBuilder(uri("/api/auth/refresh"))
-                        .header("Cookie", REFRESH_COOKIE + "=" + refreshCookie)
+                        .header("Cookie", ScenarioHttp.REFRESH_COOKIE + "=" + refreshCookie)
                         .POST(BodyPublishers.noBody())
                         .build());
         require(redeemed, 200, "redeem refresh cookie");
@@ -319,20 +319,5 @@ class HttpPictogramApi implements PictogramApi {
 
     private URI uri(String path) {
         return baseUri.resolve(path);
-    }
-
-    private static HttpResponse<String> send(HttpClient client, HttpRequest request) {
-        try {
-            return client.send(request, BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new IllegalStateException("HTTP call failed: " + request.method() + " " + request.uri(), e);
-        }
-    }
-
-    private static void require(HttpResponse<String> response, int expectedStatus, String action) {
-        if (response.statusCode() != expectedStatus) {
-            throw new AssertionError("Expected %d to %s but got %d: %s"
-                    .formatted(expectedStatus, action, response.statusCode(), response.body()));
-        }
     }
 }

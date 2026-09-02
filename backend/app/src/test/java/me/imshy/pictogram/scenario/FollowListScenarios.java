@@ -10,15 +10,15 @@ import me.imshy.pictogram.scenario.PictogramApi.Actor;
 import me.imshy.pictogram.scenario.PictogramApi.FollowRelationship;
 import org.junit.jupiter.api.Test;
 
-class FollowListScenarioTest extends ScenarioTest {
+interface FollowListScenarios extends PictogramScenario {
 
     @Test
-    void followerAndFollowingListsReadBackNewestFirstPageCleanlyAndTrackUnfollows() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void followerAndFollowingListsReadBackNewestFirstPageCleanlyAndTrackUnfollows() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         String adaId = ada.completeOnboarding("ada_lists", "Ada", null).userId();
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_lists", "Bob", null).userId();
-        var carol = pictogram.registerViaGoogle("carol@example.com");
+        var carol = pictogram().registerViaGoogle("carol@example.com");
         String carolId = carol.completeOnboarding("carol_lists", "Carol", null).userId();
 
         ada.follow(bobId);
@@ -40,12 +40,12 @@ class FollowListScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void oneBatchReadReportsTheViewersStandingWithEveryUserOnAListPage() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void oneBatchReadReportsTheViewersStandingWithEveryUserOnAListPage() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         String adaId = ada.completeOnboarding("ada_batch", "Ada", null).userId();
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_batch", "Bob", null).userId();
-        var carol = pictogram.registerViaGoogle("carol@example.com");
+        var carol = pictogram().registerViaGoogle("carol@example.com");
         String carolId = carol.completeOnboarding("carol_batch", "Carol", null).userId();
 
         ada.follow(bobId);

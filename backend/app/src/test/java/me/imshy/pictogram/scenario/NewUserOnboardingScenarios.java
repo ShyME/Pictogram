@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class NewUserOnboardingScenarioTest extends ScenarioTest {
+interface NewUserOnboardingScenarios extends PictogramScenario {
 
     @Test
-    void newUserSignsInPicksAUsernameAndLandsOnAnEmptyFeed() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void newUserSignsInPicksAUsernameAndLandsOnAnEmptyFeed() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
 
         assertThat(ada.currentProfile()).isEmpty();
 

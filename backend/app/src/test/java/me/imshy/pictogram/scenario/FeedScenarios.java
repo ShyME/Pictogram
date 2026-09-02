@@ -9,15 +9,15 @@ import me.imshy.pictogram.scenario.PictogramApi.FeedPage;
 import me.imshy.pictogram.scenario.PictogramApi.Post;
 import org.junit.jupiter.api.Test;
 
-class FeedScenarioTest extends ScenarioTest {
+interface FeedScenarios extends PictogramScenario {
 
     @Test
-    void aViewerFollowsTwoPeopleAndSeesTheirInterleavedPostsNewestFirstPagingWithoutGaps() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aViewerFollowsTwoPeopleAndSeesTheirInterleavedPostsNewestFirstPagingWithoutGaps() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_feed", "Ada", null);
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_feed", "Bob", null).userId();
-        var carol = pictogram.registerViaGoogle("carol@example.com");
+        var carol = pictogram().registerViaGoogle("carol@example.com");
         String carolId = carol.completeOnboarding("carol_feed", "Carol", null).userId();
 
         ada.follow(bobId);
@@ -37,10 +37,10 @@ class FeedScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void aPostPublishedBetweenPageFetchesCausesNoDuplicatesOrSkips() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aPostPublishedBetweenPageFetchesCausesNoDuplicatesOrSkips() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_keyset", "Ada", null);
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_keyset", "Bob", null).userId();
         ada.follow(bobId);
 
@@ -69,10 +69,10 @@ class FeedScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void followingSomeoneRevealsTheirExistingPostsAndUnfollowingHidesThem() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void followingSomeoneRevealsTheirExistingPostsAndUnfollowingHidesThem() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_toggle", "Ada", null);
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_toggle", "Bob", null).userId();
 
         bob.publishPost(bob.uploadPhoto(jpegPhoto()), "posted before ada followed");

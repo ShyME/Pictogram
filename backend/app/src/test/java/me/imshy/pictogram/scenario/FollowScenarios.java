@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import me.imshy.pictogram.scenario.PictogramApi.FollowOutcome;
 import org.junit.jupiter.api.Test;
 
-class FollowScenarioTest extends ScenarioTest {
+interface FollowScenarios extends PictogramScenario {
 
     @Test
-    void followThenUnfollowWithIdempotentRepeatsAndSelfFollowRejected() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void followThenUnfollowWithIdempotentRepeatsAndSelfFollowRejected() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         var adaProfile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         var bobProfile = bob.completeOnboarding("bob_ross", "Bob Ross", null);
 
         assertThat(ada.follow(bobProfile.userId())).isEqualTo(FollowOutcome.OK);

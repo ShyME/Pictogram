@@ -54,6 +54,9 @@ tasks.withType<Test>().configureEach {
         if (includeBlackbox) includeTags("blackbox") else excludeTags("blackbox")
     }
     filter { isFailOnNoMatchingTests = !includeBlackbox }
+    // The blackbox result is a statement about a live stack, not about the test classes — opt out
+    // of up-to-date checks AND the build cache so it always re-runs against the current stack.
+    if (includeBlackbox) doNotTrackState("asserts against a live external stack")
     testLogging {
         events("passed", "skipped", "failed")
     }

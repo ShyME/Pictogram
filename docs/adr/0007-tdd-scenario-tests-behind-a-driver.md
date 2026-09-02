@@ -32,3 +32,27 @@ intention-revealing actions (`registerViaGoogle()`, `chooseUsername()`, `publish
 - Tests are named as user goals with Given/When/Then bodies; Java uses a fluent DSL +
   AssertJ, the browser layer uses a page-object/actor layer + Playwright's `expect`.
 - Flakiness is treated as a defect, not a retry target.
+
+## Amendment (#20): the container transport landed
+
+Each acceptance journey is one `*Scenarios` test interface (`FollowScenarios`,
+`FeedScenarios`, …) written against `PictogramApi`. Two aggregators implement the whole
+list: `InProcessScenarioTest` (`@Tag("fast")`, `InProcessDriver`) and `BlackboxScenarioTest`
+(`@Tag("blackbox")`, `ContainerDriver`). A divergence between the two is a bug in one
+transport. `OrphanMediaCollectionScenarioTest` has no container twin — it drives a scheduled
+sweep and a property, neither HTTP-observable.
+
+`ContainerDriver` came out slightly heavier than "a config": `HttpPictogramApi` still owns
+all request/response mapping and `InteractiveLoginSignIn` walks `mock-oauth2-server`'s
+interactive form, but the container's Postgres is never truncated, so each instance (one per
+test) namespaces the scenarios' hard-coded emails and usernames with a per-run token and
+strips it from returned profiles. The scenario bodies stay transport-blind.
+
+CI runs the `blackbox` job on the push to `main` only — the PR gate already ran the fast
+suites on the identical up-to-date tree, and the job builds the image + boots the stack,
+too slow for every PR. So a red `blackbox` run is a **fix-forward signal on `main`**, not an
+automatic merge block: turning it into one needs branch protection (require the `Blackbox`
+check + "require branches up to date"), which this repo's plan doesn't offer. `-PincludeBlackbox`
+opts the test task out of state tracking so it never reports a cached pass against a stale
+stack; `retries: 0` in `playwright.config.ts` and no Gradle retry keep the flake budget at
+zero.

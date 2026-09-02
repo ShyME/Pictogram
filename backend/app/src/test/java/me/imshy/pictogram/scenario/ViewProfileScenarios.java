@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-class ViewProfileScenarioTest extends ScenarioTest {
+interface ViewProfileScenarios extends PictogramScenario {
 
     @Test
-    void aUserOpensAnotherUsersProfileByUsernameAndSeesTheirDetails() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aUserOpensAnotherUsersProfileByUsernameAndSeesTheirDetails() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_lovelace", "Ada Lovelace", "Countess of Lovelace");
 
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
 
         var seen = bob.viewProfile("ada_lovelace");
 
@@ -23,8 +23,8 @@ class ViewProfileScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void openingAProfileForAUsernameNobodyHoldsComesBackEmpty() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void openingAProfileForAUsernameNobodyHoldsComesBackEmpty() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
 
         assertThat(ada.viewProfile("ghost_user")).isEmpty();
     }

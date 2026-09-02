@@ -6,13 +6,13 @@ import me.imshy.pictogram.scenario.PictogramApi.DeleteOutcome;
 import me.imshy.pictogram.scenario.PictogramApi.Post;
 import org.junit.jupiter.api.Test;
 
-class DeletePostScenarioTest extends ScenarioTest {
+interface DeletePostScenarios extends PictogramScenario {
 
     @Test
-    void anAuthorDeletesAPostAndItLeavesTheirGridEveryViewersReadOfItAndAFollowersFeed() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void anAuthorDeletesAPostAndItLeavesTheirGridEveryViewersReadOfItAndAFollowersFeed() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         var adaProfile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
-        var grace = pictogram.registerViaGoogle("grace@example.com");
+        var grace = pictogram().registerViaGoogle("grace@example.com");
         grace.completeOnboarding("grace_hopper", "Grace Hopper", null);
         grace.follow(adaProfile.userId());
 
@@ -27,10 +27,10 @@ class DeletePostScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void onlyTheAuthorCanDeleteAPost() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void onlyTheAuthorCanDeleteAPost() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         var adaProfile = ada.completeOnboarding("ada_lovelace", "Ada Lovelace", null);
-        var grace = pictogram.registerViaGoogle("grace@example.com");
+        var grace = pictogram().registerViaGoogle("grace@example.com");
         grace.completeOnboarding("grace_hopper", "Grace Hopper", null);
 
         Post post = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "hands off");

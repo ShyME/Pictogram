@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import me.imshy.pictogram.scenario.PictogramApi.PostLikes;
 import org.junit.jupiter.api.Test;
 
-class LikeScenarioTest extends ScenarioTest {
+interface LikeScenarios extends PictogramScenario {
 
     @Test
-    void aViewerLikesAndUnlikesAPostWithIdempotentRepeats() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aViewerLikesAndUnlikesAPostWithIdempotentRepeats() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_likes", "Ada", null);
-        var bob = pictogram.registerViaGoogle("bob@example.com");
+        var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_likes", "Bob", null);
         String post = bob.publishPost(bob.uploadPhoto(jpegPhoto()), "a photo").postId();
 
@@ -28,8 +28,8 @@ class LikeScenarioTest extends ScenarioTest {
     }
 
     @Test
-    void aViewerMayLikeTheirOwnPost() {
-        var ada = pictogram.registerViaGoogle("ada@example.com");
+    default void aViewerMayLikeTheirOwnPost() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_selflike", "Ada", null);
         String ownPost = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "mine").postId();
 
