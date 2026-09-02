@@ -127,11 +127,28 @@ cd frontend && pnpm test:e2e                        # Playwright (after `pnpm ex
 `verify()`, unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the
 `openapi.json` drift check) and the frontend lint / typecheck / test / build.
 
-The push to `main` runs **only** the `blackbox` job — the `@Tag("blackbox")` backend tests
-and the Playwright journeys against `compose.yaml` + `compose.mock-oauth.yaml`. With
-"require branches up to date before merging" on, the merged tree already passed the
-backend/frontend suites on the PR, so those don't re-run. `workflow_dispatch` forces a
-full run.
+The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests and the
+Playwright journeys against `compose.yaml` + `compose.mock-oauth.yaml` — plus a small
+container-free `check` job (backend Spotless + module-boundary check, frontend
+format / lint / typecheck / unit / build). The full backend and frontend suites are
+**skipped** on this push: with "Require branches to be up to date before merging" on, the
+merged tree already passed them on the PR, so re-running is wasted work.
+`workflow_dispatch` forces a full run.
+
+<!-- #111 — keep this subsection self-contained so #109's README rewrite reconciles cleanly. -->
+
+### The `main`-push safety net depends on a branch-protection setting
+
+Skipping the full suites on the `main` push is only sound while **"Require branches to be
+up to date before merging"** stays enabled on the `main` branch-protection rule — that
+setting is what guarantees the merged tree is byte-identical to the one the PR gate tested.
+If it is ever unchecked, a PR can merge against a stale base and reach `main` with code
+that no full run ever saw; the `check` job is the floor that still runs in that case, but
+it deliberately skips Testcontainers and Playwright.
+
+This setting cannot be read or enforced from the repository. A maintainer must confirm in
+**Settings → Branches → `main`** that "Require branches to be up to date before merging" is
+enabled (and keep it enabled).
 
 ## Contributing
 
