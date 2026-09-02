@@ -16,7 +16,7 @@ public final class SharedPostgres {
 
     private static final boolean REUSE = System.getenv("CI") == null;
 
-    public static final PostgreSQLContainer INSTANCE = new PostgreSQLContainer("postgres:17-alpine").withReuse(REUSE);
+    public static final PostgreSQLContainer INSTANCE = new PostgreSQLContainer("postgres:18-alpine").withReuse(REUSE);
 
     static {
         INSTANCE.start();

@@ -138,6 +138,14 @@ replays the full `V001…V004` sequence on the fresh volumes. (`docker compose -
 compose.yaml down -v` only covers the container stack, not `task dev` / `task backend`.)
 Fresh checkouts and CI are unaffected.
 
+**One-time step for the Postgres 17 → 18 bump** (issue #86): the compose volume now mounts at
+`/var/lib/postgresql` instead of `/var/lib/postgresql/data`, because the `postgres:18` image
+moved `PGDATA` to a version-specific subdirectory. Handed a 17 cluster from the old volume, the
+`postgres:18` image refuses to start (exits 1, "there appears to be PostgreSQL data ... the
+result of upgrading the Docker image without upgrading the underlying database"). Run `task
+clean` once so the dev/test data (all throwaway) is dropped and Postgres 18 starts fresh. Fresh
+checkouts and CI are unaffected.
+
 ## CI
 
 `.github/workflows/ci.yml` runs `./gradlew build` on every PR — Modulith `verify()`, the
