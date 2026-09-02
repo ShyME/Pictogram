@@ -1,5 +1,8 @@
 # HTTP edge conventions live in shared-kernel
 
+- **Status:** Accepted
+- **Relates to:** ADR-0005 (no BFF — each module owns its REST resources), ADR-0004 (the `JwtDecoder` the resource-server chain verifies with)
+
 Every module owns its own REST resources under `internal.web` (ADR-0005, no BFF), so the
 cross-cutting HTTP shapes — RFC 9457 Problem Details, the `{ items, nextCursor }`
 pagination envelope with its opaque keyset cursor, and resolving the access token into an
@@ -23,8 +26,8 @@ module — was rejected as more scaffolding (a second `sharedModules` entry, its
 - `shared-kernel` depends on Spring (it was previously pure Java). The dependency is the
   web/security API surface only; it does not start a web server in a module slice test.
 - The concrete `SecurityFilterChain` and the JWT `JwtDecoder` stay in `:app` — composition,
-  not convention. Until the identity slice (#8) mints Pictogram access tokens and wires
-  their EdDSA verification key, `:app` installs a decoder that rejects every token, so
-  `/api/**` is uniformly 401.
+  not convention. Until the identity slice (#8) minted Pictogram access tokens and wired
+  their ES256 verification key, `:app` installed a decoder that rejected every token, so
+  `/api/**` was uniformly 401.
 - A later screen needing heavy cross-context fan-in is still handled by a `bff` module
   (ADR-0005), not by growing `shared-kernel`.

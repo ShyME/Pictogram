@@ -1,5 +1,15 @@
 # TDD, and scenario tests behind an in-process / container driver
 
+- **Status:** Accepted; amended (see Change log)
+- **Amended by:** [#20](https://github.com/ShyME/pictogram/issues/20)
+- **Relates to:** ADR-0001 (the test-first mandate this ADR implements)
+
+## Change log
+
+| Issue | Change |
+|---|---|
+| [#20](https://github.com/ShyME/pictogram/issues/20) | The container transport landed. Each journey is one `*Scenarios` interface against `PictogramApi`; `InProcessScenarioTest` (`@Tag("fast")`) and `BlackboxScenarioTest` (`@Tag("blackbox")`, `ContainerDriver` over the built image) run the whole list. The `blackbox` job runs on the push to `main` only and is a fix-forward signal, not a merge block. Detail in the amendment below. |
+
 All of Pictogram is built **test-first**. The test shape is a diamond: a thin layer of
 domain unit tests for edge cases, the **bulk at module-integration level**
 (`@ApplicationModuleTest` against a singleton Testcontainers PostgreSQL, `withReuse` locally),

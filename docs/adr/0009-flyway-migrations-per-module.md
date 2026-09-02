@@ -1,5 +1,15 @@
 # Database schema: Flyway, one schema per module, one global migration sequence
 
+- **Status:** Accepted; amended (see Change log)
+- **Amended by:** [#45](https://github.com/ShyME/pictogram/issues/45)
+- **Relates to:** ADR-0002 (schema per module, no cross-schema FKs), ADR-0006 (media keeps its row here, bytes in MinIO)
+
+## Change log
+
+| Issue | Change |
+|---|---|
+| [#45](https://github.com/ShyME/pictogram/issues/45) | Switched from a module-ordinal version prefix (`V1_001`, `V2_001`, …) to a **flat zero-padded sequence** (`V001`, `V002`, …). The ordinal scheme stayed globally monotonic only while modules gained migrations in ordinal order; a late migration on an already-integrated lower module sorted before applied higher-module migrations and tripped `validateOnMigrate`. Rationale in the amendment below. |
+
 Each bounded context owns its own PostgreSQL **schema** and never a foreign key across a
 schema boundary (ADR-0002 — contexts reference each other by ID value only). Schema changes
 are applied with **Flyway**, run on startup by the `:app` process against the one database.
@@ -63,15 +73,15 @@ with validation left on.
   fails with a duplicate-version error. It is a runtime footgun, not a merge-time one.
   Judged acceptable at current scale; the timestamp-prefix variant (`V20260901__…`) is the
   fallback if it becomes frequent.
-- **Transition cost** (one-time): renaming the four existing files changes their version
-  strings, so any *existing* local database whose `flyway_schema_history` still records
-  `1.001`/`2.001`/`3.001`/`4.001` fails validation against the renamed files. There is no
-  production database. Run `task clean` once — it tears down both compose projects
-  (`pictogram` from `compose.yaml` and `pictogram-dev` from `compose.dev.yaml`, each with
-  its own Postgres volume) — after which Flyway replays the full `V001…V004` sequence on the
-  fresh volumes. (`docker compose -f compose.yaml down -v` alone only drops the
-  container-stack volume, not the `task dev` / `task backend` host-loop one.) Fresh
-  databases (CI blackbox, anyone starting clean) are unaffected.
+- **Transition cost** (one-time, now past): renaming the four existing files changed their
+  version strings, so any local database whose `flyway_schema_history` still recorded
+  `1.001`/`2.001`/`3.001`/`4.001` failed validation against the renamed files. There was no
+  production database. The fix was a single `task clean` — it tears down both compose
+  projects (`pictogram` from `compose.yaml` and `pictogram-dev` from `compose.dev.yaml`,
+  each with its own Postgres volume), after which Flyway replayed the full `V001…V004`
+  sequence on the fresh volumes. (`docker compose -f compose.yaml down -v` alone only drops
+  the container-stack volume, not the `task dev` / `task backend` host-loop one.) Fresh
+  databases (CI blackbox, anyone starting clean) were unaffected.
 - `@ApplicationModuleTest` for a module with migrations runs Flyway against the shared
   Testcontainers Postgres; `DatabaseCleaner` truncates the data but leaves the schema and
   `flyway_schema_history` in place between tests.
