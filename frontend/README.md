@@ -1,8 +1,12 @@
 # Pictogram frontend
 
-React 19 + TypeScript SPA, built with Vite. React Router, TanStack Query and
-Tailwind v4 are wired in. The auth shell is in place: `/login`, the root-route guard
-that routes a visitor by `GET /api/profiles/me`, `/onboarding`, and the (empty) feed.
+React 19 + TypeScript SPA, built with Vite — React Router, TanStack Query, Tailwind v4. It
+covers the full v1 product: Google sign-in and onboarding, the root-route guard that routes
+a visitor by `GET /api/profiles/me`, the home feed (keyset-paged, infinite scroll),
+creating a post with a square crop, public profiles at `/u/<username>` with a post grid,
+follow / unfollow with follower and following lists, and likes. Feature slices under
+`src/features/` (`auth`, `feed`, `post`, `profile`, `follow`, `engagement`) mirror the
+backend context map.
 
 ## Commands
 
@@ -26,7 +30,7 @@ come from the schema. Regenerate with `pnpm generate:api` (or `task openapi` fro
 root, which refreshes both sides) whenever a backend endpoint changes, and commit the
 result — `pnpm test` fails if `schema.d.ts` is out of sync with `../backend/openapi.json`.
 
-## Auth shell
+## Session and auth
 
 `features/auth` holds the session: the access token lives only in memory (the refresh
 token is an httpOnly cookie the script can't see), and `installApiAuth()` registers an
@@ -42,7 +46,11 @@ drives the OIDC handshake (ADR-0004) and redirects back to `/`, where the first 
 
 `task test:e2e` (from the repo root) builds the whole stack — app plus a
 `mock-oauth2-server` standing in for Google, since `compose.yaml` has no OIDC provider —
-waits for it, runs the Playwright journeys, and tears it down.
+waits for it, runs the Playwright journeys, and tears it down. The journeys under `e2e/`
+walk each feature end to end in a real browser — sign-in and its error paths, onboarding,
+publishing and deleting a post, the feed, public profile grids, follow / unfollow and the
+follower lists, and likes — using the page objects in `e2e/pages/`. These are the same
+user goals the backend `*Scenarios` suite covers over HTTP (ADR-0007).
 
 To iterate against a stack you keep running:
 
