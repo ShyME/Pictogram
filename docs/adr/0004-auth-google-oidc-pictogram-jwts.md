@@ -1,31 +1,29 @@
 # Authentication: Google-only OIDC, backend-driven, Pictogram-issued JWTs
 
-- **Status:** Accepted; amended (see Change log)
-- **Amended by:** [#8](https://github.com/ShyME/pictogram/issues/8), [#26](https://github.com/ShyME/pictogram/issues/26), [#27](https://github.com/ShyME/pictogram/issues/27), [#50](https://github.com/ShyME/pictogram/issues/50)
-- **Relates to:** ADR-0001 (stateless tokens fit the service-extraction goal), ADR-0008 (the `:app` resource-server chain)
-
-## Change log
-
-| Issue | Change |
-|---|---|
-| [#8](https://github.com/ShyME/pictogram/issues/8) | Access token signs with **ES256** (ECDSA on P-256), not EdDSA/Ed25519 — Spring Security's `NimbusJwtEncoder` still rejects EdDSA. Both are asymmetric, so every property this ADR relies on is unchanged. Signing key, rotation mechanics, and the `JwtDecoder` wiring are detailed in the amendment below. |
-| [#26](https://github.com/ShyME/pictogram/issues/26) | A rotation grace window (default 60s): a consumed refresh token re-presented within the window is a benign concurrent refresh (401, family intact), not theft. Reuse detection past the window is unchanged. |
-| [#27](https://github.com/ShyME/pictogram/issues/27) | Sign-in failure paths: an unusable Google account or a failed handshake redirects to the sign-in-error route instead of 500ing; the handshake servlet session is invalidated on success. |
-| [#50](https://github.com/ShyME/pictogram/issues/50) | `SignInCompletion` (`identity/internal/web`) is the single place the handshake outcome becomes an HTTP response — `succeeded` / `unusable` / `failed` — replacing three drifting Spring hooks. No HTTP-edge behaviour change beyond fixing the failure-handler asymmetry. |
+- **Status:** Accepted
+- **Relates to:** ADR-0001 (stateless tokens fit the service-extraction goal), ADR-0008 (the `:app` resource-server chain), ADR-0011 (CSRF posture and the `SameSite=Strict` refresh cookie)
 
 Users authenticate **only via Google** in v1, using the OIDC Authorization Code flow with
 PKCE handled **server-side** by Spring Security's OAuth2 Client — the browser just follows a
 "Continue with Google" link and the client secret never leaves the backend. After verifying
 the Google identity, the `identity` module mints **Pictogram's own** access and refresh
-JWTs. The access token is signed with **ES256** (ECDSA on the P-256 curve) — see the #8
-amendment below for why not EdDSA. No other module ever sees a Google token. An
-`IdentityProvider` seam in `identity` allows adding email/password later.
+JWTs. The access token is signed with **ES256** (ECDSA on the P-256 curve). No other module
+ever sees a Google token. An `IdentityProvider` seam in `identity` allows adding
+email/password later.
 
 Chosen because it removes all password-handling surface (hashing, resets, verification,
 lockout) from v1; because stateless Pictogram tokens verified with a public key fit the
 service-extraction goal in ADR-0001; and because a future extracted service can verify
 tokens with the public key while holding no signing material. `mock-oauth2-server` stands
 in for Google in tests.
+
+**ES256, not EdDSA/Ed25519.** Both are asymmetric, so every property this ADR relies on
+holds either way — a service extracted from the monolith verifies with the public key and
+holds no signing material. ES256 wins only on tooling: Spring Security 7's `NimbusJwtEncoder`
+still rejects EdDSA
+([spring-security#17098](https://github.com/spring-projects/spring-security/issues/17098)),
+so Ed25519 would need an extra crypto dependency (Google Tink) and hand-rolled signing for
+no security gain.
 
 ## Consequences
 
@@ -35,22 +33,16 @@ in for Google in tests.
 - We run a small token issuer: key management, refresh-token rotation with reuse detection,
   a short access-token TTL as the revocation strategy.
 
-## Amendment (#8): ES256, not Ed25519
-
-The access token is signed with **ES256 (ECDSA on P-256)**, not EdDSA/Ed25519 as first
-written. Both are asymmetric, so every property this ADR relies on holds unchanged — a
-service extracted from the monolith verifies with the public key and holds no signing
-material. ES256 is chosen only for tooling: Spring Security 7's `NimbusJwtEncoder` still
-rejects EdDSA ([spring-security#17098](https://github.com/spring-projects/spring-security/issues/17098)),
-so Ed25519 would need an extra crypto dependency (Google Tink) and hand-rolled signing for
-no security gain.
+## Tokens, keys, and refresh rotation
 
 - The signing key is a P-256 EC JWK. In production it comes from `pictogram.auth.signing-key`
-  (private JWK as JSON); unset, identity generates a process-lifetime key and logs a warning.
+  (private JWK as JSON); on the `prod` profile a missing key fails startup, since an
+  ephemeral key breaks verification across replicas and on restart. Off `prod`, identity
+  generates a process-lifetime key and logs a warning.
 - Rotation consumes the presented token with a single conditional `UPDATE`, so two refreshes
   racing on the same token can't both succeed. The loser (0 rows updated, or a presented row
-  already consumed) is treated as **theft only outside a grace window** — see the #26
-  amendment below.
+  already consumed) is treated as **theft only outside a grace window** (see "Concurrent
+  refreshes" below).
 - The reuse path does **not** run in the rotation's transaction and there is no `noRollbackFor`.
   `RefreshTokenService` drives its own boundaries with sequential `TransactionTemplate` calls:
   the rotation transaction commits and closes first, then the family revocation runs in its own
@@ -73,19 +65,20 @@ no security gain.
   relying on a bean-type lookup (#28).
 - The transient session that Spring keeps during the OIDC handshake (`/oauth2/**`) holds
   the authorization request across the redirect to Google and back. It is the only
-  server-side state, and it is torn down the moment it has served its purpose — see the
-  #27 amendment. The Pictogram session (access + refresh) stays fully stateless.
+  server-side state, and it is torn down the moment it has served its purpose (see "The
+  handshake, its session, and failure paths" below). The Pictogram session (access +
+  refresh) stays fully stateless.
 - identity's sign-in filter chain matches `/oauth2/**` and `/login/oauth2/**` — the
   redirection endpoint only, not all of `/login/**`. The SPA has its own `/login` route
   (#10); scoping the matcher to `/login/oauth2/**` lets that path fall through to the
   permit-all chain and the SPA fallback (#34) instead of hitting `oauth2Login` / `denyAll`.
 
-## Amendment (#26): a grace window for concurrent refreshes
+### Concurrent refreshes
 
-Treating every second presentation of a consumed refresh token as theft made a benign
+Treating every second presentation of a consumed refresh token as theft would make a benign
 double-submit of a *live* cookie — React StrictMode's double effect, a double-click, a
 client retry — revoke the whole family and force the user back to sign-in ~15 minutes
-later. Rotation now distinguishes the two:
+later. Rotation distinguishes the two:
 
 - A presented refresh row that is already consumed (or that loses the `consumeIfLive`
   race) is theft — revoke the family, throw `RefreshTokenReuseException` — **only if it was
@@ -102,47 +95,31 @@ later. Rotation now distinguishes the two:
   detection for a genuinely stolen token is unchanged, just delayed by at most the grace
   period.
 
-Re-serving the *same* successor token to both racers for a true `200` on each was considered
-and left out of scope: it needs the rotation to be idempotent per presented token. If
-`401`+retry proves insufficient in practice, that is the fallback.
+Re-serving the *same* successor token to both racers for a true `200` on each is out of
+scope: it needs the rotation to be idempotent per presented token. If `401`+retry proves
+insufficient in practice, that is the fallback.
 
-## Amendment (#27): sign-in failure paths and the handshake session
+## The handshake, its session, and failure paths
 
-The happy path above assumed Google always returns a usable account and the handshake
-always succeeds. Two rough edges are closed:
+`SignInCompletion` (`identity/internal/web`) is the **single place** the handshake outcome
+becomes an HTTP response — not three Spring hooks each re-deriving part of the decision:
 
-- **An unusable Google account no longer 500s.** When Google reports `email_verified=false`
-  or omits `email`, `GoogleIdentityProvider.verify` throws `UnusableGoogleAccountException`
-  (a typed failure, not `IllegalStateException`). `OidcSignInSuccessHandler` catches it and
-  redirects the browser to `pictogram.auth.sign-in-error-redirect` (default
-  `/login?error=sign-in-failed`) with the `error` query parameter swapped for the specific
-  reason (`email-unverified` / `email-missing`) so the SPA shows a tailored message. No
-  Pictogram session is issued.
-- **A failed handshake** (declined consent, state mismatch, token-exchange error) goes to
-  the same route via an `AuthenticationFailureHandler` on the `/oauth2` chain, with the
-  generic `error=sign-in-failed`.
-- **Anything else thrown from the `/oauth2` chain** — there is no `DispatcherServlet` behind
-  it, so the shared `ApiExceptionHandler` never sees it — is rendered as
-  `application/problem+json` (`internal-error`, 500) by `OidcChainErrorFilter`, never a
-  white-label page.
-- **The handshake servlet session is invalidated on success.** After the refresh cookie is
-  set and before the final redirect, `OidcSignInSuccessHandler` calls
-  `HttpSession#invalidate` (null-safe) and clears the `SecurityContextHolder`. Otherwise the
-  `JSESSIONID` Spring created to hold the authorization request would linger authenticated
-  until it timed out — `AuthController.logout` is on the stateless chain and never touches
-  it. The authorization-code flow's mid-handshake session is unaffected because this runs
-  only on success. `AuthController.logout` needs no change and carries a comment saying so.
+- **`succeeded`** — set the refresh cookie, redirect to the post-login route. This is the
+  only writer of the refresh cookie on this chain.
+- **`unusable`** — when Google reports `email_verified=false` or omits `email`,
+  `GoogleIdentityProvider.verify` throws a typed `UnusableGoogleAccountException`; redirect
+  to `pictogram.auth.sign-in-error-redirect` (default `/login?error=sign-in-failed`) with
+  the `error` parameter set to the specific reason (`email-unverified` / `email-missing`) so
+  the SPA shows a tailored message. No Pictogram session is issued.
+- **`failed`** — a declined consent, state mismatch, or token-exchange error redirects to
+  the same route with the generic `error=sign-in-failed`.
 
-## Amendment (#50): one place decides how the handshake ends
-
-The three bullets above were implemented as three Spring hooks, each re-deriving part of the
-decision — and they had drifted: the failure handler redirected without ending the handshake
-session, so a declined consent left a `JSESSIONID` lingering. `SignInCompletion`
-(`identity/internal/web`) is now the single place the handshake outcome becomes an HTTP
-response: `succeeded` (refresh cookie + post-login redirect), `unusable` (sign-in-error
-redirect with the reason slug), `failed` (generic sign-in-error redirect). Every path ends
-the handshake session exactly once, and `succeeded` is the only writer of the refresh cookie
-on this chain. `OidcSignInSuccessHandler`, `SignInFailureHandler`, and `OidcChainErrorFilter`
-are one-line delegations; the filter keeps only its "no `DispatcherServlet` behind me, render
-an unhandled throwable as problem+json" backstop. No behaviour change at the HTTP edge beyond
-the failure-handler asymmetry being fixed.
+Every path ends the handshake servlet session exactly once: after any cookie is set and
+before the redirect, `HttpSession#invalidate` (null-safe) runs and the
+`SecurityContextHolder` is cleared. Otherwise the `JSESSIONID` Spring created to hold the
+authorization request would linger authenticated until timeout — `AuthController.logout` is
+on the stateless chain and never touches it. Anything else thrown from the `/oauth2` chain
+(no `DispatcherServlet` behind it, so the shared `ApiExceptionHandler` never sees it) is
+rendered `application/problem+json` (`internal-error`, 500) by `OidcChainErrorFilter`, never
+a white-label page. `OidcSignInSuccessHandler`, `SignInFailureHandler`, and
+`OidcChainErrorFilter` are one-line delegations to `SignInCompletion`.

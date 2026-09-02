@@ -1,14 +1,7 @@
 # Feed is fan-out-on-read, behind a port
 
-- **Status:** Accepted; amended (see Change log)
-- **Amended by:** [#18](https://github.com/ShyME/pictogram/issues/18)
+- **Status:** Accepted
 - **Relates to:** ADR-0002 (the synchronous published-interface query path)
-
-## Change log
-
-| Issue | Change |
-|---|---|
-| [#18](https://github.com/ShyME/pictogram/issues/18) | Port landed as `FeedQuery` with `FanOutOnReadFeed`; reads `follow.FollowGraph.usersFollowedBy` then a new `post.PublishedPosts.byAuthors` keyset query. Cursor is `shared.http.Cursor` (keyset on `publishedAt, id`), so `GET /api/feed` stays stable across a later switch to fan-out-on-write. Detail in the amendment below. |
 
 The feed can be built two ways: compute it on demand from the follow graph and posts
 (fan-out-on-read), or maintain a materialised per-user feed updated by events
@@ -23,13 +16,11 @@ is where the interesting event choreography lives and is the documented intended
 ## Consequences
 
 - `feed` calls `follow` and `post` published interfaces synchronously to assemble a page.
+  The port is `FeedQuery` (in `feed.internal`), with `FanOutOnReadFeed` the v1
+  implementation: it reads `follow.FollowGraph.usersFollowedBy`, then
+  `post.PublishedPosts.byAuthors` — a keyset query interface `post` exposes for this.
+- The cursor contract is `shared.http.Cursor` (keyset on `publishedAt, id`), identical to
+  the profile grid's, so `GET /api/feed` stays stable across a later switch to
+  fan-out-on-write.
 - The feed has no store of its own in v1; there is nothing to clean up when a post is
   deleted or a follow is removed.
-
-## Amendment (#18)
-
-The port landed as `FeedQuery` (in `feed.internal`), with `FanOutOnReadFeed` the v1
-implementation. It reads `follow.FollowGraph.usersFollowedBy` then
-`post.PublishedPosts.byAuthors` — a new keyset query interface `post` exposes for this. The
-cursor contract is `shared.http.Cursor` (keyset on `publishedAt, id`), identical to the
-profile grid's, so `GET /api/feed` stays stable across a later switch to fan-out-on-write.
