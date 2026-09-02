@@ -30,10 +30,15 @@ export function PostGrid({
     queryKey: postsByAuthorKey(authorId),
     queryFn: async ({ pageParam }) => {
       const page = await fetchPostsByAuthor(authorId, pageParam);
-      await preloadLikes?.(
-        queryClient,
-        page.posts.map((post) => post.postId),
-      );
+      try {
+        await preloadLikes?.(
+          queryClient,
+          page.posts.map((post) => post.postId),
+        );
+      } catch {
+        // Best-effort: like state is decoration seeded ahead of the buttons. Whatever went
+        // wrong (a signed-out visitor on a public profile can't read it), still show the grid.
+      }
       return page;
     },
     initialPageParam: undefined as string | undefined,

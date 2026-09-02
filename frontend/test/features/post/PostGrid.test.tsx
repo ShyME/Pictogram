@@ -93,6 +93,20 @@ test('preloads like state for every post on the grid in one pass', async () => {
   expect(preloaded).toEqual([['p-1', 'p-2']]);
 });
 
+test('renders the grid even when the like preload fails (signed-out visitor on a public profile)', async () => {
+  stubFetch(() =>
+    jsonResponse({
+      items: [{ postId: 'p-1', mediaId: 'm-1', caption: 'still here', publishedAt: 't1' }],
+      nextCursor: null,
+    }),
+  );
+  renderWithProviders(
+    <PostGrid authorId="u-1" preloadLikes={() => Promise.reject(new Error('401'))} />,
+  );
+
+  expect(await screen.findByAltText('still here')).toBeInTheDocument();
+});
+
 test('the owner deletes a post after confirming, then the grid refetches', async () => {
   const calls = stubFetch((request) => {
     if (request.method === 'DELETE') return new Response(null, { status: 204 });
