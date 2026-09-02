@@ -6,6 +6,10 @@ plugins {
     id("pictogram.code-quality-conventions")
 }
 
+// Precompiled script plugins don't get generated version-catalog accessors; reach the
+// catalog through its extension instead. https://github.com/gradle/gradle/issues/15383
+val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
+
 group = "me.imshy"
 
 version = "0.1.0-SNAPSHOT"
@@ -20,10 +24,16 @@ java {
     }
 }
 
+// spring-modulith ships no BOM_COORDINATES constant, so its coordinate is spelled out.
+val modulithBom =
+    "org.springframework.modulith:spring-modulith-bom:${
+        libs.findVersion("spring-modulith").get().requiredVersion
+    }"
+
 dependencyManagement {
     imports {
         mavenBom(SpringBootPlugin.BOM_COORDINATES)
-        mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.8")
+        mavenBom(modulithBom)
     }
 }
 
