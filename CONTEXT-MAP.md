@@ -32,6 +32,25 @@ persistence.
 - **engagement → post**: a `Like` holds a `PostId`. `post` emits `PostPublished` / `PostDeleted`; no context consumes them in v1 (they are the module's forward contract).
 - **Events emitted, mostly unconsumed in v1**: `UserRegistered`, `UserFollowed`, `UserUnfollowed`, `PostPublished`, `PostDeleted`, `PostLiked`, `PostUnliked`, `ProfileUpdated`. They exist as each module's public contract so consumers (fan-out-on-write feed, notifications, comment counts) can be added later without touching producers.
 
+## Notes on the v1 boundaries
+
+These are deliberate choices a reviewer would otherwise flag:
+
+- **`feed`, `follow` and `engagement` are finer-grained than v1 needs.** A product this
+  size would plausibly ship them as one "social" context. They are kept apart as bounded-
+  context practice and so any one of them can be extracted later without disturbing the
+  others. If that extraction never looks likely, merging them is cheap and is fair game
+  for a later PR — the split is a bet, not a load-bearing constraint.
+- **`app` depends on every context by design.** It is the composition root: it wires the
+  modules together and hosts the cross-cutting infrastructure (HTTP security, the `Clock`
+  bean, Flyway, OpenAPI). It is the one place the modularity is necessarily porous, and
+  `ModulithStructureTest` treats it accordingly.
+- **The published interfaces are not signature-pinned in v1.** `LikeCounts`, `FollowGraph`
+  and `PublishedPosts` have only one caller each (or none yet), so their shape is exercised
+  through that caller's tests rather than a dedicated consumer-contract test. When a second
+  consumer appears — or before an extraction — add a contract test per interface so a
+  breaking change to the shape fails loudly at the boundary.
+
 ## Recording decisions
 
 Architecture-level decisions live in [`docs/adr/`](./docs/adr/). Start there before changing
