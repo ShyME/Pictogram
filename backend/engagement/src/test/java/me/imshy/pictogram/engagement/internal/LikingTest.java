@@ -11,6 +11,8 @@ import me.imshy.pictogram.shared.ViewerId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.AssertablePublishedEvents;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 class LikingTest extends EngagementModuleIntegrationTest {
 
@@ -19,6 +21,9 @@ class LikingTest extends EngagementModuleIntegrationTest {
 
     @Autowired
     LikeTally tally;
+
+    @Autowired
+    PlatformTransactionManager transactionManager;
 
     private final ViewerId ada = ViewerId.random();
     private final PostId post = PostId.random();
@@ -64,6 +69,23 @@ class LikingTest extends EngagementModuleIntegrationTest {
 
         assertThat(likeStateFor(ada, post)).isEqualTo(new PostLikes(post, 0, false));
         assertThat(events.ofType(PostUnliked.class)).isEmpty();
+    }
+
+    @Test
+    void likeStaysIdempotentWhenACallerRunsItInsideTheirOwnTransaction(AssertablePublishedEvents events) {
+        // like() checks existence before it saves, rather than relying only on the
+        // DataIntegrityViolationException catch, precisely so a second like() can no-op
+        // inside a caller's transaction — a constraint violation would doom that
+        // transaction, catch or no catch.
+        var inCallerTransaction = new TransactionTemplate(transactionManager);
+
+        inCallerTransaction.executeWithoutResult(status -> {
+            liking.like(ada, post);
+            liking.like(ada, post);
+        });
+
+        assertThat(likeStateFor(ada, post)).isEqualTo(new PostLikes(post, 1, true));
+        assertThat(events.ofType(PostLiked.class)).hasSize(1);
     }
 
     @Test

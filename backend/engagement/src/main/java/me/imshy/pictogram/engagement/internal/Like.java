@@ -3,6 +3,7 @@ package me.imshy.pictogram.engagement.internal;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
@@ -15,14 +16,14 @@ import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(schema = "engagement", name = "post_like")
-class Like implements Persistable<UUID> {
+@IdClass(LikeId.class)
+class Like implements Persistable<LikeId> {
 
     @Id
-    private UUID id;
-
     @Column(name = "post_id")
     private UUID postId;
 
+    @Id
     @Column(name = "viewer_id")
     private UUID viewerId;
 
@@ -34,20 +35,19 @@ class Like implements Persistable<UUID> {
 
     protected Like() {}
 
-    private Like(UUID id, UUID postId, UUID viewerId, Instant likedAt) {
-        this.id = id;
+    private Like(UUID postId, UUID viewerId, Instant likedAt) {
         this.postId = postId;
         this.viewerId = viewerId;
         this.likedAt = likedAt;
     }
 
     static Like of(ViewerId viewer, PostId post, Instant likedAt) {
-        return new Like(UUID.randomUUID(), post.value(), viewer.value(), likedAt);
+        return new Like(post.value(), viewer.value(), likedAt);
     }
 
     @Override
-    public UUID getId() {
-        return id;
+    public LikeId getId() {
+        return new LikeId(postId, viewerId);
     }
 
     @Override

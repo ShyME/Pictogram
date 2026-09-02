@@ -44,7 +44,12 @@ v1; they are the module's forward contract (comment counts, notifications).
 
 ## Rules
 
-At most one like per `(viewer, post)` — the DB unique constraint is what enforces it and
-makes a concurrent double-like idempotent. There is **no self-like rule**: liking your own
-post is allowed, because engagement has no notion of a post's author (contrast the
-self-follow guard in `follow`).
+At most one like per `(viewer, post)` — that pair **is** the row's primary key (there is no
+surrogate id), and that constraint is what makes a concurrent double-like idempotent. There
+is **no self-like rule**: liking your own post is allowed, because engagement has no notion
+of a post's author (contrast the self-follow guard in `follow`).
+
+`Liking.like()` checks for an existing like before it saves, rather than relying only on the
+`DataIntegrityViolationException` from the primary key. The check is the fast path *and* what
+lets a caller run `like()` inside their own transaction: a constraint violation would doom
+that transaction whether or not the exception is caught. `LikingTest` pins this.
