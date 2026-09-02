@@ -42,6 +42,10 @@ caller (a signed-out visitor on a public profile sees the true count, `likedByVi
 post or unliking one that was never liked is a silent no-op. No context consumes them in
 v1; they are the module's forward contract (comment counts, notifications).
 
+`PostLiked.likedAt` and `PostUnliked.unlikedAt` are both the engagement `Clock` instant at
+which the change was recorded, captured the same way, so for one `(viewer, post)` a later
+`unlikedAt` is never earlier than the matching `likedAt` — the two are directly comparable.
+
 ## Rules
 
 At most one like per `(viewer, post)` — that pair **is** the row's primary key (there is no

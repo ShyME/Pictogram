@@ -38,9 +38,10 @@ public class Liking {
     }
 
     public void unlike(ViewerId viewer, PostId post) {
+        Instant unlikedAt = clock.instant();
         if (likes.deleteByPostIdAndViewerId(post.value(), viewer.value()) == 0) {
             return;
         }
-        events.publishEvent(new PostUnliked(post, viewer, clock.instant()));
+        events.publishEvent(new PostUnliked(post, viewer, unlikedAt));
     }
 }
