@@ -28,8 +28,13 @@ _Avoid_: Current user, actor, me
 
 `LikeCounts.of(ViewerId, Collection<PostId>)` — the like count and the viewer's own like
 state for every requested post, in one call (ADR-0005, no N+1). A post nobody has liked
-reads as `(id, 0, false)`; the batch never omits a requested id. Exposed over HTTP as
-`GET /api/engagement/likes?postIds=` plus `PUT`/`DELETE /api/engagement/likes/{postId}`.
+reads as `(id, 0, false)`; the batch never omits a requested id. `LikeCounts.of(Collection<PostId>)`
+is the same read with no viewer — every row reports `likedByViewer` as `false`.
+
+Exposed over HTTP as `GET /api/engagement/likes?postIds=` plus
+`PUT`/`DELETE /api/engagement/likes/{postId}`. The batch read tolerates an anonymous
+caller (a signed-out visitor on a public profile sees the true count, `likedByViewer`
+`false`); liking and unliking require a viewer.
 
 ## Events
 

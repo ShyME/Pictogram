@@ -23,16 +23,30 @@ public class LikeTally implements LikeCounts {
 
     @Override
     public List<PostLikes> of(ViewerId viewer, Collection<PostId> posts) {
-        List<UUID> ids = posts.stream().map(PostId::value).distinct().toList();
+        List<UUID> ids = distinctIds(posts);
         if (ids.isEmpty()) {
             return List.of();
         }
+        return tally(ids, Set.copyOf(likes.likedByViewerAmong(viewer.value(), ids)));
+    }
 
+    @Override
+    public List<PostLikes> of(Collection<PostId> posts) {
+        List<UUID> ids = distinctIds(posts);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return tally(ids, Set.of());
+    }
+
+    private List<PostLikes> tally(List<UUID> ids, Set<UUID> likedByViewer) {
         Map<UUID, Long> counts = likes.countsFor(ids).stream().collect(toMap(LikeCount::postId, LikeCount::count));
-        Set<UUID> likedByViewer = Set.copyOf(likes.likedByViewerAmong(viewer.value(), ids));
-
         return ids.stream()
                 .map(id -> new PostLikes(new PostId(id), counts.getOrDefault(id, 0L), likedByViewer.contains(id)))
                 .toList();
+    }
+
+    private static List<UUID> distinctIds(Collection<PostId> posts) {
+        return posts.stream().map(PostId::value).distinct().toList();
     }
 }
