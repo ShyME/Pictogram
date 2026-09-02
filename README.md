@@ -158,8 +158,6 @@ format / lint / typecheck / unit / build). The full backend and frontend suites 
 merged tree already passed them on the PR, so re-running is wasted work.
 `workflow_dispatch` forces a full run.
 
-<!-- #111 — keep this subsection self-contained so #109's README rewrite reconciles cleanly. -->
-
 ### The `main`-push safety net depends on a branch-protection setting
 
 Skipping the full suites on the `main` push is only sound while **"Require branches to be
@@ -174,8 +172,6 @@ This setting cannot be read or enforced from the repository. A maintainer must c
 enabled (and keep it enabled).
 
 ## Before serving real traffic
-
-<!-- Localized deployment-hardening notes (#112). The rest of the README is being reworked in #109. -->
 
 - **Signing key.** Set `PICTOGRAM_AUTH_SIGNING_KEY` (a P-256 private JWK). The `prod` profile
   refuses to start without it — an ephemeral key breaks multi-replica token verification and
