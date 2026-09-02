@@ -13,3 +13,7 @@ export function toPostLikes(view: components['schemas']['PostLikesView']): PostL
     likedByViewer: view.likedByViewer ?? false,
   };
 }
+
+export function likeLabel(count: number): string {
+  return count === 1 ? '1 like' : `${count} likes`;
+}

@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { likeLabel } from './engagement';
 import { likePost, unlikePost } from './engagementApi';
+import { HeartGlyph } from './HeartGlyph';
 import { postLikesKey } from './queryKeys';
 import { usePostLikes } from './useLikes';
 
@@ -35,18 +37,9 @@ export function LikeButton({ postId }: { postId: string }) {
             : 'text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50'
         }
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="size-6"
-          fill={isLiked ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
-        </svg>
+        <HeartGlyph filled={isLiked} />
       </button>
-      <span className="text-sm text-neutral-500">{count === 1 ? '1 like' : `${count} likes`}</span>
+      <span className="text-sm text-neutral-500">{likeLabel(count)}</span>
       {toggle.isError && (
         <p role="alert" className="text-xs text-red-600">
           That didn&rsquo;t work. Try again in a moment.

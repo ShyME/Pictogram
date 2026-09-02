@@ -12,9 +12,10 @@ vi.mock('react-router', () => ({
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
-const gridStub = (authorId: string, isOwn: boolean) => (
+const gridStub = (authorId: string, isOwn: boolean, isViewerAuthenticated: boolean) => (
   <div>
-    grid for {authorId} ({isOwn ? 'own' : 'visitor'})
+    grid for {authorId} ({isOwn ? 'own' : 'visitor'},{' '}
+    {isViewerAuthenticated ? 'signed in' : 'signed out'})
   </div>
 );
 
@@ -30,6 +31,7 @@ const found = (
   },
   isOwnProfile: false,
   viewerCanFollow: true,
+  viewerIsAuthenticated: true,
   ...over,
 });
 
@@ -85,11 +87,21 @@ test("the viewer's own profile shows an edit link to the settings page, not a fo
 test('renders the app-supplied grid on every profile, telling it whether the viewer owns it', () => {
   loaderData = found({ isOwnProfile: true });
   const { rerender } = renderWithProviders(<ProfilePage renderGrid={gridStub} />);
-  expect(screen.getByText('grid for u-1 (own)')).toBeInTheDocument();
+  expect(screen.getByText(/grid for u-1 \(own,/)).toBeInTheDocument();
 
   loaderData = found({ isOwnProfile: false });
   rerender(<ProfilePage renderGrid={gridStub} />);
-  expect(screen.getByText('grid for u-1 (visitor)')).toBeInTheDocument();
+  expect(screen.getByText(/grid for u-1 \(visitor,/)).toBeInTheDocument();
+});
+
+test('tells the app-supplied grid whether the viewer is authenticated, so it can pick the like control', () => {
+  loaderData = found({ viewerIsAuthenticated: true });
+  const { rerender } = renderWithProviders(<ProfilePage renderGrid={gridStub} />);
+  expect(screen.getByText(/signed in\)/)).toBeInTheDocument();
+
+  loaderData = found({ viewerIsAuthenticated: false });
+  rerender(<ProfilePage renderGrid={gridStub} />);
+  expect(screen.getByText(/signed out\)/)).toBeInTheDocument();
 });
 
 test("renders the app-supplied follow button on another user's profile, not on your own", () => {

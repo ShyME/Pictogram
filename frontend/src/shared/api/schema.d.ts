@@ -440,7 +440,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The like count and the viewer's like state for each requested post. */
+            /** @description The like count for each requested post, plus the viewer's own like state when signed in. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -451,15 +451,6 @@ export interface operations {
             };
             /** @description The request asked for more ids than the batch limit. */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The caller has no valid access token. */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };

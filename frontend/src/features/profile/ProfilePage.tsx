@@ -38,7 +38,11 @@ export function ProfilePage({
   renderFollowButton,
   renderFollowCounts,
 }: {
-  renderGrid?: (authorId: string, isOwnProfile: boolean) => ReactNode;
+  renderGrid?: (
+    authorId: string,
+    isOwnProfile: boolean,
+    isViewerAuthenticated: boolean,
+  ) => ReactNode;
   renderFollowButton?: (followedUserId: string) => ReactNode;
   renderFollowCounts?: (followedUserId: string, handle: string) => ReactNode;
 } = {}) {
@@ -46,7 +50,7 @@ export function ProfilePage({
 
   if (data.status === 'not-found') return <NotFound username={data.username} />;
 
-  const { profile, isOwnProfile, viewerCanFollow } = data;
+  const { profile, isOwnProfile, viewerCanFollow, viewerIsAuthenticated } = data;
   const followButtonClass =
     'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50';
 
@@ -111,7 +115,7 @@ export function ProfilePage({
 
         <section aria-label="Posts" className="mt-8 border-t border-neutral-200 pt-6">
           {renderGrid ? (
-            renderGrid(profile.userId, isOwnProfile)
+            renderGrid(profile.userId, isOwnProfile, viewerIsAuthenticated)
           ) : (
             <>
               <div className="grid grid-cols-3 gap-1">
