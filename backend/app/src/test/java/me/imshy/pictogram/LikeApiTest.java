@@ -23,7 +23,7 @@ class LikeApiTest {
 
     @Test
     void likingRequiresAToken() throws Exception {
-        mvc.perform(put("/api/engagement/likes/" + UUID.randomUUID()))
+        mvc.perform(put("/api/likes/" + UUID.randomUUID()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(
                         jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
@@ -34,10 +34,10 @@ class LikeApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        mvc.perform(put("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/engagement/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(get("/api/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].postId").value(post))
@@ -50,16 +50,16 @@ class LikeApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        mvc.perform(put("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
-        mvc.perform(put("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
-        mvc.perform(delete("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(delete("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
-        mvc.perform(delete("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(delete("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/engagement/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(get("/api/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].likeCount").value(0))
                 .andExpect(jsonPath("$[0].likedByViewer").value(false));
@@ -70,10 +70,10 @@ class LikeApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        mvc.perform(put("/api/engagement/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/engagement/likes").param("postIds", post))
+        mvc.perform(get("/api/likes").param("postIds", post))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].postId").value(post))
@@ -88,16 +88,14 @@ class LikeApiTest {
         var liked = UUID.randomUUID().toString();
         var likedByBobOnly = UUID.randomUUID().toString();
 
-        mvc.perform(put("/api/engagement/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(put("/api/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isNoContent());
-        mvc.perform(put("/api/engagement/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(bob))))
+        mvc.perform(put("/api/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(bob))))
                 .andExpect(status().isNoContent());
-        mvc.perform(put("/api/engagement/likes/" + likedByBobOnly).with(jwt().jwt(jwt -> jwt.subject(bob))))
+        mvc.perform(put("/api/likes/" + likedByBobOnly).with(jwt().jwt(jwt -> jwt.subject(bob))))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/engagement/likes")
-                        .param("postIds", liked, likedByBobOnly)
-                        .with(jwt().jwt(jwt -> jwt.subject(ada))))
+        mvc.perform(get("/api/likes").param("postIds", liked, likedByBobOnly).with(jwt().jwt(jwt -> jwt.subject(ada))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(
@@ -116,7 +114,7 @@ class LikeApiTest {
                 .mapToObj(i -> UUID.randomUUID().toString())
                 .toArray(String[]::new);
 
-        mvc.perform(get("/api/engagement/likes")
+        mvc.perform(get("/api/likes")
                         .param("postIds", tooMany)
                         .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
                 .andExpect(status().isBadRequest())

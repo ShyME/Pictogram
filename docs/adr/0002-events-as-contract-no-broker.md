@@ -6,8 +6,8 @@
 Modules must stay decoupled, but v1 has almost no genuine cross-context reactions. We are
 integrating modules two ways: **Spring Modulith application events** for state-change
 notifications (each module's forward-facing public contract), and **synchronous calls to
-another module's published interface for queries only** (e.g. `feed` asking `follow` for a
-viewer's followees). No external message broker in v1 — Spring Modulith's event
+another module's published interface for queries only** (e.g. `social`'s feed asking
+`post` for a keyset page of an author's posts). No external message broker in v1 — Spring Modulith's event
 externalisation is the documented path when a module is later extracted.
 
 The **Event Publication Registry** (persisted, retried events) is deferred until there is

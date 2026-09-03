@@ -6,8 +6,10 @@
 Pictogram is a portfolio project for practising DDD and TDD, and we want strong module
 isolation now plus a credible path to microservices later without paying for distribution
 today. We are building a **single Spring Boot deployable** with one Gradle subproject per
-bounded context (`identity`, `profile`, `media`, `post`, `follow`, `feed`, `engagement`)
-plus an open `shared-kernel` holding only ID value types. Boundaries are enforced by
+bounded context (`identity`, `profile`, `media`, `post`, `social`) plus an open
+`shared-kernel` holding only ID value types. `social` covers the follow graph, the feed
+and likes as three `internal/` sub-domains behind one module boundary (#128 merged what
+were three finer-grained contexts). Boundaries are enforced by
 **Spring Modulith** — a `verify()` test fails the build on any illegal cross-module
 dependency. Persistence is one PostgreSQL instance with **a schema per module and no
 foreign keys across schemas**, so a module's schema can move to its own database unchanged.

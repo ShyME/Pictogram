@@ -17,8 +17,6 @@ include(
     "profile",
     "media",
     "post",
-    "follow",
-    "feed",
-    "engagement",
+    "social",
     "app",
 )

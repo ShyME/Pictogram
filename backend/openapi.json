@@ -292,88 +292,6 @@
         "tags" : [ "auth-controller" ]
       }
     },
-    "/api/engagement/likes" : {
-      "get" : {
-        "operationId" : "likesByPostIds",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "postIds",
-          "required" : true,
-          "schema" : {
-            "items" : {
-              "format" : "uuid",
-              "type" : "string"
-            },
-            "type" : "array",
-            "uniqueItems" : true
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "items" : {
-                    "$ref" : "#/components/schemas/PostLikesView"
-                  },
-                  "type" : "array"
-                }
-              }
-            },
-            "description" : "The like count for each requested post, plus the viewer's own like state when signed in."
-          },
-          "400" : {
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "The request asked for more ids than the batch limit."
-          }
-        },
-        "tags" : [ "like-controller" ]
-      }
-    },
-    "/api/engagement/likes/{postId}" : {
-      "delete" : {
-        "operationId" : "unlike",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "postId",
-          "required" : true,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "The viewer no longer likes the post (or never did)."
-          }
-        },
-        "tags" : [ "like-controller" ]
-      },
-      "put" : {
-        "operationId" : "like",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "postId",
-          "required" : true,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "The viewer now likes the post (or already did)."
-          }
-        },
-        "tags" : [ "like-controller" ]
-      }
-    },
     "/api/feed" : {
       "get" : {
         "operationId" : "feed",
@@ -657,6 +575,88 @@
           }
         },
         "tags" : [ "follow-controller" ]
+      }
+    },
+    "/api/likes" : {
+      "get" : {
+        "operationId" : "likesByPostIds",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "postIds",
+          "required" : true,
+          "schema" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PostLikesView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The like count for each requested post, plus the viewer's own like state when signed in."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The request asked for more ids than the batch limit."
+          }
+        },
+        "tags" : [ "like-controller" ]
+      }
+    },
+    "/api/likes/{postId}" : {
+      "delete" : {
+        "operationId" : "unlike",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The viewer no longer likes the post (or never did)."
+          }
+        },
+        "tags" : [ "like-controller" ]
+      },
+      "put" : {
+        "operationId" : "like",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The viewer now likes the post (or already did)."
+          }
+        },
+        "tags" : [ "like-controller" ]
       }
     },
     "/api/media" : {

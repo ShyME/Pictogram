@@ -1,7 +1,7 @@
 import { LoginPage, installApiAuth } from '@features/auth';
-import { LikeButton, LikeCount, prefetchPostLikes } from '@features/engagement';
 import { FeedPage } from '@features/feed';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
+import { LikeButton, LikeCount, prefetchPostLikes } from '@features/likes';
 import { PostGrid } from '@features/post';
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@features/profile';
 import { createBrowserRouter } from 'react-router';

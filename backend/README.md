@@ -1,10 +1,12 @@
 # Pictogram backend
 
 A modular monolith: one Spring Boot deployable (`:app`), one Gradle subproject per bounded
-context, boundaries enforced by Spring Modulith. All seven contexts — `identity`, `profile`,
-`media`, `post`, `follow`, `feed`, `engagement` — are built, each with `@ApplicationModuleTest`
-coverage and a user-goal scenario suite run both in-process and black-box (see
-[`CONTEXT-MAP.md`](../CONTEXT-MAP.md) and the Tests section below).
+context, boundaries enforced by Spring Modulith. All five contexts — `identity`, `profile`,
+`media`, `post`, `social` — are built, each with `@ApplicationModuleTest` coverage and a
+user-goal scenario suite run both in-process and black-box (see
+[`CONTEXT-MAP.md`](../CONTEXT-MAP.md) and the Tests section below). `social` holds the
+follow graph, feed and likes as three `internal/` sub-domains (#128 merged what were three
+finer-grained contexts).
 
 The Gradle build lives in this directory — `frontend/` is a separate build. Run every
 command below from `backend/` (`cd backend` first).
@@ -12,8 +14,7 @@ command below from `backend/` (`cd backend` first).
 ```
 shared-kernel   whitelisted shared module — ID value types (UserId, PostId, MediaId,
                 ViewerId) plus the shared HTTP edge (ADR-0008)
-identity        profile        media        post
-follow          feed           engagement
+identity        profile        media        post        social
 app             the deployable — depends on every context
 test-support    test-only helpers (not a bounded context)
 ```
@@ -22,9 +23,11 @@ Each context's API is `me.imshy.pictogram.<context>`; everything under
 `…<context>.internal` is hidden by Modulith. `internal` is flat by default — a subpackage
 appears only for the HTTP edge (`internal.web`) or for a genuine cluster inside a crowded
 module (files you would extract, move, or delete as a unit), named for the idea not the
-layer: `identity.internal.refreshtoken`, `identity.internal.accesstoken`. Composition
-happens in the `internal` root; `InternalSlicingTest` fails the build if one subpackage
-reaches sideways into a sibling — Modulith's `internal` rule, one level down. Splitting a
+layer: `identity.internal.refreshtoken`, `identity.internal.accesstoken`,
+`social.internal.follow` / `feed` / `likes`. Composition happens in the `internal`
+root — where `social`'s in-module `FollowGraph` seam sits, so `feed` can read the follow
+graph without a slice reaching sideways. `InternalSlicingTest` fails the build if one
+subpackage reaches sideways into a sibling — Modulith's `internal` rule, one level down. Splitting a
 cluster out costs some `package-private → public`; that's the trade for a scannable package,
 and the slice test is what keeps the widened surface from being abused.
 
@@ -140,14 +143,14 @@ Structured ECS-JSON console logging is on by default (plain text on the `test` p
 
 ## Database migrations
 
-Flyway runs on startup. Each module owns its schema and ships its own migrations under
-`<module>/src/main/resources/db/migration/`. Version numbers are a single flat sequence
-shared across every module — `V001__…`, `V002__…`, … `V999__…`, zero-padded to three
-digits — so they merge into one ordered `flyway_schema_history`. The owning module is told
-by the file's path and the migration description, not by the number. A new migration always
-takes the next free number, so it always sorts last and applies cleanly with validation on.
-See [ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md) — its change log records
-the #45 switch from the old `V1_001…`/`V2_001…` module-ordinal scheme to the flat sequence.
+Flyway runs on startup. Each module ships its schema's migrations under
+`<module>/src/main/resources/db/migration/` (`social` ships one set per sub-domain schema,
+`follow` and `likes`). Version numbers are a single flat sequence shared across every
+module — `V001__…`, `V002__…`, … `V999__…`, zero-padded to three digits — so they merge
+into one ordered `flyway_schema_history`. The owning module is told by the file's path and
+the migration description, not by the number. A new migration always takes the next free
+number, so it always sorts last and applies cleanly with validation on. See
+[ADR-0009](../docs/adr/0009-flyway-migrations-per-module.md).
 
 The compose stacks and `SharedPostgres` run `postgres:18-alpine`; the named `pgdata` volume
 mounts at `/var/lib/postgresql` (Postgres 18 keeps `PGDATA` in a version-specific subdirectory

@@ -9,9 +9,7 @@ dependencies {
     implementation(project(":profile"))
     implementation(project(":media"))
     implementation(project(":post"))
-    implementation(project(":follow"))
-    implementation(project(":feed"))
-    implementation(project(":engagement"))
+    implementation(project(":social"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")

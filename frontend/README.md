@@ -5,7 +5,7 @@ covers the full v1 product: Google sign-in and onboarding, the root-route guard 
 a visitor by `GET /api/profiles/me`, the home feed (keyset-paged, infinite scroll),
 creating a post with a square crop, public profiles at `/u/<username>` with a post grid,
 follow / unfollow with follower and following lists, and likes. Feature slices under
-`src/features/` (`auth`, `feed`, `post`, `profile`, `follow`, `engagement`) mirror the
+`src/features/` (`auth`, `feed`, `post`, `profile`, `follow`, `likes`) mirror the
 backend context map.
 
 ## Commands

@@ -27,9 +27,7 @@ If any of these files don't exist yet, **proceed silently**. The `/domain-modeli
     ├── profile/CONTEXT.md
     ├── media/CONTEXT.md
     ├── post/CONTEXT.md
-    ├── follow/CONTEXT.md
-    ├── feed/CONTEXT.md
-    └── engagement/CONTEXT.md
+    └── social/CONTEXT.md            ← follow + feed + likes sub-domains (one context since #128)
 ```
 
 There are no context-scoped `docs/adr/` directories yet; add `backend/<module>/docs/adr/` only if a decision is genuinely local to one context.

@@ -11,8 +11,9 @@ in [`frontend/README.md`](./frontend/README.md).
 
 ## What's built
 
-Seven bounded contexts, each a Spring Modulith module with its own schema, published
-interface, and `CONTEXT.md` glossary (indexed from [`CONTEXT-MAP.md`](./CONTEXT-MAP.md)):
+Five bounded contexts, each a Spring Modulith module with its own schema (`social` owns
+two, `follow` and `likes`), a published interface, and a `CONTEXT.md` glossary
+(indexed from [`CONTEXT-MAP.md`](./CONTEXT-MAP.md)):
 
 | Context | What it does |
 |---|---|
@@ -20,9 +21,7 @@ interface, and `CONTEXT.md` glossary (indexed from [`CONTEXT-MAP.md`](./CONTEXT-
 | `profile` | Username, display name, bio, and the onboarding step that first creates a profile |
 | `media` | Uploaded images re-encoded server-side to one canonical square JPEG + thumbnail (ADR-0006); orphan collection |
 | `post` | A post — one image plus an optional caption, published by an author; immutable, delete-only |
-| `follow` | The directed follow graph, follower / following counts and lists |
-| `feed` | A viewer's home feed, assembled fan-out-on-read from `follow` + `post` behind a port (ADR-0003) |
-| `engagement` | Likes on a post — batch counts and per-viewer state (comments designed, not built) |
+| `social` | The follow graph (counts, lists), the feed assembled fan-out-on-read behind a port (ADR-0003), and likes on a post (comments designed, not built) — three `internal/` sub-domains in one module (#128) |
 
 The frontend is a React SPA that composes feed cards client-side from batched calls, with no
 BFF (ADR-0005). Every context has `@ApplicationModuleTest` coverage; user journeys are
