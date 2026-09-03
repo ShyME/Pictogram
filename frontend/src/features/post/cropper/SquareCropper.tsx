@@ -14,6 +14,7 @@ import {
   type ImageSize,
   MAX_ZOOM,
   OUTPUT_SIZE,
+  frameBox,
   initialCrop,
   panCrop,
   zoomCrop,
@@ -87,19 +88,6 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
     [crop],
   );
 
-  // Written property-by-property on the style object, not via a `style={}` prop, so CSP
-  // `style-src` can stay `'self'`: inline `style=` attributes are governed by it, individual
-  // property assignments are not. Pinned by SecurityHeadersTest and publishPost.spec.ts.
-  useLayoutEffect(() => {
-    const img = imgRef.current;
-    if (!img || !image || !crop || frameSize === 0) return;
-    const scale = frameSize / crop.size;
-    img.style.width = `${image.width * scale}px`;
-    img.style.height = `${image.height * scale}px`;
-    img.style.left = `${-crop.x * scale}px`;
-    img.style.top = `${-crop.y * scale}px`;
-  }, [image, crop, frameSize]);
-
   const onImageLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
     const el = event.currentTarget;
     const size = { width: el.naturalWidth, height: el.naturalHeight };
@@ -130,7 +118,7 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
     setCrop(zoomCrop(crop, target / zoomLevel(crop, image), image));
   }
 
-  const isPositioned = image !== null && crop !== null && frameSize > 0;
+  const framed = image && crop && frameSize > 0 ? frameBox(image, crop, frameSize) : null;
   const currentZoom = image && crop ? zoomLevel(crop, image) : 1;
 
   return (
@@ -150,10 +138,9 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
           onLoad={onImageLoad}
           draggable={false}
           className={
-            isPositioned
-              ? 'absolute max-w-none cursor-grab'
-              : 'absolute inset-0 size-full object-cover'
+            framed ? 'absolute max-w-none cursor-grab' : 'absolute inset-0 size-full object-cover'
           }
+          style={framed ?? undefined}
         />
       </div>
 

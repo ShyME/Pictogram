@@ -9,8 +9,8 @@ final class WebSecurityHeaders {
     // Self-contained SPA: the Vite build emits only external, same-origin scripts and styles
     // (frontend/dist/index.html carries no inline <script>) and Tailwind v4 compiles to a
     // static stylesheet, so script-src and style-src both stay strict — no 'unsafe-inline'.
-    // The one runtime-computed style, the crop image's position in SquareCropper, is written
-    // property-by-property on the element's style object, which style-src does not govern.
+    // The one runtime-computed style (SquareCropper's crop position) is a React style={}
+    // prop, which style-src does not govern — see ADR-0011 decision 3.
     // img-src allows blob:/data: for the client-side crop preview (post/NewPostPage).
     private static final String CONTENT_SECURITY_POLICY = String.join(
             "; ",

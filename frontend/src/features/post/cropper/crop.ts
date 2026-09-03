@@ -50,6 +50,18 @@ export function zoomLevel(crop: Crop, image: ImageSize): number {
   return Math.min(image.width, image.height) / crop.size;
 }
 
+export type FrameBox = { width: number; height: number; left: number; top: number };
+
+export function frameBox(image: ImageSize, crop: Crop, frameSize: number): FrameBox {
+  const scale = frameSize / crop.size;
+  return {
+    width: image.width * scale,
+    height: image.height * scale,
+    left: -crop.x * scale,
+    top: -crop.y * scale,
+  };
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }

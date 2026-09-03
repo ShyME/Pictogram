@@ -95,8 +95,10 @@ carried into #123 and settled there:
    runbook. An in-app bucket4j limiter is deferred (#126) — picked up only if the deploy
    target lacks an edge limiter or a concrete abuse pattern appears.
 3. **CSP `style-src`** — tightened to `'self'`; `'unsafe-inline'` is gone. The one
-   runtime-computed style (the crop image position in `SquareCropper`) is applied by
-   individual `style` property assignments, which `style-src` does not govern, so no
-   nonce/hash pipeline was needed. Pinned by `SecurityHeadersTest` and `publishPost.spec.ts`.
+   runtime-computed style (the crop image position in `SquareCropper`) stays a React
+   `style={}` prop: React applies it through the CSSOM property API (`node.style[prop] =
+   value`), which `style-src` does not govern — only `<style>`/`<link>` elements and inline
+   `style=` attributes are. So no nonce/hash pipeline was needed. Pinned by
+   `SecurityHeadersTest` and `publishPost.spec.ts`.
 4. **Media bucket (`SEC-8`)** — documented only; provisioning pre-creates the bucket and
    withholds `s3:CreateBucket` from the runtime role.

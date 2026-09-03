@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { LoginPage } from './pages/login.page';
 
 test('an unusable Google account lands back on login with an explanation', async ({ page }) => {
