@@ -10,7 +10,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-interface Follows extends CrudRepository<Follow, UUID> {
+interface Follows extends CrudRepository<Follow, FollowId> {
 
     boolean existsByFollowerIdAndFollowedId(UUID followerId, UUID followedId);
 
@@ -24,15 +24,15 @@ interface Follows extends CrudRepository<Follow, UUID> {
     @Query("""
             select f from Follow f
             where f.followedId = :user
-            order by f.followedAt desc, f.id desc
+            order by f.followedAt desc, f.followerId desc
             """)
     List<Follow> followersNewest(@Param("user") UUID user, Limit limit);
 
     @Query("""
             select f from Follow f
             where f.followedId = :user
-              and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.id < :beforeId))
-            order by f.followedAt desc, f.id desc
+              and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.followerId < :beforeId))
+            order by f.followedAt desc, f.followerId desc
             """)
     List<Follow> followersBefore(
             @Param("user") UUID user,
@@ -43,15 +43,15 @@ interface Follows extends CrudRepository<Follow, UUID> {
     @Query("""
             select f from Follow f
             where f.followerId = :user
-            order by f.followedAt desc, f.id desc
+            order by f.followedAt desc, f.followedId desc
             """)
     List<Follow> followingNewest(@Param("user") UUID user, Limit limit);
 
     @Query("""
             select f from Follow f
             where f.followerId = :user
-              and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.id < :beforeId))
-            order by f.followedAt desc, f.id desc
+              and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.followedId < :beforeId))
+            order by f.followedAt desc, f.followedId desc
             """)
     List<Follow> followingBefore(
             @Param("user") UUID user,
