@@ -17,6 +17,11 @@ test('new user: sign in with Google, onboard, land on the empty feed', async ({ 
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(onboarding.heading).toBeVisible();
 
+  // The refresh that ran on the post-sign-in landing had to clear the double-submit CSRF gate
+  // on /api/auth/** (#125); the SPA can only have done that with a readable XSRF-TOKEN cookie.
+  const cookies = await page.context().cookies();
+  expect(cookies.map((cookie) => cookie.name)).toContain('XSRF-TOKEN');
+
   await onboarding.completeWith(`e2e_${Date.now().toString(36)}`, 'E2E Tester');
 
   await expect(feed.emptyState).toBeVisible();

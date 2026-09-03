@@ -35,14 +35,38 @@ class HttpPictogramApi implements PictogramApi {
     @Override
     public Actor registerViaGoogle(String email) {
         String refreshCookie = signIn.authenticate(email);
-        HttpResponse<String> redeemed = send(
-                HttpClient.newHttpClient(),
-                HttpRequest.newBuilder(uri("/api/auth/refresh"))
-                        .header("Cookie", ScenarioHttp.REFRESH_COOKIE + "=" + refreshCookie)
-                        .POST(BodyPublishers.noBody())
-                        .build());
+        HttpResponse<String> redeemed = redeem(refreshCookie, null);
+        if (redeemed.statusCode() == 403) {
+            // #125: the identity chain double-submits a CSRF token. A tokenless POST is rejected
+            // with a fresh XSRF-TOKEN cookie; the retry echoes it back, exactly as the SPA does.
+            redeemed = redeem(refreshCookie, csrfTokenFrom(redeemed));
+        }
         require(redeemed, 200, "redeem refresh cookie");
         return new HttpActor(field(redeemed.body(), "accessToken"));
+    }
+
+    private HttpResponse<String> redeem(String refreshCookie, String csrfToken) {
+        String cookie = ScenarioHttp.REFRESH_COOKIE + "=" + refreshCookie;
+        var request = HttpRequest.newBuilder(uri("/api/auth/refresh")).POST(BodyPublishers.noBody());
+        if (csrfToken != null) {
+            request.header("Cookie", cookie + "; XSRF-TOKEN=" + csrfToken).header("X-XSRF-TOKEN", csrfToken);
+        } else {
+            request.header("Cookie", cookie);
+        }
+        return send(HttpClient.newHttpClient(), request.build());
+    }
+
+    private static String csrfTokenFrom(HttpResponse<?> response) {
+        String prefix = "XSRF-TOKEN=";
+        return response.headers().allValues("Set-Cookie").stream()
+                .filter(header -> header.startsWith(prefix))
+                .map(header -> {
+                    int end = header.indexOf(';');
+                    return header.substring(prefix.length(), end < 0 ? header.length() : end);
+                })
+                .filter(value -> !value.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the refresh 403 seeded no XSRF-TOKEN cookie"));
     }
 
     private final class HttpActor implements Actor {

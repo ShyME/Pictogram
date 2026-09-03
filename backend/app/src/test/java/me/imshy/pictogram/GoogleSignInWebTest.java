@@ -45,8 +45,7 @@ class GoogleSignInWebTest {
         signInThroughGoogle(cookies);
         assertThat(refreshCookie(cookies)).isPresent();
 
-        HttpResponse<String> refresh =
-                browser(cookies).send(post("/api/auth/refresh"), HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> refresh = refresh(refreshCookie(cookies).orElseThrow());
 
         assertThat(refresh.statusCode()).isEqualTo(200);
         String accessToken = readJsonString(refresh.body(), "accessToken");
@@ -60,14 +59,11 @@ class GoogleSignInWebTest {
         signInThroughGoogle(cookies);
         String presented = refreshCookie(cookies).orElseThrow();
 
-        int firstRotation = browser(cookies)
-                .send(post("/api/auth/refresh"), HttpResponse.BodyHandlers.discarding())
-                .statusCode();
-        HttpResponse<Void> replay = browser(new CookieManager())
-                .send(postWithRefreshCookie(presented), HttpResponse.BodyHandlers.discarding());
+        int firstRotation = refresh(presented).statusCode();
+        int replay = refresh(presented).statusCode();
 
         assertThat(firstRotation).isEqualTo(200);
-        assertThat(replay.statusCode()).isEqualTo(401);
+        assertThat(replay).isEqualTo(401);
     }
 
     @Test
@@ -76,16 +72,16 @@ class GoogleSignInWebTest {
         var cookies = new CookieManager();
         signInThroughGoogle(cookies);
         String presented = refreshCookie(cookies).orElseThrow();
+        String csrfToken = mintCsrfToken();
 
         ExecutorService pool = Executors.newFixedThreadPool(2);
         var barrier = new CyclicBarrier(2);
-        Callable<HttpResponse<Void>> refresh = () -> {
+        Callable<HttpResponse<String>> attempt = () -> {
             barrier.await();
-            return browser(new CookieManager())
-                    .send(postWithRefreshCookie(presented), HttpResponse.BodyHandlers.discarding());
+            return refresh(presented, csrfToken);
         };
 
-        List<Future<HttpResponse<Void>>> attempts = pool.invokeAll(List.of(refresh, refresh));
+        List<Future<HttpResponse<String>>> attempts = pool.invokeAll(List.of(attempt, attempt));
         pool.shutdown();
 
         var responses = attempts.stream().map(GoogleSignInWebTest::await).toList();
@@ -96,9 +92,7 @@ class GoogleSignInWebTest {
                 .flatMap(response -> rotatedRefreshCookieFrom(response).stream())
                 .findFirst()
                 .orElseThrow();
-        int followUp = browser(new CookieManager())
-                .send(postWithRefreshCookie(rotated), HttpResponse.BodyHandlers.discarding())
-                .statusCode();
+        int followUp = refresh(rotated).statusCode();
         assertThat(followUp).isEqualTo(200);
     }
 
@@ -208,9 +202,18 @@ class GoogleSignInWebTest {
     }
 
     private static Optional<String> rotatedRefreshCookieFrom(HttpResponse<?> response) {
+        return setCookieValue(response, REFRESH_COOKIE);
+    }
+
+    /** The value of a {@code Set-Cookie: <name>=<value>[; attrs]} header on the response, if present. */
+    private static Optional<String> setCookieValue(HttpResponse<?> response, String name) {
+        String prefix = name + "=";
         return response.headers().allValues("Set-Cookie").stream()
-                .filter(header -> header.startsWith(REFRESH_COOKIE + "="))
-                .map(header -> header.substring((REFRESH_COOKIE + "=").length(), header.indexOf(';')))
+                .filter(header -> header.startsWith(prefix))
+                .map(header -> {
+                    int end = header.indexOf(';');
+                    return header.substring(prefix.length(), end < 0 ? header.length() : end);
+                })
                 .filter(value -> !value.isEmpty())
                 .findFirst();
     }
@@ -243,17 +246,38 @@ class GoogleSignInWebTest {
                 .build();
     }
 
-    private HttpRequest post(String path) {
-        return HttpRequest.newBuilder(uri(path))
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .build();
+    /**
+     * POST /api/auth/refresh carrying the double-submit CSRF token (#125). The identity chain hands
+     * the token out by rejecting a tokenless POST with 403 and a fresh {@code XSRF-TOKEN} cookie; a
+     * real client — and this helper — echoes that value back in the {@code X-XSRF-TOKEN} header.
+     */
+    private HttpResponse<String> refresh(String refreshCookieValue) throws Exception {
+        return refresh(refreshCookieValue, mintCsrfToken());
     }
 
-    private HttpRequest postWithRefreshCookie(String value) {
-        return HttpRequest.newBuilder(uri("/api/auth/refresh"))
-                .header("Cookie", REFRESH_COOKIE + "=" + value)
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .build();
+    private HttpResponse<String> refresh(String refreshCookieValue, String csrfToken) throws Exception {
+        return HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(uri("/api/auth/refresh"))
+                                .header(
+                                        "Cookie",
+                                        REFRESH_COOKIE + "=" + refreshCookieValue + "; XSRF-TOKEN=" + csrfToken)
+                                .header("X-XSRF-TOKEN", csrfToken)
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
+    }
+
+    private String mintCsrfToken() throws Exception {
+        HttpResponse<Void> seeded = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(uri("/api/auth/refresh"))
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
+        assertThat(seeded.statusCode()).isEqualTo(403);
+        return setCookieValue(seeded, "XSRF-TOKEN")
+                .orElseThrow(() -> new AssertionError("the CSRF filter seeded no XSRF-TOKEN cookie"));
     }
 
     private static java.util.Optional<String> refreshCookie(CookieManager cookies) {
