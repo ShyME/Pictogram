@@ -1,6 +1,7 @@
 import {
   MAX_ZOOM,
   clampCrop,
+  frameBox,
   initialCrop,
   panCrop,
   zoomCrop,
@@ -39,6 +40,18 @@ test('zoomCrop zooms around the window centre', () => {
   expect(zoomed.x + zoomed.size / 2).toBe(800);
   expect(zoomed.y + zoomed.size / 2).toBe(600);
   expect(zoomLevel(zoomed, landscape)).toBe(2);
+});
+
+test('frameBox scales the image to the frame and offsets it by the crop origin', () => {
+  const crop = { x: 200, y: 100, size: 600 };
+  const frameSize = 300;
+
+  expect(frameBox(landscape, crop, frameSize)).toEqual({
+    width: 800,
+    height: 600,
+    left: -100,
+    top: -50,
+  });
 });
 
 test('panCrop converts a screen drag into image pixels and re-clamps', () => {

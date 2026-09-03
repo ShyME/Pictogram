@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { expect, test } from './fixtures';
 import { FeedPage } from './pages/feed.page';
 import { LoginPage } from './pages/login.page';
 import { NewPostPage } from './pages/newPost.page';

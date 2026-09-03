@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { FeedPage } from './pages/feed.page';
 import { LoginPage } from './pages/login.page';
 import { OnboardingPage } from './pages/onboarding.page';

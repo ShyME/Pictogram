@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { expect, test } from './fixtures';
 import { FeedPage } from './pages/feed.page';
 import { LoginPage } from './pages/login.page';
 import { NewPostPage } from './pages/newPost.page';
@@ -8,7 +8,10 @@ import { ProfilePage } from './pages/profile.page';
 
 const PHOTO = fileURLToPath(new URL('fixtures/photo.jpg', import.meta.url));
 
-test('publish a post: pick a photo, crop, caption, and see it in the grid', async ({ page }) => {
+test('publish a post: pick a photo, crop, caption, and see it in the grid', async ({
+  page,
+  cspViolations,
+}) => {
   const login = new LoginPage(page);
   const onboarding = new OnboardingPage(page);
   const feed = new FeedPage(page);
@@ -17,16 +20,6 @@ test('publish a post: pick a photo, crop, caption, and see it in the grid', asyn
 
   const username = `e2e_post_${Date.now().toString(36)}`;
   const caption = `first light ${Date.now().toString(36)}`;
-
-  // The cropper positions the image via imperative style-property writes so that CSP
-  // style-src can stay 'self'. A style={} prop or setAttribute('style') would trip a
-  // violation here (reported as a console error) — see SquareCropper / WebSecurityHeaders.
-  const cspViolations: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error' && /content security policy/i.test(message.text())) {
-      cspViolations.push(message.text());
-    }
-  });
 
   await login.open();
   await login.signInWithGoogle();
@@ -41,6 +34,8 @@ test('publish a post: pick a photo, crop, caption, and see it in the grid', asyn
   await compose.selectPhoto(PHOTO);
   await expect(compose.zoom).toBeVisible();
   await compose.frameShot();
+  // The crop is the one screen that computes a style at runtime; pin it here, not only at
+  // teardown, so a regression points straight at the cropper.
   expect(cspViolations).toEqual([]);
 
   await compose.caption.fill(caption);
