@@ -11,6 +11,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
@@ -22,7 +24,8 @@ class IdentitySecurityConfiguration {
         return http.securityMatcher("/api/auth/**")
                 .authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .build();
     }
 
@@ -35,7 +38,10 @@ class IdentitySecurityConfiguration {
             SignInCompletion completion,
             ObjectProvider<ObjectMapper> objectMapper)
             throws Exception {
-        http.securityMatcher("/oauth2/**", "/login/oauth2/**");
+        // The Authorization Code flow is GET-only and its own `state` parameter is the login-CSRF
+        // control (ADR-0011); turn off the framework-default session `CsrfFilter` so every chain's
+        // CSRF posture is set here explicitly, not inherited.
+        http.securityMatcher("/oauth2/**", "/login/oauth2/**").csrf(csrf -> csrf.disable());
         if (clientRegistrations.getIfAvailable() == null) {
             return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll())
                     .build();
