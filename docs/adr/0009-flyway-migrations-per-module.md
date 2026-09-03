@@ -7,6 +7,12 @@ Each bounded context owns its own PostgreSQL **schema** and never a foreign key 
 schema boundary (ADR-0002 — contexts reference each other by ID value only). Schema changes
 are applied with **Flyway**, run on startup by the `:app` process against the one database.
 
+One context owns more than one schema: `social` owns both `follow` and `likes` (`feed` has
+no store; `likes` is plural because `like` is a SQL reserved word) — a consequence of #128
+merging three contexts into one. Each schema is still self-contained and would move with
+its sub-domain on a re-extraction, so the "a schema can move to its own database unchanged"
+property holds.
+
 Migrations live in the module that owns the schema: `backend/<module>/src/main/resources/db/migration/`.
 Flyway merges these from every module's jar into the single default location
 `classpath:db/migration`, sharing one `flyway_schema_history` table.
@@ -26,8 +32,10 @@ The owning module is identified by the file's **path** and the migration **descr
 not by the version number. A new migration takes the next free number in the sequence, so
 it always sorts after everything already applied.
 
-Each migration does `create schema if not exists <module>;` and qualifies every object with
-that schema. A module with no persistence ships no migrations.
+Each migration does `create schema if not exists <schema>;` and qualifies every object with
+that schema. A module with no persistence ships no migrations; a module that absorbed
+several contexts (`social`) ships each sub-domain's migrations against that sub-domain's
+schema.
 
 Two alternatives were rejected:
 

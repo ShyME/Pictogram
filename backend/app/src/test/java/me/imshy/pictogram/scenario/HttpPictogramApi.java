@@ -240,18 +240,18 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public void like(String postId) {
-            require(call("PUT", "/api/engagement/likes/" + postId, null), 204, "like a post");
+            require(call("PUT", "/api/likes/" + postId, null), 204, "like a post");
         }
 
         @Override
         public void unlike(String postId) {
-            require(call("DELETE", "/api/engagement/likes/" + postId, null), 204, "unlike a post");
+            require(call("DELETE", "/api/likes/" + postId, null), 204, "unlike a post");
         }
 
         @Override
         public Map<String, PostLikes> likesOf(String... postIds) {
             String query = Arrays.stream(postIds).map(id -> "postIds=" + id).collect(Collectors.joining("&"));
-            HttpResponse<String> response = call("GET", "/api/engagement/likes?" + query, null);
+            HttpResponse<String> response = call("GET", "/api/likes?" + query, null);
             require(response, 200, "read a batch of post likes");
             Map<String, PostLikes> byId = new LinkedHashMap<>();
             json.readTree(response.body())

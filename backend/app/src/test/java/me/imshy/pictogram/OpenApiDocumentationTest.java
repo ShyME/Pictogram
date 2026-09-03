@@ -227,7 +227,7 @@ class OpenApiDocumentationTest {
 
     @Test
     void likingAPostIsDocumentedAs204() {
-        JsonNode like = spec.at("/paths/~1api~1engagement~1likes~1{postId}/put/responses");
+        JsonNode like = spec.at("/paths/~1api~1likes~1{postId}/put/responses");
 
         assertThat(like.has("204")).isTrue();
         assertThat(like.has("200")).as("no phantom 200").isFalse();
@@ -235,7 +235,7 @@ class OpenApiDocumentationTest {
 
     @Test
     void unlikingAPostIsDocumentedAs204() {
-        JsonNode unlike = spec.at("/paths/~1api~1engagement~1likes~1{postId}/delete/responses");
+        JsonNode unlike = spec.at("/paths/~1api~1likes~1{postId}/delete/responses");
 
         assertThat(unlike.has("204")).isTrue();
         assertThat(unlike.has("200")).as("no phantom 200").isFalse();
@@ -243,7 +243,7 @@ class OpenApiDocumentationTest {
 
     @Test
     void theBatchLikeReadIsDocumentedAsAnArrayOfRecordsToleratingAnAnonymousCaller() {
-        JsonNode byIds = spec.at("/paths/~1api~1engagement~1likes/get/responses");
+        JsonNode byIds = spec.at("/paths/~1api~1likes/get/responses");
 
         assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
                 .isEqualTo("array");

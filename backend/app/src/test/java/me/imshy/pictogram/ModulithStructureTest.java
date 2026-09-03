@@ -20,9 +20,7 @@ class ModulithStructureTest {
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
 
-        assertThat(names)
-                .containsExactlyInAnyOrder(
-                        "identity", "profile", "media", "post", "follow", "feed", "engagement", "shared");
+        assertThat(names).containsExactlyInAnyOrder("identity", "profile", "media", "post", "social", "shared");
     }
 
     @Test
