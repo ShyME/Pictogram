@@ -3,6 +3,7 @@ package me.imshy.pictogram.follow.internal;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
@@ -14,14 +15,14 @@ import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(schema = "follow", name = "follow")
-class Follow implements Persistable<UUID> {
+@IdClass(FollowId.class)
+class Follow implements Persistable<FollowId> {
 
     @Id
-    private UUID id;
-
     @Column(name = "follower_id")
     private UUID followerId;
 
+    @Id
     @Column(name = "followed_id")
     private UUID followedId;
 
@@ -33,15 +34,14 @@ class Follow implements Persistable<UUID> {
 
     protected Follow() {}
 
-    private Follow(UUID id, UUID followerId, UUID followedId, Instant followedAt) {
-        this.id = id;
+    private Follow(UUID followerId, UUID followedId, Instant followedAt) {
         this.followerId = followerId;
         this.followedId = followedId;
         this.followedAt = followedAt;
     }
 
     static Follow of(UserId follower, UserId followed, Instant followedAt) {
-        return new Follow(UUID.randomUUID(), follower.value(), followed.value(), followedAt);
+        return new Follow(follower.value(), followed.value(), followedAt);
     }
 
     UserId follower() {
@@ -57,8 +57,8 @@ class Follow implements Persistable<UUID> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
+    public FollowId getId() {
+        return new FollowId(followerId, followedId);
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.Cursor;
@@ -74,7 +75,7 @@ class FollowListTest extends FollowModuleIntegrationTest {
     }
 
     @Test
-    void breaksATieOnFollowedAtWithTheIdSoPagingStaysStable() {
+    void breaksAFollowedAtTieOnTheFollowerSoFollowerPagingStaysStable() {
         var target = UserId.random();
         followAt("2026-09-01T10:00:00Z", target);
         followAt("2026-09-01T10:00:00Z", target);
@@ -82,6 +83,21 @@ class FollowListTest extends FollowModuleIntegrationTest {
 
         List<UserId> wholePage = lists.followersOf(target, null, 10).items();
         List<UserId> oneAtATime = drainFollowers(target, 1);
+
+        assertThat(oneAtATime).hasSize(3).doesNotHaveDuplicates();
+        assertThat(oneAtATime).containsExactlyElementsOf(wholePage);
+    }
+
+    @Test
+    void breaksAFollowedAtTieOnTheFollowedUserSoFollowingPagingStaysStable() {
+        var viewer = ViewerId.random();
+        now = Instant.parse("2026-09-01T10:00:00Z");
+        for (int i = 0; i < 3; i++) {
+            following.follow(viewer, UserId.random());
+        }
+
+        List<UserId> wholePage = lists.followingOf(viewer.asUserId(), null, 10).items();
+        List<UserId> oneAtATime = drainFollowing(viewer.asUserId(), 1);
 
         assertThat(oneAtATime).hasSize(3).doesNotHaveDuplicates();
         assertThat(oneAtATime).containsExactlyElementsOf(wholePage);
@@ -126,10 +142,18 @@ class FollowListTest extends FollowModuleIntegrationTest {
     }
 
     private List<UserId> drainFollowers(UserId target, int pageSize) {
+        return drain(pageSize, cursor -> lists.followersOf(target, cursor, pageSize));
+    }
+
+    private List<UserId> drainFollowing(UserId target, int pageSize) {
+        return drain(pageSize, cursor -> lists.followingOf(target, cursor, pageSize));
+    }
+
+    private List<UserId> drain(int pageSize, Function<Cursor, FollowList.Page> nextPage) {
         List<UserId> ids = new ArrayList<>();
         Cursor cursor = null;
         do {
-            FollowList.Page page = lists.followersOf(target, cursor, pageSize);
+            FollowList.Page page = nextPage.apply(cursor);
             assertThat(page.items()).hasSizeLessThanOrEqualTo(pageSize);
             ids.addAll(page.items());
             cursor = page.nextCursor();

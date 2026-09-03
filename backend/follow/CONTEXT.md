@@ -58,10 +58,11 @@ list screen renders its follow buttons from a warmed cache instead of one
 
 ## The edge row
 
-The real identity of a follow edge is the `(follower_id, followed_id)` pair, which is
-unique. The row also carries a surrogate `id`: unlike `engagement.post_like`, it is **not**
-dead weight — it is the stable tie-breaker for the `#57` follower/following keyset pages
-(`order by followed_at desc, id desc`, and the matching `Cursor` component). Collapsing the
-edge onto a composite `(follower_id, followed_id)` key is possible but would mean rewriting
-those four keyset queries, their covering indexes and the cursor shape; it is left for the
-day `follow` is actually extracted.
+The `(follower_id, followed_id)` pair **is** the row's primary key (V009 — there is no
+surrogate `id`, matching `engagement.post_like`). The `#57` follower/following keyset pages
+tie-break the `followed_at` sort on the pair column that varies within a page: a followers
+page fixes `followed_id`, so it tie-breaks on `follower_id`; a following page fixes
+`follower_id`, so it tie-breaks on `followed_id`. In both directions the varying column is
+the id of the user the page lists, which is exactly what `shared.http.Cursor`'s UUID
+component already carried — so the cursor shape is unchanged. `FollowListTest` pins the
+tie-break column per direction.

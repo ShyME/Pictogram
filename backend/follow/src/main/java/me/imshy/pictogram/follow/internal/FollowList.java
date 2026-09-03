@@ -47,7 +47,7 @@ public class FollowList {
         Cursor nextCursor = null;
         if (hasMore) {
             Follow last = pageRows.get(pageRows.size() - 1);
-            nextCursor = new Cursor(last.followedAt(), last.getId());
+            nextCursor = new Cursor(last.followedAt(), listedUser.apply(last).value());
         }
 
         return new Page(pageRows.stream().map(listedUser).toList(), nextCursor);
