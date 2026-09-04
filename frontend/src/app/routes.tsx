@@ -8,6 +8,7 @@ import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
 import { NewPostRoute } from './NewPostRoute';
 import { RouteError } from './RouteError';
+import { UiShowcase } from './UiShowcase';
 import { followListLoader } from './followListLoader';
 import {
   editProfileLoader,
@@ -78,6 +79,9 @@ export const router = createBrowserRouter([
         element: <FollowListPage mode="following" />,
         loader: followListLoader,
       },
+      // Dev/test-only component showcase; the branch and its import fold away in a
+      // production build (import.meta.env.DEV === false).
+      ...(import.meta.env.DEV ? [{ path: '/ui', element: <UiShowcase /> }] : []),
     ],
   },
 ]);

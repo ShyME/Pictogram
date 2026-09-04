@@ -43,6 +43,60 @@ clearing the backlog and promoting them to `error`; don't add new warnings in th
 (`pnpm lint --fix` clears most). The `recommended` rules and the boundary rules are `error`
 and do gate.
 
+## Design system
+
+The frontend UI is built on semantic design tokens plus a small set of in-tree components
+(ADR-0013), light theme only.
+
+- **Tokens** are a Tailwind v4 `@theme` block in `frontend/src/index.css` —
+  `--color-surface`, `--color-foreground[-muted|-subtle]`, `--color-accent`, `--color-danger`,
+  radii (`--radius-control|card|dialog`), shadows (`--shadow-card|popover|dialog`), and the
+  self-hosted Inter stack (`@fontsource`). Components use the semantic utilities
+  (`bg-surface`, `text-foreground-muted`, `rounded-card`, `shadow-popover`) and **never** a
+  raw `neutral-*` / `indigo-*` palette step, so a dark theme stays a later additive block.
+- **Primitives** live in `frontend/src/shared/ui/` (Button, Input, Textarea, Card, Avatar,
+  Dialog, DropdownMenu, Toast, Spinner, EmptyState) on Radix + `lucide-react`, re-exported
+  from `@shared`. `/ui` renders them all — dev/test only, never linked, stripped from the
+  production build.
+
+### Adding a shadcn/ui component
+
+The set grows on demand. `components.json` is configured:
+
+```bash
+cd frontend && pnpm dlx shadcn@latest add <component>   # e.g. tooltip, popover, tabs
+```
+
+That drops source into `src/shared/ui/`. Then:
+
+1. Rename the file to camelCase (`dropdown-menu.tsx` → `dropdownMenu.tsx`) — the
+   `unicorn/filename-case` rule rejects kebab-case.
+2. Swap its palette classes for token utilities (`bg-background` → `bg-surface`,
+   `text-muted-foreground` → `text-foreground-muted`, …); imports become relative
+   (`../lib/cn`, `./sibling`).
+3. Re-export it from `src/shared/ui/index.ts`, add it to `src/app/UiShowcase.tsx`, and add
+   a unit test under `test/shared/ui/`.
+
+### Visual regression
+
+`pnpm test:visual` (in `frontend/`) runs Playwright `toHaveScreenshot` over `/ui` and
+`/login` at ~375 and ~1440 px against a bare `vite` dev server (no backend). Baselines are
+committed under `frontend/visual/__screenshots__/**/*-linux.png` and are generated in the
+pinned Playwright CI image (`ci.yml` → `visual` job) so font/AA rendering is stable;
+`retries: 0` holds (ADR-0007). A local run writes gitignored `*-darwin` snapshots.
+
+After an intentional UI change, regenerate the `*-linux.png` baselines in the same image and
+commit them:
+
+```bash
+docker run --rm -v "$PWD/frontend:/work" -v /work/node_modules -w /work --ipc=host \
+  -e PNPM_STORE_DIR=/tmp/pnpm-store \
+  mcr.microsoft.com/playwright:v1.62.1-noble \
+  bash -lc 'corepack enable && pnpm install --frozen-lockfile && pnpm test:visual:update'
+```
+
+(Or take the PNGs from the `visual` job's `visual-regression` artifact.)
+
 ## Blame across the formatting cutover
 
 Each one-time mechanical reformat is a single commit listed in

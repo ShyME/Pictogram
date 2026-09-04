@@ -96,3 +96,25 @@ foundation.
 - `pnpm` gains `lucide-react` and `@fontsource/*` as dependencies and the shadcn CLI as a
   dev tool. This is the first time the frontend takes on component/icon dependencies; the
   bar was "in-tree, testable, tree-shaken", which shadcn + lucide meet.
+
+## Amendment (#134)
+
+The canvas pass (`/design`) settled the palette, type scale and spacing; #134 built it out.
+Deviations from the decisions above, all deliberate:
+
+- **Accent is a restrained indigo** (`oklch(0.52 0.16 264)`), not near-black — the user's
+  call from the canvas: "some colour, not too outstanding". Primary actions, links and
+  active nav use it; the focus ring stays blue regardless.
+- **Token names follow the shadcn/Tailwind convention** (`--color-foreground`,
+  `--color-foreground-muted`, `--color-surface`) rather than the ADR's prose spelling
+  (`text`, `muted text`) — `text-text-muted` reads badly as a utility. The mapping is 1:1.
+- **The type scale and spacing rhythm are Tailwind v4's defaults**, with only `--font-sans`
+  (Inter) overridden. Inventing a parallel ramp bought nothing and widened the retrofit.
+- **`/ui` is dev/test-only** — mounted behind `import.meta.env.DEV`, so the route and its
+  code fold out of the production bundle entirely (the ADR's stricter option).
+- **Toast is `@radix-ui/react-toast`** (not `sonner`) — keeps the "own the source" story;
+  the live-region behaviour is the Radix part.
+- The visual suite runs against a bare `vite` dev server (no backend) as its own Playwright
+  config + CI job in the pinned Playwright image; baselines are `*-linux.png`, committed,
+  regenerated in that image.
+- shadcn component files are renamed to camelCase on add (repo `unicorn/filename-case`).

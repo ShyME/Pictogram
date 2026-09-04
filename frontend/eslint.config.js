@@ -156,7 +156,7 @@ export default tseslint.config(
     settings: { 'boundaries/include': [] },
   },
   {
-    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    files: ['e2e/**/*.ts', 'visual/**/*.ts', 'playwright.config.ts', 'playwright.visual.config.ts'],
     languageOptions: { globals: globals.node },
     settings: { 'boundaries/include': [] },
   },

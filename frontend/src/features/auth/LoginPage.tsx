@@ -7,12 +7,15 @@ export function LoginPage() {
   const error = signInErrorMessage(searchParams.get('error'));
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-neutral-50 p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Pictogram</h1>
-        <p className="mt-2 text-sm text-neutral-500">Sign in to see your feed.</p>
+    <main className="grid min-h-dvh place-items-center bg-canvas p-6">
+      <div className="w-full max-w-sm rounded-dialog border border-border bg-surface p-8 text-center shadow-card">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Pictogram</h1>
+        <p className="mt-2 text-sm text-foreground-muted">Sign in to see your feed.</p>
         {error && (
-          <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p
+            role="alert"
+            className="mt-4 rounded-control border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-text"
+          >
             {error}
           </p>
         )}

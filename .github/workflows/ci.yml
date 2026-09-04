@@ -114,6 +114,40 @@ jobs:
       - name: Production build
         run: pnpm build
 
+  # Visual-regression suite (ADR-0013): Playwright `toHaveScreenshot` over the `/ui`
+  # showcase and `/login`, at a narrow and a wide viewport, against a bare `vite` dev
+  # server (no backend). Runs in the pinned Playwright image so font/AA rendering matches
+  # the committed baselines in frontend/visual/__screenshots__/**/*-linux.png; `retries: 0`
+  # holds. To refresh a baseline after an intentional UI change, regenerate it in this same
+  # image (see CONTRIBUTING → Visual regression) or take it from the `visual-regression`
+  # artifact this job uploads.
+  visual:
+    name: Visual regression
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-frontend
+      - name: Screenshot suite
+        run: pnpm test:visual
+      - name: Upload screenshots and report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-regression
+          path: |
+            frontend/visual/__screenshots__/
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 14
+
   # The `backend` and `frontend` jobs are skipped on the push to `main` (the up-to-date PR
   # already ran them). This container-free job is the floor that still runs on that push, so
   # a direct push — or a merge made while "Require branches to be up to date before merging"
