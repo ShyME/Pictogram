@@ -1,4 +1,11 @@
-import { api, fetchAccounts, problemSlug, throwIfSessionExpired } from '@shared';
+import {
+  api,
+  type components,
+  fetchAccounts,
+  orAnonymous,
+  problemSlug,
+  throwIfSessionExpired,
+} from '@shared';
 import type { Comment, PostCommentCountById, ThreadComment } from './comment';
 import { toComment, toCommentCount } from './comment';
 
@@ -29,17 +36,16 @@ export async function fetchCommentThread(
 }
 
 // One batch call for the comment count of many posts, so the feed and the grid never fan
-// out a request per card (ADR-0005). Tolerates an anonymous caller, like the thread read.
+// out a request per card (ADR-0005). A signed-out viewer reads the public count the same
+// way the feed's like counts do.
 export async function fetchCommentCountsBatch(postIds: string[]): Promise<PostCommentCountById[]> {
   if (postIds.length === 0) return [];
 
-  const { data, response } = await api.GET('/api/comments', {
-    params: { query: { postIds } },
-  });
-  throwIfSessionExpired(response);
-  if (!data) throw new Error(`Comment counts batch request failed: ${response.status}`);
-
-  return data.map((view) => ({ postId: view.postId ?? '', ...toCommentCount(view) }));
+  const views = await orAnonymous<components['schemas']['PostCommentsView'][]>(
+    await api.GET('/api/comments', { params: { query: { postIds } } }),
+    { path: '/api/comments', query: { postIds }, label: 'Comment counts batch request' },
+  );
+  return views.map((view) => ({ postId: view.postId ?? '', ...toCommentCount(view) }));
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
