@@ -1,5 +1,6 @@
-import { SessionExpiredError } from '@shared';
+import { Button, EmptyState, SessionExpiredError, Spinner } from '@shared';
 import { type QueryClient, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { Images } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router';
 import { fetchFeedPage } from './feedApi';
@@ -44,7 +45,9 @@ export function FeedPage({
   if (feed.isPending) {
     return (
       <FeedShell>
-        <p className="text-center text-sm text-neutral-400">Loading your feed…</p>
+        <div className="flex justify-center py-10">
+          <Spinner label="Loading your feed" />
+        </div>
       </FeedShell>
     );
   }
@@ -53,7 +56,7 @@ export function FeedPage({
     if (feed.error instanceof SessionExpiredError) return <Navigate to="/login" replace />;
     return (
       <FeedShell>
-        <p className="text-center text-sm text-red-600">
+        <p className="text-center text-sm text-danger-text">
           We couldn&rsquo;t load your feed. Try again in a moment.
         </p>
       </FeedShell>
@@ -65,11 +68,12 @@ export function FeedPage({
   if (cards.length === 0) {
     return (
       <FeedShell>
-        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center">
-          <h2 className="text-lg font-semibold text-neutral-900">Your feed is quiet</h2>
-          <p className="mx-auto mt-2 max-w-xs text-sm text-neutral-500">
-            Find people to follow and their posts will show up here.
-          </p>
+        <div className="rounded-card border border-dashed border-border-strong bg-surface">
+          <EmptyState
+            icon={Images}
+            title="Your feed is quiet"
+            description="Find people to follow and their posts will show up here."
+          />
         </div>
       </FeedShell>
     );
@@ -87,14 +91,14 @@ export function FeedPage({
 
       {feed.hasNextPage && (
         <div className="mt-6 text-center">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={loadMore}
+            loading={feed.isFetchingNextPage}
             disabled={feed.isFetchingNextPage}
-            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
           >
             {feed.isFetchingNextPage ? 'Loading…' : 'Load more'}
-          </button>
+          </Button>
         </div>
       )}
     </FeedShell>

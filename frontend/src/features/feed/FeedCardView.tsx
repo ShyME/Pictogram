@@ -14,19 +14,19 @@ export function FeedCardView({
   const name = card.author.displayName;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+    <article className="overflow-hidden rounded-card border border-border bg-surface shadow-card">
       <header className="flex items-baseline gap-2 px-4 py-3">
         {handle ? (
           <Link to={`/u/${handle}`} className="flex items-baseline gap-2 hover:underline">
-            {name && <span className="text-sm font-semibold text-neutral-900">{name}</span>}
-            <span className="text-sm text-neutral-500">@{handle}</span>
+            {name && <span className="text-sm font-semibold text-foreground">{name}</span>}
+            <span className="text-sm text-foreground-muted">@{handle}</span>
           </Link>
         ) : (
-          <span className="text-sm font-semibold text-neutral-900">{name ?? 'Someone'}</span>
+          <span className="text-sm font-semibold text-foreground">{name ?? 'Someone'}</span>
         )}
         <time
           dateTime={card.publishedAt}
-          className="ml-auto text-xs text-neutral-400"
+          className="ml-auto text-xs text-foreground-subtle"
           title={new Date(card.publishedAt).toLocaleString()}
         >
           {relativeTime(card.publishedAt)}
@@ -37,16 +37,14 @@ export function FeedCardView({
         src={card.imageUrl}
         alt={card.caption ?? `A post by ${name ?? (handle ? `@${handle}` : 'someone')}`}
         loading="lazy"
-        className="aspect-square w-full bg-neutral-100 object-cover"
+        className="aspect-square w-full bg-surface-muted object-cover"
       />
 
-      <div className="flex items-center gap-2 px-4 pb-1 pt-3 text-neutral-400">
-        {renderLike?.(card.postId)}
-      </div>
+      <div className="flex items-center gap-2 px-4 pb-1 pt-3">{renderLike?.(card.postId)}</div>
 
       {card.caption && (
-        <p className="px-4 pb-4 pt-2 text-sm text-neutral-800">
-          {handle && <span className="font-semibold text-neutral-900">@{handle} </span>}
+        <p className="px-4 pb-4 pt-2 text-sm text-foreground">
+          {handle && <span className="font-semibold text-foreground">@{handle} </span>}
           {card.caption}
         </p>
       )}

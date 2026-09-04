@@ -1,3 +1,4 @@
+import { Button, Textarea, toast } from '@shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -38,8 +39,16 @@ export function NewPostPage({
     },
     onSuccess: (outcome) => {
       if (outcome.status !== 'published') return;
+      toast({ variant: 'success', title: 'Post shared' });
       void queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
       void navigate(`/u/${profileUsername}`, { replace: true });
+    },
+    onError: () => {
+      toast({
+        variant: 'error',
+        title: 'Something went wrong',
+        description: "We couldn't publish your post. Please try again.",
+      });
     },
   });
 
@@ -57,13 +66,10 @@ export function NewPostPage({
   return (
     <main className="mx-auto max-w-md px-4 py-8">
       <div className="flex items-baseline justify-between gap-4">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-900">New post</h1>
-        <Link
-          to={`/u/${profileUsername}`}
-          className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
-        >
-          Cancel
-        </Link>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">New post</h1>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/u/${profileUsername}`}>Cancel</Link>
+        </Button>
       </div>
 
       {file ? (
@@ -77,10 +83,10 @@ export function NewPostPage({
           {previewUrl && <SquareCropper ref={cropper} src={previewUrl} />}
 
           <div className="mt-4">
-            <label htmlFor={captionFieldId} className="block text-sm font-medium text-neutral-700">
-              Caption <span className="font-normal text-neutral-400">(optional)</span>
+            <label htmlFor={captionFieldId} className="block text-sm font-medium text-foreground">
+              Caption <span className="font-normal text-foreground-subtle">(optional)</span>
             </label>
-            <textarea
+            <Textarea
               id={captionFieldId}
               name="caption"
               value={caption}
@@ -88,56 +94,50 @@ export function NewPostPage({
                 setCaption(event.target.value);
               }}
               rows={3}
-              className="mt-1 w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none aria-[invalid=true]:border-red-500"
+              className="mt-1 resize-none"
               aria-invalid={!isCaptionValid}
             />
             <p
-              className={`mt-1 text-right text-xs ${isCaptionValid ? 'text-neutral-400' : 'text-red-600'}`}
+              className={`mt-1 text-right text-xs ${
+                isCaptionValid ? 'text-foreground-subtle' : 'text-danger-text'
+              }`}
             >
               {captionCount} / {CAPTION_MAX_LENGTH}
             </p>
           </div>
 
-          {publish.isError && (
-            <p role="alert" className="mt-2 text-sm text-red-600">
-              Something went wrong publishing your post. Please try again.
-            </p>
-          )}
           {outcome?.status === 'media-unusable' && (
-            <p role="alert" className="mt-2 text-sm text-red-600">
+            <p role="alert" className="mt-2 text-sm text-danger-text">
               That photo couldn&rsquo;t be used. Pick it again and retry.
             </p>
           )}
           {outcome?.status === 'caption-too-long' && (
-            <p role="alert" className="mt-2 text-sm text-red-600">
+            <p role="alert" className="mt-2 text-sm text-danger-text">
               Your caption is too long. Shorten it and try again.
             </p>
           )}
 
           <div className="mt-4 flex items-center gap-3">
-            <button
-              type="submit"
-              disabled={!isCaptionValid || publish.isPending}
-              className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
-            >
+            <Button type="submit" loading={publish.isPending} disabled={!isCaptionValid}>
               {publish.isPending ? 'Sharing…' : 'Share'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setFile(null);
                 setPreviewUrl(null);
                 publish.reset();
               }}
-              className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
             >
               Choose a different photo
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
-        <label className="mt-6 flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 bg-white text-sm text-neutral-500 hover:border-neutral-400">
-          <span className="text-base font-medium text-neutral-700">Select a photo</span>
+        <label className="mt-6 flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-border-strong bg-surface text-sm text-foreground-muted hover:border-foreground-subtle">
+          <span className="text-base font-medium text-foreground">Select a photo</span>
           <span>It&rsquo;ll be cropped to a square.</span>
           <input type="file" accept="image/*" onChange={onPickFile} className="sr-only" />
         </label>

@@ -1,3 +1,4 @@
+import { Button, Spinner } from '@shared';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
@@ -28,10 +29,10 @@ export function FollowListPage({ mode }: { mode: FollowListMode }) {
   if (data.status === 'not-found') {
     return (
       <PageChrome>
-        <h1 className="text-lg font-semibold text-neutral-900">This account doesn&rsquo;t exist</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+        <h1 className="text-lg font-semibold text-foreground">This account doesn&rsquo;t exist</h1>
+        <p className="mt-2 text-sm text-foreground-muted">
           No one on Pictogram goes by{' '}
-          <span className="font-medium text-neutral-700">@{data.username}</span>.
+          <span className="font-medium text-foreground">@{data.username}</span>.
         </p>
       </PageChrome>
     );
@@ -67,37 +68,36 @@ function Loaded({
   return (
     <PageChrome>
       <div className="flex items-baseline justify-between gap-4">
-        <h1 className="text-lg font-semibold text-neutral-900">{copy.title(target.username)}</h1>
-        <Link
-          to={`/u/${target.username}`}
-          className="text-sm font-medium text-neutral-900 underline"
-        >
-          Back to profile
-        </Link>
+        <h1 className="text-lg font-semibold text-foreground">{copy.title(target.username)}</h1>
+        <Button variant="link" size="sm" asChild>
+          <Link to={`/u/${target.username}`}>Back to profile</Link>
+        </Button>
       </div>
 
       <div className="mt-4">
         {list.isPending ? (
-          <p className="py-10 text-center text-sm text-neutral-400">Loading…</p>
+          <div className="flex justify-center py-10">
+            <Spinner label="Loading" />
+          </div>
         ) : list.isError ? (
-          <p className="py-10 text-center text-sm text-red-600">
+          <p className="py-10 text-center text-sm text-danger-text">
             We couldn&rsquo;t load this list. Try again in a moment.
           </p>
         ) : accounts.length === 0 ? (
-          <p className="py-10 text-center text-sm text-neutral-400">{copy.empty}</p>
+          <p className="py-10 text-center text-sm text-foreground-subtle">{copy.empty}</p>
         ) : (
           <>
             <AccountList accounts={accounts} viewerId={viewerId} />
             {list.hasNextPage && (
               <div className="mt-4 text-center">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={() => void list.fetchNextPage()}
+                  loading={list.isFetchingNextPage}
                   disabled={list.isFetchingNextPage}
-                  className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
                 >
                   {list.isFetchingNextPage ? 'Loading…' : 'Load more'}
-                </button>
+                </Button>
               </div>
             )}
           </>

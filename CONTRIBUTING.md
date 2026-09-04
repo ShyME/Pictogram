@@ -79,11 +79,14 @@ That drops source into `src/shared/ui/`. Then:
 
 ### Visual regression
 
-`pnpm test:visual` (in `frontend/`) runs Playwright `toHaveScreenshot` over `/ui` and
-`/login` at ~375 and ~1440 px against a bare `vite` dev server (no backend). Baselines are
-committed under `frontend/visual/__screenshots__/**/*-linux.png` and are generated in the
-pinned Playwright CI image (`ci.yml` → `visual` job) so font/AA rendering is stable;
-`retries: 0` holds (ADR-0007). A local run writes gitignored `*-darwin` snapshots.
+`pnpm test:visual` (in `frontend/`) runs Playwright `toHaveScreenshot` at ~375 and ~1440 px
+against a bare `vite` dev server (no backend). It covers the `/ui` showcase, `/login`, and
+every retrofitted screen (`visual/screens.visual.ts`) — the screen tests drive the real
+router with each `/api/**` read fulfilled from the fixed world in `visual/appWorld.ts`
+(clock pinned so relative timestamps don't drift). Baselines are committed under
+`frontend/visual/__screenshots__/**/*-linux.png` and are generated in the pinned Playwright
+CI image (`ci.yml` → `visual` job) so font/AA rendering is stable; `retries: 0` holds
+(ADR-0007). A local run writes gitignored `*-darwin` snapshots.
 
 After an intentional UI change, regenerate the `*-linux.png` baselines in the same image and
 commit them:
