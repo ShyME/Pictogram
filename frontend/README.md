@@ -17,8 +17,20 @@ pnpm build            # tsc -b && vite build
 pnpm lint             # eslint: slice boundaries + type-aware strict/unicorn
 pnpm test             # vitest run
 pnpm typecheck        # tsc -b --noEmit
+pnpm test:visual      # Playwright screenshot suite (/ui + /login) vs a bare vite server
 pnpm generate:api     # regenerate src/shared/api/schema.d.ts from ../backend/openapi.json
 ```
+
+## Design system
+
+`src/index.css` is a Tailwind v4 `@theme` block of semantic tokens — `--color-surface`,
+`--color-foreground`, `--color-accent`, radii, shadows, self-hosted Inter — and
+`src/shared/ui/` owns a small set of components (Button, Input, Textarea, Card, Avatar,
+Dialog, DropdownMenu, Toast, Spinner, EmptyState) built on Radix + `lucide-react` and
+re-exported from `@shared`. Components use the token utilities (`bg-surface`,
+`text-foreground-muted`, `rounded-card`), never a raw palette step; a dark theme would be a
+later additive `@theme` block. `/ui` (dev/test only, not in the production build) renders
+every primitive in its states. See ADR-0013 and CONTRIBUTING for the add-a-component flow.
 
 ## API client
 
@@ -63,12 +75,21 @@ The app shares the mock's network namespace (see `compose.mock-oauth.yaml`) so b
 app reach the OIDC issuer at the same `localhost:8095` — no `/etc/hosts` edit, no browser
 flags. CI runs the same journeys on the push to `main` (see `.github/workflows/ci.yml`).
 
+`pnpm test:visual` is a separate Playwright suite — `toHaveScreenshot` over `/ui` and
+`/login` at ~375 and ~1440 px against a bare `vite` dev server (no backend). Baselines
+under `visual/__screenshots__/` are generated in the pinned Playwright CI image (`visual`
+job); a local run writes gitignored `*-darwin` snapshots. See CONTRIBUTING → Visual
+regression.
+
 ## Structure — feature slices
 
 ```
 src/
   app/               composition root: providers, router, route table
   shared/            cross-cutting building blocks (may import shared only)
+    ui/              owned design-system primitives (Button, Dialog, …)
+    lib/             helpers (cn, queryClient)
+    api/             the typed openapi-fetch client
   features/<name>/   one vertical slice:
     *Api.ts          calls to backend REST resources
     *.ts             types and pure logic

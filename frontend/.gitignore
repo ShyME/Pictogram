@@ -1,2 +1,8 @@
 # Frontend-local ignores; repo-root .gitignore covers node_modules, dist, coverage, etc.
 *.tsbuildinfo
+.pnpm-store/
+
+# Visual-regression baselines are generated in the Playwright CI image (Linux) and
+# committed from there. A local run writes throwaway per-platform snapshots.
+visual/__screenshots__/**/*-darwin.png
+visual/__screenshots__/**/*-win32.png

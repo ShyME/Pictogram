@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { HeartGlyph } from './HeartGlyph';
+import { Heart } from 'lucide-react';
 import { likeLabel } from './likes';
 import { likePost, unlikePost } from './likesApi';
 import { postLikesKey } from './queryKeys';
@@ -33,15 +33,15 @@ export function LikeButton({ postId }: { postId: string }) {
         }}
         className={
           isLiked
-            ? 'text-red-600 transition hover:text-red-500 disabled:opacity-50'
-            : 'text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50'
+            ? 'text-like transition-colors disabled:opacity-50'
+            : 'text-foreground-subtle transition-colors hover:text-foreground-muted disabled:opacity-50'
         }
       >
-        <HeartGlyph filled={isLiked} />
+        <Heart className={isLiked ? 'size-6 fill-current' : 'size-6'} aria-hidden="true" />
       </button>
-      <span className="text-sm text-neutral-500">{likeLabel(count)}</span>
+      <span className="text-sm text-foreground-muted">{likeLabel(count)}</span>
       {toggle.isError && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-text">
           That didn&rsquo;t work. Try again in a moment.
         </p>
       )}
