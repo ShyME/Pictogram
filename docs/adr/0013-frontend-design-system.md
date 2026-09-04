@@ -1,0 +1,98 @@
+# Frontend design system: shadcn/ui components on Tailwind v4 tokens, one theme, screenshot-tested
+
+- **Status:** Accepted
+- **Relates to:** ADR-0005 (client-side composition — the SPA owns all presentation),
+  ADR-0007 (`retries: 0`, the Playwright layer), ADR-0011 (CSP on the app chains)
+
+The frontend is styled with ad-hoc Tailwind utility classes chosen per component:
+`src/index.css` is `@import 'tailwindcss';` and nothing else — no tokens, no shared
+components. `PostDetailDialog` hand-rolls a `role="dialog"`; `HeartGlyph` hand-draws an
+SVG. The next phase adds comments and a responsive pass and wants a consistent, deliberate
+look. This records the approach so every feature ticket after it inherits the same
+foundation.
+
+## Decisions
+
+1. **Design tokens in `src/index.css` via Tailwind v4 `@theme`.** Semantic names —
+   `--color-surface`, `--color-text`, `--color-text-muted`, `--color-accent`,
+   `--color-border`, a radii set, a shadow set, one type scale. Components reference tokens,
+   never raw palette values. **One theme (light) for v1.** Because every colour is a
+   semantic token, a dark theme is a later second `@theme` block, not a sweep of every
+   component.
+
+2. **Components: shadcn/ui.** Not an npm dependency — its CLI copies component source (built
+   on Radix primitives + Tailwind) into `src/shared/ui/`, which the repo then owns, styles,
+   and unit-tests. This resolves the tension between "don't hand-roll accessible dialogs,
+   menus and toasts" and "keep runtime UI dependencies at zero and keep the craft story":
+   the component code is in-tree and testable, but the parts that are subtly wrong when
+   hand-rolled — focus traps, menu keyboard semantics, toast live-regions — come from Radix.
+   `PostDetailDialog` re-homes onto the shadcn `Dialog`. shadcn's `cn()` helper and
+   `components.json` land in the frontend.
+
+3. **Icons: `lucide-react`** (shadcn's default). A build-time dependency, tree-shaken to the
+   icons actually used. `HeartGlyph` and any other bespoke SVGs are replaced.
+
+4. **Typography: one self-hosted webfont.** Inter (Geist is an acceptable alternative),
+   `system-ui` fallback stack, 400 and 600 weights, `font-display: swap`, vendored via
+   `@fontsource` so it serves from the app's own origin. CSP stays `'self'` — ADR-0011 is
+   untouched. (If the font is ever loaded from `fonts.googleapis.com` instead, that ADR's
+   `style-src`/`font-src` gain the Google font hosts, and its decision 3 wording is
+   updated — but self-hosting is the default precisely to avoid that.)
+
+5. **Aesthetic: content-first minimal.** Neutral chrome, the photo is the only saturated
+   element on the page, a single accent colour for primary actions, generous whitespace.
+   This is Instagram's own answer and it suits a photo portfolio. One `design`-skill canvas
+   pass settles the palette, the type scale, the spacing rhythm, and one screen's look;
+   after that, code is the source of truth. Full up-front mockups of every screen are
+   overkill for five screens.
+
+6. **Navigation: one `<AppNav>` in `src/shared/ui`.** Full inline nav at the `md` breakpoint
+   and above; below it, the nav collapses to the logo plus an avatar `DropdownMenu`. This
+   replaces the inline `<header>` in `AppLayout`. The nav gains a chat entry when that epic
+   lands — it is not stubbed now.
+
+7. **The component set is lean and grows on demand.** Initial set: Button, Input, Textarea,
+   Dialog, DropdownMenu, Avatar, Card, Toast, Spinner, EmptyState. Anything else is added
+   with a one-line CLI call when a feature needs it. There is no penalty for deferring, so
+   nothing speculative is built.
+
+8. **Visual-regression suite.** A `/ui` showcase route renders every `shared/ui` component
+   in its states. Playwright `toHaveScreenshot` snapshots cover that route plus the key
+   screens (feed, profile, post detail, login) at a narrow and a wide viewport. "Consistent"
+   becomes an enforced property rather than a hope. `retries: 0` still holds (ADR-0007);
+   baselines are committed and updated deliberately, and — like the existing e2e — the
+   snapshots are generated in the Playwright CI image so font rendering is stable.
+
+9. **One retrofit pass.** After the tokens and the component set land, a single change
+   migrates the existing screens (Login, Onboarding, EditProfile, NewPost, Profile, Feed,
+   FollowList) onto tokens + `shared/ui`. Done means: no ad-hoc colour or spacing literals
+   left, and the screen matches its committed screenshot baseline.
+
+## Why not
+
+- **Hand-roll everything.** Considered — it is the project's minimal-dependency instinct,
+  and `PostDetailDialog` proves it is feasible. Rejected because focus management, `Menu`
+  keyboard handling and toast accessibility are exactly what goes subtly wrong hand-rolled,
+  and shadcn keeps the code in-tree anyway, so "own the code" is not given up.
+- **A full styled kit (MUI, Mantine, Chakra).** Each ships its own styling system that
+  fights Tailwind, adds real runtime weight, and pushes a Material/opinionated look. The
+  repo is already committed to Tailwind v4.
+- **Radix Primitives directly, without shadcn.** Viable. shadcn is Radix plus a sensible
+  default style and a catalogue to copy from; it is the fallback if the CLI workflow proves
+  annoying.
+- **Dark mode now.** Doubles the review and screenshot surface of every screen and the
+  retrofit before one theme is polished. Deferred — but the semantic tokens mean it is not
+  designed out.
+
+## Consequences
+
+- `eslint-plugin-boundaries`: `shared/ui` is part of `@shared`; features import components
+  from there, never from each other.
+- Every subsequent frontend ticket — comments first — builds on `shared/ui` and adds its
+  screens to the screenshot suite. The cross-layer slice rule (ADR-0007) now includes a
+  visual snapshot wherever a slice has UI.
+- The `/ui` showcase route is test/dev-only or served behind the same build; it is not a
+  user-facing page.
+- `pnpm` gains `lucide-react` and `@fontsource/*` as dependencies and the shadcn CLI as a
+  dev tool. This is the first time the frontend takes on component/icon dependencies; the
+  bar was "in-tree, testable, tree-shaken", which shadcn + lucide meet.
