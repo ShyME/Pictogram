@@ -128,3 +128,41 @@ test('loads the next page on demand', async () => {
   expect(screen.getAllByRole('article')).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
 });
+
+test('renders the injected comment count and opens the post detail from the card', async () => {
+  stubFetch((request) =>
+    jsonResponse(
+      pathOf(request) === '/api/feed'
+        ? { items: [card({ postId: 'p-1' })], nextCursor: null }
+        : [{ userId: 'u-1', username: 'ada', displayName: 'Ada' }],
+    ),
+  );
+
+  renderWithProviders(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <FeedPage
+              renderCommentCount={(postId) => <span>{postId} chatter</span>}
+              renderPostDetail={(detail, onClose) => (
+                <div role="dialog">
+                  detail for {detail.postId} by {detail.authorId}
+                  <button type="button" onClick={onClose}>
+                    x
+                  </button>
+                </div>
+              )}
+            />
+          }
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(await screen.findByText('p-1 chatter')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Open post' }));
+  expect(screen.getByRole('dialog')).toHaveTextContent('detail for p-1 by u-1');
+});

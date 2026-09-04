@@ -1,4 +1,9 @@
-import { fetchCommentThread, postComment } from '@features/comments/commentsApi';
+import {
+  deleteComment,
+  fetchCommentCountsBatch,
+  fetchCommentThread,
+  postComment,
+} from '@features/comments/commentsApi';
 import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -73,4 +78,42 @@ test('fetchCommentThread enriches every comment with one batched author lookup',
   expect(page.nextCursor).toBe('CURSOR');
   expect(page.comments.map((comment) => comment.author?.username)).toEqual(['ada', 'ada']);
   expect(calls.filter((call) => pathOf(call) === '/api/profiles')).toHaveLength(1);
+});
+
+test('fetchCommentCountsBatch returns one record per requested post', async () => {
+  const calls = stubFetch(() =>
+    jsonResponse([
+      { postId: 'p-1', commentCount: 3 },
+      { postId: 'p-2', commentCount: 0 },
+    ]),
+  );
+
+  const counts = await fetchCommentCountsBatch(['p-1', 'p-2']);
+
+  expect(counts).toEqual([
+    { postId: 'p-1', commentCount: 3 },
+    { postId: 'p-2', commentCount: 0 },
+  ]);
+  expect(pathOf(calls[0])).toBe('/api/comments');
+  expect(new URL(calls[0].url).searchParams.getAll('postIds')).toEqual(['p-1', 'p-2']);
+});
+
+test('fetchCommentCountsBatch makes no call for an empty list', async () => {
+  const calls = stubFetch(() => jsonResponse([]));
+  expect(await fetchCommentCountsBatch([])).toEqual([]);
+  expect(calls).toHaveLength(0);
+});
+
+test('deleteComment issues a DELETE for the comment', async () => {
+  const calls = stubFetch(() => new Response(null, { status: 204 }));
+
+  await deleteComment('c-1');
+
+  expect(pathOf(calls[0])).toBe('/api/comments/c-1');
+  expect(calls[0].method).toBe('DELETE');
+});
+
+test('deleteComment throws on a non-ok response', async () => {
+  stubFetch(() => problemResponse('forbidden', 403));
+  await expect(deleteComment('c-1')).rejects.toThrow(/403/);
 });

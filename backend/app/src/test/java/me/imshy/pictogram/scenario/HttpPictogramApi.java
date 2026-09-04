@@ -290,6 +290,31 @@ class HttpPictogramApi implements PictogramApi {
         }
 
         @Override
+        public DeleteOutcome deleteComment(String commentId) {
+            HttpResponse<String> response = call("DELETE", "/api/comments/" + commentId, null);
+            return switch (response.statusCode()) {
+                case 204 -> DeleteOutcome.DELETED;
+                case 403 -> DeleteOutcome.FORBIDDEN;
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status deleting a comment: " + response.statusCode() + ": " + response.body());
+            };
+        }
+
+        @Override
+        public Map<String, Long> commentCountsOf(String... postIds) {
+            String query = Arrays.stream(postIds).map(id -> "postIds=" + id).collect(Collectors.joining("&"));
+            HttpResponse<String> response = call("GET", "/api/comments?" + query, null);
+            require(response, 200, "read a batch of post comment counts");
+            Map<String, Long> byId = new LinkedHashMap<>();
+            json.readTree(response.body())
+                    .forEach(node -> byId.put(
+                            node.path("postId").asString(),
+                            node.path("commentCount").asLong()));
+            return byId;
+        }
+
+        @Override
         public FeedPage openFeed() {
             return openFeed(null, null);
         }

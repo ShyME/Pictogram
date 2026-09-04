@@ -7,14 +7,25 @@ import type { FeedCard } from './feed';
 export function FeedCardView({
   card,
   renderLike,
-  onOpenComments,
+  renderCommentCount,
+  onOpenPost,
 }: {
   card: FeedCard;
   renderLike?: (postId: string) => ReactNode;
-  onOpenComments?: () => void;
+  renderCommentCount?: (postId: string) => ReactNode;
+  onOpenPost?: () => void;
 }) {
   const handle = card.author.username;
   const name = card.author.displayName;
+
+  const image = (
+    <img
+      src={card.imageUrl}
+      alt={card.caption ?? `A post by ${name ?? (handle ? `@${handle}` : 'someone')}`}
+      loading="lazy"
+      className="aspect-square w-full bg-surface-muted object-cover"
+    />
+  );
 
   return (
     <article className="overflow-hidden rounded-card border border-border bg-surface shadow-card">
@@ -36,24 +47,29 @@ export function FeedCardView({
         </time>
       </header>
 
-      <img
-        src={card.imageUrl}
-        alt={card.caption ?? `A post by ${name ?? (handle ? `@${handle}` : 'someone')}`}
-        loading="lazy"
-        className="aspect-square w-full bg-surface-muted object-cover"
-      />
+      {onOpenPost ? (
+        <button type="button" onClick={onOpenPost} aria-label="Open post" className="block w-full">
+          {image}
+        </button>
+      ) : (
+        image
+      )}
 
       <div className="flex items-center gap-4 px-4 pb-1 pt-3">
         {renderLike?.(card.postId)}
-        {onOpenComments && (
+        {onOpenPost && (
           <button
             type="button"
-            onClick={onOpenComments}
+            onClick={onOpenPost}
             aria-label="Open comments"
             className="flex items-center gap-2 text-foreground-subtle transition-colors hover:text-foreground-muted"
           >
-            <MessageCircle className="size-6" aria-hidden="true" />
-            <span className="text-sm">Comment</span>
+            {renderCommentCount?.(card.postId) ?? (
+              <>
+                <MessageCircle className="size-6" aria-hidden="true" />
+                <span className="text-sm">Comment</span>
+              </>
+            )}
           </button>
         )}
       </div>

@@ -1,12 +1,12 @@
 import { LoginPage, installApiAuth } from '@features/auth';
 import { CommentThread } from '@features/comments';
-import { FeedPage } from '@features/feed';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
 import { LikeButton, LikeCount, prefetchPostLikes } from '@features/likes';
-import { PostDetailDialog, PostGrid } from '@features/post';
+import { PostGrid } from '@features/post';
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@features/profile';
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
+import { FeedRoute } from './FeedRoute';
 import { NewPostRoute } from './NewPostRoute';
 import { PublicLayout } from './PublicLayout';
 import { RouteError } from './RouteError';
@@ -24,23 +24,7 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         loader: rootLoader,
         children: [
-          {
-            index: true,
-            element: (
-              <FeedPage
-                renderLike={(postId) => <LikeButton postId={postId} />}
-                preloadLikes={prefetchPostLikes}
-                renderPostDetail={(detail, onClose) => (
-                  <PostDetailDialog
-                    {...detail}
-                    onClose={onClose}
-                    renderLike={(postId) => <LikeButton postId={postId} />}
-                    renderComments={(postId) => <CommentThread postId={postId} canComment />}
-                  />
-                )}
-              />
-            ),
-          },
+          { index: true, element: <FeedRoute /> },
           { path: '/new', element: <NewPostRoute /> },
           { path: '/settings/profile', element: <EditProfilePage /> },
           {
@@ -65,7 +49,7 @@ export const router = createBrowserRouter([
             path: '/u/:username',
             element: (
               <ProfilePage
-                renderGrid={(authorId, isOwnProfile, isViewerAuthenticated) => (
+                renderGrid={(authorId, isOwnProfile, isViewerAuthenticated, viewerId) => (
                   <PostGrid
                     authorId={authorId}
                     manageable={isOwnProfile}
@@ -77,7 +61,12 @@ export const router = createBrowserRouter([
                       )
                     }
                     renderComments={(postId) => (
-                      <CommentThread postId={postId} canComment={isViewerAuthenticated} />
+                      <CommentThread
+                        postId={postId}
+                        canComment={isViewerAuthenticated}
+                        viewerId={viewerId}
+                        postAuthorId={authorId}
+                      />
                     )}
                     preloadLikes={prefetchPostLikes}
                   />

@@ -9,5 +9,5 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public abstract class SocialModuleIntegrationTest extends ModuleIntegrationTest {
 
     @MockitoBean
-    PublishedPosts publishedPosts;
+    protected PublishedPosts publishedPosts;
 }

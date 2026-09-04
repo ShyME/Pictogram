@@ -1,7 +1,7 @@
 import { CommentThread } from '@features/comments/CommentThread';
 import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -19,10 +19,13 @@ const comment = (id: string, body: string, authorId = 'u-ada') => ({
 
 const profiles = () => jsonResponse([{ userId: 'u-ada', username: 'ada', displayName: 'Ada' }]);
 
-function renderThread(canComment: boolean) {
+function renderThread(
+  canComment: boolean,
+  extra: { viewerId?: string | null; postAuthorId?: string | null } = {},
+) {
   return renderWithProviders(
     <MemoryRouter>
-      <CommentThread postId="p-1" canComment={canComment} />
+      <CommentThread postId="p-1" canComment={canComment} {...extra} />
     </MemoryRouter>,
   );
 }
@@ -86,4 +89,41 @@ test('"Load more comments" fetches the next page with the cursor', async () => {
   expect(calls.some((call) => new URL(call.url).searchParams.get('cursor') === 'CURSOR')).toBe(
     true,
   );
+});
+
+test('shows a delete control only on comments the viewer may remove and calls DELETE', async () => {
+  const calls = stubFetch((request) => {
+    if (pathOf(request) === '/api/profiles') return profiles();
+    if (request.method === 'DELETE') return new Response(null, { status: 204 });
+    return jsonResponse({
+      items: [comment('c-mine', 'mine', 'u-ada'), comment('c-theirs', 'theirs', 'u-bob')],
+      nextCursor: null,
+    });
+  });
+
+  renderThread(true, { viewerId: 'u-ada', postAuthorId: 'u-zed' });
+
+  const rows = await screen.findAllByRole('listitem');
+  expect(within(rows[0]).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  expect(within(rows[1]).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+
+  fireEvent.click(within(rows[0]).getByRole('button', { name: 'Delete' }));
+
+  await waitFor(() => {
+    expect(
+      calls.some((call) => call.method === 'DELETE' && pathOf(call) === '/api/comments/c-mine'),
+    ).toBe(true);
+  });
+});
+
+test('the post author may delete any comment', async () => {
+  stubFetch((request) => {
+    if (pathOf(request) === '/api/profiles') return profiles();
+    return jsonResponse({ items: [comment('c-1', 'hi', 'u-bob')], nextCursor: null });
+  });
+
+  renderThread(false, { viewerId: 'u-zed', postAuthorId: 'u-zed' });
+
+  const rows = await screen.findAllByRole('listitem');
+  expect(within(rows[0]).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 });

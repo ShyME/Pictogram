@@ -15,13 +15,17 @@ function FeedShell({ children }: { children: ReactNode }) {
 
 export function FeedPage({
   renderLike,
+  renderCommentCount,
   preloadLikes,
+  preloadComments,
   renderPostDetail,
 }: {
   renderLike?: (postId: string) => ReactNode;
+  renderCommentCount?: (postId: string) => ReactNode;
   preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
+  preloadComments?: (client: QueryClient, postIds: string[]) => Promise<void>;
   renderPostDetail?: (
-    detail: { postId: string; imageUrl: string; caption: string | null },
+    detail: { postId: string; imageUrl: string; caption: string | null; authorId: string },
     onClose: () => void,
   ) => ReactNode;
 } = {}) {
@@ -32,10 +36,11 @@ export function FeedPage({
     queryFn: async ({ pageParam }) => {
       const page = await fetchFeedPage(pageParam);
       const cards = await toFeedCards(page.posts);
-      await preloadLikes?.(
-        queryClient,
-        cards.map((card) => card.postId),
-      );
+      const postIds = cards.map((card) => card.postId);
+      await Promise.all([
+        preloadLikes?.(queryClient, postIds),
+        preloadComments?.(queryClient, postIds),
+      ]);
       return { cards, nextCursor: page.nextCursor };
     },
     initialPageParam: undefined as string | undefined,
@@ -94,7 +99,8 @@ export function FeedPage({
             key={card.postId}
             card={card}
             renderLike={renderLike}
-            onOpenComments={
+            renderCommentCount={renderCommentCount}
+            onOpenPost={
               renderPostDetail
                 ? () => {
                     setOpenCard(card);
@@ -107,7 +113,12 @@ export function FeedPage({
 
       {openCard &&
         renderPostDetail?.(
-          { postId: openCard.postId, imageUrl: openCard.imageUrl, caption: openCard.caption },
+          {
+            postId: openCard.postId,
+            imageUrl: openCard.imageUrl,
+            caption: openCard.caption,
+            authorId: openCard.author.userId,
+          },
           () => {
             setOpenCard(null);
           },

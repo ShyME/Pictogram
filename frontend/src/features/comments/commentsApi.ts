@@ -1,6 +1,6 @@
 import { api, problemSlug, throwIfSessionExpired } from '@shared';
-import type { Comment, CommentAuthor, ThreadComment } from './comment';
-import { toComment } from './comment';
+import type { Comment, CommentAuthor, PostCommentCountById, ThreadComment } from './comment';
+import { toComment, toCommentCount } from './comment';
 
 export type CommentThreadPage = { comments: ThreadComment[]; nextCursor: string | null };
 
@@ -45,6 +45,28 @@ async function fetchAuthors(ids: string[]): Promise<Map<string, CommentAuthor>> 
       },
     ]),
   );
+}
+
+// One batch call for the comment count of many posts, so the feed and the grid never fan
+// out a request per card (ADR-0005). Tolerates an anonymous caller, like the thread read.
+export async function fetchCommentCountsBatch(postIds: string[]): Promise<PostCommentCountById[]> {
+  if (postIds.length === 0) return [];
+
+  const { data, response } = await api.GET('/api/comments', {
+    params: { query: { postIds } },
+  });
+  throwIfSessionExpired(response);
+  if (!data) throw new Error(`Comment counts batch request failed: ${response.status}`);
+
+  return data.map((view) => ({ postId: view.postId ?? '', ...toCommentCount(view) }));
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  const { response } = await api.DELETE('/api/comments/{commentId}', {
+    params: { path: { commentId } },
+  });
+  throwIfSessionExpired(response);
+  if (!response.ok) throw new Error(`Deleting the comment failed: ${response.status}`);
 }
 
 export type PostCommentOutcome =

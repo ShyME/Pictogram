@@ -9,6 +9,7 @@ export type ProfilePageData =
       isOwnProfile: boolean;
       viewerCanFollow: boolean;
       viewerIsAuthenticated: boolean;
+      viewerId: string | null;
     }
   | { status: 'not-found'; username: string };
 
@@ -28,5 +29,6 @@ export async function profileLoader({ params }: LoaderFunctionArgs): Promise<Pro
     isOwnProfile,
     viewerCanFollow: me.status === 'onboarded' && !isOwnProfile,
     viewerIsAuthenticated: me.status !== 'unauthenticated',
+    viewerId: me.status === 'onboarded' ? me.profile.userId : null,
   };
 }

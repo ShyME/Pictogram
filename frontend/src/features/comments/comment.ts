@@ -22,6 +22,29 @@ export type CommentAuthor = { userId: string; username: string; displayName: str
 
 export type ThreadComment = Comment & { author: CommentAuthor | null };
 
+export type PostCommentCount = { commentCount: number };
+
+export type PostCommentCountById = PostCommentCount & { postId: string };
+
+export function toCommentCount(view: components['schemas']['PostCommentsView']): PostCommentCount {
+  return { commentCount: view.commentCount ?? 0 };
+}
+
+export function commentCountLabel(count: number): string {
+  return count === 1 ? '1 comment' : `${count} comments`;
+}
+
+// A comment may be removed by its own author or by the post's author (#138); the backend
+// enforces the same rule, this only decides whether to show the control.
+export function canDeleteComment(
+  comment: { authorId: string },
+  viewerId: string | null,
+  postAuthorId: string | null,
+): boolean {
+  if (!viewerId) return false;
+  return comment.authorId === viewerId || postAuthorId === viewerId;
+}
+
 export const MAX_COMMENT_LENGTH = 1000;
 
 export function commentLength(body: string): number {

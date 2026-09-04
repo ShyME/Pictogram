@@ -125,7 +125,10 @@ is unaware of comments — the thread is assembled here.
 **Comment**: a piece of free text, up to 1000 characters, attached to a post by a viewer.
 There is no edit. Unlike a `Like` or a `Follow` it has no natural key — the same viewer may
 comment on the same post any number of times — so it carries an application-assigned
-surrogate `id`.
+surrogate `id`. A comment is removed by its own author **or** by the post's author
+(`CommentRemoval` — the one place the sub-domain asks `post` who authored a post, via
+`PublishedPosts.authorOf`); a real removal fires `CommentDeleted`. When a post is deleted
+the whole thread is hard-deleted with it (`CommentCleanup` consumes `PostDeleted`).
 _Avoid_: Reply, note, annotation, post
 
 **Thread**: the comments on one post, oldest first, keyset-paged (`created_at`, then `id`
@@ -144,9 +147,11 @@ _Avoid_: Commenter, current user, principal
 ### Rules
 
 A comment body is trimmed, must be non-blank, and is at most 1000 Unicode code points
-(`EmptyCommentException` / `CommentTooLongException`, both `400`). The thread read tolerates
-an anonymous caller; writing a comment needs a viewer. There is no post-existence check —
-a comment references a `PostId` by value only (ADR-0002), exactly as a `Like` does.
+(`EmptyCommentException` / `CommentTooLongException`, both `400`). The thread read and the
+batch count read both tolerate an anonymous caller; writing or deleting a comment needs a
+viewer. Delete is idempotent like `likes` — removing a comment that isn't there is a `204`
+no-op; removing one you may not remove is `403`. There is no post-existence check on a
+write — a comment references a `PostId` by value only (ADR-0002), exactly as a `Like` does.
 
 ## Published interface
 
@@ -159,11 +164,16 @@ that its only caller, `feed`, lives in the same module.
   `LikeCounts.of(Collection<PostId>)` is the same read with no viewer — every row reports
   `likedByViewer` as `false`.
 
+- **`CommentCounts.of(Collection<PostId>)`** — the comment count for every requested post,
+  in one call (ADR-0005, no N+1), mirroring `LikeCounts`. A post with no comments reads as
+  `(id, 0)`; the batch never omits a requested id. There is no viewer variant — a comment
+  has no "by me" state to report. The feed card shows this count; the profile grid does not
+  (the count would just be visual noise on a dense 3-column grid).
+
 The paged **follower list / following list** reads (#57) and the **batch relationship
 read** (#59, `GET /api/follows?ids=`) serve the SPA's list screens through `follow`'s own
 web layer only — they are deliberately not on any published interface. The **comment
-thread** read is the same: web-layer only. A batch `CommentCounts` (mirroring `LikeCounts`)
-is designed for but not built — it lands with delete + feed/grid surfacing (#138).
+thread** read is the same: web-layer only.
 
 Over HTTP:
 
@@ -174,14 +184,18 @@ Over HTTP:
   The batch read tolerates an anonymous caller; liking and unliking require a viewer.
 - `GET`/`POST /api/posts/{postId}/comments`. The thread read tolerates an anonymous caller
   and is keyset-paged (`cursor`, `limit`), oldest first; posting a comment requires a viewer.
+- `GET /api/comments?postIds=` (batch count, anonymous-ok, behind the shared batch-id cap)
+  and `DELETE /api/comments/{commentId}` (viewer required; idempotent `204`, or `403`).
 
 ## Events
 
 `UserFollowed` / `UserUnfollowed` and `PostLiked` / `PostUnliked` fire only on a real state
-change — an idempotent no-op emits nothing. `PostCommented` fires once per new comment
-(there is no edit, so no "changed" counterpart). No context consumes any of them in v1;
-they are the module's forward contract (fan-out-on-write feed, comment counts,
-notifications).
+change — an idempotent no-op emits nothing. `PostCommented` fires once per new comment and
+`CommentDeleted` once per real removal (there is no edit, so neither has a "changed"
+counterpart; the post-deletion cascade clears a thread in bulk and stays event-free). The
+only consumer in v1 is in-module: `comment` reacts to `post`'s `PostDeleted` to clear a
+thread (synchronously, in the deleting transaction — v1 has no event registry, ADR-0002).
+The rest are the module's forward contract (fan-out-on-write feed, notifications).
 
 `PostLiked.likedAt` and `PostUnliked.unlikedAt` are both the `Clock` instant at which the
 change was recorded, captured the same way, so for one `(viewer, post)` a later

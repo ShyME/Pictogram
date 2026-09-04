@@ -46,6 +46,9 @@ test('a viewer comments on a post from the feed and both people see the thread',
     await expect(thread.getByText('first! check')).toBeVisible();
     await expect(thread.getByRole('link', { name: 'https://pictogram.dev' })).toBeVisible();
 
+    // The viewer sees a delete control on their own comment.
+    await expect(thread.getByRole('button', { name: 'Delete' })).toBeVisible();
+
     // The comment survives a reload...
     await viewerPage.reload();
     await feed.openComments(caption);
@@ -56,6 +59,17 @@ test('a viewer comments on a post from the feed and both people see the thread',
     await ownProfile.open(author);
     await ownProfile.openPostDetail(caption);
     await expect(ownProfile.postDetail.getByText('first! check')).toBeVisible();
+
+    // The feed card shows the comment count.
+    await feed.open();
+    await expect(feed.cardByCaption(caption).getByText('1 comment')).toBeVisible();
+
+    // The post's author can remove a visitor's comment, and the count falls back.
+    await ownProfile.postDetail.getByRole('button', { name: 'Delete' }).click();
+    await expect(ownProfile.postDetail.getByText('first! check')).toBeHidden();
+
+    await feed.open();
+    await expect(feed.cardByCaption(caption).getByText('0 comments')).toBeVisible();
   } finally {
     await viewerContext.close();
     await authorContext.close();

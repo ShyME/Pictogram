@@ -1,11 +1,24 @@
-import { Button, Spinner, relativeTime } from '@shared';
+import { Button, Spinner, relativeTime, toast } from '@shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import type { ThreadComment } from './comment';
+import { type ThreadComment, canDeleteComment } from './comment';
 import { CommentComposer } from './CommentComposer';
+import { deleteComment } from './commentsApi';
 import { CommentText } from './CommentText';
+import { commentThreadKey } from './queryKeys';
 import { useCommentThread } from './useCommentThread';
 
-export function CommentThread({ postId, canComment }: { postId: string; canComment: boolean }) {
+export function CommentThread({
+  postId,
+  canComment,
+  viewerId = null,
+  postAuthorId = null,
+}: {
+  postId: string;
+  canComment: boolean;
+  viewerId?: string | null;
+  postAuthorId?: string | null;
+}) {
   const thread = useCommentThread(postId);
 
   const comments = thread.data?.pages.flatMap((page) => page.comments) ?? [];
@@ -31,7 +44,12 @@ export function CommentThread({ postId, canComment }: { postId: string; canComme
       ) : (
         <ul className="flex flex-col gap-3">
           {comments.map((comment) => (
-            <CommentRow key={comment.commentId} comment={comment} />
+            <CommentRow
+              key={comment.commentId}
+              comment={comment}
+              postId={postId}
+              canDelete={canDeleteComment(comment, viewerId, postAuthorId)}
+            />
           ))}
         </ul>
       )}
@@ -55,9 +73,30 @@ export function CommentThread({ postId, canComment }: { postId: string; canComme
   );
 }
 
-function CommentRow({ comment }: { comment: ThreadComment }) {
+function CommentRow({
+  comment,
+  postId,
+  canDelete,
+}: {
+  comment: ThreadComment;
+  postId: string;
+  canDelete: boolean;
+}) {
+  const queryClient = useQueryClient();
   const handle = comment.author?.username;
   const name = comment.author?.displayName;
+
+  const remove = useMutation({
+    mutationFn: () => deleteComment(comment.commentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: commentThreadKey(postId) }),
+    onError: () => {
+      toast({
+        variant: 'error',
+        title: 'That comment didn’t delete',
+        description: 'Try again in a moment.',
+      });
+    },
+  });
 
   return (
     <li className="text-sm">
@@ -76,6 +115,18 @@ function CommentRow({ comment }: { comment: ThreadComment }) {
         >
           {relativeTime(comment.createdAt)}
         </time>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => {
+              remove.mutate();
+            }}
+            disabled={remove.isPending}
+            className="ml-auto text-xs text-foreground-subtle transition-colors hover:text-danger-text disabled:opacity-50"
+          >
+            {remove.isPending ? 'Deleting…' : 'Delete'}
+          </button>
+        )}
       </span>
       <p className="mt-0.5 whitespace-pre-wrap break-words text-foreground">
         <CommentText body={comment.body} />

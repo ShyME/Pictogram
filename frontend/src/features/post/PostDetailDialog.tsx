@@ -1,7 +1,12 @@
 import { Modal, ModalContent, ModalTitle } from '@shared';
 import type { ReactNode } from 'react';
 
-export type PostDetail = { postId: string; imageUrl: string; caption: string | null };
+export type PostDetail = {
+  postId: string;
+  imageUrl: string;
+  caption: string | null;
+  authorId: string;
+};
 
 export function PostDetailDialog({
   postId,

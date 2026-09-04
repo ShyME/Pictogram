@@ -7,6 +7,7 @@ import java.util.List;
 import me.imshy.pictogram.scenario.PictogramApi.Actor;
 import me.imshy.pictogram.scenario.PictogramApi.Comment;
 import me.imshy.pictogram.scenario.PictogramApi.CommentPage;
+import me.imshy.pictogram.scenario.PictogramApi.DeleteOutcome;
 import org.junit.jupiter.api.Test;
 
 interface CommentScenarios extends PictogramScenario {
@@ -61,6 +62,72 @@ interface CommentScenarios extends PictogramScenario {
         assertThat(ada.commentsOn(own, null, null).comments())
                 .singleElement()
                 .satisfies(comment -> assertThat(comment.body()).isEqualTo("first"));
+    }
+
+    @Test
+    default void aCommentAuthorDeletesTheirOwnCommentAndItLeavesTheThreadAndTheCount() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
+        ada.completeOnboarding("ada_cmtdel", "Ada", null);
+        var bob = pictogram().registerViaGoogle("bob@example.com");
+        bob.completeOnboarding("bob_cmtdel", "Bob", null);
+        String post = bob.publishPost(bob.uploadPhoto(jpegPhoto()), "a photo").postId();
+
+        Comment keep = bob.comment(post, "nice");
+        Comment remove = ada.comment(post, "oops wrong post");
+        assertThat(ada.commentCountsOf(post)).containsEntry(post, 2L);
+
+        assertThat(ada.deleteComment(remove.commentId())).isEqualTo(DeleteOutcome.DELETED);
+
+        assertThat(ada.commentsOn(post, null, null).comments())
+                .extracting(Comment::commentId)
+                .containsExactly(keep.commentId());
+        assertThat(ada.commentCountsOf(post)).containsEntry(post, 1L);
+    }
+
+    @Test
+    default void thePostAuthorCanRemoveAnyCommentButAnotherViewerCannot() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
+        ada.completeOnboarding("ada_cmtmod", "Ada", null);
+        var bob = pictogram().registerViaGoogle("bob@example.com");
+        bob.completeOnboarding("bob_cmtmod", "Bob", null);
+        var cal = pictogram().registerViaGoogle("cal@example.com");
+        cal.completeOnboarding("cal_cmtmod", "Cal", null);
+        String post = bob.publishPost(bob.uploadPhoto(jpegPhoto()), "a photo").postId();
+
+        Comment adasComment = ada.comment(post, "hi bob");
+
+        assertThat(cal.deleteComment(adasComment.commentId())).isEqualTo(DeleteOutcome.FORBIDDEN);
+        assertThat(bob.deleteComment(adasComment.commentId())).isEqualTo(DeleteOutcome.DELETED);
+        assertThat(bob.commentsOn(post, null, null).comments()).isEmpty();
+    }
+
+    @Test
+    default void deletingAPostRemovesItsCommentsFromTheThreadAndTheCount() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
+        ada.completeOnboarding("ada_cmtcascade", "Ada", null);
+        var bob = pictogram().registerViaGoogle("bob@example.com");
+        bob.completeOnboarding("bob_cmtcascade", "Bob", null);
+        String post = bob.publishPost(bob.uploadPhoto(jpegPhoto()), "a photo").postId();
+        ada.comment(post, "one");
+        ada.comment(post, "two");
+
+        assertThat(bob.deletePost(post)).isEqualTo(DeleteOutcome.DELETED);
+
+        assertThat(ada.commentsOn(post, null, null).comments()).isEmpty();
+        assertThat(ada.commentCountsOf(post)).containsEntry(post, 0L);
+    }
+
+    @Test
+    default void theBatchCountReadReportsEveryRequestedPostIncludingOneWithNoComments() {
+        var ada = pictogram().registerViaGoogle("ada@example.com");
+        ada.completeOnboarding("ada_cmtcounts", "Ada", null);
+        String chatty = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "loud").postId();
+        String quiet = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "silent").postId();
+
+        ada.comment(chatty, "a");
+        ada.comment(chatty, "b");
+
+        assertThat(ada.commentCountsOf(chatty, quiet)).containsEntry(chatty, 2L).containsEntry(quiet, 0L);
     }
 
     private static List<String> drainThread(Actor viewer, String postId, int pageSize) {

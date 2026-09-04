@@ -143,6 +143,7 @@ export function PostGrid({
           postId={openPost.postId}
           imageUrl={originalUrl(openPost.mediaId)}
           caption={openPost.caption}
+          authorId={openPost.authorId}
           renderLike={renderLike}
           renderComments={renderComments}
           onClose={() => {

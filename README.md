@@ -181,7 +181,7 @@ merging"** and this gap closes (tracked in #123).
   the deployed app over TLS.
 - **Rate limiting.** The app itself does none. The public unauthenticated surface —
   `GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`, `GET /api/posts`,
-  `GET /api/posts/*/comments`, `GET /api/follows/*`, `POST /api/auth/refresh`, and the OIDC
+  `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`, `POST /api/auth/refresh`, and the OIDC
   start at `/oauth2/authorization/google` — must sit behind a reverse proxy or platform rate limit
   before it takes real traffic.
 - **Media bucket.** `S3BlobStore` auto-creates the bucket on first upload for local dev only.
