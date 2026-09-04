@@ -2,7 +2,8 @@
 
 - **Status:** Accepted
 - **Relates to:** ADR-0011 (edge rate limiting, the `Secure` cookie flag), ADR-0004 (the
-  `prod` signing-key gate), ADR-0007 (post-merge CI jobs, mock-oauth2-server in tests)
+  `prod` signing-key gate), ADR-0007 (post-merge CI jobs, mock-oauth2-server in tests),
+  ADR-0014 (chat's concrete container and deployment shape)
 
 Pictogram has only ever run locally — `compose.yaml` plus an OIDC overlay
 (`compose.mock-oauth.yaml` / `compose.google.yaml`) or `compose.dev.yaml` for host-based
@@ -36,10 +37,11 @@ This records the target and why it was chosen over a managed platform.
   secret and endpoint. Deploying is running the same file with a real `.env`. A PaaS would
   force Postgres and object storage out into managed services and a rewrite of how the app
   is wired.
-- **Persistent connections.** The chat epic will need long-lived WebSocket connections.
-  Scale-to-zero and request-scoped platforms (Cloud Run, Render's free tier) handle those
-  poorly — cold starts drop sockets, request timeouts sever them. Choosing a plain box now
-  avoids migrating off a platform that cannot host chat.
+- **Persistent connections.** Chat (ADR-0014) needs long-lived WebSocket connections, one
+  per signed-in session. Scale-to-zero and request-scoped platforms (Cloud Run, Render's
+  free tier) handle those poorly — cold starts drop sockets, request timeouts sever them.
+  Choosing a plain box avoided migrating off a platform that cannot host chat; chat now
+  ships as another container on the same box, no change to this ADR's shape.
 - **The ops surface is small and is itself portfolio-positive** — a documented box, one
   compose file, one reverse proxy.
 
