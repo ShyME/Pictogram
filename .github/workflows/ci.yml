@@ -215,6 +215,16 @@ jobs:
         working-directory: backend
         run: ./gradlew build -PincludeBlackbox
 
+      - name: Upload backend test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: blackbox-test-reports
+          path: |
+            backend/**/build/reports/tests/
+            backend/**/build/test-results/
+          retention-days: 7
+
       - name: Playwright journeys
         working-directory: frontend
         run: pnpm test:e2e

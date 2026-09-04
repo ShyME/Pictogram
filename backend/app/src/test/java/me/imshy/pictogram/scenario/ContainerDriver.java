@@ -49,6 +49,23 @@ final class ContainerDriver implements PictogramApi {
         return namespace + identity;
     }
 
+    /**
+     * {@link #qualify} for a username, which unlike an email has to survive {@code Username}'s
+     * {@code ^[a-z0-9_]{3,20}$} check with the namespace prepended. A scenario literal longer than
+     * {@code 20 - namespace.length()} otherwise fails only here, as a bare 400 from {@code POST
+     * /api/profiles} in the blackbox run — invisible to the in-process transport, which needs no
+     * namespace.
+     */
+    private String qualifyUsername(String username) {
+        int budget = 20 - namespace.length();
+        if (username.length() > budget) {
+            throw new IllegalArgumentException(
+                    "Scenario username \"%s\" (%d chars) leaves no room for the %d-char blackbox namespace; keep scenario usernames to %d chars."
+                            .formatted(username, username.length(), namespace.length(), budget));
+        }
+        return qualify(username);
+    }
+
     private Profile strip(Profile profile) {
         return profile.username().startsWith(namespace)
                 ? new Profile(
@@ -75,22 +92,22 @@ final class ContainerDriver implements PictogramApi {
 
         @Override
         public Profile completeOnboarding(String username) {
-            return strip(delegate.completeOnboarding(qualify(username)));
+            return strip(delegate.completeOnboarding(qualifyUsername(username)));
         }
 
         @Override
         public Profile completeOnboarding(String username, String displayName, String bio) {
-            return strip(delegate.completeOnboarding(qualify(username), displayName, bio));
+            return strip(delegate.completeOnboarding(qualifyUsername(username), displayName, bio));
         }
 
         @Override
         public Profile editProfile(String username, String displayName, String bio) {
-            return strip(delegate.editProfile(qualify(username), displayName, bio));
+            return strip(delegate.editProfile(qualifyUsername(username), displayName, bio));
         }
 
         @Override
         public Optional<Profile> viewProfile(String username) {
-            return delegate.viewProfile(qualify(username)).map(ContainerDriver.this::strip);
+            return delegate.viewProfile(qualifyUsername(username)).map(ContainerDriver.this::strip);
         }
 
         @Override
