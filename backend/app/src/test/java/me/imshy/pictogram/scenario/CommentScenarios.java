@@ -53,7 +53,7 @@ interface CommentScenarios extends PictogramScenario {
     @Test
     default void aViewerMayCommentOnTheirOwnPost() {
         var ada = pictogram().registerViaGoogle("ada@example.com");
-        ada.completeOnboarding("ada_selfcomment", "Ada", null);
+        ada.completeOnboarding("ada_selfcmt", "Ada", null);
         String own = ada.publishPost(ada.uploadPhoto(jpegPhoto()), "mine").postId();
 
         ada.comment(own, "first");
