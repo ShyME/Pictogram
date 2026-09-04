@@ -1,7 +1,9 @@
 # Cross-module integration: events as contract, published-interface queries, no broker
 
 - **Status:** Accepted
-- **Relates to:** ADR-0003 (feed uses the query path), ADR-0009 (schema per module, no cross-schema FKs)
+- **Relates to:** ADR-0003 (feed uses the query path), ADR-0009 (schema per module, no
+  cross-schema FKs), ADR-0014 (chat's network-boundary integration — a different scope,
+  not an exception to this ADR)
 
 Modules must stay decoupled, but v1 has almost no genuine cross-context reactions. We are
 integrating modules two ways: **Spring Modulith application events** for state-change
@@ -30,3 +32,6 @@ missing profile simply means "not yet onboarded", not a lost event.
 - A published-interface query may be declared by the module that *needs* the answer when the
   Gradle dependency only runs one way: `media` owns the `PostReferences` port and `post`
   supplies the adapter, so the arrow stays `post → media` (orphan collection, #16).
+- This ADR governs integration **inside** the monolith. `chat` (ADR-0014) is a separate
+  deployable and reaches it only by verifying a JWT — a network boundary between two
+  services, not a broker, and outside this ADR's scope.

@@ -7,7 +7,8 @@ modular monolith whose module boundaries are drawn so they could later be extrac
 separate services.
 
 Each module below is one bounded context, one Gradle subproject, and one Spring Modulith
-module. `social` carries four internal sub-domains (`follow`, `feed`, `likes`, `comment`) —
+module — except `chat`, a separate service that never enters this deployable at all
+(ADR-0014). `social` carries four internal sub-domains (`follow`, `feed`, `likes`, `comment`) —
 the first three were separate contexts in early v1 — kept apart by an `internal/` package
 each and the `InternalSlicingTest` guard. `shared-kernel` is the single exception: a whitelisted module every context may
 depend on. It holds the ID value types (`UserId`, `PostId`, `MediaId`, `ViewerId`) and,
@@ -22,15 +23,17 @@ persistence.
 - [media](./backend/media/CONTEXT.md): stores uploaded images as bytes, re-encoded to one canonical square format.
 - [post](./backend/post/CONTEXT.md): the `Post` — one image plus an optional caption, published by an author.
 - [social](./backend/social/CONTEXT.md): the follow graph, the feed assembled from it, and the likes and comments on a post — one context over four internal sub-domains (`follow`, `feed`, `likes`, `comment`).
+- [chat](./chat/CONTEXT.md): live 1:1 messaging between two users — not a module of this deployable; a separate service (ADR-0014).
 
 ## Relationships
 
-- **All contexts → `shared-kernel`**: depend on it for ID value types. Contexts reference each other's data **by ID only** — never object references, never foreign keys across schemas.
+- **All contexts → `shared-kernel`**: depend on it for ID value types (except `chat`, whose separate Gradle build can't declare that dependency at all — see below). Contexts reference each other's data **by ID only** — never object references, never foreign keys across schemas.
 - **identity → profile**: `identity` emits `UserRegistered` when a person first authenticates. In v1 the `Profile` is not created from that event — it is created by the **onboarding** step when the person picks a username. A user without a profile is a legitimate "not yet onboarded" state.
 - **social (feed) → post**: `social`'s feed sub-domain calls `post`'s published interface (`PublishedPosts`) synchronously to assemble a page (fan-out-on-read), behind its own `FeedQuery` port (ADR-0003). The other half of the fan-out — the follow graph — is now an in-module call (`FollowGraph` in `social.internal`). The feed has no store.
 - **post → media**: a `Post` holds a `MediaId`, and checks ownership via `MediaCatalog` on publish. `media`'s orphan collection needs to know which media a post still references; since the Gradle arrow only runs this way, `media` declares that as a port (`PostReferences`) and `post` provides the adapter.
 - **social → post**: a `Like` and a `Comment` each hold a `PostId`. `social`'s `comment` sub-domain consumes `post`'s `PostDeleted` to hard-delete that post's thread (the one real cross-context event reaction in v1 — synchronous, no registry, ADR-0002), and calls `PublishedPosts.authorOf` to check comment-delete permission. `PostPublished` still has no consumer.
 - **Events emitted, mostly unconsumed in v1**: `UserRegistered`, `UserFollowed`, `UserUnfollowed`, `PostPublished`, `PostDeleted`, `PostLiked`, `PostUnliked`, `PostCommented`, `CommentDeleted`, `ProfileUpdated`. They exist as each module's public contract so consumers (fan-out-on-write feed, notifications) can be added later without touching producers. `PostDeleted` is the one with a consumer (comment-thread cleanup).
+- **chat ↔ everything else**: no data dependency in either direction. It verifies Pictogram JWTs (ADR-0004) and knows a caller only by the `UserId` in the token; display data (name, avatar) is resolved client-side. It is the one context missing from every arrow above, because there isn't one.
 
 ## Notes on the v1 boundaries
 
@@ -43,6 +46,11 @@ These are deliberate choices a reviewer would otherwise flag:
   sub-domain packages and `InternalSlicingTest` don't already give. A later re-extraction
   stays cheap: each sub-domain keeps its own package, and `follow` / `likes` keep their own
   schema.
+- **`chat` sits outside the deployable entirely.** Every other context here is designed
+  to be split out later (ADR-0001) but ships inside the monolith today; `chat` inverts
+  that — it never entered the monolith, shipping from day one as a separate Spring
+  WebFlux service with its own Gradle build, deliberately practising a real service
+  boundary and reactive programming end to end. See ADR-0014.
 - **`app` depends on every context by design.** It is the composition root: it wires the
   modules together and hosts the cross-cutting infrastructure (HTTP security, the `Clock`
   bean, Flyway, OpenAPI). It is the one place the modularity is necessarily porous, and
