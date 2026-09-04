@@ -55,6 +55,7 @@ provider on its own — pick how Google sign-in is wired:
 ```bash
 task up          # bundled mock Google — sign in with any username, no account needed
 task up:google   # real Google — needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env
+task seed        # fill a running `task up` stack with demo data — then sign in as 'alice'
 ```
 
 Under the hood each overlays `compose.yaml`:
@@ -194,8 +195,8 @@ Formatting is machine-enforced — run `task format` before you push. IDE setup 
 
 ## Task reference
 
-`task --list` after installing go-task. Common ones: `up`, `up:google`, `down`, `dev`, `backend`,
-`frontend`, `format`, `test`, `test:e2e`, `test:blackbox`, `logs`, `clean`.
+`task --list` after installing go-task. Common ones: `up`, `up:google`, `seed`, `down`, `dev`,
+`backend`, `frontend`, `format`, `test`, `test:e2e`, `test:blackbox`, `logs`, `clean`.
 
 ## License
 

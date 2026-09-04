@@ -1,5 +1,19 @@
 # Contributing
 
+## Local demo data
+
+`task up` starts with an empty database. Once the stack is up, `task seed` populates it
+with a fixed demo graph so you can sign in and land on a full app:
+
+- Five personas — `alice`, `bob`, `carol`, `dave`, `erin` — with four posts each, a
+  follow graph (`alice` follows and is followed by everyone), and likes and comments.
+- **Sign in as `alice`** (type `alice` on the mock-Google form) for a non-empty feed
+  *and* a non-empty profile grid.
+
+A second run against a fully-seeded stack does nothing. `task clean` wipes the database if
+you want to start over. `PICTOGRAM_BASE_URL` / `PICTOGRAM_OAUTH_URL` override the default
+`task up` topology (`PICTOGRAM_OAUTH_URL` is used for its origin — the issuer's host and port).
+
 ## Formatting
 
 Code layout is machine-enforced. CI and `task test` fail on any drift, so run `task format`

@@ -17,6 +17,7 @@ tasks:
     cmds:
       - docker compose up --build -d --wait
       - 'echo "Pictogram: http://localhost:{{.PICTOGRAM_PORT | default 8080}}"'
+      - 'echo "Demo data: task seed  (then sign in as ''alice'')"'
 
   up:google:
     desc: Like `up`, but against real Google — needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env
@@ -25,6 +26,11 @@ tasks:
     cmds:
       - docker compose up --build -d --wait
       - 'echo "Pictogram: http://localhost:{{.PICTOGRAM_PORT | default 8080}}"'
+
+  seed:
+    desc: Populate a running `task up` stack with a fixed demo graph — then sign in as 'alice'
+    cmds:
+      - node scripts/seed.mjs
 
   down:
     desc: Stop the whole-app stack — either variant (keeps volumes)
@@ -77,10 +83,16 @@ tasks:
       - pnpm format
 
   test:
-    desc: Run all checks — backend build + frontend lint/typecheck/tests
+    desc: Run all checks — backend build + frontend lint/typecheck/tests + scripts
     cmds:
       - task: test:backend
       - task: test:frontend
+      - task: test:scripts
+
+  test:scripts:
+    desc: Unit-test the zero-dependency repo scripts (Node's built-in test runner)
+    cmds:
+      - node --test "scripts/*.test.mjs"
 
   test:backend:
     dir: backend
