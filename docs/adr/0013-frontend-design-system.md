@@ -137,3 +137,29 @@ Deviations from the decisions above, all deliberate:
   removed. `/login` and `/onboarding` stay chrome-only (mid-auth-flow, no nav).
 - The per-screen **visual retrofit** (tokens, Toast, screenshot baselines) remains #136;
   this only moves the nav.
+
+## Amendment (#136)
+
+The one retrofit pass (decision 9) landed. Notes:
+
+- **Screens migrated:** onboarding, edit profile, new post, profile + post grid, feed +
+  feed card, and the follower / following lists. All ad-hoc `neutral-*` / `red-*` literals
+  are gone; the screens use the semantic token utilities and `shared/ui` primitives
+  (`Button`, `Input`, `Textarea`, `Card`, `Avatar`, `Spinner`, `EmptyState`).
+  Post detail is deliberately untouched — it is rebuilt in the comments work (#137).
+- **Mutation feedback is a `Toast`.** Create-profile, edit-profile and publish-post surface
+  success and infrastructure failure through the app-level `Toaster` (`toast(...)` from
+  `@shared`); delete-post toasts on success. Field-level and in-context messages (username
+  taken, caption too long, a failed delete while its confirm dialog is still open) stay
+  inline next to their control — they are answers about the thing in front of you, not
+  transient status.
+- **The delete confirmation stays a hand-rolled modal** (now on tokens + `Button`), not the
+  shared Radix `Dialog`: that dialog's scroll-lock writes an inline `style` on `<body>`,
+  which the app CSP (`style-src 'self'`, ADR-0011) blocks. `PostDetailDialog` is hand-rolled
+  for the same reason; #137 owns making a Radix dialog work under the CSP and unifying them.
+- **The username-rename caution** dropped its amber colour: there is no warning token in the
+  one-theme palette, so it renders as `text-foreground-muted` with `role="status"`.
+- **Visual regression** now drives the real router against a stubbed backend
+  (`visual/appWorld.ts` fulfils every `/api/**` read from a fixed world, clock pinned so the
+  relative timestamps are stable). `visual/screens.visual.ts` commits a `*-linux.png`
+  baseline per screen at both viewports.

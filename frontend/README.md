@@ -17,7 +17,7 @@ pnpm build            # tsc -b && vite build
 pnpm lint             # eslint: slice boundaries + type-aware strict/unicorn
 pnpm test             # vitest run
 pnpm typecheck        # tsc -b --noEmit
-pnpm test:visual      # Playwright screenshot suite (/ui + /login) vs a bare vite server
+pnpm test:visual      # Playwright screenshot suite (/ui + login + every screen) vs a bare vite server
 pnpm generate:api     # regenerate src/shared/api/schema.d.ts from ../backend/openapi.json
 ```
 
@@ -75,11 +75,12 @@ The app shares the mock's network namespace (see `compose.mock-oauth.yaml`) so b
 app reach the OIDC issuer at the same `localhost:8095` — no `/etc/hosts` edit, no browser
 flags. CI runs the same journeys on the push to `main` (see `.github/workflows/ci.yml`).
 
-`pnpm test:visual` is a separate Playwright suite — `toHaveScreenshot` over `/ui` and
-`/login` at ~375 and ~1440 px against a bare `vite` dev server (no backend). Baselines
-under `visual/__screenshots__/` are generated in the pinned Playwright CI image (`visual`
-job); a local run writes gitignored `*-darwin` snapshots. See CONTRIBUTING → Visual
-regression.
+`pnpm test:visual` is a separate Playwright suite — `toHaveScreenshot` over the `/ui`
+showcase, `/login`, and every screen (`visual/screens.visual.ts`, which drives the real
+router with `/api/**` served from `visual/appWorld.ts`) at ~375 and ~1440 px against a bare
+`vite` dev server. Baselines under `visual/__screenshots__/` are generated in the pinned
+Playwright CI image (`visual` job); a local run writes gitignored `*-darwin` snapshots. See
+CONTRIBUTING → Visual regression.
 
 ## Structure — feature slices
 

@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, Button } from '@shared';
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
 import type { profileLoader } from './profileLoader';
@@ -5,15 +6,14 @@ import type { profileLoader } from './profileLoader';
 function NotFound({ username }: { username: string }) {
   return (
     <main className="mx-auto max-w-xl px-4 py-16 text-center">
-      <h1 className="text-lg font-semibold text-neutral-900">This account doesn&rsquo;t exist</h1>
-      <p className="mt-2 text-sm text-neutral-500">
-        No one on Pictogram goes by{' '}
-        <span className="font-medium text-neutral-700">@{username}</span>. The link may be wrong, or
-        they may have changed their username.
+      <h1 className="text-lg font-semibold text-foreground">This account doesn&rsquo;t exist</h1>
+      <p className="mt-2 text-sm text-foreground-muted">
+        No one on Pictogram goes by <span className="font-medium text-foreground">@{username}</span>
+        . The link may be wrong, or they may have changed their username.
       </p>
-      <Link to="/" className="mt-6 inline-block text-sm font-medium text-neutral-900 underline">
-        Back to Pictogram
-      </Link>
+      <Button variant="link" asChild className="mt-6">
+        <Link to="/">Back to Pictogram</Link>
+      </Button>
     </main>
   );
 }
@@ -36,78 +36,75 @@ export function ProfilePage({
   if (data.status === 'not-found') return <NotFound username={data.username} />;
 
   const { profile, isOwnProfile, viewerCanFollow, viewerIsAuthenticated } = data;
-  const followButtonClass =
-    'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50';
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
-        <div aria-hidden className="size-20 shrink-0 rounded-full bg-neutral-200 sm:size-28" />
+        <Avatar size="lg" className="size-20 text-xl sm:size-28">
+          <AvatarFallback>{profile.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="text-xl font-semibold text-neutral-900">
+            <h1 className="text-xl font-semibold text-foreground">
               {profile.displayName ?? `@${profile.username}`}
             </h1>
             {isOwnProfile ? (
-              <Link
-                to="/settings/profile"
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-              >
-                Edit profile
-              </Link>
+              <Button variant="secondary" size="sm" asChild>
+                <Link to="/settings/profile">Edit profile</Link>
+              </Button>
             ) : viewerCanFollow ? (
               renderFollowButton ? (
                 renderFollowButton(profile.userId)
               ) : (
-                <button type="button" disabled className={followButtonClass}>
+                <Button size="sm" disabled>
                   Follow
-                </button>
+                </Button>
               )
             ) : (
-              <Link to="/login" className={followButtonClass}>
-                Follow
-              </Link>
+              <Button size="sm" asChild>
+                <Link to="/login">Follow</Link>
+              </Button>
             )}
           </div>
 
           {profile.displayName && (
-            <p className="mt-1 text-sm text-neutral-500">@{profile.username}</p>
+            <p className="mt-1 text-sm text-foreground-muted">@{profile.username}</p>
           )}
 
           {renderFollowCounts ? (
             renderFollowCounts(profile.userId, profile.username)
           ) : (
-            <dl className="mt-3 flex gap-6 text-sm text-neutral-700">
+            <dl className="mt-3 flex gap-6 text-sm text-foreground">
               <div className="flex gap-1">
                 <dt className="sr-only">Followers</dt>
                 <dd className="font-semibold">0</dd>
-                <span className="text-neutral-500">followers</span>
+                <span className="text-foreground-muted">followers</span>
               </div>
               <div className="flex gap-1">
                 <dt className="sr-only">Following</dt>
                 <dd className="font-semibold">0</dd>
-                <span className="text-neutral-500">following</span>
+                <span className="text-foreground-muted">following</span>
               </div>
             </dl>
           )}
 
           {profile.bio && (
-            <p className="mt-3 whitespace-pre-line text-sm text-neutral-800">{profile.bio}</p>
+            <p className="mt-3 whitespace-pre-line text-sm text-foreground">{profile.bio}</p>
           )}
         </div>
       </section>
 
-      <section aria-label="Posts" className="mt-8 border-t border-neutral-200 pt-6">
+      <section aria-label="Posts" className="mt-8 border-t border-border pt-6">
         {renderGrid ? (
           renderGrid(profile.userId, isOwnProfile, viewerIsAuthenticated)
         ) : (
           <>
             <div className="grid grid-cols-3 gap-1">
               {Array.from({ length: 9 }, (_, i) => (
-                <div key={i} aria-hidden className="aspect-square rounded-sm bg-neutral-100" />
+                <div key={i} aria-hidden className="aspect-square rounded-sm bg-surface-muted" />
               ))}
             </div>
-            <p className="mt-4 text-center text-sm text-neutral-400">No posts yet</p>
+            <p className="mt-4 text-center text-sm text-foreground-subtle">No posts yet</p>
           </>
         )}
       </section>

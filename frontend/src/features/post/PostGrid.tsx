@@ -1,10 +1,11 @@
+import { Button, Spinner, toast } from '@shared';
 import {
   type QueryClient,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import type { Post } from './post';
 import { thumbnailUrl } from './post';
 import { deletePost, fetchPostsByAuthor } from './postApi';
@@ -25,6 +26,9 @@ export function PostGrid({
   const queryClient = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
   const [openPost, setOpenPost] = useState<Post | null>(null);
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null);
+  }, []);
 
   const grid = useInfiniteQuery({
     queryKey: postsByAuthorKey(authorId),
@@ -49,17 +53,22 @@ export function PostGrid({
     mutationFn: (post: Post) => deletePost(post.postId),
     onSuccess: async () => {
       setPendingDelete(null);
+      toast({ variant: 'success', title: 'Post deleted' });
       await queryClient.invalidateQueries({ queryKey: postsByAuthorKey(authorId) });
     },
   });
 
   if (grid.isPending) {
-    return <p className="py-10 text-center text-sm text-neutral-400">Loading posts…</p>;
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner label="Loading posts" />
+      </div>
+    );
   }
 
   if (grid.isError) {
     return (
-      <p className="py-10 text-center text-sm text-red-600">
+      <p className="py-10 text-center text-sm text-danger-text">
         We couldn&rsquo;t load these posts. Try again in a moment.
       </p>
     );
@@ -68,7 +77,7 @@ export function PostGrid({
   const posts = grid.data.pages.flatMap((page) => page.posts);
 
   if (posts.length === 0) {
-    return <p className="py-10 text-center text-sm text-neutral-400">No posts yet</p>;
+    return <p className="py-10 text-center text-sm text-foreground-subtle">No posts yet</p>;
   }
 
   return (
@@ -91,16 +100,17 @@ export function PostGrid({
               />
             </button>
             {manageable && (
-              <button
-                type="button"
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => {
                   remove.reset();
                   setPendingDelete(post);
                 }}
-                className="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                className="absolute right-1 top-1 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
               >
                 Delete
-              </button>
+              </Button>
             )}
           </li>
         ))}
@@ -108,14 +118,14 @@ export function PostGrid({
 
       {grid.hasNextPage && (
         <div className="mt-4 text-center">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => void grid.fetchNextPage()}
+            loading={grid.isFetchingNextPage}
             disabled={grid.isFetchingNextPage}
-            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
           >
             {grid.isFetchingNextPage ? 'Loading…' : 'Load more'}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -136,15 +146,16 @@ export function PostGrid({
           onConfirm={() => {
             remove.mutate(pendingDelete);
           }}
-          onCancel={() => {
-            setPendingDelete(null);
-          }}
+          onCancel={cancelDelete}
         />
       )}
     </>
   );
 }
 
+// A hand-rolled modal, not the shared Radix `Dialog`: that pulls in a scroll-lock that
+// writes an inline `style` on <body>, which the app's CSP (`style-src 'self'`, ADR-0011)
+// blocks. `PostDetailDialog` is hand-rolled for the same reason; #137 unifies them.
 function ConfirmDelete({
   deleting,
   failed,
@@ -157,42 +168,44 @@ function ConfirmDelete({
   onCancel: () => void;
 }) {
   const titleId = useId();
+
+  useEffect(() => {
+    if (deleting) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [deleting, onCancel]);
+
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-foreground/40 p-4">
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-dialog border border-border bg-surface p-6 shadow-dialog"
       >
-        <h2 id={titleId} className="text-base font-semibold text-neutral-900">
+        <h2 id={titleId} className="text-lg font-semibold tracking-tight text-foreground">
           Delete this post?
         </h2>
-        <p className="mt-1 text-sm text-neutral-500">This can&rsquo;t be undone.</p>
+        <p className="mt-1.5 text-sm text-foreground-muted">This can&rsquo;t be undone.</p>
 
         {failed && (
-          <p role="alert" className="mt-2 text-sm text-red-600">
+          <p role="alert" className="mt-3 text-sm text-danger-text">
             That didn&rsquo;t work. Try again in a moment.
           </p>
         )}
 
-        <div className="mt-4 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={deleting}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 disabled:opacity-50"
-          >
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onCancel} disabled={deleting}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="danger" onClick={onConfirm} loading={deleting} disabled={deleting}>
             {deleting ? 'Deleting…' : 'Delete'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

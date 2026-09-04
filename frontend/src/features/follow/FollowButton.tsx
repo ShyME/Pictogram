@@ -1,3 +1,4 @@
+import { Button } from '@shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { followUser, unfollowUser } from './followApi';
 import { followRelationshipKey } from './queryKeys';
@@ -20,23 +21,19 @@ export function FollowButton({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <button
-        type="button"
+      <Button
+        variant={isFollowing ? 'secondary' : 'primary'}
+        size="sm"
         aria-pressed={isFollowing}
         disabled={isBusy}
         onClick={() => {
           toggle.mutate();
         }}
-        className={
-          isFollowing
-            ? 'rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50'
-            : 'rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50'
-        }
       >
         {isFollowing ? 'Following' : 'Follow'}
-      </button>
+      </Button>
       {toggle.isError && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-text">
           That didn&rsquo;t work. Try again in a moment.
         </p>
       )}
