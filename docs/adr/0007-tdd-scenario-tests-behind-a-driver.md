@@ -24,9 +24,13 @@ against two transports:
   what production does. Run by `BlackboxScenarioTest`, tagged `blackbox`. It composes the
   same `HttpPictogramApi` with a compose URI and an `InteractiveLoginSignIn` that walks
   `mock-oauth2-server`'s interactive form. The container's Postgres is never truncated, so
-  each instance namespaces the scenarios' hard-coded emails and usernames with a per-run
-  token and strips it from returned profiles; the scenario bodies stay transport-blind. A
-  divergence between the two transports is a bug in one of them.
+  each instance carries a per-run namespace token: it prefixes the scenarios' hard-coded
+  emails itself and hands the token to a `UsernamePolicy`, injected into `HttpPictogramApi`
+  in the same shape as `SignIn` — identity for `InProcessDriver`, prefix-and-strip for
+  `ContainerDriver` — so the scenario bodies stay transport-blind. A divergence between the
+  two transports is a bug in one of them. (`NamespacedActor`, a full-`Actor`-interface
+  decorator, did this same job first; it was a deliberate stopgap, not a design to keep, and
+  #154 retired it once the `SignIn`-shaped seam was there to replace it with.)
   `OrphanMediaCollectionScenarioTest` has no container twin — it drives a scheduled sweep and
   a property, neither HTTP-observable.
 

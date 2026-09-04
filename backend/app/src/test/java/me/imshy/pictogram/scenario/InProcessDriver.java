@@ -19,7 +19,8 @@ public final class InProcessDriver implements PictogramApi {
     private final HttpPictogramApi api;
 
     public InProcessDriver(URI baseUri, MockOAuth2Server google, ObjectMapper json) {
-        this.api = new HttpPictogramApi(baseUri, json, new MockOAuth2SignIn(baseUri, google));
+        this.api = new HttpPictogramApi(
+                baseUri, json, new MockOAuth2SignIn(baseUri, google), new IdentityUsernamePolicy());
     }
 
     @Override

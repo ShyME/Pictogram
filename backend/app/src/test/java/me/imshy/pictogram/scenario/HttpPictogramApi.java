@@ -25,11 +25,13 @@ class HttpPictogramApi implements PictogramApi {
     private final URI baseUri;
     private final ObjectMapper json;
     private final SignIn signIn;
+    private final UsernamePolicy usernamePolicy;
 
-    HttpPictogramApi(URI baseUri, ObjectMapper json, SignIn signIn) {
+    HttpPictogramApi(URI baseUri, ObjectMapper json, SignIn signIn, UsernamePolicy usernamePolicy) {
         this.baseUri = baseUri;
         this.json = json;
         this.signIn = signIn;
+        this.usernamePolicy = usernamePolicy;
     }
 
     @Override
@@ -85,7 +87,7 @@ class HttpPictogramApi implements PictogramApi {
                 return Optional.empty();
             }
             require(response, 200, "read own profile");
-            return Optional.of(profile(response.body()));
+            return Optional.of(usernamePolicy.strip(profile(response.body())));
         }
 
         @Override
@@ -95,16 +97,18 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public Profile completeOnboarding(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("POST", "/api/profiles", profileBody(username, displayName, bio));
+            HttpResponse<String> response =
+                    call("POST", "/api/profiles", profileBody(usernamePolicy.qualify(username), displayName, bio));
             require(response, 201, "complete onboarding");
-            return profile(response.body());
+            return usernamePolicy.strip(profile(response.body()));
         }
 
         @Override
         public Profile editProfile(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("PUT", "/api/profiles/me", profileBody(username, displayName, bio));
+            HttpResponse<String> response =
+                    call("PUT", "/api/profiles/me", profileBody(usernamePolicy.qualify(username), displayName, bio));
             require(response, 200, "edit own profile");
-            return profile(response.body());
+            return usernamePolicy.strip(profile(response.body()));
         }
 
         private String profileBody(String username, String displayName, String bio) {
@@ -116,12 +120,12 @@ class HttpPictogramApi implements PictogramApi {
 
         @Override
         public Optional<Profile> viewProfile(String username) {
-            HttpResponse<String> response = call("GET", "/api/profiles/" + username, null);
+            HttpResponse<String> response = call("GET", "/api/profiles/" + usernamePolicy.qualify(username), null);
             if (response.statusCode() == 404) {
                 return Optional.empty();
             }
             require(response, 200, "view a profile by username");
-            return Optional.of(profile(response.body()));
+            return Optional.of(usernamePolicy.strip(profile(response.body())));
         }
 
         @Override
