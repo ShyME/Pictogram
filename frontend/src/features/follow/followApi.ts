@@ -1,5 +1,4 @@
-import { api, type components } from '@shared';
-import { type Account, toAccount } from './account';
+import { type Account, api, type components, fetchAccounts } from '@shared';
 import { type FollowRelationship, toFollowRelationship } from './follow';
 
 export async function fetchFollowRelationship(userId: string): Promise<FollowRelationship> {
@@ -59,29 +58,19 @@ export async function fetchFollowListPage(
   if (!data) throw new Error(`Follow list request failed: ${response.status}`);
 
   const ids = data.items ?? [];
-  const [accounts, relationships] = await Promise.all([
+  const [accountsById, relationships] = await Promise.all([
     fetchAccounts(ids),
     fetchFollowRelationships(ids),
   ]);
-  const byId = new Map(accounts.map((account) => [account.userId, account]));
 
   return {
     accounts: ids.flatMap((id) => {
-      const account = byId.get(id);
+      const account = accountsById.get(id);
       return account ? [account] : [];
     }),
     relationships,
     nextCursor: data.nextCursor ?? null,
   };
-}
-
-async function fetchAccounts(userIds: string[]): Promise<Account[]> {
-  if (userIds.length === 0) return [];
-  const { data, response } = await api.GET('/api/profiles', {
-    params: { query: { ids: userIds } },
-  });
-  if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
-  return data.map((view) => toAccount(view));
 }
 
 export async function fetchFollowRelationships(

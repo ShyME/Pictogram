@@ -1,5 +1,5 @@
-import { api, problemSlug, throwIfSessionExpired } from '@shared';
-import type { Comment, CommentAuthor, PostCommentCountById, ThreadComment } from './comment';
+import { api, fetchAccounts, problemSlug, throwIfSessionExpired } from '@shared';
+import type { Comment, PostCommentCountById, ThreadComment } from './comment';
 import { toComment, toCommentCount } from './comment';
 
 export type CommentThreadPage = { comments: ThreadComment[]; nextCursor: string | null };
@@ -17,7 +17,7 @@ export async function fetchCommentThread(
   if (!data) throw new Error(`Comment thread request failed: ${response.status}`);
 
   const comments = (data.items ?? []).map((item) => toComment(item));
-  const authors = await fetchAuthors([...new Set(comments.map((comment) => comment.authorId))]);
+  const authors = await fetchAccounts([...new Set(comments.map((comment) => comment.authorId))]);
 
   return {
     comments: comments.map((comment) => ({
@@ -26,25 +26,6 @@ export async function fetchCommentThread(
     })),
     nextCursor: data.nextCursor ?? null,
   };
-}
-
-async function fetchAuthors(ids: string[]): Promise<Map<string, CommentAuthor>> {
-  if (ids.length === 0) return new Map();
-
-  const { data, response } = await api.GET('/api/profiles', { params: { query: { ids } } });
-  throwIfSessionExpired(response);
-  if (!data) throw new Error(`Comment author batch request failed: ${response.status}`);
-
-  return new Map(
-    data.map((view) => [
-      view.userId ?? '',
-      {
-        userId: view.userId ?? '',
-        username: view.username ?? '',
-        displayName: view.displayName ?? null,
-      },
-    ]),
-  );
 }
 
 // One batch call for the comment count of many posts, so the feed and the grid never fan

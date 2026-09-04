@@ -1,6 +1,5 @@
-import { Avatar, AvatarFallback } from '@shared';
+import { type Account, Avatar, AvatarFallback } from '@shared';
 import { Link } from 'react-router';
-import type { Account } from '../account';
 import { FollowButton } from '../FollowButton';
 
 export function AccountList({ accounts, viewerId }: { accounts: Account[]; viewerId: string }) {
