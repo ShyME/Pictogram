@@ -1,4 +1,4 @@
-import { relativeTime } from '@features/feed/relativeTime';
+import { relativeTime } from '@shared/lib/relativeTime';
 import { expect, test } from 'vitest';
 
 const now = new Date('2026-09-01T12:00:00Z');

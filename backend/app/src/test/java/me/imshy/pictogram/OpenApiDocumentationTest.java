@@ -262,6 +262,49 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void addingACommentIsDocumentedAs201WithACommentViewLocationAndProblemDetailErrors() {
+        JsonNode add = spec.at("/paths/~1api~1posts~1{postId}~1comments/post/responses");
+
+        assertThat(add.has("200")).as("no phantom 200").isFalse();
+        assertThat(add.at("/201/headers/Location")).isNotEmpty();
+        assertThat(add.at("/201/content/application~1json/schema/$ref").asString())
+                .endsWith("/CommentView");
+        assertThat(add.at("/400/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+        assertThat(add.at("/401/content/application~1problem+json/schema/$ref").asString())
+                .endsWith("/ProblemDetail");
+
+        JsonNode comment = spec.at("/components/schemas/CommentView");
+        assertThat(comment.at("/properties/commentId")).isNotEmpty();
+        assertThat(comment.at("/properties/postId")).isNotEmpty();
+        assertThat(comment.at("/properties/authorId")).isNotEmpty();
+        assertThat(comment.at("/properties/body")).isNotEmpty();
+        assertThat(comment.at("/properties/createdAt")).isNotEmpty();
+    }
+
+    @Test
+    void theCommentThreadIsDocumentedAsAKeysetPageOfCommentsToleratingAnAnonymousCaller() {
+        JsonNode thread = spec.at("/paths/~1api~1posts~1{postId}~1comments/get");
+
+        assertThat(thread.at("/parameters").findValuesAsString("name")).contains("cursor", "limit");
+
+        String pageRef = thread.at("/responses/200/content/application~1json/schema/$ref")
+                .asString();
+        JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
+        String itemRef = page.at("/properties/items/items/$ref").asString();
+        JsonNode item = spec.at("/components/schemas/" + itemRef.substring("#/components/schemas/".length()));
+        assertThat(item.at("/properties/body")).isNotEmpty();
+        assertThat(item.at("/properties/createdAt")).isNotEmpty();
+
+        assertThat(thread.at("/responses/400/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+        assertThat(thread.at("/responses").has("401"))
+                .as("the thread read does not require a token")
+                .isFalse();
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 

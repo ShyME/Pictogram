@@ -11,10 +11,10 @@ test('all primitives', async ({ page }) => {
   await expect(page).toHaveScreenshot('showcase.png', { fullPage: true });
 });
 
-test('dialog — open', async ({ page }) => {
+test('modal — open', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete post…' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page).toHaveScreenshot('dialog.png');
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await expect(page).toHaveScreenshot('modal.png');
 });
 
 test('dropdown menu — open', async ({ page }) => {

@@ -24,6 +24,14 @@ export class FeedPage {
     return this.cards.filter({ hasText: caption });
   }
 
+  get postDetail(): Locator {
+    return this.page.getByRole('dialog');
+  }
+
+  async openComments(caption: string): Promise<void> {
+    await this.cardByCaption(caption).getByRole('button', { name: 'Open comments' }).click();
+  }
+
   myProfileLink(username: string): Locator {
     return this.page.getByRole('link', { name: `@${username}` });
   }

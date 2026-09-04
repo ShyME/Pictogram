@@ -14,6 +14,20 @@
         "required" : [ "accessToken", "expiresInSeconds" ],
         "type" : "object"
       },
+      "ApiPageCommentView" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CommentView"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ApiPageFeedPost" : {
         "properties" : {
           "items" : {
@@ -52,6 +66,38 @@
             "type" : "array"
           },
           "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CommentView" : {
+        "properties" : {
+          "authorId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "commentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "postId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateCommentRequest" : {
+        "properties" : {
+          "body" : {
             "type" : "string"
           }
         },
@@ -914,6 +960,122 @@
           }
         },
         "tags" : [ "posts-controller" ]
+      }
+    },
+    "/api/posts/{postId}/comments" : {
+      "get" : {
+        "operationId" : "thread",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPageCommentView"
+                }
+              }
+            },
+            "description" : "A page of the post's comments, oldest first."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The pagination cursor is malformed."
+          }
+        },
+        "tags" : [ "comment-controller" ]
+      },
+      "post" : {
+        "operationId" : "add",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentView"
+                }
+              }
+            },
+            "description" : "The comment was added.",
+            "headers" : {
+              "Location" : {
+                "description" : "The comment's URL.",
+                "schema" : {
+                  "type" : "string"
+                },
+                "style" : "simple"
+              }
+            }
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The comment is empty or longer than 1000 characters."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "comment-controller" ]
       }
     },
     "/api/profiles" : {

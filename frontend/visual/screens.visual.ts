@@ -49,6 +49,18 @@ test.describe('retrofitted screens', () => {
     await expect(page).toHaveScreenshot('feed.png', { fullPage: true });
   });
 
+  test('post detail with comment thread', async ({ page }) => {
+    await stubApp(page);
+    await page.goto('/');
+    await expect(page.getByRole('article').first()).toBeVisible();
+    await page.getByRole('article').first().getByRole('button', { name: 'Open comments' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText(/reflection makes it/i)).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await waitForFonts(page);
+    await expect(dialog).toHaveScreenshot('post-detail.png');
+  });
+
   test('followers list', async ({ page }) => {
     await stubApp(page);
     await page.goto('/u/ansel/followers');

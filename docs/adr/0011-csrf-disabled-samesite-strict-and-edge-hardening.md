@@ -56,9 +56,9 @@ Encoded in `RefreshCookieTest` and `SignInCompletionTest`.
 
 - **Rate limiting (`SEC-4`)** — the application does none. The public unauthenticated
   surface (`GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`,
-  `GET /api/posts`, `GET /api/follows/*`, `POST /api/auth/refresh`, and
-  `/oauth2/authorization/google`) needs a reverse-proxy or platform rate limit before real
-  traffic. Noted in the README.
+  `GET /api/posts`, `GET /api/posts/*/comments`, `GET /api/follows/*`,
+  `POST /api/auth/refresh`, and `/oauth2/authorization/google`) needs a reverse-proxy or
+  platform rate limit before real traffic. Noted in the README.
 - **Media bucket (`SEC-8`)** — `S3BlobStore.ensureBucket()` creates the bucket on first
   upload. That is a local-dev convenience; against real S3 the bucket is pre-created during
   provisioning and `s3:CreateBucket` is withheld from the runtime role, so the branch never

@@ -149,6 +149,16 @@ final class ContainerDriver implements PictogramApi {
         }
 
         @Override
+        public Comment comment(String postId, String body) {
+            return delegate.comment(postId, body);
+        }
+
+        @Override
+        public CommentPage commentsOn(String postId, String cursor, Integer limit) {
+            return delegate.commentsOn(postId, cursor, limit);
+        }
+
+        @Override
         public AccountPage followers(String userId, String cursor, Integer limit) {
             return delegate.followers(userId, cursor, limit);
         }

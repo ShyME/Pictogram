@@ -1,62 +1,51 @@
-import { type ReactNode, useEffect, useId } from 'react';
-import type { Post } from './post';
-import { originalUrl } from './post';
+import { Modal, ModalContent, ModalTitle } from '@shared';
+import type { ReactNode } from 'react';
+
+export type PostDetail = { postId: string; imageUrl: string; caption: string | null };
 
 export function PostDetailDialog({
-  post,
+  postId,
+  imageUrl,
+  caption,
   renderLike,
+  renderComments,
   onClose,
-}: {
-  post: Post;
+}: PostDetail & {
   renderLike?: (postId: string) => ReactNode;
+  renderComments?: (postId: string) => ReactNode;
   onClose: () => void;
 }) {
-  const titleId = useId();
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-10 flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
+    <Modal
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-xl"
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-      >
-        <h2 id={titleId} className="sr-only">
-          Post
-        </h2>
-        <img
-          src={originalUrl(post.mediaId)}
-          alt={post.caption ?? 'A post'}
-          className="aspect-square w-full bg-neutral-100 object-cover"
-        />
-        <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-3 text-neutral-400">
-          {renderLike?.(post.postId)}
-          <button
-            type="button"
-            onClick={onClose}
-            className="ml-auto rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-          >
-            Close
-          </button>
+      <ModalContent className="flex max-h-[85dvh] max-w-lg flex-col overflow-hidden p-0">
+        <ModalTitle className="sr-only">Post</ModalTitle>
+        <div className="min-h-0 overflow-y-auto">
+          <img
+            src={imageUrl}
+            alt={caption ?? 'A post'}
+            className="aspect-square w-full bg-surface-muted object-cover"
+          />
+          <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-3">
+            {renderLike?.(postId)}
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-auto rounded-control px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-muted"
+            >
+              Close
+            </button>
+          </div>
+          {caption && <p className="px-4 pb-3 pt-1 text-sm text-foreground">{caption}</p>}
+          {renderComments && (
+            <div className="border-t border-border px-4 py-4">{renderComments(postId)}</div>
+          )}
         </div>
-        {post.caption && <p className="px-4 pb-4 pt-1 text-sm text-neutral-800">{post.caption}</p>}
-      </div>
-    </div>
+      </ModalContent>
+    </Modal>
   );
 }

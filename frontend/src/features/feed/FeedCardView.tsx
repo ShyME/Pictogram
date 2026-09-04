@@ -1,14 +1,17 @@
+import { relativeTime } from '@shared';
+import { MessageCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { FeedCard } from './feed';
-import { relativeTime } from './relativeTime';
 
 export function FeedCardView({
   card,
   renderLike,
+  onOpenComments,
 }: {
   card: FeedCard;
   renderLike?: (postId: string) => ReactNode;
+  onOpenComments?: () => void;
 }) {
   const handle = card.author.username;
   const name = card.author.displayName;
@@ -40,7 +43,20 @@ export function FeedCardView({
         className="aspect-square w-full bg-surface-muted object-cover"
       />
 
-      <div className="flex items-center gap-2 px-4 pb-1 pt-3">{renderLike?.(card.postId)}</div>
+      <div className="flex items-center gap-4 px-4 pb-1 pt-3">
+        {renderLike?.(card.postId)}
+        {onOpenComments && (
+          <button
+            type="button"
+            onClick={onOpenComments}
+            aria-label="Open comments"
+            className="flex items-center gap-2 text-foreground-subtle transition-colors hover:text-foreground-muted"
+          >
+            <MessageCircle className="size-6" aria-hidden="true" />
+            <span className="text-sm">Comment</span>
+          </button>
+        )}
+      </div>
 
       {card.caption && (
         <p className="px-4 pb-4 pt-2 text-sm text-foreground">

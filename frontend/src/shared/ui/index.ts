@@ -5,16 +5,6 @@ export { Button, type ButtonProps } from './button';
 export { buttonVariants, type ButtonVariantProps } from './buttonVariants';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './dialog';
-export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,6 +14,14 @@ export {
 } from './dropdownMenu';
 export { EmptyState } from './emptyState';
 export { Input } from './input';
+export {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from './modal';
 export { Spinner } from './spinner';
 export { Textarea } from './textarea';
 export {

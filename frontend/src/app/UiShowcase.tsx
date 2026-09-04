@@ -10,14 +10,6 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -26,6 +18,12 @@ import {
   DropdownMenuTrigger,
   EmptyState,
   Input,
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
   Spinner,
   Textarea,
   Toast,
@@ -36,7 +34,7 @@ import {
   ToastViewport,
 } from '@shared';
 import { ImageOff, LogOut, Settings, UserRound } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -176,26 +174,8 @@ export function UiShowcase() {
         </Card>
       </Section>
 
-      <Section title="Dialog">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="danger">Delete post…</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete this post?</DialogTitle>
-              <DialogDescription>
-                It leaves your grid and everyone&rsquo;s feed. This can&rsquo;t be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DialogClose>
-              <Button variant="danger">Delete</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <Section title="Modal">
+        <ModalDemo />
       </Section>
 
       <Section title="DropdownMenu">
@@ -258,5 +238,42 @@ export function UiShowcase() {
         </div>
       </Section>
     </div>
+  );
+}
+
+function ModalDemo() {
+  const [isOpen, setIsOpen] = useState(false);
+  const close = () => {
+    setIsOpen(false);
+  };
+  return (
+    <>
+      <Button
+        variant="danger"
+        onClick={() => {
+          setIsOpen(true);
+        }}
+      >
+        Delete post…
+      </Button>
+      <Modal isOpen={isOpen} onOpenChange={setIsOpen}>
+        <ModalContent role="alertdialog">
+          <ModalHeader>
+            <ModalTitle>Delete this post?</ModalTitle>
+            <ModalDescription>
+              It leaves your grid and everyone&rsquo;s feed. This can&rsquo;t be undone.
+            </ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="secondary" onClick={close}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={close}>
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
