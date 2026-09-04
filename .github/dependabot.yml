@@ -39,6 +39,27 @@ updates:
           - "minor"
           - "patch"
 
+  # chat is a separate Gradle build (ADR-0014) with its own version pins — Spring
+  # Boot, Spotless, palantir-java-format are copied from backend/'s catalog, not
+  # shared with it. This is the mechanism that surfaces drift: its bump PRs land
+  # alongside backend's, so a reviewer can reconcile the pins consciously instead
+  # of one silently lagging.
+  - package-ecosystem: "gradle"
+    directory: "/chat"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      gradle:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # "/" scans the repo-root action.yml and .github/workflows/*; it does not
   # recurse, so the composite actions under .github/actions/* are listed too.
   - package-ecosystem: "github-actions"
@@ -80,6 +101,24 @@ updates:
       - dependency-name: "node"
         update-types:
           - "version-update:semver-major"
+
+  # chat/Dockerfile pins the same eclipse-temurin tags as backend/Dockerfile — its
+  # own scan is what surfaces the two drifting apart (see the gradle entry above).
+  - package-ecosystem: "docker"
+    directory: "/chat"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      docker:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # The "docker" ecosystem only reads Dockerfiles; Compose files need the
   # dedicated "docker-compose" ecosystem. "/" picks up every compose*.yaml at
