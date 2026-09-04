@@ -1,40 +1,125 @@
 package me.imshy.pictogram.social.internal.comment;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.BDDMockito.given;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import me.imshy.pictogram.post.PostDeleted;
+import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.PostId;
+import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.ForbiddenException;
+import me.imshy.pictogram.social.CommentCounts.PostComments;
+import me.imshy.pictogram.social.CommentDeleted;
+import me.imshy.pictogram.social.PostCommented;
 import me.imshy.pictogram.social.internal.SocialModuleIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.modulith.test.AssertablePublishedEvents;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+/** #156: the five verb-services collapsed into one {@link CommentThread}; tests stay grouped by behaviour. */
 class CommentThreadTest extends SocialModuleIntegrationTest {
 
     @Autowired
-    Commenting commenting;
+    CommentThread thread;
 
     @Autowired
-    CommentThread thread;
+    ApplicationEventPublisher events;
 
     @MockitoBean
     Clock clock;
 
     private Instant now = Instant.parse("2026-09-04T12:00:00Z");
+    private final ViewerId author = ViewerId.random();
+    private final ViewerId postAuthor = ViewerId.random();
     private final PostId post = PostId.random();
 
     @BeforeEach
     void bindClock() {
         given(clock.instant()).willAnswer(invocation -> now);
+        given(publishedPosts.authorOf(post)).willReturn(Optional.of(new UserId(postAuthor.value())));
     }
+
+    // ---- comment() ----
+
+    @Test
+    void aCommentIsStoredAndReturnedWithItsGeneratedIdAndTimestamp(AssertablePublishedEvents publishedEvents) {
+        PostComment written = thread.comment(author, post, "first!");
+
+        assertThat(written.commentId()).isNotNull();
+        assertThat(written.postId()).isEqualTo(post);
+        assertThat(written.viewer()).isEqualTo(author);
+        assertThat(written.body()).isEqualTo("first!");
+        assertThat(written.createdAt()).isEqualTo(now);
+
+        assertThat(thread.pageFor(post, null, null).comments()).singleElement().isEqualTo(written);
+
+        assertThat(publishedEvents.ofType(PostCommented.class)).singleElement().satisfies(event -> {
+            assertThat(event.postId()).isEqualTo(post);
+            assertThat(event.commentId()).isEqualTo(written.commentId());
+            assertThat(event.viewer()).isEqualTo(author);
+            assertThat(event.commentedAt()).isEqualTo(now);
+        });
+    }
+
+    @Test
+    void everyNewCommentAnnouncesItsOwnEvent(AssertablePublishedEvents publishedEvents) {
+        thread.comment(author, post, "one");
+        thread.comment(author, post, "two");
+
+        assertThat(publishedEvents.ofType(PostCommented.class)).hasSize(2);
+    }
+
+    @Test
+    void theBodyIsTrimmed() {
+        PostComment written = thread.comment(author, post, "  spaced out  ");
+
+        assertThat(written.body()).isEqualTo("spaced out");
+    }
+
+    @Test
+    void aBlankBodyIsRejected() {
+        assertThatExceptionOfType(EmptyCommentException.class).isThrownBy(() -> thread.comment(author, post, "   "));
+    }
+
+    @Test
+    void aBodyOverAThousandCharactersIsRejected() {
+        String tooLong = "x".repeat(CommentBody.MAX_LENGTH + 1);
+
+        assertThatExceptionOfType(CommentTooLongException.class)
+                .isThrownBy(() -> thread.comment(author, post, tooLong));
+    }
+
+    @Test
+    void aBodyOfExactlyAThousandCharactersIsAccepted() {
+        String atLimit = "x".repeat(CommentBody.MAX_LENGTH);
+
+        assertThat(thread.comment(author, post, atLimit).body()).hasSize(CommentBody.MAX_LENGTH);
+    }
+
+    @Test
+    void commentingOnYourOwnPostIsAllowed() {
+        // The comment sub-domain has no notion of a post's author — mirrors likes, contrast
+        // the self-follow guard in follow.
+        assertThat(thread.comment(author, new PostId(author.value()), "talking to myself"))
+                .isNotNull();
+    }
+
+    // ---- pageFor() ----
 
     @Test
     void listsCommentsOldestFirst() {
@@ -95,14 +180,106 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         commentAt("2026-09-04T10:00:00Z", "on this post");
         PostId other = PostId.random();
         now = Instant.parse("2026-09-04T10:00:00Z");
-        commenting.comment(ViewerId.random(), other, "on another post");
+        thread.comment(ViewerId.random(), other, "on another post");
 
         assertThat(thread.pageFor(post, null, null).comments()).hasSize(1);
     }
 
+    // ---- delete() : #156's single source of truth for who may delete a comment ----
+
+    @Test
+    void theCommentsAuthorCanDeleteItAndTheDeletionIsAnnounced(AssertablePublishedEvents publishedEvents) {
+        UUID commentId = thread.comment(author, post, "my mistake").commentId();
+
+        thread.delete(author, commentId);
+
+        assertThat(thread.pageFor(post, null, null).comments()).isEmpty();
+        assertThat(publishedEvents.ofType(CommentDeleted.class)).singleElement().satisfies(event -> {
+            assertThat(event.postId()).isEqualTo(post);
+            assertThat(event.commentId()).isEqualTo(commentId);
+            assertThat(event.viewer()).isEqualTo(author);
+            assertThat(event.deletedAt()).isEqualTo(now);
+        });
+    }
+
+    @Test
+    void thePostsAuthorCanDeleteSomeoneElsesCommentAndTheEventNamesThem(AssertablePublishedEvents publishedEvents) {
+        UUID commentId = thread.comment(author, post, "not your call").commentId();
+
+        thread.delete(postAuthor, commentId);
+
+        assertThat(thread.pageFor(post, null, null).comments()).isEmpty();
+        assertThat(publishedEvents.ofType(CommentDeleted.class))
+                .singleElement()
+                .satisfies(event -> assertThat(event.viewer()).isEqualTo(postAuthor));
+    }
+
+    @Test
+    void aStrangerCannotDeleteAndTheCommentStands(AssertablePublishedEvents publishedEvents) {
+        UUID commentId = thread.comment(author, post, "leave it").commentId();
+
+        assertThatExceptionOfType(ForbiddenException.class)
+                .isThrownBy(() -> thread.delete(ViewerId.random(), commentId));
+
+        assertThat(thread.pageFor(post, null, null).comments()).hasSize(1);
+        assertThat(publishedEvents.ofType(CommentDeleted.class)).isEmpty();
+    }
+
+    @Test
+    void deletingACommentThatIsNotThereIsASilentNoOp(AssertablePublishedEvents publishedEvents) {
+        thread.delete(author, UUID.randomUUID());
+
+        assertThat(publishedEvents.ofType(CommentDeleted.class)).isEmpty();
+    }
+
+    // ---- of() : batch comment counts ----
+
+    @Test
+    void reportsEachRequestedPostsCommentCount() {
+        var chatty = PostId.random();
+        var quiet = PostId.random();
+
+        thread.comment(ViewerId.random(), chatty, "one");
+        thread.comment(ViewerId.random(), chatty, "two");
+        thread.comment(ViewerId.random(), quiet, "only me");
+
+        Map<PostId, PostComments> byId = index(thread.of(List.of(chatty, quiet)));
+
+        assertThat(byId.get(chatty)).isEqualTo(new PostComments(chatty, 2));
+        assertThat(byId.get(quiet)).isEqualTo(new PostComments(quiet, 1));
+    }
+
+    @Test
+    void returnsARecordForEveryRequestedIdIncludingOneWithNoComments() {
+        var untouched = PostId.random();
+
+        assertThat(thread.of(List.of(untouched))).containsExactly(new PostComments(untouched, 0));
+    }
+
+    @Test
+    void anEmptyRequestReturnsNothing() {
+        assertThat(thread.of(List.of())).isEmpty();
+    }
+
+    // ---- onPostDeleted() : thread cleanup ----
+
+    @Test
+    void deletingAPostHardDeletesItsThreadAndLeavesOtherThreadsAlone() {
+        var deleted = PostId.random();
+        var untouched = PostId.random();
+        thread.comment(ViewerId.random(), deleted, "on the doomed post");
+        thread.comment(ViewerId.random(), deleted, "also doomed");
+        thread.comment(ViewerId.random(), untouched, "still here");
+
+        events.publishEvent(new PostDeleted(deleted, UserId.random(), MediaId.random(), Instant.now()));
+
+        assertThat(thread.pageFor(deleted, null, null).comments()).isEmpty();
+        assertThat(thread.pageFor(untouched, null, null).comments()).hasSize(1);
+    }
+
     private UUID commentAt(String instant, String body) {
         now = Instant.parse(instant);
-        return commenting.comment(ViewerId.random(), post, body).commentId();
+        return thread.comment(ViewerId.random(), post, body).commentId();
     }
 
     private List<UUID> drain(int pageSize) {
@@ -115,5 +292,9 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
             cursor = page.nextCursor();
         } while (cursor != null);
         return ids;
+    }
+
+    private static Map<PostId, PostComments> index(List<PostComments> rows) {
+        return rows.stream().collect(toMap(PostComments::post, identity()));
     }
 }
