@@ -1,4 +1,4 @@
-import type { components } from '@shared';
+import type { Account, components } from '@shared';
 
 export type Comment = {
   commentId: string;
@@ -18,9 +18,7 @@ export function toComment(view: components['schemas']['CommentView']): Comment {
   };
 }
 
-export type CommentAuthor = { userId: string; username: string; displayName: string | null };
-
-export type ThreadComment = Comment & { author: CommentAuthor | null };
+export type ThreadComment = Comment & { author: Account | null };
 
 export type PostCommentCount = { commentCount: number };
 

@@ -1,3 +1,5 @@
+export { fetchAccounts, toAccount } from './api/accounts';
+export type { Account } from './api/accounts';
 export { api } from './api/client';
 export { problemSlug } from './api/problem';
 export type { ProblemDetail } from './api/problem';

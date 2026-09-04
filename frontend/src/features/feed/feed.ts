@@ -1,4 +1,4 @@
-import type { components } from '@shared';
+import type { Account, components } from '@shared';
 
 export type FeedPost = {
   postId: string;
@@ -18,15 +18,9 @@ export function toFeedPost(wire: components['schemas']['FeedPost']): FeedPost {
   };
 }
 
-export type FeedAuthor = {
-  userId: string;
-  username: string;
-  displayName: string | null;
-};
-
 export type FeedCard = {
   postId: string;
-  author: FeedAuthor;
+  author: Account;
   imageUrl: string;
   caption: string | null;
   publishedAt: string;

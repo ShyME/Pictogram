@@ -1,6 +1,6 @@
-import type { Account } from '@features/follow/account';
 import { FollowListPage } from '@features/follow/lists/FollowListPage';
 import type { FollowListData } from '@features/follow/lists/followList';
+import type { Account } from '@shared';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
