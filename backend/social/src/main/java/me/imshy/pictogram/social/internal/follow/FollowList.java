@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.function.Function;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.KeysetWindow;
+import me.imshy.pictogram.shared.http.Limits;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
@@ -38,23 +40,15 @@ public class FollowList {
     }
 
     private Page page(Integer limit, Function<Follow, UserId> listedUser, Function<Limit, List<Follow>> rows) {
-        int pageSize = clamp(limit);
+        int pageSize = Limits.clamp(limit, DEFAULT_LIMIT, MAX_LIMIT);
 
         List<Follow> fetched = rows.apply(Limit.of(pageSize + 1));
-        boolean hasMore = fetched.size() > pageSize;
-        List<Follow> pageRows = hasMore ? fetched.subList(0, pageSize) : fetched;
+        KeysetWindow<Follow> window = KeysetWindow.of(
+                fetched,
+                pageSize,
+                last -> new Cursor(last.followedAt(), listedUser.apply(last).value()));
 
-        Cursor nextCursor = null;
-        if (hasMore) {
-            Follow last = pageRows.get(pageRows.size() - 1);
-            nextCursor = new Cursor(last.followedAt(), listedUser.apply(last).value());
-        }
-
-        return new Page(pageRows.stream().map(listedUser).toList(), nextCursor);
-    }
-
-    private static int clamp(Integer limit) {
-        return limit == null ? DEFAULT_LIMIT : Math.clamp(limit, 1, MAX_LIMIT);
+        return new Page(window.page().stream().map(listedUser).toList(), window.nextCursor());
     }
 
     public record Page(List<UserId> items, Cursor nextCursor) {}
