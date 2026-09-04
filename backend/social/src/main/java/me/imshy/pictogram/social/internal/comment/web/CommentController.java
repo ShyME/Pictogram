@@ -14,7 +14,6 @@ import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
 import me.imshy.pictogram.social.internal.comment.CommentThread;
-import me.imshy.pictogram.social.internal.comment.Commenting;
 import me.imshy.pictogram.social.internal.comment.PostComment;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -31,11 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/posts/{postId}/comments")
 class CommentController {
 
-    private final Commenting commenting;
     private final CommentThread thread;
 
-    CommentController(Commenting commenting, CommentThread thread) {
-        this.commenting = commenting;
+    CommentController(CommentThread thread) {
         this.thread = thread;
     }
 
@@ -83,7 +80,7 @@ class CommentController {
             @CurrentUser ViewerId viewer,
             @PathVariable("postId") UUID postId,
             @RequestBody CreateCommentRequest request) {
-        CommentView view = CommentView.of(commenting.comment(viewer, new PostId(postId), request.body()));
+        CommentView view = CommentView.of(thread.comment(viewer, new PostId(postId), request.body()));
         return ResponseEntity.created(URI.create("/api/comments/" + view.commentId()))
                 .body(view);
     }

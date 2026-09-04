@@ -12,11 +12,23 @@ test('commentCountLabel is singular for one and plural otherwise', () => {
   expect(commentCountLabel(2)).toBe('2 comments');
 });
 
-test('canDeleteComment allows the comment author and the post author only', () => {
-  const mine = { authorId: 'u-ada' };
+// Mirrors the three permission cases CommentThread.mayDelete pins server-side (#156) — this
+// gate must never diverge from it.
+const mine = { authorId: 'u-ada' };
+
+test('canDeleteComment allows the comment’s own author', () => {
   expect(canDeleteComment(mine, 'u-ada', 'u-zed')).toBe(true);
+});
+
+test('canDeleteComment allows the post’s author', () => {
   expect(canDeleteComment(mine, 'u-zed', 'u-zed')).toBe(true);
+});
+
+test('canDeleteComment forbids an unrelated viewer', () => {
   expect(canDeleteComment(mine, 'u-bob', 'u-zed')).toBe(false);
+});
+
+test('canDeleteComment forbids when nobody is signed in', () => {
   expect(canDeleteComment(mine, null, 'u-ada')).toBe(false);
 });
 

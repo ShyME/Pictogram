@@ -125,15 +125,18 @@ is unaware of comments — the thread is assembled here.
 **Comment**: a piece of free text, up to 1000 characters, attached to a post by a viewer.
 There is no edit. Unlike a `Like` or a `Follow` it has no natural key — the same viewer may
 comment on the same post any number of times — so it carries an application-assigned
-surrogate `id`. A comment is removed by its own author **or** by the post's author
-(`CommentRemoval` — the one place the sub-domain asks `post` who authored a post, via
-`PublishedPosts.authorOf`); a real removal fires `CommentDeleted`. When a post is deleted
-the whole thread is hard-deleted with it (`CommentCleanup` consumes `PostDeleted`).
+surrogate `id`. A comment is removed by its own author **or** by the post's author — the one
+rule lives in `CommentThread.mayDelete` (the one place the sub-domain asks `post` who
+authored a post, via `PublishedPosts.authorOf`), and the frontend delete-control gate is
+tested against the same cases so it can't quietly drift from it; a real removal fires
+`CommentDeleted`. When a post is deleted the whole thread is hard-deleted with it
+(`CommentThread` consumes `PostDeleted`).
 _Avoid_: Reply, note, annotation, post
 
 **Thread**: the comments on one post, oldest first, keyset-paged (`created_at`, then `id`
-as the tie-break). `Commenting.comment(...)` writes one; `CommentThread.pageFor(...)` reads
-a page.
+as the tie-break). `CommentThread` is the one type for the whole sub-domain (#156) — write,
+read a page, remove, batch-tally counts, and post-deletion cleanup all live there, since
+each was a single method holding nothing but the `Comments` repository.
 _Avoid_: Discussion, conversation, replies
 
 **Viewer**: the user writing the comment. Carried as a `ViewerId` and stored in `viewer_id`

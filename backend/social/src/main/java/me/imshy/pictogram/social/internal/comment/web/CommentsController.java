@@ -13,7 +13,7 @@ import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.social.CommentCounts;
-import me.imshy.pictogram.social.internal.comment.CommentRemoval;
+import me.imshy.pictogram.social.internal.comment.CommentThread;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -29,11 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 class CommentsController {
 
     private final CommentCounts counts;
-    private final CommentRemoval removal;
+    private final CommentThread thread;
 
-    CommentsController(CommentCounts counts, CommentRemoval removal) {
+    CommentsController(CommentCounts counts, CommentThread thread) {
         this.counts = counts;
-        this.removal = removal;
+        this.thread = thread;
     }
 
     record PostCommentsView(UUID postId, long commentCount) {
@@ -76,7 +76,7 @@ class CommentsController {
     })
     @DeleteMapping("/{commentId}")
     ResponseEntity<Void> deleteComment(@CurrentUser ViewerId viewer, @PathVariable("commentId") UUID commentId) {
-        removal.delete(viewer, commentId);
+        thread.delete(viewer, commentId);
         return ResponseEntity.noContent().build();
     }
 }
