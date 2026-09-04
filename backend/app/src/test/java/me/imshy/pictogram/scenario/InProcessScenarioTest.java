@@ -6,7 +6,8 @@ package me.imshy.pictogram.scenario;
  * container. {@code OrphanMediaCollectionScenarioTest} stays separate (it needs in-process beans).
  */
 class InProcessScenarioTest extends ScenarioTest
-        implements DeletePostScenarios,
+        implements CommentScenarios,
+                DeletePostScenarios,
                 EditProfileScenarios,
                 FeedScenarios,
                 FollowScenarios,

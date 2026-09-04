@@ -115,6 +115,33 @@ const FOLLOW = new Map<
 const FOLLOWERS_OF_ANSEL = ['u-vivian', 'u-saul', 'u-dorothea'];
 const ANSEL_FOLLOWS = ['u-vivian', 'u-dorothea'];
 
+type CommentView = {
+  commentId: string;
+  postId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+const COMMENTS: Record<string, CommentView[]> = {
+  'p-v1': [
+    {
+      commentId: 'c-1',
+      postId: 'p-v1',
+      authorId: 'u-saul',
+      body: 'The reflection makes it — you can feel the street around you.',
+      createdAt: ago(5 * HOUR),
+    },
+    {
+      commentId: 'c-2',
+      postId: 'p-v1',
+      authorId: 'u-dorothea',
+      body: 'More at https://pictogram.dev/vivian',
+      createdAt: ago(2 * HOUR),
+    },
+  ],
+};
+
 function likesFor(postIds: string[]) {
   return postIds.map((postId) => {
     const likes = LIKES.get(postId);
@@ -200,6 +227,10 @@ async function handle(route: Route): Promise<void> {
   }
 
   if (path === '/api/likes') return json(route, likesFor(url.searchParams.getAll('postIds')));
+
+  const commentsMatch = /^\/api\/posts\/([^/]+)\/comments$/.exec(path);
+  if (commentsMatch)
+    return json(route, { items: COMMENTS[commentsMatch[1]] ?? [], nextCursor: null });
 
   if (path === '/api/follows') return json(route, relationshipsFor(url.searchParams.getAll('ids')));
 

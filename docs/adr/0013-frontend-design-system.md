@@ -163,3 +163,29 @@ The one retrofit pass (decision 9) landed. Notes:
   (`visual/appWorld.ts` fulfils every `/api/**` read from a fixed world, clock pinned so the
   relative timestamps are stable). `visual/screens.visual.ts` commits a `*-linux.png`
   baseline per screen at both viewports.
+
+## Amendment (#137)
+
+The comments work rebuilt the post-detail view and forced the dialog question the two
+earlier tickets deferred.
+
+- **The Radix `Dialog` primitive is gone; `shared/ui/modal.tsx` replaces it.** Radix
+  `Dialog.Content` wraps its children in `react-remove-scroll`, which injects a `<style>`
+  element to lock body scroll — blocked by the app CSP `style-src 'self'` (ADR-0011), with
+  no clean fix for a statically-served SPA (decision 3 already ruled out a nonce/hash
+  pipeline). `Modal` is a hand-rolled, shadcn-shaped compound (`Modal`, `ModalContent`,
+  `ModalHeader`, `ModalTitle`, `ModalDescription`, `ModalFooter`) with a focus trap, an
+  Escape / backdrop close, and a scroll lock set through the CSSOM property API
+  (`document.body.style.overflow = …`) — the same `style-src` carve-out the crop frame
+  uses. `PostDetailDialog` and the delete-confirmation (`PostGrid`) are both on it now, so
+  the "two hand-rolled modals" note from #136 is resolved. `e2e/comments.spec.ts` opens the
+  modal under the real CSP; the `cspViolations` fixture fails the test on any violation.
+- **The post-detail view is the shared `Modal`** hosting the image, the injected like
+  control, the caption, and the comment thread. The feed card gains an "Open comments"
+  affordance; the profile grid thumbnail already opened the detail. Both are wired from
+  `routes.tsx` (a feature may not import another feature's component), which passes
+  `renderComments` / `renderPostDetail` render props.
+- **`relativeTime` moved from `features/feed` to `shared/lib`** so the comment row and the
+  feed card can share it without a cross-feature import.
+- The `/ui` showcase's `Dialog` section became a `Modal` section; the `dialog-*` visual
+  baselines were replaced by `modal-*`, and a `post-detail` screen baseline was added.

@@ -26,8 +26,9 @@ pnpm generate:api     # regenerate src/shared/api/schema.d.ts from ../backend/op
 `src/index.css` is a Tailwind v4 `@theme` block of semantic tokens — `--color-surface`,
 `--color-foreground`, `--color-accent`, radii, shadows, self-hosted Inter — and
 `src/shared/ui/` owns a small set of components (Button, Input, Textarea, Card, Avatar,
-Dialog, DropdownMenu, Toast, Spinner, EmptyState, AppNav) built on Radix + `lucide-react` and
-re-exported from `@shared`. Components use the token utilities (`bg-surface`,
+Modal, DropdownMenu, Toast, Spinner, EmptyState, AppNav) built on Radix + `lucide-react`
+(`Modal` is hand-rolled — Radix's dialog scroll-lock trips the CSP) and re-exported from
+`@shared`. Components use the token utilities (`bg-surface`,
 `text-foreground-muted`, `rounded-card`), never a raw palette step; a dark theme would be a
 later additive `@theme` block. `/ui` (dev/test only, not in the production build) renders
 every primitive in its states. See ADR-0013 and CONTRIBUTING for the add-a-component flow.
@@ -88,8 +89,8 @@ CONTRIBUTING → Visual regression.
 src/
   app/               composition root: providers, router, route table
   shared/            cross-cutting building blocks (may import shared only)
-    ui/              owned design-system primitives (Button, Dialog, …)
-    lib/             helpers (cn, queryClient)
+    ui/              owned design-system primitives (Button, Modal, …)
+    lib/             helpers (cn, queryClient, relativeTime)
     api/             the typed openapi-fetch client
   features/<name>/   one vertical slice:
     *Api.ts          calls to backend REST resources

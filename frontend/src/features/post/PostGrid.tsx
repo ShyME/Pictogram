@@ -1,13 +1,23 @@
-import { Button, Spinner, toast } from '@shared';
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+  Spinner,
+  toast,
+} from '@shared';
 import {
   type QueryClient,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { Post } from './post';
-import { thumbnailUrl } from './post';
+import { originalUrl, thumbnailUrl } from './post';
 import { deletePost, fetchPostsByAuthor } from './postApi';
 import { PostDetailDialog } from './PostDetailDialog';
 import { postsByAuthorKey } from './queryKeys';
@@ -16,19 +26,18 @@ export function PostGrid({
   authorId,
   manageable = false,
   renderLike,
+  renderComments,
   preloadLikes,
 }: {
   authorId: string;
   manageable?: boolean;
   renderLike?: (postId: string) => ReactNode;
+  renderComments?: (postId: string) => ReactNode;
   preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
 }) {
   const queryClient = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
   const [openPost, setOpenPost] = useState<Post | null>(null);
-  const cancelDelete = useCallback(() => {
-    setPendingDelete(null);
-  }, []);
 
   const grid = useInfiniteQuery({
     queryKey: postsByAuthorKey(authorId),
@@ -131,8 +140,11 @@ export function PostGrid({
 
       {openPost && (
         <PostDetailDialog
-          post={openPost}
+          postId={openPost.postId}
+          imageUrl={originalUrl(openPost.mediaId)}
+          caption={openPost.caption}
           renderLike={renderLike}
+          renderComments={renderComments}
           onClose={() => {
             setOpenPost(null);
           }}
@@ -146,16 +158,15 @@ export function PostGrid({
           onConfirm={() => {
             remove.mutate(pendingDelete);
           }}
-          onCancel={cancelDelete}
+          onCancel={() => {
+            setPendingDelete(null);
+          }}
         />
       )}
     </>
   );
 }
 
-// A hand-rolled modal, not the shared Radix `Dialog`: that pulls in a scroll-lock that
-// writes an inline `style` on <body>, which the app's CSP (`style-src 'self'`, ADR-0011)
-// blocks. `PostDetailDialog` is hand-rolled for the same reason; #137 unifies them.
 function ConfirmDelete({
   deleting,
   failed,
@@ -167,31 +178,18 @@ function ConfirmDelete({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const titleId = useId();
-
-  useEffect(() => {
-    if (deleting) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [deleting, onCancel]);
-
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-foreground/40 p-4">
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="w-full max-w-sm rounded-dialog border border-border bg-surface p-6 shadow-dialog"
-      >
-        <h2 id={titleId} className="text-lg font-semibold tracking-tight text-foreground">
-          Delete this post?
-        </h2>
-        <p className="mt-1.5 text-sm text-foreground-muted">This can&rsquo;t be undone.</p>
+    <Modal
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen && !deleting) onCancel();
+      }}
+    >
+      <ModalContent role="alertdialog" className="max-w-sm" closeOnEscape={!deleting}>
+        <ModalHeader>
+          <ModalTitle>Delete this post?</ModalTitle>
+          <ModalDescription>This can&rsquo;t be undone.</ModalDescription>
+        </ModalHeader>
 
         {failed && (
           <p role="alert" className="mt-3 text-sm text-danger-text">
@@ -199,15 +197,15 @@ function ConfirmDelete({
           </p>
         )}
 
-        <div className="mt-5 flex justify-end gap-3">
+        <ModalFooter>
           <Button variant="secondary" onClick={onCancel} disabled={deleting}>
             Cancel
           </Button>
           <Button variant="danger" onClick={onConfirm} loading={deleting} disabled={deleting}>
             {deleting ? 'Deleting…' : 'Delete'}
           </Button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }

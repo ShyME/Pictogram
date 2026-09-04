@@ -1,25 +1,23 @@
 # Social
 
 Everything that connects one user to another's posts: the **follow graph**, the **feed**
-assembled from it, and the **likes** on a post.
+assembled from it, the **likes** on a post, and the **comments** on a post.
 
-These were three separate contexts in early v1 (`follow`, `feed`, `engagement` — the last
-now the `likes` sub-domain). They were merged into one (#128) because together they are
-smaller than most single contexts here —
-`feed` has no store, `follow` and `likes` are one table each — and the split bought
-nothing the module boundary inside `social` doesn't already give. A later re-extraction is
-still cheap: each sub-domain keeps its own package, and `follow` / `likes` keep their
-own schema.
-
-Comments are designed for and come next; they will be their own `social.internal.comment`
-sub-domain and schema, not folded into `likes`.
+`follow`, `feed` and `engagement` (the last now the `likes` sub-domain) were three separate
+contexts in early v1. They were merged into one (#128) because together they are smaller
+than most single contexts here — `feed` has no store, `follow` and `likes` are one table
+each — and the split bought nothing the module boundary inside `social` doesn't already
+give. `comment` (#137) joined as a fourth sub-domain: it was designed for from the start
+and kept out of `likes` because a comment is a distinct thing with its own lifecycle. A
+later re-extraction is still cheap: each sub-domain keeps its own package, and `follow` /
+`likes` / `comment` keep their own schema.
 
 ## Internal shape
 
-`social.internal` has one package per sub-domain — `follow`, `feed`, `likes` — and
-`InternalSlicingTest` forbids them from reaching into each other. The one seam between them
-is **`FollowGraph`** (in `social.internal`, one level up from the slices): `feed` reads it
-to fan out, `follow` implements it. It sits above the slices deliberately, so the
+`social.internal` has one package per sub-domain — `follow`, `feed`, `likes`, `comment` —
+and `InternalSlicingTest` forbids them from reaching into each other. The one seam between
+them is **`FollowGraph`** (in `social.internal`, one level up from the slices): `feed` reads
+it to fan out, `follow` implements it. It sits above the slices deliberately, so the
 feed → follow direction is a single visible interface rather than a slice violation.
 
 ## Follow
@@ -107,10 +105,6 @@ _Avoid_: Favourite, heart, upvote, star, reaction
 confused with the post's author.
 _Avoid_: Current user, actor, me
 
-**Comment** (designed for, not built): a short piece of free text a user attaches to a
-post. Flat — no replies, no threading. Its own sub-domain when built, not part of `likes`.
-_Avoid_: Reply, note, annotation, thread
-
 ### Rules
 
 At most one like per `(viewer, post)` — that pair **is** the row's primary key (there is no
@@ -122,6 +116,37 @@ has no notion of a post's author (contrast the self-follow guard in `follow`).
 the `DataIntegrityViolationException` from the primary key. The check is the fast path *and*
 what lets a caller run `like()` inside their own transaction: a constraint violation would
 doom that transaction whether or not the exception is caught. `LikingTest` pins this.
+
+## Comments
+
+A piece of free text a viewer attaches to a post, shown in a flat thread. The post itself
+is unaware of comments — the thread is assembled here.
+
+**Comment**: a piece of free text, up to 1000 characters, attached to a post by a viewer.
+There is no edit. Unlike a `Like` or a `Follow` it has no natural key — the same viewer may
+comment on the same post any number of times — so it carries an application-assigned
+surrogate `id`.
+_Avoid_: Reply, note, annotation, post
+
+**Thread**: the comments on one post, oldest first, keyset-paged (`created_at`, then `id`
+as the tie-break). `Commenting.comment(...)` writes one; `CommentThread.pageFor(...)` reads
+a page.
+_Avoid_: Discussion, conversation, replies
+
+**Viewer**: the user writing the comment. Carried as a `ViewerId` and stored in `viewer_id`
+— the same as `likes`, and for the same reason: the sub-domain acts for whoever is asking
+and has **no notion of a post's author**, so commenting on your own post is allowed (no
+self-comment guard, unlike the self-follow guard in `follow`). The `PostCommented` event
+carries it as `viewer` too. The thread *read* surfaces it on the wire as `authorId`,
+matching `PostView` / `FeedPost` — from the client's side a comment is authored content.
+_Avoid_: Commenter, current user, principal
+
+### Rules
+
+A comment body is trimmed, must be non-blank, and is at most 1000 Unicode code points
+(`EmptyCommentException` / `CommentTooLongException`, both `400`). The thread read tolerates
+an anonymous caller; writing a comment needs a viewer. There is no post-existence check —
+a comment references a `PostId` by value only (ADR-0002), exactly as a `Like` does.
 
 ## Published interface
 
@@ -136,7 +161,9 @@ that its only caller, `feed`, lives in the same module.
 
 The paged **follower list / following list** reads (#57) and the **batch relationship
 read** (#59, `GET /api/follows?ids=`) serve the SPA's list screens through `follow`'s own
-web layer only — they are deliberately not on any published interface.
+web layer only — they are deliberately not on any published interface. The **comment
+thread** read is the same: web-layer only. A batch `CommentCounts` (mirroring `LikeCounts`)
+is designed for but not built — it lands with delete + feed/grid surfacing (#138).
 
 Over HTTP:
 
@@ -145,21 +172,28 @@ Over HTTP:
   `GET /api/follows?ids=`, `GET /api/follows/{userId}/followers`, `/following`.
 - `GET /api/likes?postIds=`, `PUT`/`DELETE /api/likes/{postId}`.
   The batch read tolerates an anonymous caller; liking and unliking require a viewer.
+- `GET`/`POST /api/posts/{postId}/comments`. The thread read tolerates an anonymous caller
+  and is keyset-paged (`cursor`, `limit`), oldest first; posting a comment requires a viewer.
 
 ## Events
 
 `UserFollowed` / `UserUnfollowed` and `PostLiked` / `PostUnliked` fire only on a real state
-change — an idempotent no-op emits nothing. No context consumes them in v1; they are the
-module's forward contract (fan-out-on-write feed, comment counts, notifications).
+change — an idempotent no-op emits nothing. `PostCommented` fires once per new comment
+(there is no edit, so no "changed" counterpart). No context consumes any of them in v1;
+they are the module's forward contract (fan-out-on-write feed, comment counts,
+notifications).
 
 `PostLiked.likedAt` and `PostUnliked.unlikedAt` are both the `Clock` instant at which the
 change was recorded, captured the same way, so for one `(viewer, post)` a later
 `unlikedAt` is never earlier than the matching `likedAt` — the two are directly comparable.
+`PostCommented.commentedAt` is the same `Clock` instant stored on the comment.
 
 ## Schema
 
-`follow` and `likes` each own a Postgres schema of that name (`feed` has no store; the
-`likes` schema is plural because `like` is a SQL reserved word). The `social` module owning
-two schemas is the one place ADR-0009's "one schema per context" doesn't hold literally — a
-consequence of the #128 merge, and harmless: each schema is still self-contained and would
-move with its sub-domain on a re-extraction.
+`follow`, `likes` and `comment` each own a Postgres schema of that name (`feed` has no
+store; the `likes` schema is plural because `like` is a SQL reserved word). The `social`
+module owning three schemas is where ADR-0009's "one schema per context" doesn't hold
+literally — a consequence of the #128 merge plus the #137 comment sub-domain, and harmless:
+each schema is still self-contained and would move with its sub-domain on a re-extraction.
+`comment.comment` is the one table here with an application-assigned surrogate `id` primary
+key rather than a natural key — a comment has no `(viewer, post)`-style identity.

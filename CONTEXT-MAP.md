@@ -7,9 +7,9 @@ modular monolith whose module boundaries are drawn so they could later be extrac
 separate services.
 
 Each module below is one bounded context, one Gradle subproject, and one Spring Modulith
-module. `social` carries three internal sub-domains (`follow`, `feed`, `likes`) that were
-separate contexts in early v1 — kept apart by an `internal/` package each and the
-`InternalSlicingTest` guard. `shared-kernel` is the single exception: a whitelisted module every context may
+module. `social` carries four internal sub-domains (`follow`, `feed`, `likes`, `comment`) —
+the first three were separate contexts in early v1 — kept apart by an `internal/` package
+each and the `InternalSlicingTest` guard. `shared-kernel` is the single exception: a whitelisted module every context may
 depend on. It holds the ID value types (`UserId`, `PostId`, `MediaId`, `ViewerId`) and,
 in its `http` sub-package, the cross-cutting HTTP edge conventions — Problem Details, the
 pagination envelope, current-user resolution (ADR-0008). No domain behaviour, entities, or
@@ -21,7 +21,7 @@ persistence.
 - [profile](./backend/profile/CONTEXT.md): the public face of a user — username, display name, bio — and the onboarding step that creates it.
 - [media](./backend/media/CONTEXT.md): stores uploaded images as bytes, re-encoded to one canonical square format.
 - [post](./backend/post/CONTEXT.md): the `Post` — one image plus an optional caption, published by an author.
-- [social](./backend/social/CONTEXT.md): the follow graph, the feed assembled from it, and likes on a post (comments designed, not built) — one context over three internal sub-domains (`follow`, `feed`, `likes`).
+- [social](./backend/social/CONTEXT.md): the follow graph, the feed assembled from it, and the likes and comments on a post — one context over four internal sub-domains (`follow`, `feed`, `likes`, `comment`).
 
 ## Relationships
 
@@ -30,7 +30,7 @@ persistence.
 - **social (feed) → post**: `social`'s feed sub-domain calls `post`'s published interface (`PublishedPosts`) synchronously to assemble a page (fan-out-on-read), behind its own `FeedQuery` port (ADR-0003). The other half of the fan-out — the follow graph — is now an in-module call (`FollowGraph` in `social.internal`). The feed has no store.
 - **post → media**: a `Post` holds a `MediaId`, and checks ownership via `MediaCatalog` on publish. `media`'s orphan collection needs to know which media a post still references; since the Gradle arrow only runs this way, `media` declares that as a port (`PostReferences`) and `post` provides the adapter.
 - **social (likes) → post**: a `Like` holds a `PostId`. `post` emits `PostPublished` / `PostDeleted`; no context consumes them in v1 (they are the module's forward contract).
-- **Events emitted, mostly unconsumed in v1**: `UserRegistered`, `UserFollowed`, `UserUnfollowed`, `PostPublished`, `PostDeleted`, `PostLiked`, `PostUnliked`, `ProfileUpdated`. They exist as each module's public contract so consumers (fan-out-on-write feed, notifications, comment counts) can be added later without touching producers.
+- **Events emitted, mostly unconsumed in v1**: `UserRegistered`, `UserFollowed`, `UserUnfollowed`, `PostPublished`, `PostDeleted`, `PostLiked`, `PostUnliked`, `PostCommented`, `ProfileUpdated`. They exist as each module's public contract so consumers (fan-out-on-write feed, notifications, comment counts) can be added later without touching producers.
 
 ## Notes on the v1 boundaries
 

@@ -14,7 +14,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Tag("blackbox")
 class BlackboxScenarioTest
-        implements DeletePostScenarios,
+        implements CommentScenarios,
+                DeletePostScenarios,
                 EditProfileScenarios,
                 FeedScenarios,
                 FollowScenarios,

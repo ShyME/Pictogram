@@ -42,6 +42,10 @@ public interface PictogramApi {
 
         Map<String, PostLikes> likesOf(String... postIds);
 
+        Comment comment(String postId, String body);
+
+        CommentPage commentsOn(String postId, String cursor, Integer limit);
+
         AccountPage followers(String userId, String cursor, Integer limit);
 
         AccountPage following(String userId, String cursor, Integer limit);
@@ -64,6 +68,10 @@ public interface PictogramApi {
     record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {}
 
     record PostLikes(long likeCount, boolean likedByViewer) {}
+
+    record Comment(String commentId, String postId, String authorId, String body, String createdAt) {}
+
+    record CommentPage(List<Comment> comments, String nextCursor) {}
 
     record AccountPage(List<String> userIds, String nextCursor) {}
 

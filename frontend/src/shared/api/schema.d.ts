@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts/{postId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["thread"];
+        put?: never;
+        post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profiles": {
         parameters: {
             query?: never;
@@ -285,6 +301,10 @@ export interface components {
             /** Format: int64 */
             expiresInSeconds: number;
         };
+        ApiPageCommentView: {
+            items?: components["schemas"]["CommentView"][];
+            nextCursor?: string;
+        };
         ApiPageFeedPost: {
             items?: components["schemas"]["FeedPost"][];
             nextCursor?: string;
@@ -296,6 +316,20 @@ export interface components {
         ApiPageUUID: {
             items?: string[];
             nextCursor?: string;
+        };
+        CommentView: {
+            /** Format: uuid */
+            authorId?: string;
+            body?: string;
+            /** Format: uuid */
+            commentId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: uuid */
+            postId?: string;
+        };
+        CreateCommentRequest: {
+            body?: string;
         };
         EditProfileRequest: {
             bio?: string;
@@ -915,6 +949,86 @@ export interface operations {
             };
             /** @description No post has that id. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    thread: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of the post's comments, oldest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiPageCommentView"];
+                };
+            };
+            /** @description The pagination cursor is malformed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description The comment was added. */
+            201: {
+                headers: {
+                    /** @description The comment's URL. */
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentView"];
+                };
+            };
+            /** @description The comment is empty or longer than 1000 characters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The caller has no valid access token. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,8 +1,9 @@
 import { Button, EmptyState, SessionExpiredError, Spinner } from '@shared';
 import { type QueryClient, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Images } from 'lucide-react';
-import { type ReactNode, useCallback, useEffect, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router';
+import type { FeedCard } from './feed';
 import { fetchFeedPage } from './feedApi';
 import { toFeedCards } from './feedCards';
 import { FeedCardView } from './FeedCardView';
@@ -15,11 +16,17 @@ function FeedShell({ children }: { children: ReactNode }) {
 export function FeedPage({
   renderLike,
   preloadLikes,
+  renderPostDetail,
 }: {
   renderLike?: (postId: string) => ReactNode;
   preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
+  renderPostDetail?: (
+    detail: { postId: string; imageUrl: string; caption: string | null },
+    onClose: () => void,
+  ) => ReactNode;
 } = {}) {
   const queryClient = useQueryClient();
+  const [openCard, setOpenCard] = useState<FeedCard | null>(null);
   const feed = useInfiniteQuery({
     queryKey: feedKey(),
     queryFn: async ({ pageParam }) => {
@@ -83,9 +90,28 @@ export function FeedPage({
     <FeedShell>
       <div className="space-y-6">
         {cards.map((card) => (
-          <FeedCardView key={card.postId} card={card} renderLike={renderLike} />
+          <FeedCardView
+            key={card.postId}
+            card={card}
+            renderLike={renderLike}
+            onOpenComments={
+              renderPostDetail
+                ? () => {
+                    setOpenCard(card);
+                  }
+                : undefined
+            }
+          />
         ))}
       </div>
+
+      {openCard &&
+        renderPostDetail?.(
+          { postId: openCard.postId, imageUrl: openCard.imageUrl, caption: openCard.caption },
+          () => {
+            setOpenCard(null);
+          },
+        )}
 
       <div ref={sentinel} className="h-px" aria-hidden />
 

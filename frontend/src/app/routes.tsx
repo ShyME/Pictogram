@@ -1,8 +1,9 @@
 import { LoginPage, installApiAuth } from '@features/auth';
+import { CommentThread } from '@features/comments';
 import { FeedPage } from '@features/feed';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
 import { LikeButton, LikeCount, prefetchPostLikes } from '@features/likes';
-import { PostGrid } from '@features/post';
+import { PostDetailDialog, PostGrid } from '@features/post';
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@features/profile';
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
@@ -29,6 +30,14 @@ export const router = createBrowserRouter([
               <FeedPage
                 renderLike={(postId) => <LikeButton postId={postId} />}
                 preloadLikes={prefetchPostLikes}
+                renderPostDetail={(detail, onClose) => (
+                  <PostDetailDialog
+                    {...detail}
+                    onClose={onClose}
+                    renderLike={(postId) => <LikeButton postId={postId} />}
+                    renderComments={(postId) => <CommentThread postId={postId} canComment />}
+                  />
+                )}
               />
             ),
           },
@@ -67,6 +76,9 @@ export const router = createBrowserRouter([
                         <LikeCount postId={postId} />
                       )
                     }
+                    renderComments={(postId) => (
+                      <CommentThread postId={postId} canComment={isViewerAuthenticated} />
+                    )}
                     preloadLikes={prefetchPostLikes}
                   />
                 )}

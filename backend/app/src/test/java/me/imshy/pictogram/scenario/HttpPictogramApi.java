@@ -264,6 +264,32 @@ class HttpPictogramApi implements PictogramApi {
         }
 
         @Override
+        public Comment comment(String postId, String body) {
+            HttpResponse<String> response =
+                    call("POST", "/api/posts/" + postId + "/comments", json.writeValueAsString(Map.of("body", body)));
+            require(response, 201, "add a comment");
+            return toComment(json.readTree(response.body()));
+        }
+
+        @Override
+        public CommentPage commentsOn(String postId, String cursor, Integer limit) {
+            var query = new StringBuilder();
+            if (cursor != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("cursor=").append(cursor);
+            }
+            if (limit != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("limit=").append(limit);
+            }
+            HttpResponse<String> response = call("GET", "/api/posts/" + postId + "/comments" + query, null);
+            require(response, 200, "read a comment thread");
+            JsonNode page = json.readTree(response.body());
+            List<Comment> comments = new ArrayList<>();
+            page.path("items").forEach(node -> comments.add(toComment(node)));
+            JsonNode next = page.path("nextCursor");
+            return new CommentPage(comments, next.isNull() || next.isMissingNode() ? null : next.asString());
+        }
+
+        @Override
         public FeedPage openFeed() {
             return openFeed(null, null);
         }
@@ -308,6 +334,15 @@ class HttpPictogramApi implements PictogramApi {
 
     private Post post(String body) {
         return post(json.readTree(body));
+    }
+
+    private static Comment toComment(JsonNode node) {
+        return new Comment(
+                node.path("commentId").asString(),
+                node.path("postId").asString(),
+                node.path("authorId").asString(),
+                node.path("body").asString(),
+                node.path("createdAt").asString());
     }
 
     private static Post post(JsonNode node) {
