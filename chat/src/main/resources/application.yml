@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: chat
+
+server:
+  port: 8081
+
+# Only `health` is exposed — the Boot default, and all this scaffold needs (#163).
+management:
+  endpoint:
+    health:
+      show-details: never

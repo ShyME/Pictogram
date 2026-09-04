@@ -11,7 +11,7 @@ How the engineering skills should consume this repo's domain documentation when 
 Pictogram is a **multi-context** repo.
 
 - **`CONTEXT-MAP.md`** at the repo root: the list of bounded contexts and how they relate. Start here.
-- **`backend/<module>/CONTEXT.md`**: the glossary for one bounded context. Read each one relevant to the topic, and use its vocabulary.
+- **`backend/<module>/CONTEXT.md`**: the glossary for one bounded context. Read each one relevant to the topic, and use its vocabulary. `chat` is the exception — its glossary is `chat/CONTEXT.md`, since it's a separate service outside `backend/` (ADR-0014).
 - **`docs/adr/`**: system-wide architecture decisions. Read the ADRs that touch the area you're about to work in.
 
 If any of these files don't exist yet, **proceed silently**. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
@@ -22,6 +22,7 @@ If any of these files don't exist yet, **proceed silently**. The `/domain-modeli
 /
 ├── CONTEXT-MAP.md                     ← the context list + relationships
 ├── docs/adr/                          ← system-wide decisions (0001…)
+├── chat/CONTEXT.md                    ← separate service, outside backend/ (ADR-0014)
 └── backend/
     ├── identity/CONTEXT.md
     ├── profile/CONTEXT.md

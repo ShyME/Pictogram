@@ -1,7 +1,7 @@
 name: CI
 
 # Every change reaches `main` through a PR, so the PR run is the gate: it runs the
-# backend + frontend suites. The post-merge push to `main` runs the blackbox job plus a
+# backend + chat + frontend suites. The post-merge push to `main` runs the blackbox job plus a
 # container-free `check` — with "Require branches to be up to date before merging" on, the
 # merged tree is byte-identical to what the PR already tested, so re-running the full
 # suites is wasted work; `check` is the cheap floor that still catches a push which somehow
@@ -88,6 +88,35 @@ jobs:
           path: backend/**/build/reports/tests/
           retention-days: 7
 
+  # chat (ADR-0014) is its own Gradle build, independent of backend/ — no Testcontainers,
+  # no shared cache key, its own job so a chat failure never masks a backend one or vice versa.
+  chat:
+    name: Chat build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check
+        working-directory: chat
+        run: ./gradlew check
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chat-test-reports
+          path: chat/build/reports/tests/
+          retention-days: 7
+
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
@@ -148,11 +177,11 @@ jobs:
             frontend/test-results/
           retention-days: 14
 
-  # The `backend` and `frontend` jobs are skipped on the push to `main` (the up-to-date PR
-  # already ran them). This container-free job is the floor that still runs on that push, so
-  # a direct push — or a merge made while "Require branches to be up to date before merging"
-  # is off — can't land on `main` with zero lint / type / boundary coverage. It deliberately
-  # skips Testcontainers and Playwright; the deep suites stay on the PR gate.
+  # The `backend`, `chat` and `frontend` jobs are skipped on the push to `main` (the
+  # up-to-date PR already ran them). This container-free job is the floor that still runs on
+  # that push, so a direct push — or a merge made while "Require branches to be up to date
+  # before merging" is off — can't land on `main` with zero lint / type / boundary coverage.
+  # It deliberately skips Testcontainers and Playwright; the deep suites stay on the PR gate.
   check:
     name: Fast check (main-push safety net)
     runs-on: ubuntu-latest
@@ -171,6 +200,10 @@ jobs:
       - name: Backend format + module boundaries
         working-directory: backend
         run: ./gradlew spotlessCheck :app:test --tests "me.imshy.pictogram.ModulithStructureTest"
+
+      - name: Chat check
+        working-directory: chat
+        run: ./gradlew check
 
       - name: Frontend format / lint / typecheck / unit / build
         working-directory: frontend
@@ -207,8 +240,27 @@ jobs:
         working-directory: frontend
         run: pnpm exec playwright install --with-deps chromium
 
+      # ChatDockerImageTest builds chat/Dockerfile itself and runs it as a container —
+      # independent of the compose stack below, so it can run before it comes up.
+      - name: Chat Docker image test
+        working-directory: chat
+        run: ./gradlew test -PincludeBlackbox
+
+      - name: Upload chat test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chat-blackbox-test-reports
+          path: chat/build/reports/tests/
+          retention-days: 7
+
       - name: Start the app
         run: docker compose up --build -d --wait
+
+      # Proves #163's other half of the scaffolded path: a request routed through Caddy
+      # (not just a direct hit on chat's own port) reaches chat.
+      - name: Verify chat is reachable through Caddy
+        run: curl --fail http://localhost:${PICTOGRAM_CHAT_PORT:-8082}/actuator/health
 
       # @Tag("blackbox") backend tests: the ContainerDriver hits the running stack above.
       - name: Backend blackbox tests

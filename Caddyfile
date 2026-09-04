@@ -1,0 +1,6 @@
+# Routes chat's endpoints (ADR-0014). `app` stays directly published (compose.yaml) —
+# this scaffold proves only that a routed request reaches chat end to end (#163); the
+# JWT-carrying WebSocket route is added when chat grows one.
+:8082 {
+	reverse_proxy chat:8081
+}
