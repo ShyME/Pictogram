@@ -1,22 +1,32 @@
-import { type QueryClient, useQuery } from '@tanstack/react-query';
-import { type FollowRelationshipById, fetchFollowRelationship } from './followApi';
+import { createBatchAside } from '@shared';
+import type { QueryClient } from '@tanstack/react-query';
+import type { FollowRelationship } from './follow';
+import {
+  type FollowRelationshipById,
+  fetchFollowRelationship,
+  fetchFollowRelationships,
+} from './followApi';
 import { followRelationshipKey } from './queryKeys';
 
-const SEEDED_STALE_TIME_MS = 30_000;
+const cache = createBatchAside<FollowRelationship>({
+  key: followRelationshipKey,
+  readOne: (userId) => fetchFollowRelationship(userId),
+  readBatch: async (userIds) => {
+    const batch = await fetchFollowRelationships(userIds);
+    return batch.map(({ userId, ...relationship }) => [userId, relationship]);
+  },
+});
 
 export function useFollowRelationship(userId: string) {
-  return useQuery({
-    queryKey: followRelationshipKey(userId),
-    queryFn: () => fetchFollowRelationship(userId),
-    staleTime: SEEDED_STALE_TIME_MS,
-  });
+  return cache.useValue(userId);
 }
 
 export function seedFollowRelationships(
   client: QueryClient,
   records: FollowRelationshipById[],
 ): void {
-  for (const { userId, ...relationship } of records) {
-    client.setQueryData(followRelationshipKey(userId), relationship);
-  }
+  cache.seed(
+    client,
+    records.map(({ userId, ...relationship }) => [userId, relationship]),
+  );
 }

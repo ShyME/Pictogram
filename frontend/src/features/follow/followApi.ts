@@ -1,24 +1,12 @@
-import { type Account, api, type components, fetchAccounts } from '@shared';
+import { type Account, api, type components, fetchAccounts, orAnonymous } from '@shared';
 import { type FollowRelationship, toFollowRelationship } from './follow';
 
 export async function fetchFollowRelationship(userId: string): Promise<FollowRelationship> {
-  const { data, response } = await api.GET('/api/follows/{userId}', {
-    params: { path: { userId } },
-  });
-  if (data) return toFollowRelationship(data);
-  if (response.status === 401) return anonymousFollowRelationship(userId);
-  throw new Error(`Unexpected /api/follows/${userId} response: ${response.status}`);
-}
-
-async function anonymousFollowRelationship(userId: string): Promise<FollowRelationship> {
-  const response = await fetch(`/api/follows/${encodeURIComponent(userId)}`, {
-    headers: { Accept: 'application/json' },
-  });
-  if (!response.ok) {
-    throw new Error(`Unexpected /api/follows/${userId} response: ${response.status}`);
-  }
   return toFollowRelationship(
-    (await response.json()) as components['schemas']['FollowRelationship'],
+    await orAnonymous<components['schemas']['FollowRelationship']>(
+      await api.GET('/api/follows/{userId}', { params: { path: { userId } } }),
+      { path: `/api/follows/${encodeURIComponent(userId)}`, label: 'Follow relationship request' },
+    ),
   );
 }
 
