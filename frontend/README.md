@@ -80,7 +80,9 @@ flags. CI runs the same journeys on the push to `main` (see `.github/workflows/c
 showcase, `/login`, and every screen (`visual/screens.visual.ts`, which drives the real
 router with `/api/**` served from `visual/appWorld.ts`) at ~375 and ~1440 px against a bare
 `vite` dev server. Baselines under `visual/__screenshots__/` are generated in the pinned
-Playwright CI image (`visual` job); a local run writes gitignored `*-darwin` snapshots. See
+Playwright CI image (`visual` job); a local run writes gitignored `*-darwin` snapshots. It
+also runs `visual/overflow.visual.ts`, a no-baseline suite that asserts no screen overflows
+its viewport horizontally at either width with worst-case content (`stubStress`). See
 CONTRIBUTING → Visual regression.
 
 ## Structure — feature slices

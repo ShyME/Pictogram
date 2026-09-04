@@ -30,7 +30,7 @@ export function FollowListPage({ mode }: { mode: FollowListMode }) {
     return (
       <PageChrome>
         <h1 className="text-lg font-semibold text-foreground">This account doesn&rsquo;t exist</h1>
-        <p className="mt-2 text-sm text-foreground-muted">
+        <p className="mt-2 break-words text-sm text-foreground-muted">
           No one on Pictogram goes by{' '}
           <span className="font-medium text-foreground">@{data.username}</span>.
         </p>
@@ -68,8 +68,10 @@ function Loaded({
   return (
     <PageChrome>
       <div className="flex items-baseline justify-between gap-4">
-        <h1 className="text-lg font-semibold text-foreground">{copy.title(target.username)}</h1>
-        <Button variant="link" size="sm" asChild>
+        <h1 className="min-w-0 break-words text-lg font-semibold text-foreground">
+          {copy.title(target.username)}
+        </h1>
+        <Button variant="link" size="sm" asChild className="shrink-0">
           <Link to={`/u/${target.username}`}>Back to profile</Link>
         </Button>
       </div>

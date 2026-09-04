@@ -100,9 +100,12 @@ function CommentRow({
 
   return (
     <li className="text-sm">
-      <span className="flex items-baseline gap-2">
+      <span className="flex items-center gap-2">
         {handle ? (
-          <Link to={`/u/${handle}`} className="font-semibold text-foreground hover:underline">
+          <Link
+            to={`/u/${handle}`}
+            className="min-w-0 truncate font-semibold text-foreground hover:underline"
+          >
             {name ?? `@${handle}`}
           </Link>
         ) : (
@@ -110,7 +113,7 @@ function CommentRow({
         )}
         <time
           dateTime={comment.createdAt}
-          className="text-xs text-foreground-subtle"
+          className="shrink-0 text-xs text-foreground-subtle"
           title={new Date(comment.createdAt).toLocaleString()}
         >
           {relativeTime(comment.createdAt)}
@@ -122,7 +125,7 @@ function CommentRow({
               remove.mutate();
             }}
             disabled={remove.isPending}
-            className="ml-auto text-xs text-foreground-subtle transition-colors hover:text-danger-text disabled:opacity-50"
+            className="ml-auto shrink-0 text-xs text-foreground-subtle transition-colors hover:text-danger-text disabled:opacity-50"
           >
             {remove.isPending ? 'Deleting…' : 'Delete'}
           </button>

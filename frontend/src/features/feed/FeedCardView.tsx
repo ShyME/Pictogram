@@ -29,18 +29,20 @@ export function FeedCardView({
 
   return (
     <article className="overflow-hidden rounded-card border border-border bg-surface shadow-card">
-      <header className="flex items-baseline gap-2 px-4 py-3">
+      <header className="flex items-center gap-2 px-4 py-3">
         {handle ? (
-          <Link to={`/u/${handle}`} className="flex items-baseline gap-2 hover:underline">
-            {name && <span className="text-sm font-semibold text-foreground">{name}</span>}
-            <span className="text-sm text-foreground-muted">@{handle}</span>
+          <Link to={`/u/${handle}`} className="flex min-w-0 items-center gap-2 hover:underline">
+            {name && <span className="truncate text-sm font-semibold text-foreground">{name}</span>}
+            <span className="shrink-0 text-sm text-foreground-muted">@{handle}</span>
           </Link>
         ) : (
-          <span className="text-sm font-semibold text-foreground">{name ?? 'Someone'}</span>
+          <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+            {name ?? 'Someone'}
+          </span>
         )}
         <time
           dateTime={card.publishedAt}
-          className="ml-auto text-xs text-foreground-subtle"
+          className="ml-auto shrink-0 text-xs text-foreground-subtle"
           title={new Date(card.publishedAt).toLocaleString()}
         >
           {relativeTime(card.publishedAt)}
@@ -75,7 +77,7 @@ export function FeedCardView({
       </div>
 
       {card.caption && (
-        <p className="px-4 pb-4 pt-2 text-sm text-foreground">
+        <p className="break-words px-4 pb-4 pt-2 text-sm text-foreground">
           {handle && <span className="font-semibold text-foreground">@{handle} </span>}
           {card.caption}
         </p>
