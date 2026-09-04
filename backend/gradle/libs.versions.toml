@@ -1,5 +1,7 @@
 [versions]
-# buildSrc convention-plugin toolchain
+# buildSrc convention-plugin toolchain — chat/build.gradle.kts copies these four by hand
+# (a separate Gradle build per ADR-0014, can't reach this catalog). Check chat when
+# bumping one of them, and vice versa.
 spring-boot = "4.1.1"
 dependency-management = "1.1.7"
 spotless = "8.10.1"

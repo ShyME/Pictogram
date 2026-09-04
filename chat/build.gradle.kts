@@ -1,3 +1,8 @@
+// A separate Gradle build (ADR-0014) can't share backend/'s version catalog without
+// reintroducing the coupling that ADR is deliberately practising splitting away from — so
+// these versions are copied from backend/gradle/libs.versions.toml by hand, not pinned
+// there. Dependabot scans this build independently too (.github/dependabot.yml); when its
+// bump PR lands, or when backend's does, check whether the other should follow.
 plugins {
     java
     id("org.springframework.boot") version "4.1.1"
@@ -32,6 +37,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// Mirrors backend's pictogram.code-quality-conventions.gradle.kts ruleset by hand — same
+// reason as the plugin versions above. Keep the two in sync when one changes.
 spotless {
     java {
         target("src/**/*.java")
