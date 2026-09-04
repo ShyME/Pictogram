@@ -12,7 +12,7 @@ Default canonical triage vocabulary (`needs-triage`, `needs-info`, `ready-for-ag
 
 ### Domain docs
 
-Multi-context: `CONTEXT-MAP.md` at the repo root links one `CONTEXT.md` per bounded context under `backend/<module>/`; system-wide ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Multi-context: `CONTEXT-MAP.md` at the repo root links one `CONTEXT.md` per bounded context under `backend/<module>/` (`chat/CONTEXT.md` is the exception — outside `backend/`, ADR-0014); system-wide ADRs in `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Project
 

@@ -58,6 +58,12 @@ tasks:
     cmds:
       - ./gradlew :app:bootRun
 
+  chat:
+    desc: Run chat on the host (its own Gradle build — ADR-0014)
+    dir: chat
+    cmds:
+      - ./gradlew bootRun
+
   frontend:
     desc: Run the Vite dev server (proxies /api and /oauth2 to the host backend)
     dir: frontend
@@ -66,13 +72,19 @@ tasks:
       - pnpm dev
 
   format:
-    desc: Auto-format the codebase — backend (Spotless + ktfmt) and frontend (Prettier)
+    desc: Auto-format the codebase — backend (Spotless + ktfmt), chat, and frontend (Prettier)
     cmds:
       - task: format:backend
+      - task: format:chat
       - task: format:frontend
 
   format:backend:
     dir: backend
+    cmds:
+      - ./gradlew spotlessApply
+
+  format:chat:
+    dir: chat
     cmds:
       - ./gradlew spotlessApply
 
@@ -83,9 +95,10 @@ tasks:
       - pnpm format
 
   test:
-    desc: Run all checks — backend build + frontend lint/typecheck/tests + scripts
+    desc: Run all checks — backend build, chat build, frontend lint/typecheck/tests, scripts
     cmds:
       - task: test:backend
+      - task: test:chat
       - task: test:frontend
       - task: test:scripts
 
@@ -98,6 +111,11 @@ tasks:
     dir: backend
     cmds:
       - ./gradlew build
+
+  test:chat:
+    dir: chat
+    cmds:
+      - ./gradlew check
 
   test:frontend:
     dir: frontend
@@ -121,12 +139,14 @@ tasks:
       - pnpm test:e2e
 
   test:blackbox:
-    desc: The full main-only tier — backend @Tag("blackbox") scenarios + Playwright journeys against the built image
+    desc: The full main-only tier — backend + chat @Tag("blackbox") scenarios + Playwright journeys against the built image
     env:
       COMPOSE_FILE: compose.yaml:compose.mock-oauth.yaml
     cmds:
+      - cd chat && ./gradlew test -PincludeBlackbox
       - docker compose up --build -d --wait
       - defer: docker compose down -v
+      - curl --fail http://localhost:{{.PICTOGRAM_CHAT_PORT | default 8082}}/actuator/health
       - cd backend && ./gradlew build -PincludeBlackbox
       - cd frontend && pnpm install && pnpm exec playwright install --with-deps chromium && pnpm test:e2e
 
@@ -142,4 +162,5 @@ tasks:
       - docker compose -f compose.yaml down -v --remove-orphans
       - docker compose -f compose.dev.yaml down -v
       - cd backend && ./gradlew clean
+      - cd chat && ./gradlew clean
       - rm -rf frontend/dist

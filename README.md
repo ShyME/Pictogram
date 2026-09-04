@@ -75,6 +75,10 @@ profile against the `postgres` and `minio` services. Spring serves the SPA at `/
 hard reload or pasted link on a client route (`/login`, `/onboarding`) forwards to
 `index.html` so the SPA re-resolves it.
 
+`compose.yaml` also brings up `chat` — a separate service, own Gradle build, own
+Dockerfile (ADR-0014) — behind a `caddy` container at <http://localhost:8082>. It has no
+message-handling yet; `/actuator/health` is the only endpoint (#163).
+
 ```bash
 docker compose -f compose.yaml down --remove-orphans     # stop      (task down)
 docker compose -f compose.yaml down -v --remove-orphans   # stop + wipe data
@@ -101,6 +105,12 @@ host backend:
 
 ```bash
 cd frontend && pnpm install && pnpm dev      # task frontend
+```
+
+Chat — its own Gradle build (ADR-0014), needs no infra:
+
+```bash
+cd chat && ./gradlew bootRun                 # task chat
 ```
 
 In IntelliJ, running the app picks up the `local` profile and the infra starts on its
@@ -147,15 +157,17 @@ cd frontend && pnpm test:e2e                        # Playwright (after `pnpm ex
 
 `.github/workflows/ci.yml` gates every PR: the backend `./gradlew build` (Modulith
 `verify()`, unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the
-`openapi.json` drift check) and the frontend lint / typecheck / test / build.
+`openapi.json` drift check), `chat`'s own `./gradlew check` (a separate Gradle build,
+ADR-0014 — no Testcontainers, nothing shared with the backend job), and the frontend lint /
+typecheck / test / build.
 
-The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests and the
-Playwright journeys against `compose.yaml` + `compose.mock-oauth.yaml` — plus a small
-container-free `check` job (backend Spotless + module-boundary check, frontend
-format / lint / typecheck / unit / build). The full backend and frontend suites are
-**skipped** on this push: with "Require branches to be up to date before merging" on, the
-merged tree already passed them on the PR, so re-running is wasted work.
-`workflow_dispatch` forces a full run.
+The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests, a curl
+through Caddy to chat's health endpoint, and the Playwright journeys against `compose.yaml`
++ `compose.mock-oauth.yaml` — plus a small container-free `check` job (backend Spotless +
+module-boundary check, a chat check, frontend format / lint / typecheck / unit / build). The
+full backend, chat and frontend suites are **skipped** on this push: with "Require branches
+to be up to date before merging" on, the merged tree already passed them on the PR, so
+re-running is wasted work. `workflow_dispatch` forces a full run.
 
 ### The `main`-push safety net depends on a branch-protection setting
 
