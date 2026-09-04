@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import me.imshy.pictogram.scenario.PictogramApi.Actor;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 @Tag("fast")
@@ -30,6 +32,7 @@ class HttpPictogramApiTest {
     private final List<Recorded> received = new CopyOnWriteArrayList<>();
     private final Map<String, Stub> stubs = new ConcurrentHashMap<>();
     private final RecordingSignIn signIn = new RecordingSignIn();
+    private final ObjectMapper json = JsonMapper.builder().build();
     private HttpPictogramApi api;
 
     @BeforeEach
@@ -38,7 +41,7 @@ class HttpPictogramApiTest {
         server.createContext("/", this::handle);
         server.start();
         baseUri = URI.create("http://localhost:" + server.getAddress().getPort());
-        api = new HttpPictogramApi(baseUri, JsonMapper.builder().build(), signIn);
+        api = new HttpPictogramApi(baseUri, json, signIn, new IdentityUsernamePolicy());
 
         stub("POST", "/api/auth/refresh", 200, "{\"accessToken\":\"stub-access-token\"}");
     }
@@ -101,6 +104,67 @@ class HttpPictogramApiTest {
     }
 
     @Test
+    void completeOnboardingRoutesTheUsernameThroughTheInjectedPolicy() {
+        RecordingUsernamePolicy policy = new RecordingUsernamePolicy();
+        stub(
+                "POST",
+                "/api/profiles",
+                201,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
+
+        Profile profile = actor(policy).completeOnboarding("ada_lovelace", "Ada Lovelace", "Countess");
+
+        assertThat(policy.qualifiedUsernames).containsExactly("ada_lovelace");
+        assertThat(only("POST", "/api/profiles").bodyAsJson().path("username").asString())
+                .isEqualTo("q-ada_lovelace");
+        assertThat(profile.username()).isEqualTo("ada_lovelace");
+    }
+
+    @Test
+    void editProfileRoutesTheUsernameThroughTheInjectedPolicy() {
+        RecordingUsernamePolicy policy = new RecordingUsernamePolicy();
+        stub(
+                "PUT",
+                "/api/profiles/me",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
+
+        Profile profile = actor(policy).editProfile("ada_lovelace", "Ada Lovelace", "Countess");
+
+        assertThat(policy.qualifiedUsernames).containsExactly("ada_lovelace");
+        assertThat(only("PUT", "/api/profiles/me").bodyAsJson().path("username").asString())
+                .isEqualTo("q-ada_lovelace");
+        assertThat(profile.username()).isEqualTo("ada_lovelace");
+    }
+
+    @Test
+    void viewProfileQualifiesTheLookupUsernameAndStripsTheResult() {
+        RecordingUsernamePolicy policy = new RecordingUsernamePolicy();
+        stub(
+                "GET",
+                "/api/profiles/q-ada_lovelace",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
+
+        Optional<Profile> profile = actor(policy).viewProfile("ada_lovelace");
+
+        assertThat(policy.qualifiedUsernames).containsExactly("ada_lovelace");
+        assertThat(profile).contains(new Profile("u-1", "ada_lovelace", null, null));
+    }
+
+    @Test
+    void currentProfileStripsTheReturnedProfile() {
+        RecordingUsernamePolicy policy = new RecordingUsernamePolicy();
+        stub(
+                "GET",
+                "/api/profiles/me",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
+
+        assertThat(actor(policy).currentProfile()).contains(new Profile("u-1", "ada_lovelace", null, null));
+    }
+
+    @Test
     void uploadPhotoSendsAWellFormedMultipartBodyAndReadsTheMediaId() {
         stub("POST", "/api/media", 201, "{\"mediaId\":\"m-42\"}");
         byte[] image = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -123,6 +187,11 @@ class HttpPictogramApiTest {
 
     private Actor actor() {
         return api.registerViaGoogle("ada@example.com");
+    }
+
+    private Actor actor(UsernamePolicy usernamePolicy) {
+        var policedApi = new HttpPictogramApi(baseUri, json, signIn, usernamePolicy);
+        return policedApi.registerViaGoogle("ada@example.com");
     }
 
     private void stub(String method, String path, int status, String body) {
@@ -174,6 +243,29 @@ class HttpPictogramApiTest {
         public String authenticate(String email) {
             this.capturedEmail = email;
             return "stub-refresh-cookie";
+        }
+    }
+
+    /** A distinguishable, reversible policy ({@code "q-"} prefix) so a test can prove the seam wires through. */
+    private static final class RecordingUsernamePolicy implements UsernamePolicy {
+
+        private static final String PREFIX = "q-";
+
+        private final List<String> qualifiedUsernames = new CopyOnWriteArrayList<>();
+
+        @Override
+        public String qualify(String username) {
+            qualifiedUsernames.add(username);
+            return PREFIX + username;
+        }
+
+        @Override
+        public Profile strip(Profile profile) {
+            return new Profile(
+                    profile.userId(),
+                    profile.username().substring(PREFIX.length()),
+                    profile.displayName(),
+                    profile.bio());
         }
     }
 
