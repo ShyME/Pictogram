@@ -189,3 +189,27 @@ earlier tickets deferred.
   feed card can share it without a cross-feature import.
 - The `/ui` showcase's `Dialog` section became a `Modal` section; the `dialog-*` visual
   baselines were replaced by `modal-*`, and a `post-detail` screen baseline was added.
+
+## Amendment (#139)
+
+The responsive pass over the finished layouts — done last, once the screens were built and
+retrofitted (#136) and the comment view rebuilt (#137). Notes:
+
+- **`visual/overflow.visual.ts`** is an assertion suite, not a screenshot one: for every
+  screen, at both the 375 px and 1440 px project, it fails if the document is wider than the
+  viewport. The feed card and the post-detail modal are `overflow-hidden`, so text that
+  fails to wrap is clipped without growing the document — those two get an extra check that
+  the container's own `scrollWidth` doesn't exceed its box. It runs against `stubStress`
+  (a `stubApp` overlay in `visual/appWorld.ts` that swaps every user-authored payload for
+  worst-case content — a 20-char username, a long display name, an unbreakable token, a long
+  bare URL). Encoding this as assertions means a regression fails a test rather than needing
+  someone to spot it in a screenshot diff.
+- **The hardening was `break-words` / `truncate` + `min-w-0` / `shrink-0`**, nothing
+  structural: the feed-card and comment-row headers truncate the name and pin the timestamp;
+  the profile heading/bio, the not-found lines, the follow-list heading and the post-detail
+  caption wrap long tokens.
+- **The post grid adapts its column count**: `grid-cols-3` on a phone, `sm:grid-cols-4`
+  above. The feed column was already constrained (`max-w-xl`, centred) and the `Modal`
+  already fits a small viewport (`p-4` overlay, `w-full max-w-*`), so those needed nothing.
+- Only `profile-desktop-linux.png` moved (the fourth grid column); all other baselines were
+  unchanged.

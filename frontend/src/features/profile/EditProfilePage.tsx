@@ -96,7 +96,7 @@ export function EditProfilePage() {
               </p>
             )}
             {isRenaming && !nameError && (
-              <p role="status" className="mt-1.5 text-sm text-foreground-muted">
+              <p role="status" className="mt-1.5 break-words text-sm text-foreground-muted">
                 Changing your username breaks existing links. Anyone who visits your old{' '}
                 <span className="font-medium text-foreground">/u/{profile.username}</span> link will
                 see a &ldquo;not found&rdquo; page.

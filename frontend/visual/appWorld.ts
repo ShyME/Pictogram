@@ -262,6 +262,71 @@ export async function stubApp(page: Page): Promise<void> {
   await page.route(isApiCall, (route) => void handle(route));
 }
 
+// Worst-case content for the horizontal-overflow assertions (#139): a maximum-length
+// username, an unusually long display name, and a bio carrying one enormous unbreakable
+// token plus a long bare URL — the strings that break a layout if a container forgets to
+// wrap or truncate. Kept out of the screenshot world so the committed baselines stay
+// readable.
+const STRESS_HANDLE = 'aureliano_buendia_08'; // 20 chars — the username cap
+const STRESS_NAME = 'Aureliano Buendía de la Fotografía de Montaña y Nieve';
+const STRESS_TOKEN = `unbreakable-${'x'.repeat(90)}`;
+const STRESS_URL = `https://example.com/${'segment/'.repeat(12)}end`;
+
+const STRESS_PERSON: ProfileView = {
+  userId: 'u-stress',
+  username: STRESS_HANDLE,
+  displayName: STRESS_NAME,
+  bio: `${STRESS_TOKEN} and then a bare link ${STRESS_URL} to close it out`,
+};
+
+const STRESS_POST: PostView = {
+  postId: 'p-stress',
+  authorId: 'u-stress',
+  mediaId: 'm-a1',
+  caption: `${STRESS_TOKEN} ${STRESS_URL}`,
+  publishedAt: ago(2 * HOUR),
+};
+
+const STRESS_COMMENT: CommentView = {
+  commentId: 'c-stress',
+  postId: 'p-stress',
+  authorId: 'u-stress',
+  body: `${STRESS_TOKEN} ${STRESS_URL}`,
+  createdAt: ago(1 * HOUR),
+};
+
+// Layered over `stubApp`: a world of exactly one account, `u-stress`, carrying the
+// worst-case strings above. It overrides only the reads that return user-authored text and
+// keeps their filtering semantics (`?author=`, `?ids=`) in step with `handle()` so the two
+// never diverge; everything else falls through to the normal handler.
+const hasStressId = (ids: string[]) => ids.length === 0 || ids.includes('u-stress');
+
+export async function stubStress(page: Page): Promise<void> {
+  await stubApp(page);
+  await page.route(isApiCall, async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+
+    if (path === '/api/profiles/me') return json(route, STRESS_PERSON);
+    if (path === '/api/profiles')
+      return json(route, hasStressId(url.searchParams.getAll('ids')) ? [STRESS_PERSON] : []);
+    if (/^\/api\/profiles\/[^/]+$/.test(path)) return json(route, STRESS_PERSON);
+    if (path === '/api/feed') return json(route, { items: [STRESS_POST], nextCursor: null });
+    if (path === '/api/posts')
+      return json(route, {
+        items: url.searchParams.get('author') === 'u-stress' ? [STRESS_POST] : [],
+        nextCursor: null,
+      });
+    if (/^\/api\/posts\/[^/]+\/comments$/.test(path))
+      return json(route, { items: [STRESS_COMMENT], nextCursor: null });
+    if (/^\/api\/follows\/[^/]+\/(followers|following)$/.test(path))
+      return json(route, { items: ['u-stress'], nextCursor: null });
+    return route.fallback();
+  });
+}
+
+export const STRESS_PROFILE_PATH = `/u/${STRESS_HANDLE}`;
+
 // The one screen shown to a visitor who has authenticated but not yet picked a username.
 export async function stubNeedsOnboarding(page: Page): Promise<void> {
   await page.clock.setFixedTime(new Date(NOW));

@@ -89,6 +89,11 @@ router with each `/api/**` read fulfilled from the fixed world in `visual/appWor
 CI image (`ci.yml` → `visual` job) so font/AA rendering is stable; `retries: 0` holds
 (ADR-0007). A local run writes gitignored `*-darwin` snapshots.
 
+The same config also runs `visual/overflow.visual.ts` — an assertion suite (no baselines)
+that fails if any screen overflows its viewport horizontally at either width, driven by
+`stubStress` (worst-case usernames, display names, tokens and URLs). See ADR-0013
+"Amendment (#139)".
+
 After an intentional UI change, regenerate the `*-linux.png` baselines in the same image and
 commit them:
 

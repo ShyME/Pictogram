@@ -7,7 +7,7 @@ function NotFound({ username }: { username: string }) {
   return (
     <main className="mx-auto max-w-xl px-4 py-16 text-center">
       <h1 className="text-lg font-semibold text-foreground">This account doesn&rsquo;t exist</h1>
-      <p className="mt-2 text-sm text-foreground-muted">
+      <p className="mt-2 break-words text-sm text-foreground-muted">
         No one on Pictogram goes by <span className="font-medium text-foreground">@{username}</span>
         . The link may be wrong, or they may have changed their username.
       </p>
@@ -46,7 +46,7 @@ export function ProfilePage({
         </Avatar>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="min-w-0 break-words text-xl font-semibold text-foreground">
               {profile.displayName ?? `@${profile.username}`}
             </h1>
             {isOwnProfile ? (
@@ -90,7 +90,9 @@ export function ProfilePage({
           )}
 
           {profile.bio && (
-            <p className="mt-3 whitespace-pre-line text-sm text-foreground">{profile.bio}</p>
+            <p className="mt-3 whitespace-pre-line break-words text-sm text-foreground">
+              {profile.bio}
+            </p>
           )}
         </div>
       </section>
@@ -100,7 +102,7 @@ export function ProfilePage({
           renderGrid(profile.userId, isOwnProfile, viewerIsAuthenticated, viewerId)
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 sm:gap-2">
               {Array.from({ length: 9 }, (_, i) => (
                 <div key={i} aria-hidden className="aspect-square rounded-sm bg-surface-muted" />
               ))}

@@ -91,7 +91,7 @@ export function PostGrid({
 
   return (
     <>
-      <ul className="grid grid-cols-3 gap-1">
+      <ul className="grid grid-cols-3 gap-1 sm:grid-cols-4 sm:gap-2">
         {posts.map((post) => (
           <li key={post.postId} className="group relative">
             <button

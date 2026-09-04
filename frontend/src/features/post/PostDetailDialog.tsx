@@ -45,7 +45,9 @@ export function PostDetailDialog({
               Close
             </button>
           </div>
-          {caption && <p className="px-4 pb-3 pt-1 text-sm text-foreground">{caption}</p>}
+          {caption && (
+            <p className="break-words px-4 pb-3 pt-1 text-sm text-foreground">{caption}</p>
+          )}
           {renderComments && (
             <div className="border-t border-border px-4 py-4">{renderComments(postId)}</div>
           )}
