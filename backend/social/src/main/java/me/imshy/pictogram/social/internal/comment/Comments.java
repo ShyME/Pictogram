@@ -1,14 +1,27 @@
 package me.imshy.pictogram.social.internal.comment;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 interface Comments extends CrudRepository<Comment, UUID> {
+
+    @Query("""
+            select new me.imshy.pictogram.social.internal.comment.CommentCount(c.postId, count(c))
+            from Comment c
+            where c.postId in :posts
+            group by c.postId
+            """)
+    List<CommentCount> countsFor(@Param("posts") Collection<UUID> posts);
+
+    @Transactional
+    int deleteByPostId(UUID postId);
 
     @Query("""
             select c from Comment c

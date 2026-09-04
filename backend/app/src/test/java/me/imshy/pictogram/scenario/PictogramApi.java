@@ -46,6 +46,10 @@ public interface PictogramApi {
 
         CommentPage commentsOn(String postId, String cursor, Integer limit);
 
+        DeleteOutcome deleteComment(String commentId);
+
+        Map<String, Long> commentCountsOf(String... postIds);
+
         AccountPage followers(String userId, String cursor, Integer limit);
 
         AccountPage following(String userId, String cursor, Integer limit);

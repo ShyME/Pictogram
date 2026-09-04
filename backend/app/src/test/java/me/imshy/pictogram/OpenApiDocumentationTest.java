@@ -305,6 +305,36 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void deletingACommentIsDocumentedAs204WithA403ProblemDetail() {
+        JsonNode delete = spec.at("/paths/~1api~1comments~1{commentId}/delete/responses");
+
+        assertThat(delete.has("204")).isTrue();
+        assertThat(delete.has("200")).as("no phantom 200").isFalse();
+        assertThat(delete.at("/403/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+    }
+
+    @Test
+    void theBatchCommentCountReadIsDocumentedAsAnArrayOfRecordsToleratingAnAnonymousCaller() {
+        JsonNode byIds = spec.at("/paths/~1api~1comments/get/responses");
+
+        assertThat(byIds.at("/200/content/application~1json/schema/type").asString())
+                .isEqualTo("array");
+        String itemRef =
+                byIds.at("/200/content/application~1json/schema/items/$ref").asString();
+        JsonNode item = spec.at("/components/schemas/" + itemRef.substring("#/components/schemas/".length()));
+        assertThat(item.at("/properties/postId")).isNotEmpty();
+        assertThat(item.at("/properties/commentCount")).isNotEmpty();
+        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref")
+                        .asString())
+                .endsWith("/ProblemDetail");
+        assertThat(byIds.has("401"))
+                .as("the batch count read does not require a token")
+                .isFalse();
+    }
+
+    @Test
     void refreshIsDocumentedWithATypedBodyAndA401() {
         JsonNode refresh = spec.at("/paths/~1api~1auth~1refresh/post/responses");
 

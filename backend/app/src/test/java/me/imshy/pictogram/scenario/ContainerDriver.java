@@ -176,6 +176,16 @@ final class ContainerDriver implements PictogramApi {
         }
 
         @Override
+        public DeleteOutcome deleteComment(String commentId) {
+            return delegate.deleteComment(commentId);
+        }
+
+        @Override
+        public Map<String, Long> commentCountsOf(String... postIds) {
+            return delegate.commentCountsOf(postIds);
+        }
+
+        @Override
         public AccountPage followers(String userId, String cursor, Integer limit) {
             return delegate.followers(userId, cursor, limit);
         }

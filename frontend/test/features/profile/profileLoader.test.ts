@@ -30,6 +30,7 @@ test("marks the profile as the viewer's own when the usernames match", async () 
     isOwnProfile: true,
     viewerCanFollow: false,
     viewerIsAuthenticated: true,
+    viewerId: 'u-1',
   });
 });
 

@@ -153,6 +153,10 @@ function likesFor(postIds: string[]) {
   });
 }
 
+function commentCountsFor(postIds: string[]) {
+  return postIds.map((postId) => ({ postId, commentCount: (COMMENTS[postId] ?? []).length }));
+}
+
 function relationshipsFor(userIds: string[]) {
   return userIds.map((userId) => {
     const follow = FOLLOW.get(userId);
@@ -227,6 +231,9 @@ async function handle(route: Route): Promise<void> {
   }
 
   if (path === '/api/likes') return json(route, likesFor(url.searchParams.getAll('postIds')));
+
+  if (path === '/api/comments')
+    return json(route, commentCountsFor(url.searchParams.getAll('postIds')));
 
   const commentsMatch = /^\/api\/posts\/([^/]+)\/comments$/.exec(path);
   if (commentsMatch)

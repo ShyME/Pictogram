@@ -115,6 +115,15 @@ class AuthoredPostsTest extends PostModuleIntegrationTest {
     }
 
     @Test
+    void namesTheAuthorOfAPostAndIsEmptyForAnIdNoPostHas() {
+        var ada = UserId.random();
+        var post = publishAt(ada, "2026-09-01T10:00:00Z");
+
+        assertThat(publishedPosts.authorOf(post)).contains(ada);
+        assertThat(publishedPosts.authorOf(PostId.random())).isEmpty();
+    }
+
+    @Test
     void noRequestedAuthorsIsAnEmptyLastPage() {
         PublishedPosts.Page page = publishedPosts.byAuthors(List.of(), null, 10);
 

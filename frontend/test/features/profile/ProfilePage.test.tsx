@@ -32,6 +32,7 @@ const found = (
   isOwnProfile: false,
   viewerCanFollow: true,
   viewerIsAuthenticated: true,
+  viewerId: 'u-viewer',
   ...over,
 });
 

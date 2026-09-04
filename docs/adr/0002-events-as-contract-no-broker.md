@@ -21,8 +21,12 @@ missing profile simply means "not yet onboarded", not a lost event.
   even with zero consumers, so fan-out-on-write, notifications, and comment counts can be
   added later without touching the producing modules.
 - No listener may mutate another module's state; that is what published-interface commands
-  would be for. The only one so far is `media`'s `OrphanCollection`, driven by a `@Scheduled`
-  trigger at the composition root — infrastructure, not a cross-context reaction.
+  would be for. A listener reacting to another module's event by changing **its own** state
+  is fine: `social`'s `comment` sub-domain consumes `post`'s `PostDeleted` to hard-delete
+  that post's thread (#138). It is a plain `@EventListener`, synchronous in the deleting
+  transaction — the registry stays deferred because a lost cleanup only leaves harmless
+  orphan comment rows, not a broken invariant. `media`'s `OrphanCollection` is the other
+  cross-module reaction, driven by a `@Scheduled` trigger at the composition root.
 - A published-interface query may be declared by the module that *needs* the answer when the
   Gradle dependency only runs one way: `media` owns the `PostReferences` port and `post`
   supplies the adapter, so the arrow stays `post → media` (orphan collection, #16).

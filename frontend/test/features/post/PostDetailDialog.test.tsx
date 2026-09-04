@@ -6,6 +6,7 @@ const detail = {
   postId: 'p-1',
   imageUrl: '/api/media/m-9/original',
   caption: 'a caption',
+  authorId: 'u-ada',
 };
 
 test('shows the full-size image, the caption, and the injected like + comments slots', () => {

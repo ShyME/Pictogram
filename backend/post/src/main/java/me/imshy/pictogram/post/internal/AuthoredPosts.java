@@ -2,11 +2,13 @@ package me.imshy.pictogram.post.internal;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import me.imshy.pictogram.post.PublishedPost;
 import me.imshy.pictogram.post.PublishedPosts;
+import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.http.Cursor;
 import org.springframework.data.domain.Limit;
@@ -43,6 +45,11 @@ class AuthoredPosts implements PublishedPosts {
         }
 
         return new Page(page.stream().map(AuthoredPosts::toPublished).toList(), nextCursor);
+    }
+
+    @Override
+    public Optional<UserId> authorOf(PostId post) {
+        return posts.findById(post.value()).map(Post::author);
     }
 
     private static PublishedPost toPublished(Post post) {
