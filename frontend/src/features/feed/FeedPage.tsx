@@ -1,4 +1,4 @@
-import { Button, EmptyState, SessionExpiredError, Spinner } from '@shared';
+import { Button, EmptyState, SessionExpiredError, Spinner, composeCards } from '@shared';
 import { type QueryClient, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Images } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
@@ -35,12 +35,14 @@ export function FeedPage({
     queryKey: feedKey(),
     queryFn: async ({ pageParam }) => {
       const page = await fetchFeedPage(pageParam);
-      const cards = await toFeedCards(page.posts);
-      const postIds = cards.map((card) => card.postId);
-      await Promise.all([
-        preloadLikes?.(queryClient, postIds),
-        preloadComments?.(queryClient, postIds),
-      ]);
+      const cards = await composeCards(page.posts, {
+        hydrate: toFeedCards,
+        idOf: (card) => card.postId,
+        prime: (postIds) => [
+          preloadLikes?.(queryClient, postIds),
+          preloadComments?.(queryClient, postIds),
+        ],
+      });
       return { cards, nextCursor: page.nextCursor };
     },
     initialPageParam: undefined as string | undefined,

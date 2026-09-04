@@ -7,6 +7,7 @@ import {
   ModalHeader,
   ModalTitle,
   Spinner,
+  primeBestEffort,
   toast,
 } from '@shared';
 import {
@@ -43,15 +44,12 @@ export function PostGrid({
     queryKey: postsByAuthorKey(authorId),
     queryFn: async ({ pageParam }) => {
       const page = await fetchPostsByAuthor(authorId, pageParam);
-      try {
-        await preloadLikes?.(
+      await primeBestEffort([
+        preloadLikes?.(
           queryClient,
           page.posts.map((post) => post.postId),
-        );
-      } catch {
-        // Best-effort: like state is decoration seeded ahead of the like controls. If the
-        // batch read fails for any reason, still show the grid.
-      }
+        ),
+      ]);
       return page;
     },
     initialPageParam: undefined as string | undefined,
