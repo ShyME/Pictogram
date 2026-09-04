@@ -1,8 +1,8 @@
 import { NewPostPage } from '@features/post';
-import { useLoaderData } from 'react-router';
-import type { newPostLoader } from './guards';
+import { useOutletContext } from 'react-router';
+import type { AppLayoutContext } from './AppLayout';
 
 export function NewPostRoute() {
-  const { profile } = useLoaderData<typeof newPostLoader>();
+  const { profile } = useOutletContext<AppLayoutContext>();
   return <NewPostPage authorId={profile.userId} profileUsername={profile.username} />;
 }

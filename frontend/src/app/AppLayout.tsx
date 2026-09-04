@@ -1,33 +1,19 @@
-import { SignOutButton } from '@features/auth';
-import { Link, Outlet, useLoaderData } from 'react-router';
+import { useSignOut } from '@features/auth';
+import type { Profile } from '@features/profile';
+import { AppNav } from '@shared';
+import { Outlet, useLoaderData } from 'react-router';
 import type { rootLoader } from './guards';
+
+export type AppLayoutContext = { profile: Profile };
 
 export function AppLayout() {
   const { profile } = useLoaderData<typeof rootLoader>();
+  const { signOut, signingOut } = useSignOut();
 
   return (
-    <div className="min-h-dvh bg-neutral-50">
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3">
-        <Link to="/" className="font-semibold tracking-tight text-neutral-900">
-          Pictogram
-        </Link>
-        <div className="flex items-center gap-3 text-sm text-neutral-500">
-          <Link
-            to="/new"
-            className="rounded-lg bg-neutral-900 px-3 py-1.5 font-medium text-white hover:bg-neutral-700"
-          >
-            New post
-          </Link>
-          <Link
-            to={`/u/${profile.username}`}
-            className="font-medium text-neutral-700 hover:text-neutral-900"
-          >
-            @{profile.username}
-          </Link>
-          <SignOutButton />
-        </div>
-      </header>
-      <Outlet />
+    <div className="min-h-dvh bg-canvas">
+      <AppNav viewer={{ username: profile.username }} onSignOut={signOut} signingOut={signingOut} />
+      <Outlet context={{ profile } satisfies AppLayoutContext} />
     </div>
   );
 }

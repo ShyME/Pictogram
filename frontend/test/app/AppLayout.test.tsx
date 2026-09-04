@@ -1,34 +1,56 @@
 import { AppLayout } from '@app/AppLayout';
 import { renderWithProviders } from '@test-support/render';
-import { screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { fireEvent, screen, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useOutletContext } from 'react-router';
 import { expect, test, vi } from 'vitest';
 
-vi.mock('react-router', () => ({
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router')>()),
   useLoaderData: () => ({
     profile: { userId: 'u-1', username: 'ada', displayName: 'Ada', bio: null },
   }),
-  useNavigate: () => vi.fn(),
-  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
-  Outlet: () => <p>feed content</p>,
 }));
 
-test('shows the signed-in username, a sign-out control, and the routed page', () => {
-  renderWithProviders(<AppLayout />);
+// jsdom's matchMedia stub reports the narrow layout, so the nav actions sit in the menu.
+test('mounts the app nav for the signed-in viewer and renders the routed page', () => {
+  renderWithProviders(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<p>feed content</p>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  );
 
-  expect(screen.getByText('@ada')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
   expect(screen.getByText('feed content')).toBeInTheDocument();
+
+  fireEvent.keyDown(screen.getByRole('button', { name: /open menu/i }), { key: 'Enter' });
+  const menu = screen.getByRole('menu');
+
+  expect(within(menu).getByRole('menuitem', { name: /your profile/i })).toHaveAttribute(
+    'href',
+    '/u/ada',
+  );
+  expect(within(menu).getByRole('menuitem', { name: /new post/i })).toHaveAttribute('href', '/new');
+  expect(within(menu).getByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
 });
 
-test("the signed-in handle links to the viewer's own profile page", () => {
-  renderWithProviders(<AppLayout />);
+function ShowsHandle() {
+  const { profile } = useOutletContext<{ profile: { username: string } }>();
+  return <p>context: {profile.username}</p>;
+}
 
-  expect(screen.getByRole('link', { name: '@ada' })).toHaveAttribute('href', '/u/ada');
-});
+test('hands the signed-in profile to nested routes through the outlet context', () => {
+  renderWithProviders(
+    <MemoryRouter initialEntries={['/new']}>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="new" element={<ShowsHandle />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+  );
 
-test('offers a link to the post composer', () => {
-  renderWithProviders(<AppLayout />);
-
-  expect(screen.getByRole('link', { name: /new post/i })).toHaveAttribute('href', '/new');
+  expect(screen.getByText('context: ada')).toBeInTheDocument();
 });

@@ -118,3 +118,22 @@ Deviations from the decisions above, all deliberate:
   config + CI job in the pinned Playwright image; baselines are `*-linux.png`, committed,
   regenerated in that image.
 - shadcn component files are renamed to camelCase on add (repo `unicorn/filename-case`).
+
+## Amendment (#135)
+
+`<AppNav>` built per decision 6. Deviations / notes:
+
+- **The breakpoint is matched in JS** (`useSyncExternalStore` over `matchMedia('(min-width:
+  48rem)')`), not CSS `hidden md:flex` / `md:hidden`. Only the active branch is ever in the
+  DOM, so there is one tab stop and one copy of each action — no `aria-hidden` duplicates.
+- The sign-out logic moved from a `SignOutButton` component to a `useSignOut` hook that the
+  layouts drive through `AppNav` props.
+- **`AppNav` is on every authenticated screen, not just the feed** (the ticket's "used on
+  every page"). Two pathless layout routes in `routes.tsx`: `AppLayout` (`rootLoader`,
+  redirects) wraps feed / new post / edit profile / follow lists and passes the viewer to
+  `/new` + `/settings/profile` via `Outlet` context; `PublicLayout` (`viewerLoader`, never
+  redirects) wraps the public profile page and renders `AppNav` in its logged-out state
+  (logo + "Log in") for anonymous visitors. Each page's hand-written `<header>` chrome is
+  removed. `/login` and `/onboarding` stay chrome-only (mid-auth-flow, no nav).
+- The per-screen **visual retrofit** (tokens, Toast, screenshot baselines) remains #136;
+  this only moves the nav.

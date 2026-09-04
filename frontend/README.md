@@ -26,7 +26,7 @@ pnpm generate:api     # regenerate src/shared/api/schema.d.ts from ../backend/op
 `src/index.css` is a Tailwind v4 `@theme` block of semantic tokens — `--color-surface`,
 `--color-foreground`, `--color-accent`, radii, shadows, self-hosted Inter — and
 `src/shared/ui/` owns a small set of components (Button, Input, Textarea, Card, Avatar,
-Dialog, DropdownMenu, Toast, Spinner, EmptyState) built on Radix + `lucide-react` and
+Dialog, DropdownMenu, Toast, Spinner, EmptyState, AppNav) built on Radix + `lucide-react` and
 re-exported from `@shared`. Components use the token utilities (`bg-surface`,
 `text-foreground-muted`, `rounded-card`), never a raw palette step; a dark theme would be a
 later additive `@theme` block. `/ui` (dev/test only, not in the production build) renders

@@ -1,4 +1,9 @@
-import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from './accessGate';
+import {
+  fetchViewerOrNull,
+  requireAnonymous,
+  requireOnboarded,
+  requireOnboardedOrAnon,
+} from './accessGate';
 
 const asLoader =
   <T>(load: () => Promise<T>) =>
@@ -12,9 +17,7 @@ const asLoader =
   };
 
 export const rootLoader = asLoader(async () => ({ profile: await requireOnboarded() }));
-
-export const newPostLoader = rootLoader;
-export const editProfileLoader = rootLoader;
+export const viewerLoader = asLoader(async () => ({ viewer: await fetchViewerOrNull() }));
 
 export const loginLoader = asLoader(requireAnonymous);
 export const onboardingLoader = asLoader(requireOnboardedOrAnon);

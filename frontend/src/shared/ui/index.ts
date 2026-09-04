@@ -1,3 +1,4 @@
+export { AppNav } from './appNav';
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
 export { avatarVariants, type AvatarVariantProps } from './avatarVariants';
 export { Button, type ButtonProps } from './button';

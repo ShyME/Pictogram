@@ -29,7 +29,8 @@ export class ProfilePage {
   }
 
   handle(username: string): Locator {
-    return this.page.getByText(`@${username}`, { exact: true });
+    // Scoped to the page body: the AppNav also shows the signed-in viewer's own @handle.
+    return this.page.getByRole('main').getByText(`@${username}`, { exact: true });
   }
 
   postByCaption(caption: string): Locator {
