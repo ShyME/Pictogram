@@ -1,4 +1,4 @@
-import { loginLoader, newPostLoader, onboardingLoader, rootLoader } from '@app/guards';
+import { loginLoader, onboardingLoader, rootLoader, viewerLoader } from '@app/guards';
 import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -50,15 +50,15 @@ test('onboardingLoader requires a session and is skipped once a profile exists',
   expect(await onboardingLoader()).toBeNull();
 });
 
-test('newPostLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile', async () => {
+test('viewerLoader: the onboarded profile, or null for an anonymous or half-onboarded visitor', async () => {
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
+  expect(await viewerLoader()).toEqual({
+    viewer: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
+  });
+
   profileEndpoint(401);
-  expect(redirectTarget(await newPostLoader())).toBe('/login');
+  expect(await viewerLoader()).toEqual({ viewer: null });
 
   profileEndpoint(404);
-  expect(redirectTarget(await newPostLoader())).toBe('/onboarding');
-
-  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
-  expect(await newPostLoader()).toEqual({
-    profile: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
-  });
+  expect(await viewerLoader()).toEqual({ viewer: null });
 });

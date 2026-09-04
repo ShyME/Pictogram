@@ -7,16 +7,11 @@ import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@fe
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
 import { NewPostRoute } from './NewPostRoute';
+import { PublicLayout } from './PublicLayout';
 import { RouteError } from './RouteError';
 import { UiShowcase } from './UiShowcase';
 import { followListLoader } from './followListLoader';
-import {
-  editProfileLoader,
-  loginLoader,
-  newPostLoader,
-  onboardingLoader,
-  rootLoader,
-} from './guards';
+import { loginLoader, onboardingLoader, rootLoader, viewerLoader } from './guards';
 
 installApiAuth();
 
@@ -37,47 +32,53 @@ export const router = createBrowserRouter([
               />
             ),
           },
+          { path: '/new', element: <NewPostRoute /> },
+          { path: '/settings/profile', element: <EditProfilePage /> },
+          {
+            path: '/u/:username/followers',
+            element: <FollowListPage mode="followers" />,
+            loader: followListLoader,
+          },
+          {
+            path: '/u/:username/following',
+            element: <FollowListPage mode="following" />,
+            loader: followListLoader,
+          },
         ],
       },
       { path: '/login', element: <LoginPage />, loader: loginLoader },
       { path: '/onboarding', element: <OnboardingPage />, loader: onboardingLoader },
-      { path: '/settings/profile', element: <EditProfilePage />, loader: editProfileLoader },
-      { path: '/new', element: <NewPostRoute />, loader: newPostLoader },
       {
-        path: '/u/:username',
-        element: (
-          <ProfilePage
-            renderGrid={(authorId, isOwnProfile, isViewerAuthenticated) => (
-              <PostGrid
-                authorId={authorId}
-                manageable={isOwnProfile}
-                renderLike={(postId) =>
-                  isViewerAuthenticated ? (
-                    <LikeButton postId={postId} />
-                  ) : (
-                    <LikeCount postId={postId} />
-                  )
-                }
-                preloadLikes={prefetchPostLikes}
+        element: <PublicLayout />,
+        loader: viewerLoader,
+        children: [
+          {
+            path: '/u/:username',
+            element: (
+              <ProfilePage
+                renderGrid={(authorId, isOwnProfile, isViewerAuthenticated) => (
+                  <PostGrid
+                    authorId={authorId}
+                    manageable={isOwnProfile}
+                    renderLike={(postId) =>
+                      isViewerAuthenticated ? (
+                        <LikeButton postId={postId} />
+                      ) : (
+                        <LikeCount postId={postId} />
+                      )
+                    }
+                    preloadLikes={prefetchPostLikes}
+                  />
+                )}
+                renderFollowButton={(userId) => <FollowButton userId={userId} />}
+                renderFollowCounts={(userId, handle) => (
+                  <FollowCounts userId={userId} username={handle} />
+                )}
               />
-            )}
-            renderFollowButton={(userId) => <FollowButton userId={userId} />}
-            renderFollowCounts={(userId, handle) => (
-              <FollowCounts userId={userId} username={handle} />
-            )}
-          />
-        ),
-        loader: profileLoader,
-      },
-      {
-        path: '/u/:username/followers',
-        element: <FollowListPage mode="followers" />,
-        loader: followListLoader,
-      },
-      {
-        path: '/u/:username/following',
-        element: <FollowListPage mode="following" />,
-        loader: followListLoader,
+            ),
+            loader: profileLoader,
+          },
+        ],
       },
       // Dev/test-only component showcase; the branch and its import fold away in a
       // production build (import.meta.env.DEV === false).

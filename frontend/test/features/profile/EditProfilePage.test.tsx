@@ -1,4 +1,5 @@
-import { EditProfilePage, type EditProfileData } from '@features/profile/EditProfilePage';
+import type { Profile } from '@features/profile';
+import { EditProfilePage } from '@features/profile/EditProfilePage';
 import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
@@ -6,10 +7,10 @@ import type { ReactNode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 
 const navigate = vi.fn();
-let loaderData: EditProfileData;
+let outletContext: { profile: Profile };
 
 vi.mock('react-router', () => ({
-  useLoaderData: () => loaderData,
+  useOutletContext: () => outletContext,
   useNavigate: () => navigate,
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
@@ -19,8 +20,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const render = (over: Partial<EditProfileData['profile']> = {}) => {
-  loaderData = {
+const render = (over: Partial<Profile> = {}) => {
+  outletContext = {
     profile: { userId: 'u-1', username: 'ada', displayName: 'Ada', bio: 'a bio', ...over },
   };
   return renderWithProviders(<EditProfilePage />);

@@ -1,4 +1,5 @@
 import {
+  AppNav,
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -70,6 +71,17 @@ export function UiShowcase() {
           visual-regression suite.
         </p>
       </header>
+
+      <Section title="AppNav">
+        <div className="w-full overflow-hidden rounded-card border border-border">
+          <AppNav
+            viewer={{ username: 'ansel' }}
+            onSignOut={() => {
+              // inert in the showcase
+            }}
+          />
+        </div>
+      </Section>
 
       <Section title="Surfaces & lines">
         <Swatch name="canvas" className="bg-canvas" />

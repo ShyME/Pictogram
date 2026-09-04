@@ -8,6 +8,13 @@ export async function requireOnboarded(): Promise<Profile> {
   return me.profile;
 }
 
+// The viewer for a screen that anonymous visitors may also see (the public profile page):
+// their profile if signed in and onboarded, otherwise null. Never redirects.
+export async function fetchViewerOrNull(): Promise<Profile | null> {
+  const me = await fetchMyProfile().catch(() => ({ status: 'unauthenticated' }) as const);
+  return me.status === 'onboarded' ? me.profile : null;
+}
+
 export async function requireAnonymous(): Promise<null> {
   const me = await fetchMyProfile();
   if (me.status === 'onboarded') throw redirect('/');

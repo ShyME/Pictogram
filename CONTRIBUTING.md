@@ -55,7 +55,7 @@ The frontend UI is built on semantic design tokens plus a small set of in-tree c
   (`bg-surface`, `text-foreground-muted`, `rounded-card`, `shadow-popover`) and **never** a
   raw `neutral-*` / `indigo-*` palette step, so a dark theme stays a later additive block.
 - **Primitives** live in `frontend/src/shared/ui/` (Button, Input, Textarea, Card, Avatar,
-  Dialog, DropdownMenu, Toast, Spinner, EmptyState) on Radix + `lucide-react`, re-exported
+  Dialog, DropdownMenu, Toast, Spinner, EmptyState, AppNav) on Radix + `lucide-react`, re-exported
   from `@shared`. `/ui` renders them all — dev/test only, never linked, stripped from the
   production build.
 

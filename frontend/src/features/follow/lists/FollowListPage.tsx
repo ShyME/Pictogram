@@ -8,16 +8,7 @@ import { AccountList } from './AccountList';
 import type { FollowListData, FollowListMode } from './followList';
 
 function PageChrome({ children }: { children: ReactNode }) {
-  return (
-    <div className="min-h-dvh bg-neutral-50">
-      <header className="border-b border-neutral-200 bg-white px-4 py-3">
-        <Link to="/" className="font-semibold tracking-tight text-neutral-900">
-          Pictogram
-        </Link>
-      </header>
-      <main className="mx-auto max-w-xl px-4 py-8">{children}</main>
-    </div>
-  );
+  return <main className="mx-auto max-w-xl px-4 py-8">{children}</main>;
 }
 
 const COPY: Record<FollowListMode, { title: (handle: string) => string; empty: string }> = {
