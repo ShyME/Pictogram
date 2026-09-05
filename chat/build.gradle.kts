@@ -28,6 +28,11 @@ dependencies {
     // The reactive stack, not spring-boot-starter-web — see ADR-0014.
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // JWT verification only (NimbusJwtDecoder + validators) — not the resource-server
+    // starter, since chat has exactly one authenticated route (the WS handshake) and no
+    // use for Spring Security's filter-chain machinery (#164).
+    implementation("org.springframework.security:spring-security-oauth2-core")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")

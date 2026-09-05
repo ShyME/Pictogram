@@ -7,7 +7,12 @@ export { problemSlug } from './api/problem';
 export type { ProblemDetail } from './api/problem';
 export { orAnonymous } from './api/publicRead';
 export type { components, paths } from './api/schema';
-export { SessionExpiredError, throwIfSessionExpired } from './api/session';
+export {
+  SessionExpiredError,
+  accessTokenChanges,
+  publishAccessToken,
+  throwIfSessionExpired,
+} from './api/session';
 export { cn } from './lib/cn';
 export { createQueryClient } from './lib/queryClient';
 export { relativeTime } from './lib/relativeTime';

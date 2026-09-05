@@ -10,6 +10,8 @@ public interface PictogramApp {
 
     interface PictogramApi {
 
+        String accessToken();
+
         Optional<Profile> currentProfile();
 
         Profile completeOnboarding(String username);
