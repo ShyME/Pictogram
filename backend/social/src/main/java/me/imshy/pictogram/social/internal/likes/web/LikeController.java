@@ -18,13 +18,7 @@ import me.imshy.pictogram.social.internal.likes.Liking;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/likes")
@@ -52,8 +46,8 @@ class LikeController {
         return ResponseEntity.noContent().build();
     }
 
-    @ApiResponses(
-            @ApiResponse(responseCode = "204", description = "The viewer no longer likes the post (or never did)."))
+    @ApiResponses(@ApiResponse(responseCode = "204",
+        description = "The viewer no longer likes the post (or never did)."))
     @DeleteMapping("/{postId}")
     ResponseEntity<Void> unlike(@CurrentUser ViewerId viewer, @PathVariable("postId") UUID postId) {
         liking.unlike(viewer, new PostId(postId));
@@ -61,22 +55,15 @@ class LikeController {
     }
 
     @ApiResponses({
-        @ApiResponse(
-                responseCode = "200",
-                description =
-                        "The like count for each requested post, plus the viewer's own like state when signed in.",
-                content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostLikesView.class)))),
-        @ApiResponse(
-                responseCode = "400",
-                description = "The request asked for more ids than the batch limit.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class)))
-    })
+        @ApiResponse(responseCode = "200",
+            description = "The like count for each requested post, plus the viewer's own like state when signed in.",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostLikesView.class)))),
+        @ApiResponse(responseCode = "400", description = "The request asked for more ids than the batch limit.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @GetMapping(params = "postIds")
-    List<PostLikesView> likesByPostIds(
-            @CurrentUser Optional<ViewerId> viewer, @RequestParam("postIds") Set<UUID> postIds) {
+    List<PostLikesView> likesByPostIds(@CurrentUser Optional<ViewerId> viewer,
+        @RequestParam("postIds") Set<UUID> postIds) {
         List<PostId> posts = BatchIds.checked(postIds).stream().map(PostId::new).toList();
         List<LikeCounts.PostLikes> likes = viewer.map(v -> counts.of(v, posts)).orElseGet(() -> counts.of(posts));
         return likes.stream().map(PostLikesView::of).toList();

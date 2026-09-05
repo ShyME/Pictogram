@@ -22,12 +22,12 @@ class AccessTokenSigningKeyConfiguration {
         }
         if (environment.matchesProfiles("prod")) {
             throw new IllegalStateException(
-                    "pictogram.auth.signing-key (env PICTOGRAM_AUTH_SIGNING_KEY) must be set on "
-                            + "the 'prod' profile: an ephemeral key breaks token verification across replicas and invalidates "
-                            + "every access token on restart (ADR-0004).");
+                "pictogram.auth.signing-key (env PICTOGRAM_AUTH_SIGNING_KEY) must be set on "
+                    + "the 'prod' profile: an ephemeral key breaks token verification across replicas and invalidates "
+                    + "every access token on restart (ADR-0004).");
         }
         log.warn("pictogram.auth.signing-key is not set — generating a process-lifetime access-token "
-                + "key. Access tokens will not survive a restart; set the property in production.");
+            + "key. Access tokens will not survive a restart; set the property in production.");
         return SigningKey.generate();
     }
 }

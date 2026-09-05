@@ -56,9 +56,6 @@ function Swatch({ name, className }: { name: string; className: string }) {
   );
 }
 
-// Dev/test-only. Rendered at /ui to exercise every shared/ui primitive for the
-// Playwright screenshot suite; never linked from the app and excluded from the
-// production bundle (see app/routes.tsx).
 export function UiShowcase() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-4xl flex-col gap-12 px-6 py-12">

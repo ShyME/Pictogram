@@ -24,12 +24,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
-/**
- * Everything the {@code comment} sub-domain does to a post's thread: write, read a page, remove,
- * batch-tally counts, and clean up after the post itself is deleted (#156 — these were five
- * one-method services split by verb, each holding nothing but {@link Comments} plus a clock or
- * event publisher).
- */
 @Service
 public class CommentThread implements CommentCounts {
 
@@ -50,8 +44,7 @@ public class CommentThread implements CommentCounts {
 
     public PostComment comment(ViewerId viewer, PostId post, String body) {
         Instant createdAt = clock.instant();
-        PostComment saved = comments.save(Comment.write(viewer, post, CommentBody.of(body), createdAt))
-                .view();
+        PostComment saved = comments.save(Comment.write(viewer, post, CommentBody.of(body), createdAt)).view();
         events.publishEvent(new PostCommented(post, saved.commentId(), viewer, createdAt));
         return saved;
     }
@@ -61,11 +54,11 @@ public class CommentThread implements CommentCounts {
 
         Limit fetch = Limit.of(pageSize + 1);
         List<Comment> rows = after == null
-                ? comments.oldestFor(post.value(), fetch)
-                : comments.afterFor(post.value(), after.at(), after.id(), fetch);
+            ? comments.oldestFor(post.value(), fetch)
+            : comments.afterFor(post.value(), after.at(), after.id(), fetch);
 
-        KeysetWindow<Comment> window =
-                KeysetWindow.of(rows, pageSize, last -> new Cursor(last.createdAt(), last.getId()));
+        KeysetWindow<Comment> window = KeysetWindow.of(rows, pageSize,
+            last -> new Cursor(last.createdAt(), last.getId()));
 
         return new Page(window.page().stream().map(Comment::view).toList(), window.nextCursor());
     }
@@ -84,20 +77,12 @@ public class CommentThread implements CommentCounts {
         events.publishEvent(new CommentDeleted(comment.postId(), commentId, viewer, clock.instant()));
     }
 
-    /**
-     * The one rule for who may remove a comment (#156): its own author, or the post's author. The
-     * frontend delete-control gate ({@code canDeleteComment} in
-     * {@code frontend/src/features/comments/comment.ts}) mirrors this and is tested against the
-     * same three cases.
-     */
     private boolean mayDelete(ViewerId viewer, PostComment comment) {
         if (comment.viewer().value().equals(viewer.value())) {
             return true;
         }
-        return publishedPosts
-                .authorOf(comment.postId())
-                .map(author -> author.value().equals(viewer.value()))
-                .orElse(false);
+        return publishedPosts.authorOf(comment.postId()).map(author -> author.value().equals(viewer.value()))
+            .orElse(false);
     }
 
     @Override
@@ -106,21 +91,16 @@ public class CommentThread implements CommentCounts {
         if (ids.isEmpty()) {
             return List.of();
         }
-        Map<UUID, Long> counts =
-                comments.countsFor(ids).stream().collect(toMap(CommentCount::postId, CommentCount::count));
-        return ids.stream()
-                .map(id -> new PostComments(new PostId(id), counts.getOrDefault(id, 0L)))
-                .toList();
+        Map<UUID, Long> counts = comments.countsFor(ids).stream()
+            .collect(toMap(CommentCount::postId, CommentCount::count));
+        return ids.stream().map(id -> new PostComments(new PostId(id), counts.getOrDefault(id, 0L))).toList();
     }
 
-    /**
-     * Clears the post's thread when the post is deleted, so no comment row outlives its post.
-     * Synchronous, in the deleting transaction — v1 has no event registry (ADR-0002).
-     */
     @EventListener
     void onPostDeleted(PostDeleted event) {
         comments.deleteByPostId(event.postId().value());
     }
 
-    public record Page(List<PostComment> comments, Cursor nextCursor) {}
+    public record Page(List<PostComment> comments, Cursor nextCursor) {
+    }
 }

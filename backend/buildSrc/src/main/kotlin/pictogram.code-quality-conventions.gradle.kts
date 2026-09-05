@@ -11,7 +11,10 @@ val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 spotless {
     java {
         target("src/**/*.java")
-        palantirJavaFormat(libs.findVersion("palantir-java-format").get().requiredVersion)
+        eclipse()
+            .configFile(
+                rootProject.layout.projectDirectory.file("config/eclipse-java-formatter.xml")
+            )
         removeUnusedImports()
         importOrder()
         formatAnnotations()

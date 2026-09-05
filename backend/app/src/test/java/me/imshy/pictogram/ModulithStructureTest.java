@@ -11,14 +11,12 @@ import org.springframework.modulith.docs.Documenter;
 
 class ModulithStructureTest {
 
-    private static final ApplicationModules MODULES = ApplicationModules.of(
-            PictogramApplication.class, JavaClass.Predicates.resideInAPackage("me.imshy.pictogram.testsupport.."));
+    private static final ApplicationModules MODULES = ApplicationModules.of(PictogramApplication.class,
+        JavaClass.Predicates.resideInAPackage("me.imshy.pictogram.testsupport.."));
 
     @Test
     void everyBoundedContextIsAModule() {
-        var names = MODULES.stream()
-                .map(module -> module.getIdentifier().toString())
-                .collect(Collectors.toSet());
+        var names = MODULES.stream().map(module -> module.getIdentifier().toString()).collect(Collectors.toSet());
 
         assertThat(names).containsExactlyInAnyOrder("identity", "profile", "media", "post", "social", "shared");
     }

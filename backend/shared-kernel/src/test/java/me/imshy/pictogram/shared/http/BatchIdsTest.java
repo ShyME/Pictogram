@@ -27,9 +27,8 @@ class BatchIdsTest {
     void rejectsASetOverTheCapAsABadRequest() {
         Set<Integer> tooMany = idsCounting(BatchIds.MAX + 1);
 
-        assertThatExceptionOfType(OversizedBatchException.class)
-                .isThrownBy(() -> BatchIds.checked(tooMany))
-                .satisfies(ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        assertThatExceptionOfType(OversizedBatchException.class).isThrownBy(() -> BatchIds.checked(tooMany))
+            .satisfies(ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
     private static Set<Integer> idsCounting(int n) {

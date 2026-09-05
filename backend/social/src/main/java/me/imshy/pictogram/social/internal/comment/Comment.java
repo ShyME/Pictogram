@@ -1,12 +1,6 @@
 package me.imshy.pictogram.social.internal.comment;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 import me.imshy.pictogram.shared.PostId;
@@ -34,7 +28,8 @@ class Comment implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Comment() {}
+    protected Comment() {
+    }
 
     private Comment(UUID id, UUID postId, UUID viewerId, String body, Instant createdAt) {
         this.id = id;

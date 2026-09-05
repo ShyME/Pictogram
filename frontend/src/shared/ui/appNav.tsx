@@ -33,7 +33,6 @@ function useIsInlineViewport(): boolean {
 }
 
 type AppNavProps = {
-  // The signed-in viewer, or null/undefined for an anonymous visitor (public profile page).
   viewer?: { username: string } | null;
   onSignOut?: () => void;
   signingOut?: boolean;

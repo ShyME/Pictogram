@@ -7,12 +7,7 @@ import java.util.UUID;
 import me.imshy.pictogram.identity.InvalidAccessTokenException;
 import me.imshy.pictogram.shared.UserId;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.*;
 
 public class AccessTokens {
 
@@ -32,15 +27,10 @@ public class AccessTokens {
 
     public String issue(UserId user) {
         Instant now = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(issuer)
-                .subject(user.value().toString())
-                .issuedAt(now)
-                .expiresAt(now.plus(ttl))
-                .build();
-        return encoder.encode(JwtEncoderParameters.from(
-                        JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
-                .getTokenValue();
+        JwtClaimsSet claims = JwtClaimsSet.builder().issuer(issuer).subject(user.value().toString()).issuedAt(now)
+            .expiresAt(now.plus(ttl)).build();
+        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
+            .getTokenValue();
     }
 
     public UserId resolve(String accessToken) {

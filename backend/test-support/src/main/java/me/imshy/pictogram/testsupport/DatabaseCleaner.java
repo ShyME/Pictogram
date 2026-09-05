@@ -14,11 +14,11 @@ public final class DatabaseCleaner {
 
     public void truncateAll() {
         List<String> tables = jdbc.queryForList("""
-                select format('%I.%I', schemaname, tablename)
-                from pg_tables
-                where schemaname not in ('pg_catalog', 'information_schema')
-                  and tablename <> 'flyway_schema_history'
-                """, String.class);
+            select format('%I.%I', schemaname, tablename)
+            from pg_tables
+            where schemaname not in ('pg_catalog', 'information_schema')
+              and tablename <> 'flyway_schema_history'
+            """, String.class);
 
         if (tables.isEmpty()) {
             return;

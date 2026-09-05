@@ -9,7 +9,8 @@ class LikeId implements Serializable {
     private UUID postId;
     private UUID viewerId;
 
-    protected LikeId() {}
+    protected LikeId() {
+    }
 
     LikeId(UUID postId, UUID viewerId) {
         this.postId = postId;
@@ -18,9 +19,8 @@ class LikeId implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof LikeId that
-                && Objects.equals(postId, that.postId)
-                && Objects.equals(viewerId, that.viewerId);
+        return other instanceof LikeId that && Objects.equals(postId, that.postId)
+            && Objects.equals(viewerId, that.viewerId);
     }
 
     @Override

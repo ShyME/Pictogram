@@ -4,4 +4,5 @@ import me.imshy.pictogram.testsupport.ModuleIntegrationTest;
 import org.springframework.modulith.test.ApplicationModuleTest;
 
 @ApplicationModuleTest
-abstract class ProfileModuleIntegrationTest extends ModuleIntegrationTest {}
+abstract class ProfileModuleIntegrationTest extends ModuleIntegrationTest {
+}

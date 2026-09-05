@@ -21,10 +21,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 class PostTimelineTest extends PostModuleIntegrationTest {
 
     @Autowired
-    Publishing publishing;
+    PostPublishing postPublishing;
 
     @Autowired
-    PostTimeline timeline;
+    PostTimeline postTimeline;
 
     @MockitoBean
     Clock clock;
@@ -43,7 +43,7 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         var b = publishAt(author, "2026-09-01T11:00:00Z");
         var c = publishAt(author, "2026-09-01T12:00:00Z");
 
-        assertThat(ids(timeline.pageFor(author, null, null))).containsExactly(c, b, a);
+        assertThat(ids(postTimeline.pageFor(author, null, null))).containsExactly(c, b, a);
     }
 
     @Test
@@ -56,9 +56,8 @@ class PostTimelineTest extends PostModuleIntegrationTest {
 
         List<PostId> seen = drain(author, 2);
 
-        assertThat(seen)
-                .containsExactly(
-                        published.get(4), published.get(3), published.get(2), published.get(1), published.get(0));
+        assertThat(seen).containsExactly(published.get(4), published.get(3), published.get(2), published.get(1),
+            published.get(0));
     }
 
     @Test
@@ -68,7 +67,7 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         publishAt(author, "2026-09-01T10:00:00Z");
         publishAt(author, "2026-09-01T10:00:00Z");
 
-        List<PostId> wholePage = ids(timeline.pageFor(author, null, 10));
+        List<PostId> wholePage = ids(postTimeline.pageFor(author, null, 10));
         List<PostId> pagedOneAtATime = drain(author, 1);
 
         assertThat(pagedOneAtATime).hasSize(3).doesNotHaveDuplicates();
@@ -82,9 +81,9 @@ class PostTimelineTest extends PostModuleIntegrationTest {
             publishAt(author, "2026-09-01T10:00:00Z");
         }
 
-        assertThat(timeline.pageFor(author, null, null).items()).hasSize(PostTimeline.DEFAULT_LIMIT);
-        assertThat(timeline.pageFor(author, null, 1000).items()).hasSize(PostTimeline.MAX_LIMIT);
-        assertThat(timeline.pageFor(author, null, 0).items()).hasSize(1);
+        assertThat(postTimeline.pageFor(author, null, null).items()).hasSize(PostTimeline.DEFAULT_LIMIT);
+        assertThat(postTimeline.pageFor(author, null, 1000).items()).hasSize(PostTimeline.MAX_LIMIT);
+        assertThat(postTimeline.pageFor(author, null, 0).items()).hasSize(1);
     }
 
     @Test
@@ -94,7 +93,7 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         var adasPost = publishAt(ada, "2026-09-01T10:00:00Z");
         publishAt(grace, "2026-09-01T11:00:00Z");
 
-        assertThat(ids(timeline.pageFor(ada, null, null))).containsExactly(adasPost);
+        assertThat(ids(postTimeline.pageFor(ada, null, null))).containsExactly(adasPost);
     }
 
     @Test
@@ -103,14 +102,14 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         publishAt(author, "2026-09-01T10:00:00Z");
         publishAt(author, "2026-09-01T11:00:00Z");
 
-        assertThat(timeline.pageFor(author, null, 5).nextCursor()).isNull();
+        assertThat(postTimeline.pageFor(author, null, 5).nextCursor()).isNull();
     }
 
     private PostId publishAt(UserId author, String instant) {
         now = Instant.parse(instant);
         var mediaId = MediaId.random();
-        given(media.ownerOf(mediaId)).willReturn(Optional.of(author));
-        return publishing.publish(author, mediaId, null).postId();
+        given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(author));
+        return postPublishing.publish(author, mediaId, null).postId();
     }
 
     private static List<PostId> ids(Page page) {
@@ -121,7 +120,7 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         List<PostId> ids = new ArrayList<>();
         Cursor cursor = null;
         do {
-            Page page = timeline.pageFor(author, cursor, pageSize);
+            Page page = postTimeline.pageFor(author, cursor, pageSize);
             ids.addAll(ids(page));
             cursor = page.nextCursor();
         } while (cursor != null);

@@ -8,6 +8,7 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
 import java.text.ParseException;
 import java.util.UUID;
 
@@ -21,9 +22,7 @@ public final class SigningKey {
 
     public static SigningKey generate() {
         try {
-            return new SigningKey(new ECKeyGenerator(Curve.P_256)
-                    .keyID(UUID.randomUUID().toString())
-                    .generate());
+            return new SigningKey(new ECKeyGenerator(Curve.P_256).keyID(UUID.randomUUID().toString()).generate());
         } catch (JOSEException e) {
             throw new IllegalStateException("Could not generate an access-token signing key", e);
         }

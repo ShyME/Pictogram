@@ -11,8 +11,8 @@ public interface PublishedPosts {
 
     Page byAuthors(Collection<UserId> authors, Cursor after, int limit);
 
-    /** Who published a post, or empty if no post has that id. */
     Optional<UserId> authorOf(PostId post);
 
-    record Page(List<PublishedPost> posts, Cursor nextCursor) {}
+    record Page(List<PublishedPost> posts, Cursor nextCursor) {
+    }
 }

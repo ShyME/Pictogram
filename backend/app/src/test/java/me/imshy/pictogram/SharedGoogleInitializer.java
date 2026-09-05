@@ -5,31 +5,16 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 
-/**
- * Points the OAuth2 client at {@link SharedGoogle}. An initializer, not a
- * {@code DynamicPropertyRegistrar} bean, because {@code ClientsConfiguredCondition} reads
- * {@code spring.security.oauth2.client.registration.*} while auto-configuration is still being
- * parsed — before registrar beans contribute. One initializer class → one cache key, so every
- * class carrying {@link AppOAuthWebIntegrationTest} still shares a context (#78).
- */
 public class SharedGoogleInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @Override
     public void initialize(ConfigurableApplicationContext context) {
-        context.getEnvironment()
-                .getPropertySources()
-                .addFirst(new MapPropertySource(
-                        "sharedGoogle",
-                        Map.of(
-                                "spring.security.oauth2.client.registration.google.client-id",
-                                SharedGoogle.CLIENT_ID,
-                                "spring.security.oauth2.client.registration.google.client-secret",
-                                SharedGoogle.CLIENT_SECRET,
-                                "spring.security.oauth2.client.registration.google.scope",
-                                "openid,email",
-                                "spring.security.oauth2.client.provider.google.issuer-uri",
-                                SharedGoogle.INSTANCE
-                                        .issuerUrl(SharedGoogle.ISSUER_ID)
-                                        .toString())));
+        context.getEnvironment().getPropertySources()
+            .addFirst(new MapPropertySource("sharedGoogle",
+                Map.of("spring.security.oauth2.client.registration.google.client-id", SharedGoogle.CLIENT_ID,
+                    "spring.security.oauth2.client.registration.google.client-secret", SharedGoogle.CLIENT_SECRET,
+                    "spring.security.oauth2.client.registration.google.scope", "openid,email",
+                    "spring.security.oauth2.client.provider.google.issuer-uri",
+                    SharedGoogle.INSTANCE.issuerUrl(SharedGoogle.ISSUER_ID).toString())));
     }
 }

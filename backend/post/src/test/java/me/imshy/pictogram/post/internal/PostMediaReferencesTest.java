@@ -14,10 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 class PostMediaReferencesTest extends PostModuleIntegrationTest {
 
     @Autowired
-    Publishing publishing;
+    PostPublishing postPublishing;
 
     @Autowired
-    PostDeletion deletion;
+    PostDeletion postDeletion;
 
     @Autowired
     PostReferences postReferences;
@@ -28,11 +28,11 @@ class PostMediaReferencesTest extends PostModuleIntegrationTest {
         var referenced = MediaId.random();
         var afterDelete = MediaId.random();
         var neverPosted = MediaId.random();
-        given(media.ownerOf(referenced)).willReturn(Optional.of(author));
-        given(media.ownerOf(afterDelete)).willReturn(Optional.of(author));
-        publishing.publish(author, referenced, null);
-        var doomed = publishing.publish(author, afterDelete, null);
-        deletion.delete(author, doomed.postId());
+        given(mediaCatalog.ownerOf(referenced)).willReturn(Optional.of(author));
+        given(mediaCatalog.ownerOf(afterDelete)).willReturn(Optional.of(author));
+        postPublishing.publish(author, referenced, null);
+        var doomed = postPublishing.publish(author, afterDelete, null);
+        postDeletion.delete(author, doomed.postId());
 
         var stillReferenced = postReferences.referencedAmong(List.of(referenced, afterDelete, neverPosted));
 

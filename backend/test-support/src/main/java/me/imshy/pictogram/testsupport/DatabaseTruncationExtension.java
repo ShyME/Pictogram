@@ -6,9 +6,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Truncates every table (bar Flyway's history) after each test. One extension referenced from the
- * shared meta-annotations and base classes, replacing the {@code @AfterEach} that was copied into
- * {@code ModuleIntegrationTest}, {@code ScenarioTest}, and every app API test.
+ * Truncates every table (bar Flyway's history) after each test. One extension
+ * referenced from the shared meta-annotations and base classes, replacing the
+ * {@code @AfterEach} that was copied into {@code ModuleIntegrationTest},
+ * {@code AppTest}, and every app API test.
  */
 public final class DatabaseTruncationExtension implements AfterEachCallback {
 

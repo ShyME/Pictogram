@@ -30,6 +30,4 @@ export function seedCommentCounts(client: QueryClient, records: PostCommentCount
   );
 }
 
-// The feed and the grid load a page then seed every post's comment count from one batch
-// call, so the per-card counts read from cache instead of firing a request each (ADR-0005).
 export const prefetchCommentCounts = cache.prime;

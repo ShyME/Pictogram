@@ -112,9 +112,7 @@ class SpaDeepLinkTest {
     @Test
     void unmatchedApiRoutesStayProblemDetailsNotTheSpaShell() {
         HttpResponse<String> response = http.exchange(http.to("/api/does-not-exist")
-                .header("Authorization", "Bearer not-a-real-token")
-                .header("Accept", "text/html")
-                .GET());
+            .header("Authorization", "Bearer not-a-real-token").header("Accept", "text/html").GET());
 
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(contentType(response)).contains("application/problem+json");

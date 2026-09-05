@@ -18,16 +18,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class OrphanCollectorTest extends MediaModuleIntegrationTest {
 
-    private static final Duration GRACE = Duration.ofHours(24);
+    private static final Duration GRACE_PERIOD = Duration.ofHours(24);
 
     @Autowired
-    OrphanCollector collector;
+    OrphanCollector orphanCollector;
 
     @Autowired
-    MediaLibrary library;
+    MediaLibrary mediaLibrary;
 
     @Autowired
-    BlobStore blobs;
+    BlobStore blobStore;
 
     @MockitoBean
     Clock clock;
@@ -43,52 +43,51 @@ class OrphanCollectorTest extends MediaModuleIntegrationTest {
 
     @Test
     void sweepsAwayEveryUnreferencedMediaPastTheGraceAndLeavesTheReferencedOneAlone() {
-        MediaId livePostImage = library.upload(UserId.random(), jpeg());
-        MediaId neverPosted = library.upload(UserId.random(), jpeg());
-        MediaId hadItsPostDeleted = library.upload(UserId.random(), jpeg());
+        MediaId livePostImage = mediaLibrary.upload(UserId.random(), jpeg());
+        MediaId neverPosted = mediaLibrary.upload(UserId.random(), jpeg());
+        MediaId hadItsPostDeleted = mediaLibrary.upload(UserId.random(), jpeg());
         given(postReferences.referencedAmong(any())).willReturn(Set.of(livePostImage));
 
-        time.advance(GRACE.plusHours(1));
-        int collected = collector.collectOrphans();
+        time.advance(GRACE_PERIOD.plusHours(1));
+        int collected = orphanCollector.collectOrphans();
 
         assertThat(collected).isEqualTo(2);
         assertRemoved(neverPosted);
         assertRemoved(hadItsPostDeleted);
-        assertThat(library.original(livePostImage)).isNotEmpty();
-        assertThat(library.thumbnail(livePostImage)).isNotEmpty();
+        assertThat(mediaLibrary.original(livePostImage)).isNotEmpty();
+        assertThat(mediaLibrary.thumbnail(livePostImage)).isNotEmpty();
     }
 
     @Test
     void collectsAMediaOnceItsLastReferencingPostGoesAway() {
-        MediaId image = library.upload(UserId.random(), jpeg());
+        MediaId image = mediaLibrary.upload(UserId.random(), jpeg());
         given(postReferences.referencedAmong(any())).willReturn(Set.of(image));
-        time.advance(GRACE.plusHours(1));
+        time.advance(GRACE_PERIOD.plusHours(1));
 
-        assertThat(collector.collectOrphans()).isZero();
-        assertThat(library.original(image)).isNotEmpty();
+        assertThat(orphanCollector.collectOrphans()).isZero();
+        assertThat(mediaLibrary.original(image)).isNotEmpty();
 
         given(postReferences.referencedAmong(any())).willReturn(Set.of());
 
-        assertThat(collector.collectOrphans()).isEqualTo(1);
+        assertThat(orphanCollector.collectOrphans()).isEqualTo(1);
         assertRemoved(image);
     }
 
     @Test
     void leavesMediaThatIsStillInsideTheGracePeriod() {
-        MediaId fresh = library.upload(UserId.random(), jpeg());
+        MediaId fresh = mediaLibrary.upload(UserId.random(), jpeg());
 
-        time.advance(GRACE.minusHours(1));
-        int collected = collector.collectOrphans();
+        time.advance(GRACE_PERIOD.minusHours(1));
+        int collected = orphanCollector.collectOrphans();
 
         assertThat(collected).isZero();
-        assertThat(library.original(fresh)).isNotEmpty();
+        assertThat(mediaLibrary.original(fresh)).isNotEmpty();
     }
 
     private void assertRemoved(MediaId mediaId) {
-        assertThatExceptionOfType(MediaNotFoundException.class).isThrownBy(() -> library.original(mediaId));
-        assertThatExceptionOfType(RuntimeException.class)
-                .as("bytes for %s are gone from storage too", mediaId)
-                .isThrownBy(() -> blobs.get(StorageKeys.original(mediaId)));
+        assertThatExceptionOfType(MediaNotFoundException.class).isThrownBy(() -> mediaLibrary.original(mediaId));
+        assertThatExceptionOfType(RuntimeException.class).as("bytes for %s are gone from storage too", mediaId)
+            .isThrownBy(() -> blobStore.get(StorageKeys.original(mediaId)));
     }
 
     private static byte[] jpeg() {

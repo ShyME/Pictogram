@@ -14,7 +14,7 @@ class FollowDirectoryTest extends SocialModuleIntegrationTest {
     Following following;
 
     @Autowired
-    FollowDirectory graph;
+    FollowDirectory followGraph;
 
     @Test
     void countsFollowersAndFollowingIndependentlyPerDirection() {
@@ -26,10 +26,10 @@ class FollowDirectoryTest extends SocialModuleIntegrationTest {
         following.follow(carol, bob.asUserId());
         following.follow(bob, ada.asUserId());
 
-        assertThat(graph.followerCount(bob.asUserId())).isEqualTo(2);
-        assertThat(graph.followingCount(bob.asUserId())).isEqualTo(1);
-        assertThat(graph.followerCount(ada.asUserId())).isEqualTo(1);
-        assertThat(graph.followingCount(carol.asUserId())).isEqualTo(1);
+        assertThat(followGraph.followerCount(bob.asUserId())).isEqualTo(2);
+        assertThat(followGraph.followingCount(bob.asUserId())).isEqualTo(1);
+        assertThat(followGraph.followerCount(ada.asUserId())).isEqualTo(1);
+        assertThat(followGraph.followingCount(carol.asUserId())).isEqualTo(1);
     }
 
     @Test
@@ -39,8 +39,8 @@ class FollowDirectoryTest extends SocialModuleIntegrationTest {
 
         following.follow(ada, bob);
 
-        assertThat(graph.isFollowing(ada, bob)).isTrue();
-        assertThat(graph.isFollowing(ViewerId.of(bob), ada.asUserId())).isFalse();
+        assertThat(followGraph.isFollowing(ada, bob)).isTrue();
+        assertThat(followGraph.isFollowing(ViewerId.of(bob), ada.asUserId())).isFalse();
     }
 
     @Test
@@ -54,6 +54,6 @@ class FollowDirectoryTest extends SocialModuleIntegrationTest {
         following.follow(ada, carol);
         following.follow(ViewerId.random(), dave);
 
-        assertThat(graph.usersFollowedBy(ada)).containsExactlyInAnyOrder(bob, carol);
+        assertThat(followGraph.usersFollowedBy(ada)).containsExactlyInAnyOrder(bob, carol);
     }
 }

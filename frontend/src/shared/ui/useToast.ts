@@ -11,8 +11,6 @@ export type ToastRecord = {
 
 type ToastInput = Omit<ToastRecord, 'id' | 'variant'> & { variant?: ToastVariant };
 
-// The queue is capped: a burst — or toasts queued before a <Toaster> is mounted to run
-// Radix's dismiss timers — can't grow it without bound.
 const MAX_QUEUED = 4;
 
 let records: ToastRecord[] = [];

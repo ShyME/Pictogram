@@ -1,12 +1,6 @@
 package me.imshy.pictogram.profile.internal;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -34,7 +28,8 @@ class Profile implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Profile() {}
+    protected Profile() {
+    }
 
     private Profile(UserId userId, Username username, DisplayName displayName, Bio bio, Instant createdAt) {
         this.userId = userId.value();
@@ -50,8 +45,7 @@ class Profile implements Persistable<UUID> {
 
     boolean edit(Username username, DisplayName displayName, Bio bio) {
         boolean changed = !this.username.equals(username.value())
-                || !Objects.equals(this.displayName, displayName.value())
-                || !Objects.equals(this.bio, bio.value());
+            || !Objects.equals(this.displayName, displayName.value()) || !Objects.equals(this.bio, bio.value());
         this.username = username.value();
         this.displayName = displayName.value();
         this.bio = bio.value();

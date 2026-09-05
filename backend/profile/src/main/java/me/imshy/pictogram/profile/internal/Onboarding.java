@@ -16,25 +16,25 @@ public class Onboarding {
         this.clock = clock;
     }
 
-    public ProfileView completeOnboarding(UserId user, String username, String displayName, String bio) {
-        Username handle = new Username(username);
-        DisplayName name = DisplayName.of(displayName);
-        Bio about = Bio.of(bio);
+    public ProfileView completeOnboarding(UserId userId, String username, String displayName, String bio) {
+        Username usernameHandle = new Username(username);
+        DisplayName displayNameHandle = DisplayName.of(displayName);
+        Bio bioHandle = Bio.of(bio);
 
-        if (profiles.existsById(user.value())) {
+        if (profiles.existsById(userId.value())) {
             throw new AlreadyOnboardedException();
         }
-        if (profiles.existsByUsername(handle.value())) {
+        if (profiles.existsByUsername(usernameHandle.value())) {
             throw new UsernameAlreadyTakenException();
         }
 
-        var profile = Profile.onboard(user, handle, name, about, clock.instant());
+        var profile = Profile.onboard(userId, usernameHandle, displayNameHandle, bioHandle, clock.instant());
         try {
             profiles.save(profile);
         } catch (DataIntegrityViolationException lostARace) {
-            throw profiles.existsById(user.value())
-                    ? new AlreadyOnboardedException()
-                    : new UsernameAlreadyTakenException();
+            throw profiles.existsById(userId.value())
+                ? new AlreadyOnboardedException()
+                : new UsernameAlreadyTakenException();
         }
         return ProfileView.of(profile);
     }

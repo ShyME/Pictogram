@@ -5,4 +5,5 @@ import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.UserId;
 
-public record PostPublished(PostId postId, UserId authorId, MediaId mediaId, Instant publishedAt) {}
+public record PostPublished(PostId postId, UserId authorId, MediaId mediaId, Instant publishedAt) {
+}

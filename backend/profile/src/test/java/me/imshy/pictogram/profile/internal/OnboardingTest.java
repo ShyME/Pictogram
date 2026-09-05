@@ -43,7 +43,7 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
     @Test
     void aUserWithoutAProfileHasNotYetOnboarded() {
         assertThatExceptionOfType(ProfileNotFoundException.class)
-                .isThrownBy(() -> onboarding.profileOf(UserId.random()));
+            .isThrownBy(() -> onboarding.profileOf(UserId.random()));
     }
 
     @Test
@@ -51,7 +51,7 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         onboarding.completeOnboarding(UserId.random(), "ada", null, null);
 
         assertThatExceptionOfType(UsernameAlreadyTakenException.class)
-                .isThrownBy(() -> onboarding.completeOnboarding(UserId.random(), "ada", null, null));
+            .isThrownBy(() -> onboarding.completeOnboarding(UserId.random(), "ada", null, null));
     }
 
     @Test
@@ -60,14 +60,13 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         onboarding.completeOnboarding(user, "ada", null, null);
 
         assertThatExceptionOfType(AlreadyOnboardedException.class)
-                .isThrownBy(() -> onboarding.completeOnboarding(user, "ada_again", null, null));
+            .isThrownBy(() -> onboarding.completeOnboarding(user, "ada_again", null, null));
     }
 
     @Test
     void anOverlongBioIsRejected() {
-        assertThatExceptionOfType(InvalidProfileDetailsException.class)
-                .isThrownBy(() ->
-                        onboarding.completeOnboarding(UserId.random(), "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
+        assertThatExceptionOfType(InvalidProfileDetailsException.class).isThrownBy(
+            () -> onboarding.completeOnboarding(UserId.random(), "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
     }
 
     @Test
@@ -82,12 +81,8 @@ class OnboardingTest extends ProfileModuleIntegrationTest {
         var user = UserId.random();
         onboarding.completeOnboarding(user, "ada", "Ada", null);
 
-        var racing = Profile.onboard(
-                user,
-                new Username("mallory"),
-                DisplayName.of(null),
-                Bio.of(null),
-                Instant.parse("2026-08-31T00:00:00Z"));
+        var racing = Profile.onboard(user, new Username("mallory"), DisplayName.of(null), Bio.of(null),
+            Instant.parse("2026-08-31T00:00:00Z"));
         assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> profiles.save(racing));
 
         assertThat(onboarding.profileOf(user).username()).isEqualTo("ada");

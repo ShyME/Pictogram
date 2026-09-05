@@ -20,10 +20,8 @@ class SignInCompletion {
     }
 
     void succeeded(HttpServletRequest request, HttpServletResponse response, Session session) throws IOException {
-        response.addHeader(
-                HttpHeaders.SET_COOKIE,
-                RefreshCookie.issue(session.refreshToken(), properties.refreshTokenTtl(), properties.cookieSecure())
-                        .toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, RefreshCookie
+            .issue(session.refreshToken(), properties.refreshTokenTtl(), properties.cookieSecure()).toString());
         endHandshakeSession(request);
         response.sendRedirect(properties.postLoginRedirect());
     }
@@ -48,8 +46,6 @@ class SignInCompletion {
 
     private String signInErrorRedirect(String reasonSlug) {
         return UriComponentsBuilder.fromUriString(properties.signInErrorRedirect())
-                .replaceQueryParam("error", reasonSlug)
-                .build()
-                .toUriString();
+            .replaceQueryParam("error", reasonSlug).build().toUriString();
     }
 }

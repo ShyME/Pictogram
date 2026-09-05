@@ -13,12 +13,14 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 public final class AccessTokenVerification {
 
-    private AccessTokenVerification() {}
+    private AccessTokenVerification() {
+    }
 
     public static NimbusJwtDecoder decoder(JWKSource<SecurityContext> jwkSource, String issuer, Clock clock) {
-        var processor = new DefaultJWTProcessor<SecurityContext>();
+        var processor = new DefaultJWTProcessor<>();
         processor.setJWSKeySelector(new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, jwkSource));
-        processor.setJWTClaimsSetVerifier((claims, context) -> {});
+        processor.setJWTClaimsSetVerifier((claims, context) -> {
+        });
 
         var timestamps = new JwtTimestampValidator();
         timestamps.setClock(clock);

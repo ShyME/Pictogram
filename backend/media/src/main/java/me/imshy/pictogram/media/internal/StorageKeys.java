@@ -4,7 +4,8 @@ import me.imshy.pictogram.shared.MediaId;
 
 final class StorageKeys {
 
-    private StorageKeys() {}
+    private StorageKeys() {
+    }
 
     static String original(MediaId mediaId) {
         return mediaId.value() + "/original.jpg";

@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 
 class KeysetWindowTest {
 
-    private record Row(Instant at, UUID id) {}
+    private record Row(Instant at, UUID id) {
+    }
 
     private static final Function<Row, Cursor> CURSOR_OF = row -> new Cursor(row.at(), row.id());
 
     private static List<Row> rows(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(i -> new Row(Instant.ofEpochSecond(1_700_000_000L + i), UUID.randomUUID()))
-                .toList();
+            .mapToObj(i -> new Row(Instant.ofEpochSecond(1_700_000_000L + i), UUID.randomUUID())).toList();
     }
 
     @Test
@@ -48,8 +48,7 @@ class KeysetWindowTest {
         KeysetWindow<Row> window = KeysetWindow.of(fetched, 3, CURSOR_OF);
 
         assertThat(window.page()).containsExactly(fetched.get(0), fetched.get(1), fetched.get(2));
-        assertThat(window.nextCursor())
-                .isEqualTo(new Cursor(fetched.get(2).at(), fetched.get(2).id()));
+        assertThat(window.nextCursor()).isEqualTo(new Cursor(fetched.get(2).at(), fetched.get(2).id()));
     }
 
     @Test
@@ -85,9 +84,9 @@ class KeysetWindowTest {
         List<Row> fetched = rows(3);
 
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> KeysetWindow.of(fetched, 0, CURSOR_OF));
+            .isThrownBy(() -> KeysetWindow.of(fetched, 0, CURSOR_OF));
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> KeysetWindow.of(fetched, -1, CURSOR_OF));
+            .isThrownBy(() -> KeysetWindow.of(fetched, -1, CURSOR_OF));
     }
 
     @Test

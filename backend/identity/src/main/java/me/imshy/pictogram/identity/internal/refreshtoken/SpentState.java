@@ -6,8 +6,6 @@ import java.time.Instant;
 record SpentState(Instant consumedAt, Instant revokedAt) {
 
     boolean isBenignRaceWithin(Duration grace, Instant now) {
-        return consumedAt != null
-                && revokedAt == null
-                && Duration.between(consumedAt, now).compareTo(grace) <= 0;
+        return consumedAt != null && revokedAt == null && Duration.between(consumedAt, now).compareTo(grace) <= 0;
     }
 }

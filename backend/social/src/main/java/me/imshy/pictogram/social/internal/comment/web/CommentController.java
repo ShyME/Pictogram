@@ -18,13 +18,7 @@ import me.imshy.pictogram.social.internal.comment.PostComment;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/posts/{postId}/comments")
@@ -36,70 +30,42 @@ class CommentController {
         this.thread = thread;
     }
 
-    record CreateCommentRequest(String body) {}
+    record CreateCommentRequest(String body) {
+    }
 
     record CommentView(UUID commentId, UUID postId, UUID authorId, String body, Instant createdAt) {
 
         static CommentView of(PostComment comment) {
-            return new CommentView(
-                    comment.commentId(),
-                    comment.postId().value(),
-                    comment.viewer().value(),
-                    comment.body(),
-                    comment.createdAt());
+            return new CommentView(comment.commentId(), comment.postId().value(), comment.viewer().value(),
+                comment.body(), comment.createdAt());
         }
     }
 
     @ApiResponses({
-        @ApiResponse(
-                responseCode = "201",
-                description = "The comment was added.",
-                headers =
-                        @Header(
-                                name = "Location",
-                                description = "The comment's URL.",
-                                schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(implementation = CommentView.class))),
-        @ApiResponse(
-                responseCode = "400",
-                description = "The comment is empty or longer than 1000 characters.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(
-                responseCode = "401",
-                description = "The caller has no valid access token.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class)))
-    })
+        @ApiResponse(responseCode = "201", description = "The comment was added.",
+            headers = @Header(name = "Location", description = "The comment's URL.", schema = @Schema(type = "string")),
+            content = @Content(schema = @Schema(implementation = CommentView.class))),
+        @ApiResponse(responseCode = "400", description = "The comment is empty or longer than 1000 characters.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @PostMapping
-    ResponseEntity<CommentView> add(
-            @CurrentUser ViewerId viewer,
-            @PathVariable("postId") UUID postId,
-            @RequestBody CreateCommentRequest request) {
+    ResponseEntity<CommentView> add(@CurrentUser ViewerId viewer, @PathVariable("postId") UUID postId,
+        @RequestBody CreateCommentRequest request) {
         CommentView view = CommentView.of(thread.comment(viewer, new PostId(postId), request.body()));
-        return ResponseEntity.created(URI.create("/api/comments/" + view.commentId()))
-                .body(view);
+        return ResponseEntity.created(URI.create("/api/comments/" + view.commentId())).body(view);
     }
 
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "A page of the post's comments, oldest first."),
-        @ApiResponse(
-                responseCode = "400",
-                description = "The pagination cursor is malformed.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class)))
-    })
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "A page of the post's comments, oldest first."),
+        @ApiResponse(responseCode = "400", description = "The pagination cursor is malformed.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @GetMapping
-    ApiPage<CommentView> thread(
-            @PathVariable("postId") UUID postId,
-            @RequestParam(name = "cursor", required = false) String cursor,
-            @RequestParam(name = "limit", required = false) Integer limit) {
+    ApiPage<CommentView> thread(@PathVariable("postId") UUID postId,
+        @RequestParam(name = "cursor", required = false) String cursor,
+        @RequestParam(name = "limit", required = false) Integer limit) {
         Cursor after = cursor == null ? null : Cursor.decode(cursor);
         CommentThread.Page page = thread.pageFor(new PostId(postId), after, limit);
         return ApiPage.of(page.comments().stream().map(CommentView::of).toList(), page.nextCursor());

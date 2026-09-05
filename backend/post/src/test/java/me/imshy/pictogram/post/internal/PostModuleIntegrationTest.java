@@ -9,5 +9,5 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 abstract class PostModuleIntegrationTest extends ModuleIntegrationTest {
 
     @MockitoBean
-    MediaCatalog media;
+    MediaCatalog mediaCatalog;
 }

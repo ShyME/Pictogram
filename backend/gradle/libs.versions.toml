@@ -6,7 +6,6 @@ spring-boot = "4.1.1"
 dependency-management = "1.1.7"
 spotless = "8.10.1"
 modernizer = "2.0.0"
-palantir-java-format = "2.97.0"
 
 # BOM-managed platforms
 spring-modulith = "2.1.1"

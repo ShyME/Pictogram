@@ -66,7 +66,7 @@ class MediaLibraryTest extends MediaModuleIntegrationTest {
         var junk = "definitely not a photo".getBytes(StandardCharsets.UTF_8);
 
         assertThatExceptionOfType(UndecodableImageException.class)
-                .isThrownBy(() -> library.upload(UserId.random(), junk));
+            .isThrownBy(() -> library.upload(UserId.random(), junk));
     }
 
     private static byte[] safeUpload() {

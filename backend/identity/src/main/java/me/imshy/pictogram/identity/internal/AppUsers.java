@@ -14,14 +14,10 @@ interface AppUsers extends CrudRepository<AppUser, UUID> {
 
     @Modifying
     @Query(value = """
-            insert into identity.app_user (id, provider, subject, email, registered_at)
-            values (:id, :provider, :subject, :email, :registeredAt)
-            on conflict (provider, subject) do nothing
-            """, nativeQuery = true)
-    int insertIfAbsent(
-            @Param("id") UUID id,
-            @Param("provider") String provider,
-            @Param("subject") String subject,
-            @Param("email") String email,
-            @Param("registeredAt") Instant registeredAt);
+        insert into identity.app_user (id, provider, subject, email, registered_at)
+        values (:id, :provider, :subject, :email, :registeredAt)
+        on conflict (provider, subject) do nothing
+        """, nativeQuery = true)
+    int insertIfAbsent(@Param("id") UUID id, @Param("provider") String provider, @Param("subject") String subject,
+        @Param("email") String email, @Param("registeredAt") Instant registeredAt);
 }

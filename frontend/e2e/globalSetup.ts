@@ -17,9 +17,6 @@ const probes: readonly Probe[] = [
     expected: 200,
     bodyIncludes: '"status":"UP"',
   },
-  // Readiness is settled by the checks above; this one warms the /api/** security chain, the
-  // MVC handler mapping and a first JPA query (an unknown username is a 404) so the first real
-  // journey step doesn't pay that cold start.
   { path: '/api/profiles/warmup_probe', accept: 'application/json', expected: 404 },
 ];
 

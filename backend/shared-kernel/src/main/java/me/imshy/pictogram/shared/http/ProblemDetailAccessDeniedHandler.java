@@ -16,9 +16,8 @@ public class ProblemDetailAccessDeniedHandler implements AccessDeniedHandler {
     }
 
     @Override
-    public void handle(
-            HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
-            throws IOException {
+    public void handle(HttpServletRequest request, HttpServletResponse response,
+        AccessDeniedException accessDeniedException) throws IOException {
         var problem = new ForbiddenException("You do not have access to this resource.").toProblemDetail();
         ProblemDetails.write(response, objectMapper, problem);
     }

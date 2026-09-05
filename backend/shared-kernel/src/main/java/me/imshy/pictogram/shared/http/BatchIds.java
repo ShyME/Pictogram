@@ -6,7 +6,8 @@ public final class BatchIds {
 
     public static final int MAX = 100;
 
-    private BatchIds() {}
+    private BatchIds() {
+    }
 
     public static <T> Set<T> checked(Set<T> ids) {
         if (ids.size() > MAX) {

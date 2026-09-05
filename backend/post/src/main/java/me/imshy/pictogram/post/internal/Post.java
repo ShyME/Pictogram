@@ -1,12 +1,6 @@
 package me.imshy.pictogram.post.internal;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 import me.imshy.pictogram.shared.MediaId;
@@ -35,7 +29,8 @@ class Post implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Post() {}
+    protected Post() {
+    }
 
     private Post(UUID id, UUID authorId, UUID mediaId, String caption, Instant publishedAt) {
         this.id = id;
