@@ -18,7 +18,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
     Following following;
 
     @Autowired
-    FollowDirectory graph;
+    FollowDirectory followGraph;
 
     private final ViewerId ada = ViewerId.random();
     private final UserId bob = UserId.random();
@@ -27,7 +27,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
     void followingAUserAddsTheEdgeAndAnnouncesIt(AssertablePublishedEvents events) {
         following.follow(ada, bob);
 
-        assertThat(graph.isFollowing(ada, bob)).isTrue();
+        assertThat(followGraph.isFollowing(ada, bob)).isTrue();
         assertThat(events.ofType(UserFollowed.class)).singleElement().satisfies(event -> {
             assertThat(event.follower()).isEqualTo(ada.asUserId());
             assertThat(event.followed()).isEqualTo(bob);
@@ -41,7 +41,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
 
         following.follow(ada, bob);
 
-        assertThat(graph.followerCount(bob)).isEqualTo(1);
+        assertThat(followGraph.followerCount(bob)).isEqualTo(1);
         assertThat(events.ofType(UserFollowed.class)).hasSize(1);
     }
 
@@ -51,7 +51,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
 
         following.unfollow(ada, bob);
 
-        assertThat(graph.isFollowing(ada, bob)).isFalse();
+        assertThat(followGraph.isFollowing(ada, bob)).isFalse();
         assertThat(events.ofType(UserUnfollowed.class)).singleElement().satisfies(event -> {
             assertThat(event.follower()).isEqualTo(ada.asUserId());
             assertThat(event.followed()).isEqualTo(bob);
@@ -62,7 +62,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
     void unfollowingAUserNotFollowedChangesNothingAndAnnouncesNothing(AssertablePublishedEvents events) {
         following.unfollow(ada, bob);
 
-        assertThat(graph.isFollowing(ada, bob)).isFalse();
+        assertThat(followGraph.isFollowing(ada, bob)).isFalse();
         assertThat(events.ofType(UserUnfollowed.class)).isEmpty();
     }
 
@@ -72,7 +72,7 @@ class FollowingTest extends SocialModuleIntegrationTest {
 
         assertThatExceptionOfType(SelfFollowException.class).isThrownBy(() -> following.follow(self, self.asUserId()));
 
-        assertThat(graph.followingCount(self.asUserId())).isZero();
+        assertThat(followGraph.followingCount(self.asUserId())).isZero();
         assertThat(events.ofType(UserFollowed.class)).isEmpty();
     }
 }

@@ -1,11 +1,6 @@
 package me.imshy.pictogram.identity.internal.refreshtoken;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.domain.Persistable;
@@ -28,7 +23,8 @@ class RefreshToken implements Persistable<UUID> {
     @Transient
     private boolean unsaved;
 
-    protected RefreshToken() {}
+    protected RefreshToken() {
+    }
 
     RefreshToken(UUID familyId, UUID userId, String tokenHash, Instant issuedAt, Instant expiresAt) {
         this.id = UUID.randomUUID();

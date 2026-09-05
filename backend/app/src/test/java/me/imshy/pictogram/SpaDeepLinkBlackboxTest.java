@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 class SpaDeepLinkBlackboxTest {
 
     private final HttpProbe http = new HttpProbe(
-            Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
+        Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
 
     @Test
     void aDirectGetOnAClientRouteReturnsTheSpaShellAsHtml() {

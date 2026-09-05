@@ -13,7 +13,8 @@ final class RefreshCookie {
     static final String NAME = "pictogram_refresh";
     private static final String PATH = "/api/auth";
 
-    private RefreshCookie() {}
+    private RefreshCookie() {
+    }
 
     static ResponseCookie issue(String token, Duration maxAge, boolean secure) {
         return builder(token, secure).maxAge(maxAge).build();
@@ -28,18 +29,11 @@ final class RefreshCookie {
         if (cookies == null) {
             return Optional.empty();
         }
-        return Arrays.stream(cookies)
-                .filter(cookie -> NAME.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .filter(StringUtils::hasText)
-                .findFirst();
+        return Arrays.stream(cookies).filter(cookie -> NAME.equals(cookie.getName())).map(Cookie::getValue)
+            .filter(StringUtils::hasText).findFirst();
     }
 
     private static ResponseCookie.ResponseCookieBuilder builder(String value, boolean secure) {
-        return ResponseCookie.from(NAME, value)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Strict")
-                .path(PATH);
+        return ResponseCookie.from(NAME, value).httpOnly(true).secure(secure).sameSite("Strict").path(PATH);
     }
 }

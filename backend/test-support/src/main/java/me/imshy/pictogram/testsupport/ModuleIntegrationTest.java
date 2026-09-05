@@ -6,7 +6,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @ActiveProfiles("test")
-@ExtendWith({DatabaseTruncationExtension.class, ModuleSliceContextGuard.class})
+@ExtendWith({DatabaseTruncationExtension.class, ModuleSliceContextAmountGuard.class})
 public abstract class ModuleIntegrationTest {
 
     @DynamicPropertySource

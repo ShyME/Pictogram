@@ -74,13 +74,13 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
         onboarding.completeOnboarding(UserId.random(), "grace", null, null);
 
         assertThatExceptionOfType(UsernameAlreadyTakenException.class)
-                .isThrownBy(() -> editing.editProfile(ada, "grace", null, null));
+            .isThrownBy(() -> editing.editProfile(ada, "grace", null, null));
     }
 
     @Test
     void editingAProfileThatDoesNotExistIsNotFound() {
         assertThatExceptionOfType(ProfileNotFoundException.class)
-                .isThrownBy(() -> editing.editProfile(UserId.random(), "nobody", null, null));
+            .isThrownBy(() -> editing.editProfile(UserId.random(), "nobody", null, null));
     }
 
     @Test
@@ -89,7 +89,7 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
         onboarding.completeOnboarding(user, "ada", null, null);
 
         assertThatExceptionOfType(MalformedUsernameException.class)
-                .isThrownBy(() -> editing.editProfile(user, "No Good", null, null));
+            .isThrownBy(() -> editing.editProfile(user, "No Good", null, null));
     }
 
     @Test
@@ -98,7 +98,7 @@ class ProfileEditingTest extends ProfileModuleIntegrationTest {
         onboarding.completeOnboarding(user, "ada", null, null);
 
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-                .isThrownBy(() -> editing.editProfile(user, "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
+            .isThrownBy(() -> editing.editProfile(user, "ada", null, "x".repeat(Bio.MAX_LENGTH + 1)));
     }
 
     @Test

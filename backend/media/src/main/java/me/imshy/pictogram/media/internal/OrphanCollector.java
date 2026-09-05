@@ -21,19 +21,15 @@ class OrphanCollector implements OrphanCollection {
     private static final Limit BATCH = Limit.of(500);
 
     private final Medias medias;
-    private final BlobStore blobs;
+    private final BlobStore blobStore;
     private final PostReferences postReferences;
     private final Clock clock;
     private final Duration gracePeriod;
 
-    OrphanCollector(
-            Medias medias,
-            BlobStore blobs,
-            PostReferences postReferences,
-            Clock clock,
-            MediaRetentionProperties retention) {
+    OrphanCollector(Medias medias, BlobStore blobStore, PostReferences postReferences, Clock clock,
+        MediaRetentionProperties retention) {
         this.medias = medias;
-        this.blobs = blobs;
+        this.blobStore = blobStore;
         this.postReferences = postReferences;
         this.clock = clock;
         this.gracePeriod = retention.gracePeriod();
@@ -47,8 +43,7 @@ class OrphanCollector implements OrphanCollection {
             return 0;
         }
 
-        Set<MediaId> referenced = postReferences.referencedAmong(
-                candidates.stream().map(Media::mediaId).toList());
+        Set<MediaId> referenced = postReferences.referencedAmong(candidates.stream().map(Media::mediaId).toList());
         int collected = 0;
         for (Media media : candidates) {
             if (referenced.contains(media.mediaId())) {
@@ -68,8 +63,8 @@ class OrphanCollector implements OrphanCollection {
     private boolean delete(Media media) {
         MediaId mediaId = media.mediaId();
         try {
-            blobs.remove(StorageKeys.original(mediaId));
-            blobs.remove(StorageKeys.thumbnail(mediaId));
+            blobStore.remove(StorageKeys.original(mediaId));
+            blobStore.remove(StorageKeys.thumbnail(mediaId));
             medias.delete(media);
             return true;
         } catch (RuntimeException e) {

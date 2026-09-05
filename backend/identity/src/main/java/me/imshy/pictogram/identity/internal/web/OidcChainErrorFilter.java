@@ -28,7 +28,7 @@ class OidcChainErrorFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         try {
             chain.doFilter(request, response);
         } catch (UnusableGoogleAccountException unusable) {
@@ -44,8 +44,8 @@ class OidcChainErrorFilter extends OncePerRequestFilter {
             log.error("Unhandled failure in the Google sign-in filter chain", failure);
             completion.endHandshakeSession(request);
             response.reset();
-            var problem = ProblemDetail.forStatusAndDetail(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Sign-in could not be completed. The failure has been logged.");
+            var problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Sign-in could not be completed. The failure has been logged.");
             problem.setType(ProblemType.INTERNAL_ERROR.uri());
             problem.setTitle(ProblemType.INTERNAL_ERROR.title());
             ProblemDetails.write(response, objectMapper, problem);

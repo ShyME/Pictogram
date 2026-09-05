@@ -27,28 +27,16 @@ class FeedController {
         this.feed = feed;
     }
 
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "A page of the viewer's feed, newest post first."),
-        @ApiResponse(
-                responseCode = "400",
-                description = "The pagination cursor is malformed.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(
-                responseCode = "401",
-                description = "The caller has no valid access token.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class)))
-    })
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "A page of the viewer's feed, newest post first."),
+        @ApiResponse(responseCode = "400", description = "The pagination cursor is malformed.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @GetMapping
-    ApiPage<FeedPost> feed(
-            @CurrentUser ViewerId viewer,
-            @RequestParam(name = "cursor", required = false) String cursor,
-            @RequestParam(name = "limit", required = false) Integer limit) {
+    ApiPage<FeedPost> feed(@CurrentUser ViewerId viewer, @RequestParam(name = "cursor", required = false) String cursor,
+        @RequestParam(name = "limit", required = false) Integer limit) {
         Cursor after = cursor == null ? null : Cursor.decode(cursor);
         FeedQuery.Page page = feed.pageFor(viewer, after, limit);
         return ApiPage.of(page.posts(), page.nextCursor());

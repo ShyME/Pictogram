@@ -5,4 +5,5 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(MediaRetentionProperties.class)
-class MediaRetentionConfiguration {}
+class MediaRetentionConfiguration {
+}

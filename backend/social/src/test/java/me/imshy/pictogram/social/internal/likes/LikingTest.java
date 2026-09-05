@@ -21,7 +21,7 @@ class LikingTest extends SocialModuleIntegrationTest {
     Liking liking;
 
     @Autowired
-    LikeTally tally;
+    LikeTally likeTally;
 
     @Autowired
     PlatformTransactionManager transactionManager;
@@ -99,6 +99,6 @@ class LikingTest extends SocialModuleIntegrationTest {
     }
 
     private PostLikes likeStateFor(ViewerId viewer, PostId post) {
-        return tally.of(viewer, List.of(post)).getFirst();
+        return likeTally.of(viewer, List.of(post)).getFirst();
     }
 }

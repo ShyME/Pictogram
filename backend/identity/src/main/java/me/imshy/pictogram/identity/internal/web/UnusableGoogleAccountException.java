@@ -3,8 +3,7 @@ package me.imshy.pictogram.identity.internal.web;
 class UnusableGoogleAccountException extends RuntimeException {
 
     enum Reason {
-        EMAIL_UNVERIFIED("email-unverified"),
-        EMAIL_MISSING("email-missing");
+        EMAIL_UNVERIFIED("email-unverified"), EMAIL_MISSING("email-missing");
 
         private final String slug;
 

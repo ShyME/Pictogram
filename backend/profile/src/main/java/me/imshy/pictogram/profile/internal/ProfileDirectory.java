@@ -17,15 +17,12 @@ public class ProfileDirectory {
     }
 
     public ProfileView byUsername(String username) {
-        return profiles.findByUsername(username.toLowerCase(Locale.ROOT))
-                .map(ProfileView::of)
-                .orElseThrow(ProfileNotFoundException::new);
+        return profiles.findByUsername(username.toLowerCase(Locale.ROOT)).map(ProfileView::of)
+            .orElseThrow(ProfileNotFoundException::new);
     }
 
     public List<ProfileView> byIds(Collection<UserId> ids) {
         var keys = ids.stream().map(UserId::value).toList();
-        return StreamSupport.stream(profiles.findAllById(keys).spliterator(), false)
-                .map(ProfileView::of)
-                .toList();
+        return StreamSupport.stream(profiles.findAllById(keys).spliterator(), false).map(ProfileView::of).toList();
     }
 }

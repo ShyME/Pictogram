@@ -30,6 +30,4 @@ export function seedPostLikes(client: QueryClient, records: PostLikesById[]): vo
   );
 }
 
-// The feed loads a page of cards then seeds every post's like state from one batch call,
-// so the per-card LikeButtons read from cache instead of firing a request each (ADR-0005).
 export const prefetchPostLikes = cache.prime;

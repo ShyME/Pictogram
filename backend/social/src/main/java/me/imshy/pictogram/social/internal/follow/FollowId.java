@@ -9,7 +9,8 @@ class FollowId implements Serializable {
     private UUID followerId;
     private UUID followedId;
 
-    protected FollowId() {}
+    protected FollowId() {
+    }
 
     FollowId(UUID followerId, UUID followedId) {
         this.followerId = followerId;
@@ -18,9 +19,8 @@ class FollowId implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof FollowId that
-                && Objects.equals(followerId, that.followerId)
-                && Objects.equals(followedId, that.followedId);
+        return other instanceof FollowId that && Objects.equals(followerId, that.followerId)
+            && Objects.equals(followedId, that.followedId);
     }
 
     @Override

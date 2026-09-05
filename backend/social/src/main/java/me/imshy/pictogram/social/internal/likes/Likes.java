@@ -16,11 +16,11 @@ interface Likes extends CrudRepository<Like, LikeId> {
     int deleteByPostIdAndViewerId(UUID postId, UUID viewerId);
 
     @Query("""
-            select new me.imshy.pictogram.social.internal.likes.LikeCount(l.postId, count(l))
-            from Like l
-            where l.postId in :posts
-            group by l.postId
-            """)
+        select new me.imshy.pictogram.social.internal.likes.LikeCount(l.postId, count(l))
+        from Like l
+        where l.postId in :posts
+        group by l.postId
+        """)
     List<LikeCount> countsFor(@Param("posts") Collection<UUID> posts);
 
     @Query("select l.postId from Like l where l.viewerId = :viewer and l.postId in :posts")

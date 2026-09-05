@@ -17,12 +17,8 @@ class AccessTokensTest {
 
     private final MutableClock clock = MutableClock.at("2026-08-31T10:00:00Z");
     private final SigningKey key = SigningKey.generate();
-    private final AccessTokens accessTokens = new AccessTokens(
-            new NimbusJwtEncoder(key.jwkSource()),
-            AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock),
-            clock,
-            TTL,
-            ISSUER);
+    private final AccessTokens accessTokens = new AccessTokens(new NimbusJwtEncoder(key.jwkSource()),
+        AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock), clock, TTL, ISSUER);
 
     @Test
     void resolvesAFreshTokenBackToItsUser() {
@@ -42,21 +38,17 @@ class AccessTokensTest {
 
     @Test
     void rejectsATokenSignedByADifferentKey() {
-        var otherIssuer = new AccessTokens(
-                new NimbusJwtEncoder(SigningKey.generate().jwkSource()),
-                AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock),
-                clock,
-                TTL,
-                ISSUER);
+        var otherIssuer = new AccessTokens(new NimbusJwtEncoder(SigningKey.generate().jwkSource()),
+            AccessTokenVerification.decoder(key.jwkSource(), ISSUER, clock), clock, TTL, ISSUER);
         String foreignToken = otherIssuer.issue(UserId.random());
 
         assertThatExceptionOfType(InvalidAccessTokenException.class)
-                .isThrownBy(() -> accessTokens.resolve(foreignToken));
+            .isThrownBy(() -> accessTokens.resolve(foreignToken));
     }
 
     @Test
     void rejectsAGarbageString() {
         assertThatExceptionOfType(InvalidAccessTokenException.class)
-                .isThrownBy(() -> accessTokens.resolve("not.a.jwt"));
+            .isThrownBy(() -> accessTokens.resolve("not.a.jwt"));
     }
 }

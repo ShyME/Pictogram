@@ -35,9 +35,6 @@ export async function fetchCommentThread(
   };
 }
 
-// One batch call for the comment count of many posts, so the feed and the grid never fan
-// out a request per card (ADR-0005). A signed-out viewer reads the public count the same
-// way the feed's like counts do.
 export async function fetchCommentCountsBatch(postIds: string[]): Promise<PostCommentCountById[]> {
   if (postIds.length === 0) return [];
 

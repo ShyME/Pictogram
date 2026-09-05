@@ -19,20 +19,15 @@ class OpenApiContractTest {
     private static final Path SPEC_FILE = Path.of(System.getProperty("pictogram.openapi.file", "../openapi.json"));
 
     private static final JsonMapper CANONICAL = JsonMapper.builder()
-            .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .build();
+        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS).enable(SerializationFeature.INDENT_OUTPUT).build();
 
     @LocalServerPort
     private int port;
 
     @Test
     void committedSpecMatchesTheRunningApp() throws IOException {
-        String published = canonicalize(RestClient.create("http://localhost:" + port)
-                .get()
-                .uri("/v3/api-docs")
-                .retrieve()
-                .body(String.class));
+        String published = canonicalize(
+            RestClient.create("http://localhost:" + port).get().uri("/v3/api-docs").retrieve().body(String.class));
 
         if (Boolean.getBoolean("pictogram.openapi.generate")) {
             Files.writeString(SPEC_FILE, published, StandardCharsets.UTF_8);
@@ -43,8 +38,8 @@ class OpenApiContractTest {
             fail("%s does not exist. Run ./gradlew :app:generateOpenApiSpec and commit it.", SPEC_FILE);
         }
         assertThat(Files.readString(SPEC_FILE, StandardCharsets.UTF_8))
-                .describedAs("%s is stale. Run ./gradlew :app:generateOpenApiSpec and commit it.", SPEC_FILE)
-                .isEqualTo(published);
+            .describedAs("%s is stale. Run ./gradlew :app:generateOpenApiSpec and commit it.", SPEC_FILE)
+            .isEqualTo(published);
     }
 
     private static String canonicalize(String json) {

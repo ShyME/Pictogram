@@ -1,10 +1,6 @@
 package me.imshy.pictogram.testsupport;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 
 public final class MutableClock extends Clock {
 

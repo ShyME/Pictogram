@@ -23,7 +23,7 @@ class FollowListTest extends SocialModuleIntegrationTest {
     Following following;
 
     @Autowired
-    FollowList lists;
+    FollowList followList;
 
     @MockitoBean
     Clock clock;
@@ -41,7 +41,7 @@ class FollowListTest extends SocialModuleIntegrationTest {
         var ada = followAt("2026-09-01T10:00:00Z", carol);
         var bob = followAt("2026-09-01T11:00:00Z", carol);
 
-        FollowList.Page followers = lists.followersOf(carol, null, null);
+        FollowList.Page followers = followList.followersOf(carol, null, null);
 
         assertThat(followers.items()).containsExactly(bob, ada);
         assertThat(followers.nextCursor()).isNull();
@@ -57,7 +57,7 @@ class FollowListTest extends SocialModuleIntegrationTest {
         now = Instant.parse("2026-09-01T11:00:00Z");
         following.follow(ada, carol);
 
-        FollowList.Page followed = lists.followingOf(ada.asUserId(), null, null);
+        FollowList.Page followed = followList.followingOf(ada.asUserId(), null, null);
 
         assertThat(followed.items()).containsExactly(carol, bob);
     }
@@ -82,7 +82,7 @@ class FollowListTest extends SocialModuleIntegrationTest {
         followAt("2026-09-01T10:00:00Z", target);
         followAt("2026-09-01T10:00:00Z", target);
 
-        List<UserId> wholePage = lists.followersOf(target, null, 10).items();
+        List<UserId> wholePage = followList.followersOf(target, null, 10).items();
         List<UserId> oneAtATime = drainFollowers(target, 1);
 
         assertThat(oneAtATime).hasSize(3).doesNotHaveDuplicates();
@@ -97,7 +97,7 @@ class FollowListTest extends SocialModuleIntegrationTest {
             following.follow(viewer, UserId.random());
         }
 
-        List<UserId> wholePage = lists.followingOf(viewer.asUserId(), null, 10).items();
+        List<UserId> wholePage = followList.followingOf(viewer.asUserId(), null, 10).items();
         List<UserId> oneAtATime = drainFollowing(viewer.asUserId(), 1);
 
         assertThat(oneAtATime).hasSize(3).doesNotHaveDuplicates();
@@ -111,9 +111,9 @@ class FollowListTest extends SocialModuleIntegrationTest {
             followAt("2026-09-01T10:00:00Z", target);
         }
 
-        assertThat(lists.followersOf(target, null, null).items()).hasSize(FollowList.DEFAULT_LIMIT);
-        assertThat(lists.followersOf(target, null, 1000).items()).hasSize(FollowList.MAX_LIMIT);
-        assertThat(lists.followersOf(target, null, 0).items()).hasSize(1);
+        assertThat(followList.followersOf(target, null, null).items()).hasSize(FollowList.DEFAULT_LIMIT);
+        assertThat(followList.followersOf(target, null, 1000).items()).hasSize(FollowList.MAX_LIMIT);
+        assertThat(followList.followersOf(target, null, 0).items()).hasSize(1);
     }
 
     @Test
@@ -124,12 +124,12 @@ class FollowListTest extends SocialModuleIntegrationTest {
 
         following.unfollow(ViewerId.of(ada), carol);
 
-        assertThat(lists.followersOf(carol, null, null).items()).containsExactly(bob);
+        assertThat(followList.followersOf(carol, null, null).items()).containsExactly(bob);
     }
 
     @Test
     void aUserWithNoFollowersGetsAnEmptyLastPage() {
-        FollowList.Page page = lists.followersOf(UserId.random(), null, null);
+        FollowList.Page page = followList.followersOf(UserId.random(), null, null);
 
         assertThat(page.items()).isEmpty();
         assertThat(page.nextCursor()).isNull();
@@ -143,11 +143,11 @@ class FollowListTest extends SocialModuleIntegrationTest {
     }
 
     private List<UserId> drainFollowers(UserId target, int pageSize) {
-        return drain(pageSize, cursor -> lists.followersOf(target, cursor, pageSize));
+        return drain(pageSize, cursor -> followList.followersOf(target, cursor, pageSize));
     }
 
     private List<UserId> drainFollowing(UserId target, int pageSize) {
-        return drain(pageSize, cursor -> lists.followingOf(target, cursor, pageSize));
+        return drain(pageSize, cursor -> followList.followingOf(target, cursor, pageSize));
     }
 
     private List<UserId> drain(int pageSize, Function<Cursor, FollowList.Page> nextPage) {

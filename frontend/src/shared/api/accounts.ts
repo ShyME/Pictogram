@@ -2,9 +2,6 @@ import { api } from './client';
 import type { components } from './schema';
 import { throwIfSessionExpired } from './session';
 
-// The wire shape of a profile, reduced to what every screen needs to render an author or
-// an account row. One place normalises the nullable `ProfileView` fields (ADR-0005: the
-// client composes cards from batched `?ids=` reads, so this mapping is not per-feature).
 export type Account = {
   userId: string;
   username: string;

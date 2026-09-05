@@ -3,7 +3,7 @@ package me.imshy.pictogram.media.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.awt.Color;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -13,18 +13,19 @@ import org.junit.jupiter.api.Test;
 
 class ImagePipelineTest {
 
-    private final ImagePipeline pipeline = new ImagePipeline();
+    private final ImagePipeline imagePipeline = new ImagePipeline();
 
     @Test
     void bytesThatAreNotAnImageAreRejected() {
         var junk = "this is not an image".getBytes(StandardCharsets.UTF_8);
 
-        assertThatExceptionOfType(UndecodableImageException.class).isThrownBy(() -> pipeline.transcode(junk));
+        assertThatExceptionOfType(UndecodableImageException.class).isThrownBy(() -> imagePipeline.transcode(junk));
     }
 
     @Test
     void anEmptyUploadIsRejected() {
-        assertThatExceptionOfType(UndecodableImageException.class).isThrownBy(() -> pipeline.transcode(new byte[0]));
+        assertThatExceptionOfType(UndecodableImageException.class)
+            .isThrownBy(() -> imagePipeline.transcode(new byte[0]));
     }
 
     @Test
@@ -33,19 +34,18 @@ class ImagePipelineTest {
         ImageIO.write(new BufferedImage(64, 64, BufferedImage.TYPE_INT_RGB), "gif", gif);
 
         assertThatExceptionOfType(UndecodableImageException.class)
-                .isThrownBy(() -> pipeline.transcode(gif.toByteArray()));
+            .isThrownBy(() -> imagePipeline.transcode(gif.toByteArray()));
     }
 
     @Test
     void theWebpReaderPluginIsOnTheClasspath() {
         assertThat(ImageIO.getImageReadersByFormatName("webp").hasNext())
-                .as("imageio-webp must be registered for WebP uploads to decode")
-                .isTrue();
+            .as("imageio-webp must be registered for WebP uploads to decode").isTrue();
     }
 
     @Test
     void theOriginalIsAJpegAtTheOneCanonicalSquareSize() throws Exception {
-        var renditions = pipeline.transcode(TestImages.jpeg(1600, 900));
+        var renditions = imagePipeline.transcode(TestImages.jpeg(1600, 900));
 
         var original = ImageIO.read(new ByteArrayInputStream(renditions.original()));
         assertThat(original.getWidth()).isEqualTo(ImagePipeline.ORIGINAL_SIZE);
@@ -55,7 +55,7 @@ class ImagePipelineTest {
 
     @Test
     void theThumbnailIsAJpegAtTheThumbnailSquareSize() throws Exception {
-        var renditions = pipeline.transcode(TestImages.png(800, 1200));
+        var renditions = imagePipeline.transcode(TestImages.png(800, 1200));
 
         var thumbnail = ImageIO.read(new ByteArrayInputStream(renditions.thumbnail()));
         assertThat(thumbnail.getWidth()).isEqualTo(ImagePipeline.THUMBNAIL_SIZE);
@@ -68,7 +68,7 @@ class ImagePipelineTest {
         byte[] withLocation = TestImages.jpegWithLocation(1600, 1200);
         assertThat(Imaging.getMetadata(withLocation)).isNotNull();
 
-        var renditions = pipeline.transcode(withLocation);
+        var renditions = imagePipeline.transcode(withLocation);
 
         assertThat(Imaging.getMetadata(renditions.original())).isNull();
         assertThat(Imaging.getMetadata(renditions.thumbnail())).isNull();
@@ -78,8 +78,7 @@ class ImagePipelineTest {
     void theCanonicalRenditionIsUprightWhenTheUploadCarriesAnOrientationTag() throws Exception {
         byte[] rotated = TestImages.markedTopLeft(900, 600, 6);
 
-        var original = ImageIO.read(
-                new ByteArrayInputStream(pipeline.transcode(rotated).original()));
+        var original = ImageIO.read(new ByteArrayInputStream(imagePipeline.transcode(rotated).original()));
 
         assertThat(brightnessTopRight(original)).isLessThan(brightnessTopLeft(original));
     }
@@ -88,8 +87,7 @@ class ImagePipelineTest {
     void anUploadWithNoMeaningfulOrientationTagIsLeftAsItIs() throws Exception {
         byte[] plain = TestImages.markedTopLeft(900, 600, 1);
 
-        var original =
-                ImageIO.read(new ByteArrayInputStream(pipeline.transcode(plain).original()));
+        var original = ImageIO.read(new ByteArrayInputStream(imagePipeline.transcode(plain).original()));
 
         assertThat(brightnessTopLeft(original)).isLessThan(brightnessTopRight(original));
     }

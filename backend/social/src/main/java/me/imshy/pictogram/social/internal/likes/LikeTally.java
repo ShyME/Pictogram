@@ -2,11 +2,7 @@ package me.imshy.pictogram.social.internal.likes;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.social.LikeCounts;
@@ -42,8 +38,7 @@ public class LikeTally implements LikeCounts {
     private List<PostLikes> tally(List<UUID> ids, Set<UUID> likedByViewer) {
         Map<UUID, Long> counts = likes.countsFor(ids).stream().collect(toMap(LikeCount::postId, LikeCount::count));
         return ids.stream()
-                .map(id -> new PostLikes(new PostId(id), counts.getOrDefault(id, 0L), likedByViewer.contains(id)))
-                .toList();
+            .map(id -> new PostLikes(new PostId(id), counts.getOrDefault(id, 0L), likedByViewer.contains(id))).toList();
     }
 
     private static List<UUID> distinctIds(Collection<PostId> posts) {

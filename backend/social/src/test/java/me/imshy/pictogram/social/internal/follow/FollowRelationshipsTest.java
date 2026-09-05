@@ -19,7 +19,7 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
     Following following;
 
     @Autowired
-    FollowRelationships relationships;
+    FollowRelationships followRelationships;
 
     @Test
     void reportsEachRequestedUsersCountsAndWhetherTheViewerFollowsThem() {
@@ -32,7 +32,7 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
         following.follow(dan, bob);
         following.follow(ViewerId.of(bob), carol);
 
-        Map<UserId, Relationship> byId = index(relationships.of(viewer, List.of(bob, carol)));
+        Map<UserId, Relationship> byId = index(followRelationships.of(viewer, List.of(bob, carol)));
 
         assertThat(byId.get(bob)).isEqualTo(new Relationship(bob, 2, 1, true));
         assertThat(byId.get(carol)).isEqualTo(new Relationship(carol, 1, 0, false));
@@ -42,13 +42,13 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
     void returnsARecordForEveryRequestedIdIncludingOneWithNoEdges() {
         var stranger = UserId.random();
 
-        assertThat(relationships.of(ViewerId.random(), List.of(stranger)))
-                .containsExactly(new Relationship(stranger, 0, 0, false));
+        assertThat(followRelationships.of(ViewerId.random(), List.of(stranger)))
+            .containsExactly(new Relationship(stranger, 0, 0, false));
     }
 
     @Test
     void anEmptyRequestReturnsNothing() {
-        assertThat(relationships.of(ViewerId.random(), List.of())).isEmpty();
+        assertThat(followRelationships.of(ViewerId.random(), List.of())).isEmpty();
     }
 
     @Test
@@ -58,8 +58,8 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
         following.follow(viewer, other);
         following.follow(ViewerId.of(other), viewer.asUserId());
 
-        assertThat(relationships.of(viewer, List.of(viewer.asUserId())))
-                .containsExactly(new Relationship(viewer.asUserId(), 1, 1, false));
+        assertThat(followRelationships.of(viewer, List.of(viewer.asUserId())))
+            .containsExactly(new Relationship(viewer.asUserId(), 1, 1, false));
     }
 
     private static Map<UserId, Relationship> index(List<Relationship> rows) {

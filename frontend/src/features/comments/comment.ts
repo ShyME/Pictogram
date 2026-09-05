@@ -32,10 +32,6 @@ export function commentCountLabel(count: number): string {
   return count === 1 ? '1 comment' : `${count} comments`;
 }
 
-// A comment may be removed by its own author or by the post's author. The backend's single
-// source of truth is CommentThread.mayDelete (backend/social/.../internal/comment/CommentThread.java,
-// #156) — this only decides whether to show the control, and is tested against the same
-// three permission cases in comment.test.ts.
 export function canDeleteComment(
   comment: { authorId: string },
   viewerId: string | null,
@@ -54,7 +50,6 @@ export function commentLength(body: string): number {
   return [...body].length;
 }
 
-// http / https only; `@mention`s are deliberately left alone (#137).
 const URL_PATTERN = /\bhttps?:\/\/[^\s<]+[^\s<.,!?;:)\]}'"]/gi;
 
 export type CommentSegment = { text: string; href?: string };

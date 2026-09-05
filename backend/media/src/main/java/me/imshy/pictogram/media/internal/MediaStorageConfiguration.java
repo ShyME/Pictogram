@@ -16,13 +16,9 @@ class MediaStorageConfiguration {
 
     @Bean
     S3Client mediaS3Client(MediaStorageProperties storage) {
-        return S3Client.builder()
-                .endpointOverride(URI.create(storage.endpoint()))
-                .region(Region.of(storage.region()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(storage.accessKey(), storage.secretKey())))
-                .forcePathStyle(storage.pathStyleAccess())
-                .httpClientBuilder(UrlConnectionHttpClient.builder())
-                .build();
+        return S3Client.builder().endpointOverride(URI.create(storage.endpoint())).region(Region.of(storage.region()))
+            .credentialsProvider(
+                StaticCredentialsProvider.create(AwsBasicCredentials.create(storage.accessKey(), storage.secretKey())))
+            .forcePathStyle(storage.pathStyleAccess()).httpClientBuilder(UrlConnectionHttpClient.builder()).build();
     }
 }

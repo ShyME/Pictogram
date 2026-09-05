@@ -1,9 +1,7 @@
 package me.imshy.pictogram.identity.internal.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,22 +20,15 @@ import org.springframework.mock.web.MockHttpSession;
 
 class SignInCompletionTest {
 
-    private static final AuthProperties PROPERTIES = new AuthProperties(
-            Duration.ofMinutes(15),
-            Duration.ofDays(30),
-            Duration.ofSeconds(60),
-            "pictogram",
-            null,
-            "/home",
-            "/login?error=sign-in-failed",
-            false);
+    private static final AuthProperties PROPERTIES = new AuthProperties(Duration.ofMinutes(15), Duration.ofDays(30),
+        Duration.ofSeconds(60), "pictogram", null, "/home", "/login?error=sign-in-failed", false);
 
     private final SignInCompletion completion = new SignInCompletion(PROPERTIES);
 
     @FunctionalInterface
     private interface Outcome {
         void complete(SignInCompletion completion, HttpServletRequest request, HttpServletResponse response)
-                throws Exception;
+            throws Exception;
     }
 
     private static final Outcome SUCCEEDED = (c, req, res) -> c.succeeded(req, res, session("refresh-token-abc"));
@@ -51,12 +42,9 @@ class SignInCompletionTest {
 
         completion.succeeded(new MockHttpServletRequest(), response, session("refresh-token-abc"));
 
-        assertThat(response.getHeaders(HttpHeaders.SET_COOKIE))
-                .anySatisfy(header -> assertThat(header)
-                        .startsWith("pictogram_refresh=refresh-token-abc")
-                        .contains("Max-Age=" + Duration.ofDays(30).toSeconds())
-                        .contains("SameSite=Strict")
-                        .contains("Path=/api/auth"));
+        assertThat(response.getHeaders(HttpHeaders.SET_COOKIE)).anySatisfy(header -> assertThat(header)
+            .startsWith("pictogram_refresh=refresh-token-abc").contains("Max-Age=" + Duration.ofDays(30).toSeconds())
+            .contains("SameSite=Strict").contains("Path=/api/auth"));
         assertThat(response.getRedirectedUrl()).isEqualTo("/home");
     }
 
@@ -99,7 +87,7 @@ class SignInCompletionTest {
 
     @Test
     void everyOutcomeEndsTheHandshakeSessionExactlyOnce() throws Exception {
-        for (Outcome outcome : new Outcome[] {SUCCEEDED, UNUSABLE_UNVERIFIED, UNUSABLE_MISSING, FAILED}) {
+        for (Outcome outcome : new Outcome[]{SUCCEEDED, UNUSABLE_UNVERIFIED, UNUSABLE_MISSING, FAILED}) {
             HttpSession handshakeSession = spy(new MockHttpSession());
             var request = new MockHttpServletRequest();
             request.setSession(handshakeSession);
@@ -112,7 +100,7 @@ class SignInCompletionTest {
 
     @Test
     void endingTheHandshakeToleratesTheAbsenceOfAServletSession() throws Exception {
-        for (Outcome outcome : new Outcome[] {SUCCEEDED, UNUSABLE_MISSING, FAILED}) {
+        for (Outcome outcome : new Outcome[]{SUCCEEDED, UNUSABLE_MISSING, FAILED}) {
             var response = new MockHttpServletResponse();
 
             outcome.complete(completion, new MockHttpServletRequest(), response);
@@ -128,10 +116,7 @@ class SignInCompletionTest {
     }
 
     private static Session session(String refreshToken) {
-        return new Session(
-                "access-token",
-                Instant.now().plusSeconds(900),
-                refreshToken,
-                Instant.now().plusSeconds(3600));
+        return new Session("access-token", Instant.now().plusSeconds(900), refreshToken,
+            Instant.now().plusSeconds(3600));
     }
 }

@@ -1,7 +1,6 @@
 import { Fragment } from 'react';
 import { commentSegments } from './comment';
 
-// `@mention`s are deliberately not parsed (#137) — only bare URLs become links.
 export function CommentText({ body }: { body: string }) {
   return (
     <>

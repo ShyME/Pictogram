@@ -48,8 +48,8 @@ class CursorTest {
 
     @Test
     void rejectsABase64TokenWhoseIdIsNotAUuid() {
-        var badId =
-                Base64.getUrlEncoder().withoutPadding().encodeToString("2026-08-30T12:34:56Z|not-a-uuid".getBytes());
+        var badId = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("2026-08-30T12:34:56Z|not-a-uuid".getBytes());
 
         assertThatExceptionOfType(InvalidCursorException.class).isThrownBy(() -> Cursor.decode(badId));
     }

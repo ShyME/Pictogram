@@ -9,9 +9,7 @@ public final class UndecodableImageException extends ApiException {
     static final ProblemType TYPE = new ProblemType("media-undecodable", "Upload is not a readable image");
 
     public UndecodableImageException() {
-        super(
-                HttpStatus.BAD_REQUEST,
-                TYPE,
-                "The upload could not be read as an image. Supported formats are JPEG, PNG and WebP.");
+        super(HttpStatus.BAD_REQUEST, TYPE,
+            "The upload could not be read as an image. Supported formats are JPEG, PNG and WebP.");
     }
 }

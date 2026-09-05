@@ -36,7 +36,6 @@ class IdJsonTest {
         var media = MediaId.random();
 
         assertThat(json.readValue(json.writeValueAsString(post), PostId.class)).isEqualTo(post);
-        assertThat(json.readValue(json.writeValueAsString(media), MediaId.class))
-                .isEqualTo(media);
+        assertThat(json.readValue(json.writeValueAsString(media), MediaId.class)).isEqualTo(media);
     }
 }

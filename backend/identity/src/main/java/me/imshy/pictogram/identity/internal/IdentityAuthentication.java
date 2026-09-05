@@ -19,12 +19,8 @@ public class IdentityAuthentication {
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
-    IdentityAuthentication(
-            AppUsers users,
-            AccessTokens accessTokens,
-            RefreshTokenService refreshTokens,
-            ApplicationEventPublisher events,
-            Clock clock) {
+    IdentityAuthentication(AppUsers users, AccessTokens accessTokens, RefreshTokenService refreshTokens,
+        ApplicationEventPublisher events, Clock clock) {
         this.users = users;
         this.accessTokens = accessTokens;
         this.refreshTokens = refreshTokens;
@@ -35,17 +31,16 @@ public class IdentityAuthentication {
     @Transactional
     public Session authenticate(ExternalAccount account) {
         AppUser user = users.findByProviderAndSubject(account.provider(), account.subject())
-                .orElseGet(() -> register(account));
+            .orElseGet(() -> register(account));
         return session(refreshTokens.startSession(user.userId()));
     }
 
     private AppUser register(ExternalAccount account) {
         Instant now = clock.instant();
-        boolean weRegisteredThem =
-                users.insertIfAbsent(UUID.randomUUID(), account.provider(), account.subject(), account.email(), now)
-                        == 1;
+        boolean weRegisteredThem = users.insertIfAbsent(UUID.randomUUID(), account.provider(), account.subject(),
+            account.email(), now) == 1;
         AppUser user = users.findByProviderAndSubject(account.provider(), account.subject())
-                .orElseThrow(() -> new IllegalStateException("user vanished right after being registered"));
+            .orElseThrow(() -> new IllegalStateException("user vanished right after being registered"));
         if (weRegisteredThem) {
             events.publishEvent(new UserRegistered(user.userId(), user.email(), user.registeredAt()));
         }
@@ -61,10 +56,7 @@ public class IdentityAuthentication {
     }
 
     private Session session(RefreshTokenService.Issued refresh) {
-        return new Session(
-                accessTokens.issue(refresh.user()),
-                clock.instant().plus(accessTokens.ttl()),
-                refresh.token(),
-                refresh.expiresAt());
+        return new Session(accessTokens.issue(refresh.user()), clock.instant().plus(accessTokens.ttl()),
+            refresh.token(), refresh.expiresAt());
     }
 }

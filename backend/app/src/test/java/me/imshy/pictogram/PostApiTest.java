@@ -1,16 +1,11 @@
 package me.imshy.pictogram;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.jayway.jsonpath.JsonPath;
-import java.awt.Color;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
@@ -30,12 +25,9 @@ class PostApiTest {
 
     @Test
     void publishingNeedsAToken() throws Exception {
-        mvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID())))
-                .andExpect(status().isUnauthorized())
-                .andExpect(
-                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(post("/api/posts").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID()))).andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -43,23 +35,19 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(author);
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\",\"caption\":\"sunset over the bay\"}".formatted(mediaId)))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.postId").exists())
-                .andExpect(jsonPath("$.authorId").value(author))
-                .andExpect(jsonPath("$.mediaId").value(mediaId))
-                .andExpect(jsonPath("$.caption").value("sunset over the bay"));
+        mvc.perform(
+            post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author))).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"mediaId\":\"%s\",\"caption\":\"sunset over the bay\"}".formatted(mediaId)))
+            .andExpect(status().isCreated()).andExpect(header().exists("Location"))
+            .andExpect(jsonPath("$.postId").exists()).andExpect(jsonPath("$.authorId").value(author))
+            .andExpect(jsonPath("$.mediaId").value(mediaId))
+            .andExpect(jsonPath("$.caption").value("sunset over the bay"));
 
-        mvc.perform(get("/api/posts").param("author", author))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(1))
-                .andExpect(jsonPath("$.items[0].caption").value("sunset over the bay"))
-                .andExpect(jsonPath("$.items[0].mediaId").value(mediaId))
-                .andExpect(jsonPath("$.nextCursor").doesNotExist());
+        mvc.perform(get("/api/posts").param("author", author)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(1))
+            .andExpect(jsonPath("$.items[0].caption").value("sunset over the bay"))
+            .andExpect(jsonPath("$.items[0].mediaId").value(mediaId))
+            .andExpect(jsonPath("$.nextCursor").doesNotExist());
     }
 
     @Test
@@ -67,9 +55,8 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
         publish(author, uploadPhoto(author), "a post");
 
-        mvc.perform(get("/api/posts").param("author", author))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(1));
+        mvc.perform(get("/api/posts").param("author", author)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(1));
     }
 
     @Test
@@ -77,12 +64,11 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(author);
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, "x".repeat(2201))))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-caption-too-long"));
+        mvc.perform(
+            post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author))).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, "x".repeat(2201))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-caption-too-long"));
     }
 
     @Test
@@ -91,55 +77,42 @@ class PostApiTest {
         var interloper = UUID.randomUUID().toString();
         String mediaId = uploadPhoto(owner);
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(interloper)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\"}".formatted(mediaId)))
-                .andExpect(status().is(422))
-                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
+        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(interloper)))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"mediaId\":\"%s\"}".formatted(mediaId)))
+            .andExpect(status().is(422)).andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
     }
 
     @Test
     void publishingAMediaIdNoMediaHasIsTheSameUnprocessableEntity() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID())))
-                .andExpect(status().is(422))
-                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
+        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"mediaId\":\"%s\"}".formatted(UUID.randomUUID())))
+            .andExpect(status().is(422)).andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
     }
 
     @Test
     void publishingWithNoMediaIdIsAProblemDetailNotAServerError() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"caption\":\"no photo\"}"))
-                .andExpect(status().is(422))
-                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
+        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"caption\":\"no photo\"}")).andExpect(status().is(422))
+            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-media-unusable"));
     }
 
     @Test
     void publishingWithAMalformedMediaIdIsABadRequestNotAServerError() throws Exception {
         var author = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"not-a-uuid\"}"))
-                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"mediaId\":\"not-a-uuid\"}"))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
     void deletingNeedsAToken() throws Exception {
-        mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID()))
-                .andExpect(status().isUnauthorized())
-                .andExpect(
-                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID())).andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -148,11 +121,10 @@ class PostApiTest {
         String postId = publish(author, uploadPhoto(author), "delete me");
 
         mvc.perform(delete("/api/posts/{postId}", postId).with(jwt().jwt(jwt -> jwt.subject(author))))
-                .andExpect(status().isNoContent());
+            .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/posts").param("author", author))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(0));
+        mvc.perform(get("/api/posts").param("author", author)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(0));
     }
 
     @Test
@@ -162,11 +134,10 @@ class PostApiTest {
         String postId = publish(author, uploadPhoto(author), "not yours");
 
         mvc.perform(delete("/api/posts/{postId}", postId).with(jwt().jwt(jwt -> jwt.subject(interloper))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
 
-        mvc.perform(get("/api/posts").param("author", author))
-                .andExpect(jsonPath("$.items.length()").value(1));
+        mvc.perform(get("/api/posts").param("author", author)).andExpect(jsonPath("$.items.length()").value(1));
     }
 
     @Test
@@ -174,24 +145,21 @@ class PostApiTest {
         var author = UUID.randomUUID().toString();
 
         mvc.perform(delete("/api/posts/{postId}", UUID.randomUUID()).with(jwt().jwt(jwt -> jwt.subject(author))))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-not-found"));
+            .andExpect(status().isNotFound()).andExpect(jsonPath("$.type").value(ProblemType.BASE + "post-not-found"));
     }
 
     private String uploadPhoto(String owner) throws Exception {
         var result = mvc.perform(multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(owner))))
-                .andExpect(status().isCreated())
-                .andReturn();
+            .andExpect(status().isCreated()).andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.mediaId");
     }
 
     private String publish(String author, String mediaId, String caption) throws Exception {
-        var result = mvc.perform(post("/api/posts")
-                        .with(jwt().jwt(jwt -> jwt.subject(author)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, caption)))
-                .andExpect(status().isCreated())
-                .andReturn();
+        var result = mvc
+            .perform(
+                post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author))).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"mediaId\":\"%s\",\"caption\":\"%s\"}".formatted(mediaId, caption)))
+            .andExpect(status().isCreated()).andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.postId");
     }
 

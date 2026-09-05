@@ -42,7 +42,10 @@ dependencies {
 spotless {
     java {
         target("src/**/*.java")
-        palantirJavaFormat("2.97.0")
+        eclipse()
+            .configFile(
+                rootProject.layout.projectDirectory.file("config/eclipse-java-formatter.xml")
+            )
         removeUnusedImports()
         importOrder()
         formatAnnotations()

@@ -15,11 +15,11 @@ public interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
 
     @Modifying
     @Query("update RefreshToken t set t.consumedAt = :when "
-            + "where t.id = :id and t.consumedAt is null and t.revokedAt is null")
+        + "where t.id = :id and t.consumedAt is null and t.revokedAt is null")
     int consumeIfLive(@Param("id") UUID id, @Param("when") Instant when);
 
     @Query("select new me.imshy.pictogram.identity.internal.refreshtoken.SpentState(t.consumedAt, t.revokedAt) "
-            + "from RefreshToken t where t.id = :id")
+        + "from RefreshToken t where t.id = :id")
     Optional<SpentState> spentStateById(@Param("id") UUID id);
 
     @Transactional

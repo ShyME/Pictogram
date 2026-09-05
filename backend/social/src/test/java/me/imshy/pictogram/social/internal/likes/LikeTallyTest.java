@@ -19,7 +19,7 @@ class LikeTallyTest extends SocialModuleIntegrationTest {
     Liking liking;
 
     @Autowired
-    LikeTally tally;
+    LikeTally likeTally;
 
     @Test
     void reportsEachRequestedPostsCountAndWhetherTheViewerLikedIt() {
@@ -32,7 +32,7 @@ class LikeTallyTest extends SocialModuleIntegrationTest {
         liking.like(bob, liked);
         liking.like(bob, likedByOthersOnly);
 
-        Map<PostId, PostLikes> byId = index(tally.of(ada, List.of(liked, likedByOthersOnly)));
+        Map<PostId, PostLikes> byId = index(likeTally.of(ada, List.of(liked, likedByOthersOnly)));
 
         assertThat(byId.get(liked)).isEqualTo(new PostLikes(liked, 2, true));
         assertThat(byId.get(likedByOthersOnly)).isEqualTo(new PostLikes(likedByOthersOnly, 1, false));
@@ -42,12 +42,13 @@ class LikeTallyTest extends SocialModuleIntegrationTest {
     void returnsARecordForEveryRequestedIdIncludingOneWithNoLikes() {
         var untouched = PostId.random();
 
-        assertThat(tally.of(ViewerId.random(), List.of(untouched))).containsExactly(new PostLikes(untouched, 0, false));
+        assertThat(likeTally.of(ViewerId.random(), List.of(untouched)))
+            .containsExactly(new PostLikes(untouched, 0, false));
     }
 
     @Test
     void anEmptyRequestReturnsNothing() {
-        assertThat(tally.of(ViewerId.random(), List.of())).isEmpty();
+        assertThat(likeTally.of(ViewerId.random(), List.of())).isEmpty();
     }
 
     @Test
@@ -59,7 +60,7 @@ class LikeTallyTest extends SocialModuleIntegrationTest {
         liking.like(bob, liked);
         liking.like(ViewerId.random(), liked);
 
-        Map<PostId, PostLikes> byId = index(tally.of(List.of(liked, untouched)));
+        Map<PostId, PostLikes> byId = index(likeTally.of(List.of(liked, untouched)));
 
         assertThat(byId.get(liked)).isEqualTo(new PostLikes(liked, 2, false));
         assertThat(byId.get(untouched)).isEqualTo(new PostLikes(untouched, 0, false));
@@ -67,7 +68,7 @@ class LikeTallyTest extends SocialModuleIntegrationTest {
 
     @Test
     void anEmptyRequestWithoutAViewerReturnsNothing() {
-        assertThat(tally.of(List.of())).isEmpty();
+        assertThat(likeTally.of(List.of())).isEmpty();
     }
 
     private static Map<PostId, PostLikes> index(List<PostLikes> rows) {

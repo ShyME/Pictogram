@@ -13,29 +13,29 @@ import org.springframework.transaction.annotation.Transactional;
 interface Comments extends CrudRepository<Comment, UUID> {
 
     @Query("""
-            select new me.imshy.pictogram.social.internal.comment.CommentCount(c.postId, count(c))
-            from Comment c
-            where c.postId in :posts
-            group by c.postId
-            """)
+        select new me.imshy.pictogram.social.internal.comment.CommentCount(c.postId, count(c))
+        from Comment c
+        where c.postId in :posts
+        group by c.postId
+        """)
     List<CommentCount> countsFor(@Param("posts") Collection<UUID> posts);
 
     @Transactional
     int deleteByPostId(UUID postId);
 
     @Query("""
-            select c from Comment c
-            where c.postId = :post
-            order by c.createdAt asc, c.id asc
-            """)
+        select c from Comment c
+        where c.postId = :post
+        order by c.createdAt asc, c.id asc
+        """)
     List<Comment> oldestFor(@Param("post") UUID post, Limit limit);
 
     @Query("""
-            select c from Comment c
-            where c.postId = :post
-              and (c.createdAt > :afterAt or (c.createdAt = :afterAt and c.id > :afterId))
-            order by c.createdAt asc, c.id asc
-            """)
-    List<Comment> afterFor(
-            @Param("post") UUID post, @Param("afterAt") Instant afterAt, @Param("afterId") UUID afterId, Limit limit);
+        select c from Comment c
+        where c.postId = :post
+          and (c.createdAt > :afterAt or (c.createdAt = :afterAt and c.id > :afterId))
+        order by c.createdAt asc, c.id asc
+        """)
+    List<Comment> afterFor(@Param("post") UUID post, @Param("afterAt") Instant afterAt, @Param("afterId") UUID afterId,
+        Limit limit);
 }

@@ -37,17 +37,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> handleUnexpected(Exception ex) {
         log.error("Unhandled exception serving an API request", ex);
-        var body = ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "The server could not process the request. The failure has been logged.");
+        var body = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+            "The server could not process the request. The failure has been logged.");
         body.setType(ProblemType.INTERNAL_ERROR.uri());
         body.setTitle(ProblemType.INTERNAL_ERROR.title());
         return problem(body);
     }
 
     private static ResponseEntity<ProblemDetail> problem(ProblemDetail body) {
-        return ResponseEntity.status(body.getStatus())
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(body);
+        return ResponseEntity.status(body.getStatus()).contentType(MediaType.APPLICATION_PROBLEM_JSON).body(body);
     }
 }

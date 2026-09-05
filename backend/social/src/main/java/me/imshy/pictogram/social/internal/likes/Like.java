@@ -1,13 +1,6 @@
 package me.imshy.pictogram.social.internal.likes;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 import me.imshy.pictogram.shared.PostId;
@@ -33,7 +26,8 @@ class Like implements Persistable<LikeId> {
     @Transient
     private boolean persisted;
 
-    protected Like() {}
+    protected Like() {
+    }
 
     private Like(UUID postId, UUID viewerId, Instant likedAt) {
         this.postId = postId;

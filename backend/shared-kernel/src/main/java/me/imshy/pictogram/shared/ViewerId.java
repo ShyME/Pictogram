@@ -2,6 +2,7 @@ package me.imshy.pictogram.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Objects;
 import java.util.UUID;
 

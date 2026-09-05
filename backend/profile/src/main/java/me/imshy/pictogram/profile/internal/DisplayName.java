@@ -11,7 +11,7 @@ record DisplayName(String value) {
         String trimmed = raw.strip();
         if (trimmed.codePoints().anyMatch(Character::isISOControl)) {
             throw new InvalidProfileDetailsException(
-                    "A display name may not contain line breaks or control characters.");
+                "A display name may not contain line breaks or control characters.");
         }
         if (trimmed.codePointCount(0, trimmed.length()) > MAX_LENGTH) {
             throw new InvalidProfileDetailsException("A display name may be at most " + MAX_LENGTH + " characters.");

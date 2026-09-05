@@ -22,10 +22,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 class AuthoredPostsTest extends PostModuleIntegrationTest {
 
     @Autowired
-    Publishing publishing;
+    PostPublishing postPublishing;
 
     @Autowired
-    PostDeletion deletion;
+    PostDeletion postDeletion;
 
     @Autowired
     PublishedPosts publishedPosts;
@@ -63,16 +63,10 @@ class AuthoredPostsTest extends PostModuleIntegrationTest {
             published.add(publishAt(author, "2026-09-01T10:0%d:00Z".formatted(minute)));
         }
 
-        List<PostId> seen = drain(List.of(ada, bob), 2);
+        List<PostId> seen = getPosts(List.of(ada, bob), 2);
 
-        assertThat(seen)
-                .containsExactly(
-                        published.get(5),
-                        published.get(4),
-                        published.get(3),
-                        published.get(2),
-                        published.get(1),
-                        published.get(0));
+        assertThat(seen).containsExactly(published.get(5), published.get(4), published.get(3), published.get(2),
+            published.get(1), published.get(0));
     }
 
     @Test
@@ -85,7 +79,7 @@ class AuthoredPostsTest extends PostModuleIntegrationTest {
         publishAt(bob, "2026-09-01T10:00:00Z");
 
         List<PostId> wholePage = ids(publishedPosts.byAuthors(List.of(ada, bob), null, 10));
-        List<PostId> pagedOneAtATime = drain(List.of(ada, bob), 1);
+        List<PostId> pagedOneAtATime = getPosts(List.of(ada, bob), 1);
 
         assertThat(pagedOneAtATime).hasSize(4).doesNotHaveDuplicates();
         assertThat(pagedOneAtATime).containsExactlyElementsOf(wholePage);
@@ -109,7 +103,7 @@ class AuthoredPostsTest extends PostModuleIntegrationTest {
         var keep = publishAt(ada, "2026-09-01T10:00:00Z");
         var drop = publishAt(ada, "2026-09-01T11:00:00Z");
 
-        deletion.delete(ada, drop);
+        postDeletion.delete(ada, drop);
 
         assertThat(ids(publishedPosts.byAuthors(List.of(ada), null, 10))).containsExactly(keep);
     }
@@ -143,15 +137,15 @@ class AuthoredPostsTest extends PostModuleIntegrationTest {
     private PostId publishAt(UserId author, String instant) {
         now = Instant.parse(instant);
         var mediaId = MediaId.random();
-        given(media.ownerOf(mediaId)).willReturn(Optional.of(author));
-        return publishing.publish(author, mediaId, null).postId();
+        given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(author));
+        return postPublishing.publish(author, mediaId, null).postId();
     }
 
     private static List<PostId> ids(PublishedPosts.Page page) {
         return page.posts().stream().map(PublishedPost::postId).toList();
     }
 
-    private List<PostId> drain(List<UserId> authors, int pageSize) {
+    private List<PostId> getPosts(List<UserId> authors, int pageSize) {
         List<PostId> ids = new ArrayList<>();
         Cursor cursor = null;
         do {

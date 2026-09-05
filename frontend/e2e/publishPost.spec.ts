@@ -34,8 +34,7 @@ test('publish a post: pick a photo, crop, caption, and see it in the grid', asyn
   await compose.selectPhoto(PHOTO);
   await expect(compose.zoom).toBeVisible();
   await compose.frameShot();
-  // The crop is the one screen that computes a style at runtime; pin it here, not only at
-  // teardown, so a regression points straight at the cropper.
+
   expect(cspViolations).toEqual([]);
 
   await compose.caption.fill(caption);

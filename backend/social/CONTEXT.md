@@ -15,7 +15,7 @@ later re-extraction is still cheap: each sub-domain keeps its own package, and `
 ## Internal shape
 
 `social.internal` has one package per sub-domain — `follow`, `feed`, `likes`, `comment` —
-and `InternalSlicingTest` forbids them from reaching into each other. The one seam between
+and `ModuleInternalSlicingTest` forbids them from reaching into each other. The one seam between
 them is **`FollowGraph`** (in `social.internal`, one level up from the slices): `feed` reads
 it to fan out, `follow` implements it. It sits above the slices deliberately, so the
 feed → follow direction is a single visible interface rather than a slice violation.

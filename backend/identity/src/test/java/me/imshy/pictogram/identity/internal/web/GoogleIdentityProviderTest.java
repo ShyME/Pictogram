@@ -28,18 +28,16 @@ class GoogleIdentityProviderTest {
     void anUnverifiedEmailIsRejected() {
         OidcUser user = oidcUser("google-sub-2", "grace@example.com", false);
 
-        assertThatExceptionOfType(UnusableGoogleAccountException.class)
-                .isThrownBy(() -> google.verify(user))
-                .satisfies(ex -> assertThat(ex.reason()).isEqualTo(Reason.EMAIL_UNVERIFIED));
+        assertThatExceptionOfType(UnusableGoogleAccountException.class).isThrownBy(() -> google.verify(user))
+            .satisfies(ex -> assertThat(ex.reason()).isEqualTo(Reason.EMAIL_UNVERIFIED));
     }
 
     @Test
     void aMissingEmailClaimIsRejected() {
         OidcUser user = oidcUser("google-sub-3", null, true);
 
-        assertThatExceptionOfType(UnusableGoogleAccountException.class)
-                .isThrownBy(() -> google.verify(user))
-                .satisfies(ex -> assertThat(ex.reason()).isEqualTo(Reason.EMAIL_MISSING));
+        assertThatExceptionOfType(UnusableGoogleAccountException.class).isThrownBy(() -> google.verify(user))
+            .satisfies(ex -> assertThat(ex.reason()).isEqualTo(Reason.EMAIL_MISSING));
     }
 
     private static OidcUser oidcUser(String subject, String email, boolean emailVerified) {

@@ -12,12 +12,7 @@ import me.imshy.pictogram.identity.internal.IdentityAuthentication;
 import me.imshy.pictogram.identity.internal.InvalidRefreshTokenException;
 import me.imshy.pictogram.identity.internal.Session;
 import me.imshy.pictogram.shared.http.ProblemType;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,8 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 class AuthController {
 
-    private static final ProblemType SESSION_INVALID =
-            new ProblemType("session-invalid", "Your session is no longer valid");
+    private static final ProblemType SESSION_INVALID = new ProblemType("session-invalid",
+        "Your session is no longer valid");
 
     private final IdentityAuthentication authentication;
     private final AuthProperties properties;
@@ -39,26 +34,17 @@ class AuthController {
         this.clock = clock;
     }
 
-    record AccessTokenResponse(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-            String accessToken,
+    record AccessTokenResponse(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String accessToken,
 
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-            long expiresInSeconds) {}
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long expiresInSeconds) {
+    }
 
     @ApiResponses({
-        @ApiResponse(
-                responseCode = "200",
-                description = "A fresh access token; the refresh cookie is rotated.",
-                content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))),
-        @ApiResponse(
-                responseCode = "401",
-                description = "The refresh cookie is missing, already used, or expired.",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                                schema = @Schema(implementation = ProblemDetail.class)))
-    })
+        @ApiResponse(responseCode = "200", description = "A fresh access token; the refresh cookie is rotated.",
+            content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))),
+        @ApiResponse(responseCode = "401", description = "The refresh cookie is missing, already used, or expired.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @PostMapping("/refresh")
     ResponseEntity<?> refresh(HttpServletRequest request) {
         String presented = RefreshCookie.readFrom(request).orElse(null);
@@ -71,11 +57,9 @@ class AuthController {
         } catch (InvalidRefreshTokenException invalid) {
             return sessionInvalid();
         }
-        long expiresIn = Duration.between(clock.instant(), session.accessTokenExpiresAt())
-                .toSeconds();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(session).toString())
-                .body(new AccessTokenResponse(session.accessToken(), expiresIn));
+        long expiresIn = Duration.between(clock.instant(), session.accessTokenExpiresAt()).toSeconds();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, refreshCookie(session).toString())
+            .body(new AccessTokenResponse(session.accessToken(), expiresIn));
     }
 
     @ApiResponse(responseCode = "204", description = "The session is ended and the refresh cookie cleared.")
@@ -83,10 +67,7 @@ class AuthController {
     ResponseEntity<Void> logout(HttpServletRequest request) {
         RefreshCookie.readFrom(request).ifPresent(authentication::signOut);
         return ResponseEntity.noContent()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        RefreshCookie.expired(properties.cookieSecure()).toString())
-                .build();
+            .header(HttpHeaders.SET_COOKIE, RefreshCookie.expired(properties.cookieSecure()).toString()).build();
     }
 
     private ResponseCookie refreshCookie(Session session) {
@@ -97,11 +78,7 @@ class AuthController {
         var problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Sign in again to continue.");
         problem.setType(SESSION_INVALID.uri());
         problem.setTitle(SESSION_INVALID.title());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        RefreshCookie.expired(properties.cookieSecure()).toString())
-                .body(problem);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .header(HttpHeaders.SET_COOKIE, RefreshCookie.expired(properties.cookieSecure()).toString()).body(problem);
     }
 }

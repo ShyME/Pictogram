@@ -2,11 +2,7 @@ package me.imshy.pictogram.social.internal.follow;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import org.springframework.stereotype.Service;
@@ -30,18 +26,14 @@ public class FollowRelationships {
         Map<UUID, Long> following = tally(follows.followingCounts(ids));
         Set<UUID> followed = Set.copyOf(follows.followedByViewerAmong(viewer.value(), ids));
 
-        return ids.stream()
-                .map(id -> new Relationship(
-                        new UserId(id),
-                        followers.getOrDefault(id, 0L),
-                        following.getOrDefault(id, 0L),
-                        followed.contains(id)))
-                .toList();
+        return ids.stream().map(id -> new Relationship(new UserId(id), followers.getOrDefault(id, 0L),
+            following.getOrDefault(id, 0L), followed.contains(id))).toList();
     }
 
     private static Map<UUID, Long> tally(List<FollowCount> counts) {
         return counts.stream().collect(toMap(FollowCount::userId, FollowCount::count));
     }
 
-    public record Relationship(UserId user, long followerCount, long followingCount, boolean followedByViewer) {}
+    public record Relationship(UserId user, long followerCount, long followingCount, boolean followedByViewer) {
+    }
 }

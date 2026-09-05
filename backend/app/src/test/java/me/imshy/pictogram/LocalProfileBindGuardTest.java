@@ -9,30 +9,30 @@ class LocalProfileBindGuardTest {
 
     @Test
     void localProfileOnAWildcardBindIsRejected() {
-        assertThatIllegalStateException()
-                .isThrownBy(() -> LocalProfileBindGuard.verify(true, "0.0.0.0"))
-                .withMessageContaining("loopback");
+        assertThatIllegalStateException().isThrownBy(() -> LocalProfileBindGuard.isLocalAndLoopback(true, "0.0.0.0"))
+            .withMessageContaining("loopback");
     }
 
     @Test
     void localProfileOnARoutableAddressIsRejected() {
-        assertThatIllegalStateException().isThrownBy(() -> LocalProfileBindGuard.verify(true, "192.168.1.5"));
+        assertThatIllegalStateException()
+            .isThrownBy(() -> LocalProfileBindGuard.isLocalAndLoopback(true, "192.168.1.5"));
     }
 
     @Test
     void localProfileOnLoopbackIsAllowed() {
-        assertThatCode(() -> LocalProfileBindGuard.verify(true, "127.0.0.1")).doesNotThrowAnyException();
-        assertThatCode(() -> LocalProfileBindGuard.verify(true, "localhost")).doesNotThrowAnyException();
+        assertThatCode(() -> LocalProfileBindGuard.isLocalAndLoopback(true, "127.0.0.1")).doesNotThrowAnyException();
+        assertThatCode(() -> LocalProfileBindGuard.isLocalAndLoopback(true, "localhost")).doesNotThrowAnyException();
     }
 
     @Test
     void anUnsetBindAddressIsTheDeveloperDefaultAndAllowed() {
-        assertThatCode(() -> LocalProfileBindGuard.verify(true, null)).doesNotThrowAnyException();
-        assertThatCode(() -> LocalProfileBindGuard.verify(true, "  ")).doesNotThrowAnyException();
+        assertThatCode(() -> LocalProfileBindGuard.isLocalAndLoopback(true, null)).doesNotThrowAnyException();
+        assertThatCode(() -> LocalProfileBindGuard.isLocalAndLoopback(true, "  ")).doesNotThrowAnyException();
     }
 
     @Test
     void aNonLocalProfileIsNotConstrained() {
-        assertThatCode(() -> LocalProfileBindGuard.verify(false, "0.0.0.0")).doesNotThrowAnyException();
+        assertThatCode(() -> LocalProfileBindGuard.isLocalAndLoopback(false, "0.0.0.0")).doesNotThrowAnyException();
     }
 }

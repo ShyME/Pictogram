@@ -29,38 +29,25 @@ class CurrentUserArgumentResolverTest {
     }
 
     @SuppressWarnings("unused")
-    void sample(
-            @CurrentUser UserId userId,
-            @CurrentUser ViewerId viewerId,
-            @CurrentUser Optional<ViewerId> maybeViewer,
-            @CurrentUser Optional<UserId> maybeUser,
-            String notAnnotated) {}
+    void sample(@CurrentUser UserId userId, @CurrentUser ViewerId viewerId, @CurrentUser Optional<ViewerId> maybeViewer,
+        @CurrentUser Optional<UserId> maybeUser, String notAnnotated) {
+    }
 
     private MethodParameter parameter(int index) {
-        Method method = ReflectionUtils.findMethod(
-                CurrentUserArgumentResolverTest.class,
-                "sample",
-                UserId.class,
-                ViewerId.class,
-                Optional.class,
-                Optional.class,
-                String.class);
+        Method method = ReflectionUtils.findMethod(CurrentUserArgumentResolverTest.class, "sample", UserId.class,
+            ViewerId.class, Optional.class, Optional.class, String.class);
         return new MethodParameter(method, index);
     }
 
     private void signedInAs(UUID userId) {
-        Jwt jwt = Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .subject(userId.toString())
-                .build();
+        Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").subject(userId.toString()).build();
         SecurityContextHolder.getContext()
-                .setAuthentication(new JwtAuthenticationToken(jwt, AuthorityUtils.NO_AUTHORITIES));
+            .setAuthentication(new JwtAuthenticationToken(jwt, AuthorityUtils.NO_AUTHORITIES));
     }
 
     private void anonymous() {
-        SecurityContextHolder.getContext()
-                .setAuthentication(new AnonymousAuthenticationToken(
-                        "key", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS")));
+        SecurityContextHolder.getContext().setAuthentication(new AnonymousAuthenticationToken("key", "anonymousUser",
+            AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS")));
     }
 
     @Test
@@ -85,7 +72,7 @@ class CurrentUserArgumentResolverTest {
         signedInAs(subject);
 
         assertThat(resolver.resolveArgument(parameter(2), null, null, null))
-                .isEqualTo(Optional.of(new ViewerId(subject)));
+            .isEqualTo(Optional.of(new ViewerId(subject)));
     }
 
     @Test
@@ -101,6 +88,6 @@ class CurrentUserArgumentResolverTest {
         anonymous();
 
         assertThatExceptionOfType(UnauthenticatedException.class)
-                .isThrownBy(() -> resolver.resolveArgument(parameter(1), null, null, null));
+            .isThrownBy(() -> resolver.resolveArgument(parameter(1), null, null, null));
     }
 }

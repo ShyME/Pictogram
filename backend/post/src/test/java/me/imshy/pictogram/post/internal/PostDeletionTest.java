@@ -17,10 +17,10 @@ import org.springframework.modulith.test.AssertablePublishedEvents;
 class PostDeletionTest extends PostModuleIntegrationTest {
 
     @Autowired
-    Publishing publishing;
+    PostPublishing postPublishing;
 
     @Autowired
-    PostDeletion deletion;
+    PostDeletion postDeletion;
 
     @Autowired
     PostTimeline timeline;
@@ -29,10 +29,10 @@ class PostDeletionTest extends PostModuleIntegrationTest {
     void deletesTheAuthorsOwnPostAndItLeavesTheirGrid(AssertablePublishedEvents events) {
         var author = UserId.random();
         var mediaId = MediaId.random();
-        given(media.ownerOf(mediaId)).willReturn(Optional.of(author));
-        PostView post = publishing.publish(author, mediaId, "goodbye");
+        given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(author));
+        PostView post = postPublishing.publish(author, mediaId, "goodbye");
 
-        deletion.delete(author, post.postId());
+        postDeletion.delete(author, post.postId());
 
         assertThat(timeline.pageFor(author, null, null).items()).isEmpty();
         assertThat(events.ofType(PostDeleted.class)).singleElement().satisfies(event -> {
@@ -48,22 +48,21 @@ class PostDeletionTest extends PostModuleIntegrationTest {
         var author = UserId.random();
         var interloper = UserId.random();
         var mediaId = MediaId.random();
-        given(media.ownerOf(mediaId)).willReturn(Optional.of(author));
-        PostView post = publishing.publish(author, mediaId, null);
+        given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(author));
+        PostView post = postPublishing.publish(author, mediaId, null);
 
         assertThatExceptionOfType(ForbiddenException.class)
-                .isThrownBy(() -> deletion.delete(interloper, post.postId()));
+            .isThrownBy(() -> postDeletion.delete(interloper, post.postId()));
 
-        assertThat(timeline.pageFor(author, null, null).items())
-                .extracting(PostView::postId)
-                .containsExactly(post.postId());
+        assertThat(timeline.pageFor(author, null, null).items()).extracting(PostView::postId)
+            .containsExactly(post.postId());
         assertThat(events.ofType(PostDeleted.class)).isEmpty();
     }
 
     @Test
     void rejectsAPostIdNoPostHas() {
         assertThatExceptionOfType(PostNotFoundException.class)
-                .isThrownBy(() -> deletion.delete(UserId.random(), PostId.random()));
+            .isThrownBy(() -> postDeletion.delete(UserId.random(), PostId.random()));
     }
 
     @Test
@@ -71,15 +70,13 @@ class PostDeletionTest extends PostModuleIntegrationTest {
         var author = UserId.random();
         var keep = MediaId.random();
         var drop = MediaId.random();
-        given(media.ownerOf(keep)).willReturn(Optional.of(author));
-        given(media.ownerOf(drop)).willReturn(Optional.of(author));
-        PostId kept = publishing.publish(author, keep, null).postId();
-        PostId dropped = publishing.publish(author, drop, null).postId();
+        given(mediaCatalog.ownerOf(keep)).willReturn(Optional.of(author));
+        given(mediaCatalog.ownerOf(drop)).willReturn(Optional.of(author));
+        PostId kept = postPublishing.publish(author, keep, null).postId();
+        PostId dropped = postPublishing.publish(author, drop, null).postId();
 
-        deletion.delete(author, dropped);
+        postDeletion.delete(author, dropped);
 
-        assertThat(timeline.pageFor(author, null, null).items())
-                .extracting(PostView::postId)
-                .containsExactly(kept);
+        assertThat(timeline.pageFor(author, null, null).items()).extracting(PostView::postId).containsExactly(kept);
     }
 }

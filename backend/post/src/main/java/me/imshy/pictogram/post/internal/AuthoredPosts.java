@@ -1,10 +1,6 @@
 package me.imshy.pictogram.post.internal;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import me.imshy.pictogram.post.PublishedPost;
 import me.imshy.pictogram.post.PublishedPosts;
@@ -32,8 +28,8 @@ class AuthoredPosts implements PublishedPosts {
         Set<UUID> authorIds = authors.stream().map(UserId::value).collect(Collectors.toSet());
         Limit fetch = Limit.of(limit + 1);
         List<Post> rows = after == null
-                ? posts.newestByAuthors(authorIds, fetch)
-                : posts.byAuthorsBefore(authorIds, after.at(), after.id(), fetch);
+            ? posts.newestByAuthors(authorIds, fetch)
+            : posts.byAuthorsBefore(authorIds, after.at(), after.id(), fetch);
 
         boolean hasMore = rows.size() > limit;
         List<Post> page = hasMore ? rows.subList(0, limit) : rows;
