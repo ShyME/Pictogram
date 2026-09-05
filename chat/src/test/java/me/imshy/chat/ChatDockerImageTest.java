@@ -16,7 +16,14 @@ class ChatDockerImageTest {
     void builtImageAnswersItsHealthEndpoint() {
         var image = new ImageFromDockerfile().withFileFromPath(".", Path.of("."));
 
+        // A syntactically valid EC public JWK is enough to boot chat (ADR-0014) —
+        // mirrors
+        // the public half of compose.yaml's fixed dev signing key.
         try (var chat = new GenericContainer<>(image).withExposedPorts(8081)
+            .withEnv("PICTOGRAM_AUTH_PUBLIC_KEY",
+                "{\"kty\":\"EC\",\"crv\":\"P-256\",\"kid\":\"pictogram-compose-dev\","
+                    + "\"x\":\"7EWxh26yV1MJB79bw4ltkPt9iBmiewFFvBwG-DDMOTE\","
+                    + "\"y\":\"jfek6RiC-fb6vxojc9T4n-QdAjwhHYoMychxZ3gSa5g\"}")
             .waitingFor(Wait.forHttp("/actuator/health").forStatusCode(200))) {
             chat.start();
 

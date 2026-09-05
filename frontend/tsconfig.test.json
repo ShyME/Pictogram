@@ -30,7 +30,9 @@
       "@test-support/*": ["test/support/*"]
     },
 
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    // vite/client: a src file under test (chatConnection.ts, #164) reads import.meta.env —
+    // this project's "include" is test/ only, so it never sees src/vite-env.d.ts itself.
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
 
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo"
   },

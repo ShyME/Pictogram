@@ -65,6 +65,12 @@ services:
   chat:
     build:
       context: ./chat
+    environment:
+      # The public half of `app`'s PICTOGRAM_AUTH_SIGNING_KEY above (same x/y, no "d") —
+      # chat verifies signatures but holds no signing material (ADR-0014, #164). A real
+      # deployment derives this from its own PICTOGRAM_AUTH_SIGNING_KEY and never inherits
+      # this default.
+      PICTOGRAM_AUTH_PUBLIC_KEY: ${PICTOGRAM_AUTH_PUBLIC_KEY:-{"kty":"EC","crv":"P-256","kid":"pictogram-compose-dev","x":"7EWxh26yV1MJB79bw4ltkPt9iBmiewFFvBwG-DDMOTE","y":"jfek6RiC-fb6vxojc9T4n-QdAjwhHYoMychxZ3gSa5g"}}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8081/actuator/health || exit 1"]
       interval: 5s

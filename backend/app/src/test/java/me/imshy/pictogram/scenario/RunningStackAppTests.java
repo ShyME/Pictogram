@@ -18,19 +18,28 @@ class RunningStackAppTests
         LikeTests,
         UserOnboardingTests,
         PostPublishTests,
-        ViewProfileTests {
+        ViewProfileTests,
+        ChatConnectionTests {
 
     private PictogramApp pictogramApp;
+    private URI chatBaseUri;
 
     @BeforeEach
     void connectToTheRunningStack() {
         URI baseUri = URI
             .create(Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
         pictogramApp = new RunningStackApp(baseUri, JsonMapper.builder().build());
+        chatBaseUri = URI
+            .create(Optional.ofNullable(System.getenv("PICTOGRAM_CHAT_BASE_URL")).orElse("http://localhost:8082"));
     }
 
     @Override
     public PictogramApp pictogram() {
         return pictogramApp;
+    }
+
+    @Override
+    public URI chatBaseUri() {
+        return chatBaseUri;
     }
 }

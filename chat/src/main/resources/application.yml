@@ -2,6 +2,13 @@ spring:
   application:
     name: chat
 
+# Verifies Pictogram access tokens at the WebSocket handshake (ADR-0014, #164). The public
+# JWK is identity's signing key with its private "d" stripped — chat holds no signing
+# material, only what it needs to check a signature.
+pictogram:
+  auth:
+    public-key: ${PICTOGRAM_AUTH_PUBLIC_KEY:}
+
 server:
   port: 8081
 

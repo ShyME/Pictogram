@@ -74,6 +74,11 @@ class HttpPictogramApp implements PictogramApp {
         }
 
         @Override
+        public String accessToken() {
+            return accessToken;
+        }
+
+        @Override
         public Optional<Profile> currentProfile() {
             HttpResponse<String> response = call("GET", "/api/profiles/me", null);
             if (response.statusCode() == 404) {
