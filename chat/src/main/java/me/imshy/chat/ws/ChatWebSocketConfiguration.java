@@ -1,7 +1,7 @@
 package me.imshy.chat.ws;
 
 import java.time.Clock;
-import java.util.Map;
+import me.imshy.chat.UserId;
 import me.imshy.chat.auth.AccessTokenVerifier;
 import me.imshy.chat.auth.AuthProperties;
 import me.imshy.chat.auth.PublicSigningKey;
@@ -10,9 +10,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.web.reactive.HandlerMapping;
-import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
+import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableConfigurationProperties(AuthProperties.class)
@@ -37,15 +39,47 @@ class ChatWebSocketConfiguration {
     }
 
     @Bean
-    HandlerMapping chatWebSocketMapping() {
-        var mapping = new SimpleUrlHandlerMapping();
-        mapping.setUrlMap(Map.of(WS_PATH, new ChatWebSocketHandler()));
-        mapping.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        return mapping;
+    ConnectionRegistry connectionRegistry() {
+        return new ConnectionRegistry();
+    }
+
+    @Bean
+    HandlerMapping chatWebSocketMapping(ConnectionRegistry connections, ObjectMapper json) {
+        return new ChatWebSocketHandlerMapping(connections, json);
     }
 
     @Bean
     WebSocketHandlerAdapter chatWebSocketHandlerAdapter() {
         return new WebSocketHandlerAdapter();
+    }
+
+    // A plain SimpleUrlHandlerMapping hands out one shared handler instance for
+    // every
+    // request; this builds a fresh ChatWebSocketHandler per handshake instead, so
+    // each one
+    // can close over the caller ChatHandshakeFilter attributed to that exchange.
+    private static final class ChatWebSocketHandlerMapping implements HandlerMapping, Ordered {
+
+        private final ConnectionRegistry connections;
+        private final ObjectMapper json;
+
+        ChatWebSocketHandlerMapping(ConnectionRegistry connections, ObjectMapper json) {
+            this.connections = connections;
+            this.json = json;
+        }
+
+        @Override
+        public Mono<Object> getHandler(ServerWebExchange exchange) {
+            if (!WS_PATH.equals(exchange.getRequest().getPath().value()))
+                return Mono.empty();
+
+            UserId caller = exchange.getAttribute(ChatHandshakeFilter.USER_ID_ATTRIBUTE);
+            return Mono.just(new ChatWebSocketHandler(connections, json, caller));
+        }
+
+        @Override
+        public int getOrder() {
+            return Ordered.HIGHEST_PRECEDENCE;
+        }
     }
 }

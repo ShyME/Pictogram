@@ -19,7 +19,8 @@ class RunningStackAppTests
         UserOnboardingTests,
         PostPublishTests,
         ViewProfileTests,
-        ChatConnectionTests {
+        ChatConnectionTests,
+        ChatMessageTests {
 
     private PictogramApp pictogramApp;
     private URI chatBaseUri;
