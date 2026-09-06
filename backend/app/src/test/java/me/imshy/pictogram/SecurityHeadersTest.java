@@ -41,7 +41,10 @@ class SecurityHeadersTest {
 
         assertThat(headers.firstValue("Content-Security-Policy")).hasValueSatisfying(csp -> assertThat(csp)
             .contains("default-src 'self'").contains("script-src 'self'").contains("style-src 'self'")
-            .doesNotContain("'unsafe-inline'").contains("object-src 'none'").contains("frame-ancestors 'none'"));
+            .doesNotContain("'unsafe-inline'").contains("object-src 'none'").contains("frame-ancestors 'none'")
+            // chat's connection lives on its own origin until #169 (ADR-0014) — the SPA
+            // must be allowed to open it.
+            .contains("connect-src 'self' ws://*:8082 wss://*:8082"));
         assertThat(headers.firstValue("Referrer-Policy")).hasValue("strict-origin-when-cross-origin");
         assertThat(headers.firstValue("Permissions-Policy"))
             .hasValueSatisfying(policy -> assertThat(policy).contains("geolocation=()"));
