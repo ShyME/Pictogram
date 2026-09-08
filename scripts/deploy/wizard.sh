@@ -371,12 +371,12 @@ step "box is staged — it will start serving once Stage 12 fills the domain + O
 stage "GitHub: the deploy secrets"
 say "The Deploy workflow (.github/workflows/deploy.yml) reads these."
 set_secret DEPLOY_SSH_KEY "$(cat "$CI_KEY")"
-set_secret DEPLOY_HOST "$DEPLOY_HOST"
 set_secret DEPLOY_USER "$DEPLOY_USER"
-# Pin the box's host key so CI verifies it instead of trust-on-first-use. If the box is
-# ever rebuilt (the #176 migration), re-run this stage to refresh it.
-set_secret DEPLOY_KNOWN_HOSTS "$(ssh-keyscan "$DEPLOY_HOST" 2>/dev/null)"
-note "DEPLOY_HOST is the IP for now; Stage 12 swaps it for the domain."
+# DEPLOY_HOST (and its pinned host key) are set in Stage 12, not here. The workflow rolls
+# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 12 fills
+# the domain + OAuth values — so setting it now would only make dispatches fail on the
+# missing ${PICTOGRAM_DOMAIN} guard. Pre-domain, the workflow builds/pushes/validates only.
+note "DEPLOY_HOST is deliberately unset until Stage 12 — a dispatch now builds and pushes, no box roll."
 
 # ── Stage 12 ─────────────────────────────────────────────────────────────
 stage "Domain-gated tail — run this part once you own the domain"

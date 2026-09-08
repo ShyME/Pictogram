@@ -41,7 +41,11 @@ after fixing anything. It covers:
    `.env`, derive `PICTOGRAM_AUTH_PUBLIC_KEY` from it by dropping the `d` member (chat
    verifies signatures, holds no private material — ADR-0014).
 5. **DB / MinIO creds** — generate strong values into the box `.env`.
-6. **CI secrets** — `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KNOWN_HOSTS`.
+6. **CI secrets** — `DEPLOY_SSH_KEY` and `DEPLOY_USER`. `DEPLOY_HOST` and
+   `DEPLOY_KNOWN_HOSTS` are set later, in the domain-gated tail: the workflow rolls the box
+   the moment `DEPLOY_HOST` exists, and the box cannot serve until the tail fills
+   `PICTOGRAM_DOMAIN` + the OAuth values, so a dispatch before then would only fail on the
+   missing `${PICTOGRAM_DOMAIN}` guard.
 7. It then **pauses** and prints the domain-gated tail (below), which cannot run until the
    domain is registered.
 
@@ -63,6 +67,8 @@ after fixing anything. It covers:
   client is production-only.
 - Fill the box `~/pictogram/.env`: `PICTOGRAM_DOMAIN`, `GOOGLE_CLIENT_ID`,
   `GOOGLE_CLIENT_SECRET`.
+- Set the CI secrets `DEPLOY_HOST` (the domain) and `DEPLOY_KNOWN_HOSTS` (the box's pinned
+  host key, keyed to the domain name). This is what arms the workflow's box-roll step.
 - Run the **Deploy** workflow (below). Caddy issues the certificate on first request.
 
 ## The deploy workflow
@@ -86,17 +92,20 @@ Steps:
    `ghcr.io/shyme/pictogram-<svc>` tagged `latest` and `<tag>`.
 2. `caddy validate` `Caddyfile.prod` against that caddy image — catches a broken Caddyfile
    or a missing module before it reaches the box.
-3. If `DEPLOY_HOST` is set: over SSH, `cd pictogram && export PICTOGRAM_TAG=<tag> &&
-   docker compose -f compose.yaml -f compose.prod.yaml pull && ... up -d --wait`.
+3. If `DEPLOY_HOST` is set: over SSH, `cd pictogram && export PICTOGRAM_TAG='<tag>' &&
+   docker compose -f compose.yaml -f compose.prod.yaml pull && ... up -d --wait`. The
+   `tag` input is validated against the Docker tag grammar in the first step, so it cannot
+   inject an output key or a remote command.
 
-Until the box exists the roll step is skipped with a notice; build + push + validate still
-run, so the pipeline is exercised.
+Until the domain-gated tail sets `DEPLOY_HOST` the roll step is skipped with a notice;
+build + push + validate still run, so the pipeline is exercised.
 
 **CI secrets:** `DEPLOY_SSH_KEY` (private key whose public half is in the box `deploy`
-user's `authorized_keys`), `DEPLOY_HOST` (the static IP, later the domain), `DEPLOY_USER`
-(`deploy`), and `DEPLOY_KNOWN_HOSTS` (the box's pinned host key — `ssh-keyscan` output;
-without it CI falls back to trust-on-first-use). Rebuilding the box (#176) invalidates the
-last two — re-run wizard Stage 11. GHCR push uses the built-in `GITHUB_TOKEN`
+user's `authorized_keys`), `DEPLOY_USER` (`deploy`), `DEPLOY_HOST` (the domain; set in the
+domain-gated tail), and `DEPLOY_KNOWN_HOSTS` (the box's pinned host key — `ssh-keyscan`
+output; without it CI falls back to trust-on-first-use). Rebuilding the box (#176)
+invalidates `DEPLOY_HOST`/`DEPLOY_KNOWN_HOSTS` — re-run wizard Stage 12. GHCR push uses the
+built-in `GITHUB_TOKEN`
 (`packages: write`).
 
 ## Edge rate limits
