@@ -1,7 +1,5 @@
 package me.imshy.pictogram.social.internal.comment;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.BDDMockito.given;
@@ -16,7 +14,6 @@ import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.Cursor;
 import me.imshy.pictogram.shared.http.ForbiddenException;
-import me.imshy.pictogram.social.CommentCounts.PostComments;
 import me.imshy.pictogram.social.CommentDeleted;
 import me.imshy.pictogram.social.PostCommented;
 import me.imshy.pictogram.social.internal.SocialModuleIntegrationTest;
@@ -213,32 +210,9 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         assertThat(publishedEvents.ofType(CommentDeleted.class)).isEmpty();
     }
 
-    @Test
-    void reportsEachRequestedPostsCommentCount() {
-        var chatty = PostId.random();
-        var quiet = PostId.random();
-
-        thread.comment(ViewerId.random(), chatty, "one");
-        thread.comment(ViewerId.random(), chatty, "two");
-        thread.comment(ViewerId.random(), quiet, "only me");
-
-        Map<PostId, PostComments> byId = index(thread.of(List.of(chatty, quiet)));
-
-        assertThat(byId.get(chatty)).isEqualTo(new PostComments(chatty, 2));
-        assertThat(byId.get(quiet)).isEqualTo(new PostComments(quiet, 1));
-    }
-
-    @Test
-    void returnsARecordForEveryRequestedIdIncludingOneWithNoComments() {
-        var untouched = PostId.random();
-
-        assertThat(thread.of(List.of(untouched))).containsExactly(new PostComments(untouched, 0));
-    }
-
-    @Test
-    void anEmptyRequestReturnsNothing() {
-        assertThat(thread.of(List.of())).isEmpty();
-    }
+    // The batch comment-count read (CommentCounts) is pinned by the
+    // consumer-contract test
+    // CommentCountsContractTest (#157), not here.
 
     // ---- onPostDeleted() : thread cleanup ----
 
@@ -271,9 +245,5 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
             cursor = page.nextCursor();
         } while (cursor != null);
         return ids;
-    }
-
-    private static Map<PostId, PostComments> index(List<PostComments> rows) {
-        return rows.stream().collect(toMap(PostComments::post, identity()));
     }
 }
