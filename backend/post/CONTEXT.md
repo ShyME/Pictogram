@@ -7,7 +7,15 @@ person. A post does not change after it is published — it is only created or d
 
 - `PublishedPosts.byAuthors(authors, cursor, limit)` — a keyset page of the posts by a set
   of authors, newest first. `feed` calls this to assemble a fan-out-on-read page (ADR-0003).
+- `PublishedPosts.authorOf(post)` — the author of a post, empty for an unknown id.
+  `social`'s `comment` sub-domain calls it to gate comment deletion.
 - Events `PostPublished` / `PostDeleted` — the module's forward contract, unconsumed in v1.
+
+`PublishedPostsContractTest` (`post.contract`, #157) drives the published type as `feed`
+and `comment` do — distinct from `AuthoredPostsTest`, which tests the implementation — and
+pins the consumer invariants: only the requested authors' posts come back, an author with
+no posts contributes nothing rather than failing, the keyset page walks every post once,
+and `authorOf` is empty for an unknown id.
 
 ## Language
 

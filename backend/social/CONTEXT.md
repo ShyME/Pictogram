@@ -173,10 +173,22 @@ that its only caller, `feed`, lives in the same module.
   has no "by me" state to report. The feed card shows this count; the profile grid does not
   (the count would just be visual noise on a dense 3-column grid).
 
+Both shapes are pinned by a consumer-contract test that drives the published type as an
+outside module would — `LikeCountsContractTest` and `CommentCountsContractTest` in
+`social.contract` (#157) — separate from the `LikeTally` / `CommentThread` implementation
+tests. They fix the batch-read invariants: one row per requested id, an unknown id reads
+as the zero value, and the no-viewer `LikeCounts` form never reports a viewer's own like.
+
 The paged **follower list / following list** reads (#57) and the **batch relationship
-read** (#59, `GET /api/follows?ids=`) serve the SPA's list screens through `follow`'s own
-web layer only — they are deliberately not on any published interface. The **comment
-thread** read is the same: web-layer only.
+read** (#59, `GET /api/follows?ids=` → `FollowRelationships`) serve the SPA's list screens
+through `follow`'s own web layer only — they are deliberately not on any published
+interface, and #157 kept it that way rather than give `FollowRelationships` a contract
+test. The reason it differs from `LikeCounts` / `CommentCounts`: #128 folded the follow
+graph in-module (`FollowGraph`), so the batch read has no cross-module consumer to pin a
+shape for — its one caller is `FollowController`, and the frontend follower/following
+screens are its only real client. If `follow` is ever re-extracted, this read moves with
+it and earns a published interface then. The **comment thread** read is the same:
+web-layer only.
 
 Over HTTP:
 
