@@ -1,7 +1,10 @@
 import {
   backoffDelayMs,
   chatConnectionStatus,
+  chatPresence,
+  queryPresence,
   type ChatConnectionStatus,
+  type PresenceUpdate,
 } from '@features/chat/chatConnection';
 import { FakeWebSocket, stubWebSocket } from '@test-support/stubWebSocket';
 import { BehaviorSubject } from 'rxjs';
@@ -78,6 +81,40 @@ test('a dropped connection is retried after a backoff delay', async () => {
 
   FakeWebSocket.instances[1]?.open();
   expect(statuses).toEqual(['connecting', 'open', 'connecting', 'open']);
+});
+
+test('queryPresence writes an on-demand presence-query frame to the open socket', () => {
+  const { statuses } = record('a-token');
+  FakeWebSocket.instances[0]?.open();
+  expect(statuses).toContain('open');
+
+  queryPresence('u-ada');
+
+  expect(FakeWebSocket.instances[0]?.sent).toEqual(['{"type":"presence-query","userId":"u-ada"}']);
+});
+
+test('queryPresence is a no-op with no open socket', () => {
+  queryPresence('u-ada');
+
+  expect(FakeWebSocket.instances).toHaveLength(0);
+});
+
+test('chatPresence emits the parsed answer to a presence query', () => {
+  record('a-token');
+  FakeWebSocket.instances[0]?.open();
+  const updates: PresenceUpdate[] = [];
+  chatPresence().subscribe((update) => {
+    updates.push(update);
+  });
+
+  FakeWebSocket.instances[0]?.receive('{"type":"presence","userId":"u-ada","online":true}');
+  FakeWebSocket.instances[0]?.receive('{"type":"presence","userId":"u-zoe","online":false}');
+  FakeWebSocket.instances[0]?.receive('{"type":"message","senderUserId":"u-ada","text":"hi"}');
+
+  expect(updates).toEqual([
+    { userId: 'u-ada', online: true },
+    { userId: 'u-zoe', online: false },
+  ]);
 });
 
 test('backoff grows across consecutive drops before a success', async () => {

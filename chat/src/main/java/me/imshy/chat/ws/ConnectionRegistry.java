@@ -29,6 +29,14 @@ class ConnectionRegistry {
         connections.computeIfAbsent(user, ignored -> ConcurrentHashMap.newKeySet()).add(outbound);
     }
 
+    // Presence (ADR-0014): whether the user has at least one connection open right
+    // now —
+    // answered per user, on request, never pushed as a feed.
+    boolean isOnline(UserId user) {
+        Set<Sinks.Many<OutboundEvent>> userConnections = connections.get(user);
+        return userConnections != null && !userConnections.isEmpty();
+    }
+
     void disconnect(UserId user, Sinks.Many<OutboundEvent> outbound) {
         connections.computeIfPresent(user, (ignored, outboundSinks) -> {
             outboundSinks.remove(outbound);

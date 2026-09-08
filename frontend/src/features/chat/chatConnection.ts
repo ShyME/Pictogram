@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, of, Subject, timer, type Observer } from 'rxjs';
-import { retry, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, map, retry, switchMap } from 'rxjs/operators';
 
 export type ChatConnectionStatus = 'closed' | 'connecting' | 'open';
 
@@ -8,6 +8,10 @@ export type ChatConnectionStatus = 'closed' | 'connecting' | 'open';
 export type IncomingMessage = { type: 'message'; senderUserId: string; text: string };
 export type UndeliveredNotice = { type: 'undelivered'; recipientUserId: string; text: string };
 export type ChatEvent = IncomingMessage | UndeliveredNotice;
+
+// The answer to a presence query this connection asked (ADR-0014): one user, right now —
+// never pushed unsolicited, never a feed of everyone's status.
+export type PresenceUpdate = { userId: string; online: boolean };
 
 const BASE_BACKOFF_MS = 1000;
 const MAX_BACKOFF_MS = 30_000;
@@ -34,7 +38,12 @@ function chatSocketUrl(): string {
   return `${wsProtocol}//${host}/ws`;
 }
 
-function parseChatEvent(raw: unknown): ChatEvent | null {
+// One parse per inbound frame, tagged by which stream it belongs on: the chat-event
+// stream (message / undelivered) or the presence-answer stream.
+type InboundFrame =
+  { stream: 'event'; event: ChatEvent } | { stream: 'presence'; update: PresenceUpdate };
+
+function parseInboundFrame(raw: unknown): InboundFrame | null {
   if (typeof raw !== 'string') return null;
   let value: unknown;
   try {
@@ -49,13 +58,25 @@ function parseChatEvent(raw: unknown): ChatEvent | null {
     typeof frame.senderUserId === 'string' &&
     typeof frame.text === 'string'
   )
-    return { type: 'message', senderUserId: frame.senderUserId, text: frame.text };
+    return {
+      stream: 'event',
+      event: { type: 'message', senderUserId: frame.senderUserId, text: frame.text },
+    };
   if (
     frame.type === 'undelivered' &&
     typeof frame.recipientUserId === 'string' &&
     typeof frame.text === 'string'
   )
-    return { type: 'undelivered', recipientUserId: frame.recipientUserId, text: frame.text };
+    return {
+      stream: 'event',
+      event: { type: 'undelivered', recipientUserId: frame.recipientUserId, text: frame.text },
+    };
+  if (
+    frame.type === 'presence' &&
+    typeof frame.userId === 'string' &&
+    typeof frame.online === 'boolean'
+  )
+    return { stream: 'presence', update: { userId: frame.userId, online: frame.online } };
   return null;
 }
 
@@ -63,9 +84,32 @@ function parseChatEvent(raw: unknown): ChatEvent | null {
 // through the RxJS status pipeline. Only ever holds a socket that has reached 'open'.
 const openSocket$ = new BehaviorSubject<WebSocket | null>(null);
 const inboundEvents$ = new Subject<ChatEvent>();
+const presenceUpdates$ = new Subject<PresenceUpdate>();
 
 export function chatEvents(): Observable<ChatEvent> {
   return inboundEvents$.asObservable();
+}
+
+// The stream of presence-query answers (ADR-0014). A consumer asks with `queryPresence`
+// and filters this to the user it asked about — chat never emits here unprompted.
+export function chatPresence(): Observable<PresenceUpdate> {
+  return presenceUpdates$.asObservable();
+}
+
+// Whether the session's one WebSocket is currently open. Driven by the single connection
+// opened at the app shell — subscribing here never opens one.
+export function chatSocketOpen(): Observable<boolean> {
+  return openSocket$.pipe(
+    map((socket) => socket !== null),
+    distinctUntilChanged(),
+  );
+}
+
+// Asks chat whether one user is connected, right now (ADR-0014) — on-demand only, never a
+// poll or a subscription. A no-op with no open socket: the answer would be lost, and the
+// caller shows nothing rather than a stale state.
+export function queryPresence(userId: string): void {
+  openSocket$.value?.send(JSON.stringify({ type: 'presence-query', userId }));
 }
 
 export type MessageDelivery = 'sent' | 'no-connection';
@@ -97,8 +141,10 @@ function connect(accessToken: string): Observable<ChatConnectionStatus> {
       subscriber.next('open');
     });
     socket.addEventListener('message', (event: MessageEvent) => {
-      const chatEvent = parseChatEvent(event.data);
-      if (chatEvent) inboundEvents$.next(chatEvent);
+      const frame = parseInboundFrame(event.data);
+      if (!frame) return;
+      if (frame.stream === 'presence') presenceUpdates$.next(frame.update);
+      else inboundEvents$.next(frame.event);
     });
     socket.addEventListener('close', () => {
       if (openSocket$.value === socket) openSocket$.next(null);
