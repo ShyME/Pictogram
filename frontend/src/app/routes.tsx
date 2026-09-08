@@ -1,4 +1,5 @@
 import { LoginPage, installApiAuth } from '@features/auth';
+import { MessageButton } from '@features/chat';
 import { CommentThread } from '@features/comments';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
 import { LikeButton, LikeCount, prefetchPostLikes } from '@features/likes';
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
                 renderFollowCounts={(userId, handle) => (
                   <FollowCounts userId={userId} username={handle} />
                 )}
+                renderMessageButton={(peer) => <MessageButton peer={peer} />}
               />
             ),
             loader: profileLoader,

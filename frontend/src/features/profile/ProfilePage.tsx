@@ -22,6 +22,7 @@ export function ProfilePage({
   renderGrid,
   renderFollowButton,
   renderFollowCounts,
+  renderMessageButton,
 }: {
   renderGrid?: (
     authorId: string,
@@ -31,6 +32,11 @@ export function ProfilePage({
   ) => ReactNode;
   renderFollowButton?: (followedUserId: string) => ReactNode;
   renderFollowCounts?: (followedUserId: string, handle: string) => ReactNode;
+  renderMessageButton?: (peer: {
+    userId: string;
+    username: string;
+    displayName: string | null;
+  }) => ReactNode;
 } = {}) {
   const data = useLoaderData<typeof profileLoader>();
 
@@ -54,13 +60,20 @@ export function ProfilePage({
                 <Link to="/settings/profile">Edit profile</Link>
               </Button>
             ) : viewerCanFollow ? (
-              renderFollowButton ? (
-                renderFollowButton(profile.userId)
-              ) : (
-                <Button size="sm" disabled>
-                  Follow
-                </Button>
-              )
+              <>
+                {renderFollowButton ? (
+                  renderFollowButton(profile.userId)
+                ) : (
+                  <Button size="sm" disabled>
+                    Follow
+                  </Button>
+                )}
+                {renderMessageButton?.({
+                  userId: profile.userId,
+                  username: profile.username,
+                  displayName: profile.displayName,
+                })}
+              </>
             ) : (
               <Button size="sm" asChild>
                 <Link to="/login">Follow</Link>

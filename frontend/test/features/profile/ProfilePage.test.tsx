@@ -120,6 +120,24 @@ test("renders the app-supplied follow button on another user's profile, not on y
   expect(screen.getByRole('link', { name: /edit profile/i })).toBeInTheDocument();
 });
 
+const messageSlot = (peer: { username: string }) => (
+  <button type="button">message {peer.username}</button>
+);
+
+test("renders the app-supplied message button only on another signed-in viewer's profile", () => {
+  loaderData = found({ isOwnProfile: false, viewerCanFollow: true });
+  const { rerender } = renderWithProviders(<ProfilePage renderMessageButton={messageSlot} />);
+  expect(screen.getByRole('button', { name: 'message ada_lovelace' })).toBeInTheDocument();
+
+  loaderData = found({ isOwnProfile: true });
+  rerender(<ProfilePage renderMessageButton={messageSlot} />);
+  expect(screen.queryByRole('button', { name: /message/i })).not.toBeInTheDocument();
+
+  loaderData = found({ isOwnProfile: false, viewerCanFollow: false });
+  rerender(<ProfilePage renderMessageButton={messageSlot} />);
+  expect(screen.queryByRole('button', { name: /message/i })).not.toBeInTheDocument();
+});
+
 test('renders the app-supplied count row on every profile', () => {
   loaderData = found({ isOwnProfile: true });
   renderWithProviders(<ProfilePage renderFollowCounts={(userId) => <p>counts for {userId}</p>} />);
