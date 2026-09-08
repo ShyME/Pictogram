@@ -32,6 +32,55 @@ services:
     volumes:
       - miniodata:/data
 
+  # The apache/kafka-native image runs as uid 1000 but does not pre-create its data dir, so a
+  # fresh named volume mounts root-owned and the broker can't write it. This one-shot fixes
+  # the ownership before kafka starts. Same image tag as `kafka` below (and compose.dev.yaml;
+  # tests use the JVM image, pinned in SharedKafka.java) — keep the four in sync.
+  kafka-init:
+    image: &kafka-image apache/kafka-native:4.2.1
+    user: "0:0"
+    entrypoint: ["sh", "-c", "mkdir -p /var/lib/kafka/data && chown -R 1000:1000 /var/lib/kafka/data"]
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+
+  # Single-node KRaft broker for the one externalised flow (ADR-0015). The GraalVM native
+  # image keeps the footprint down — the box is 4 GB and already runs two JVMs, Postgres and
+  # MinIO (ADR-0012), so the heap is capped here and this is a known memory-pressure point
+  # tied to the #176 migration off the temporary host.
+  kafka:
+    image: *kafka-image
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # One node, so every replication factor is 1; 3 partitions per ADR-0015.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # The native launch script forwards KAFKA_OPTS to the binary but ignores KAFKA_HEAP_OPTS
+      # (that is the JVM image's server-start script). This is the real heap cap for the box.
+      KAFKA_OPTS: -Xmx512m -Xms256m
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      # bash is in the image; the native image ships no JRE, so the kafka CLI scripts are out.
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/9092' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
   app:
     build:
       context: .
@@ -49,6 +98,7 @@ services:
       PICTOGRAM_MEDIA_ENDPOINT: http://minio:9000
       PICTOGRAM_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER:-pictogram}
       PICTOGRAM_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-pictogram}
+      PICTOGRAM_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
       interval: 5s
@@ -59,6 +109,10 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_started
+      # Ordering only — nothing is externalised or consumed yet (#196 / #197), so app does not
+      # need a healthy broker to serve. The consumer ticket tightens this to service_healthy.
+      kafka:
         condition: service_started
 
   chat:
@@ -102,3 +156,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+  kafkadata:
