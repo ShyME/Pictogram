@@ -173,11 +173,13 @@ that its only caller, `feed`, lives in the same module.
   has no "by me" state to report. The feed card shows this count; the profile grid does not
   (the count would just be visual noise on a dense 3-column grid).
 
-Both shapes are pinned by a consumer-contract test that drives the published type as an
-outside module would — `LikeCountsContractTest` and `CommentCountsContractTest` in
-`social.contract` (#157) — separate from the `LikeTally` / `CommentThread` implementation
-tests. They fix the batch-read invariants: one row per requested id, an unknown id reads
-as the zero value, and the no-viewer `LikeCounts` form never reports a viewer's own like.
+Both shapes are pinned by a consumer-contract test that drives the published type through
+the interface — `LikeCountsContractTest` and `CommentCountsContractTest` in
+`social.contract` (#157). `LikeCountsContractTest` is the former `LikeTallyTest` promoted
+into `contract` (the tally has no surface beyond `LikeCounts`); `CommentCountsContractTest`
+was split out of `CommentThreadTest`, which keeps the write / page / delete / cleanup
+cases. They fix the batch-read invariants: one row per requested id, an unknown id reads as
+the zero value, and the no-viewer `LikeCounts` form never reports a viewer's own like.
 
 The paged **follower list / following list** reads (#57) and the **batch relationship
 read** (#59, `GET /api/follows?ids=` → `FollowRelationships`) serve the SPA's list screens

@@ -12,10 +12,13 @@ person. A post does not change after it is published — it is only created or d
 - Events `PostPublished` / `PostDeleted` — the module's forward contract, unconsumed in v1.
 
 `PublishedPostsContractTest` (`post.contract`, #157) drives the published type as `feed`
-and `comment` do — distinct from `AuthoredPostsTest`, which tests the implementation — and
-pins the consumer invariants: only the requested authors' posts come back, an author with
-no posts contributes nothing rather than failing, the keyset page walks every post once,
-and `authorOf` is empty for an unknown id.
+and `comment` do, so a breaking shape change fails at the module boundary. It is the former
+`AuthoredPostsTest` promoted into `contract` — the query has no surface beyond the
+published interface, so there is nothing left to test separately at the implementation
+level. It pins: only the requested authors' posts come back, newest first; an author with
+no posts contributes nothing rather than failing; the keyset page walks every post once
+and the last page has no cursor; a deleted post leaves the stream; `authorOf` names a
+known post and is empty for an unknown id.
 
 ## Language
 

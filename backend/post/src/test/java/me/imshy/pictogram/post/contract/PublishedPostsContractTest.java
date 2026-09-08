@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import me.imshy.pictogram.post.PublishedPost;
 import me.imshy.pictogram.post.PublishedPosts;
+import me.imshy.pictogram.post.internal.PostDeletion;
 import me.imshy.pictogram.post.internal.PostModuleIntegrationTest;
 import me.imshy.pictogram.post.internal.PostPublishing;
 import me.imshy.pictogram.shared.MediaId;
@@ -21,10 +22,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+// The consumer-contract test for the published PublishedPosts interface (#157): drives it
+// exactly as feed's fan-out and comment's delete-permission check do. Promoted here from
+// the former AuthoredPostsTest so a breaking shape change fails at the module boundary.
 class PublishedPostsContractTest extends PostModuleIntegrationTest {
 
     @Autowired
     PostPublishing postPublishing;
+
+    @Autowired
+    PostDeletion postDeletion;
 
     @Autowired
     PublishedPosts publishedPosts;
@@ -35,67 +42,111 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
     private Instant now = Instant.parse("2026-09-01T12:00:00Z");
 
     @BeforeEach
-    void bindClock() {
+    void bindClockToControlledTime() {
         given(clock.instant()).willAnswer(invocation -> now);
     }
 
     @Test
-    void byAuthorsReturnsPostsOnlyForTheRequestedAuthorsNewestFirst() {
+    void mergesSeveralAuthorsPostsIntoOneNewestFirstStream() {
+        var ada = UserId.random();
+        var bob = UserId.random();
+
+        var a1 = publishAt(ada, "2026-09-01T10:00:00Z");
+        var b1 = publishAt(bob, "2026-09-01T10:30:00Z");
+        var a2 = publishAt(ada, "2026-09-01T11:00:00Z");
+        var b2 = publishAt(bob, "2026-09-01T11:30:00Z");
+
+        assertThat(ids(publishedPosts.byAuthors(List.of(ada, bob), null, 10))).containsExactly(b2, a2, b1, a1);
+    }
+
+    @Test
+    void pagesAcrossAuthorsWithoutDuplicatesOrSkips() {
+        var ada = UserId.random();
+        var bob = UserId.random();
+        List<PostId> published = new ArrayList<>();
+        for (int minute = 0; minute < 6; minute++) {
+            var author = minute % 2 == 0 ? ada : bob;
+            published.add(publishAt(author, "2026-09-01T10:0%d:00Z".formatted(minute)));
+        }
+
+        List<PostId> seen = getPosts(List.of(ada, bob), 2);
+
+        assertThat(seen).containsExactly(published.get(5), published.get(4), published.get(3), published.get(2),
+            published.get(1), published.get(0));
+    }
+
+    @Test
+    void breaksAPublishedAtTieOnTheIdSoPagingStaysStable() {
+        var ada = UserId.random();
+        var bob = UserId.random();
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(bob, "2026-09-01T10:00:00Z");
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(bob, "2026-09-01T10:00:00Z");
+
+        List<PostId> wholePage = ids(publishedPosts.byAuthors(List.of(ada, bob), null, 10));
+        List<PostId> pagedOneAtATime = getPosts(List.of(ada, bob), 1);
+
+        assertThat(pagedOneAtATime).hasSize(4).doesNotHaveDuplicates();
+        assertThat(pagedOneAtATime).containsExactlyElementsOf(wholePage);
+    }
+
+    @Test
+    void onlyReturnsPostsByTheRequestedAuthors() {
         var ada = UserId.random();
         var bob = UserId.random();
         var carol = UserId.random();
-        var adaOld = publishAt(ada, "2026-09-01T10:00:00Z");
-        publishAt(bob, "2026-09-01T10:30:00Z");
-        var carolNew = publishAt(carol, "2026-09-01T11:00:00Z");
+        var adasPost = publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(bob, "2026-09-01T11:00:00Z");
+        var carolsPost = publishAt(carol, "2026-09-01T12:00:00Z");
 
-        var page = publishedPosts.byAuthors(List.of(ada, carol), null, 10);
-
-        assertThat(ids(page)).containsExactly(carolNew, adaOld);
+        assertThat(ids(publishedPosts.byAuthors(List.of(ada, carol), null, 10))).containsExactly(carolsPost, adasPost);
     }
 
     @Test
     void anAuthorWithNoPostsContributesNothingRatherThanFailing() {
         var ada = UserId.random();
         var silent = UserId.random();
-        var only = publishAt(ada, "2026-09-01T10:00:00Z");
+        var onlyPost = publishAt(ada, "2026-09-01T10:00:00Z");
 
-        var page = publishedPosts.byAuthors(List.of(ada, silent), null, 10);
-
-        assertThat(ids(page)).containsExactly(only);
-        assertThat(page.nextCursor()).isNull();
+        assertThat(ids(publishedPosts.byAuthors(List.of(ada, silent), null, 10))).containsExactly(onlyPost);
     }
 
     @Test
-    void noRequestedAuthorsIsAnEmptyTerminalPage() {
-        var page = publishedPosts.byAuthors(List.of(), null, 10);
+    void aDeletedPostLeavesTheStream() {
+        var ada = UserId.random();
+        var keep = publishAt(ada, "2026-09-01T10:00:00Z");
+        var drop = publishAt(ada, "2026-09-01T11:00:00Z");
+
+        postDeletion.delete(ada, drop);
+
+        assertThat(ids(publishedPosts.byAuthors(List.of(ada), null, 10))).containsExactly(keep);
+    }
+
+    @Test
+    void namesTheAuthorOfAPostAndIsEmptyForAnIdNoPostHas() {
+        var ada = UserId.random();
+        var post = publishAt(ada, "2026-09-01T10:00:00Z");
+
+        assertThat(publishedPosts.authorOf(post)).contains(ada);
+        assertThat(publishedPosts.authorOf(PostId.random())).isEmpty();
+    }
+
+    @Test
+    void noRequestedAuthorsIsAnEmptyLastPage() {
+        PublishedPosts.Page page = publishedPosts.byAuthors(List.of(), null, 10);
 
         assertThat(page.posts()).isEmpty();
         assertThat(page.nextCursor()).isNull();
     }
 
     @Test
-    void theKeysetPageWalksEveryPostOfTheRequestedAuthorsExactlyOnce() {
+    void theLastPageHasNoNextCursor() {
         var ada = UserId.random();
-        var bob = UserId.random();
-        List<PostId> published = new ArrayList<>();
-        for (int minute = 0; minute < 6; minute++) {
-            published.add(publishAt(minute % 2 == 0 ? ada : bob, "2026-09-01T10:0%d:00Z".formatted(minute)));
-        }
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(ada, "2026-09-01T11:00:00Z");
 
-        List<PostId> wholePage = ids(publishedPosts.byAuthors(List.of(ada, bob), null, 10));
-        List<PostId> walked = walk(List.of(ada, bob), 2);
-
-        assertThat(walked).doesNotHaveDuplicates().containsExactlyElementsOf(wholePage);
-        assertThat(walked).containsExactlyInAnyOrderElementsOf(published);
-    }
-
-    @Test
-    void authorOfNamesAKnownPostAndIsEmptyForAnUnknownId() {
-        var ada = UserId.random();
-        var post = publishAt(ada, "2026-09-01T10:00:00Z");
-
-        assertThat(publishedPosts.authorOf(post)).contains(ada);
-        assertThat(publishedPosts.authorOf(PostId.random())).isEmpty();
+        assertThat(publishedPosts.byAuthors(List.of(ada), null, 5).nextCursor()).isNull();
     }
 
     private PostId publishAt(UserId author, String instant) {
@@ -109,14 +160,14 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
         return page.posts().stream().map(PublishedPost::postId).toList();
     }
 
-    private List<PostId> walk(List<UserId> authors, int pageSize) {
-        List<PostId> seen = new ArrayList<>();
+    private List<PostId> getPosts(List<UserId> authors, int pageSize) {
+        List<PostId> ids = new ArrayList<>();
         Cursor cursor = null;
         do {
             PublishedPosts.Page page = publishedPosts.byAuthors(authors, cursor, pageSize);
-            seen.addAll(ids(page));
+            ids.addAll(ids(page));
             cursor = page.nextCursor();
         } while (cursor != null);
-        return seen;
+        return ids;
     }
 }
