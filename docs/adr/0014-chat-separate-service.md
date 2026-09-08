@@ -32,7 +32,12 @@ land in Caddy's or a proxy's access logs.
 
 Deployment does not change ADR-0012's shape: chat is another container in the same
 `compose.yaml`, routed by Caddy on the same box — no new infrastructure, and no database
-is provisioned for it in v1.
+is provisioned for it in v1. Chat does not get its own origin: one Caddy site block
+fronts both services, routing chat's WebSocket path to `chat` and every other request to
+`app`, with `app` and `chat` both internal-only (#169). Same origin means the frontend
+opens the socket against one predictable URL, and production provisions and renews one
+TLS certificate, not two (ADR-0012). #163 shipped a temporary standalone Caddy on its
+own port to keep that scaffold's blast radius small; #169 folded it in.
 
 ## Consequences
 

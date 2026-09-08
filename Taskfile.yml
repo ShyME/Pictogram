@@ -146,7 +146,11 @@ tasks:
       - cd chat && ./gradlew test -PincludeBlackbox
       - docker compose up --build -d --wait
       - defer: docker compose down -v
-      - curl --fail http://localhost:{{.PICTOGRAM_CHAT_PORT | default 8082}}/actuator/health
+      # The shared Caddy origin serves `app`, and routes /ws to `chat` (401 without a
+      # token — `app` would 200 the SPA fallback). ChatConnectionTests then does the
+      # real WebSocket handshake through it.
+      - curl -sf -o /dev/null http://localhost:{{.PICTOGRAM_PORT | default 8080}}/actuator/health
+      - test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:{{.PICTOGRAM_PORT | default 8080}}/ws)" = 401
       - cd backend && ./gradlew build -PincludeBlackbox
       - cd frontend && pnpm install && pnpm exec playwright install --with-deps chromium && pnpm test:e2e
 

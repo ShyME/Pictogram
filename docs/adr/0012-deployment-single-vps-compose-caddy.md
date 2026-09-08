@@ -16,12 +16,20 @@ This records the target and why it was chosen over a managed platform.
   of traffic included. Oracle Cloud's Always Free ARM tier is the same architecture for €0
   and is an acceptable substitute; the decision is "a flat-fee box", not the specific
   vendor.
-- **Runtime:** Docker Compose, the exact `compose.yaml` topology — `app`, `postgres`,
-  `minio`, all containers on the box, each with a named volume. No service is peeled off to
-  a managed offering.
-- **Edge:** Caddy as reverse proxy, terminating TLS with an automatic Let's Encrypt
-  certificate for a registered domain (~$10/year, Cloudflare Registrar or Porkbun; DNS an A
-  record at the box).
+- **Runtime:** Docker Compose, the exact `compose.yaml` topology — `app`, `chat`,
+  `postgres`, `minio`, all containers on the box, each with a named volume. No service is
+  peeled off to a managed offering.
+- **Edge:** Caddy as reverse proxy and the single published entrypoint, terminating TLS
+  with one automatic Let's Encrypt certificate for a registered domain (~$10/year,
+  Cloudflare Registrar or Porkbun; DNS an A record at the box). One site block fronts
+  both services — chat's WebSocket path to `chat`, every other request to `app` — so
+  `app` and `chat` are internal-only and there is one origin and one certificate, not two
+  (#169, ADR-0014). `app` runs with `forward-headers-strategy: native` so redirect URIs
+  and the OAuth2 callback are built from Caddy's external `https` scheme and host,
+  trusting `X-Forwarded-*` only from the compose network. Terminating TLS for the real
+  domain — binding `:443`, mapping the host ports — is layered on in a prod compose
+  overlay when the deploy job lands; the committed `compose.yaml` is the plain-HTTP
+  `:8080` shape.
 - **Deploy:** a GitHub Actions job on push to `main`, after the existing build and blackbox
   jobs — build the image, push to GHCR, then over SSH `docker compose pull && docker
   compose up -d` on the box.

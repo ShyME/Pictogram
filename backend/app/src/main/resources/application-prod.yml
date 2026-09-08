@@ -1,4 +1,13 @@
 # Production: run as a container. Datasource comes from the environment.
+server:
+  # Always reached through Caddy (ADR-0012, ADR-0014, #169) — honour its X-Forwarded-*
+  # so redirect URIs and the OAuth2 callback are built with the external scheme and
+  # host, not app's internal http://…:8080. `native` (Tomcat's RemoteIpValve) only
+  # trusts the headers from an internal-proxy source, unlike `framework`, which trusts
+  # any caller — `app` publishes no port, so the only client is Caddy on the compose
+  # network.
+  forward-headers-strategy: native
+
 spring:
   datasource:
     url: ${PICTOGRAM_DB_URL}

@@ -1,6 +1,25 @@
-# Routes chat's endpoints (ADR-0014). `app` stays directly published (compose.yaml) — this
-# is chat's own temporary origin until #169 folds it behind app's Caddy. `reverse_proxy`
-# handles the WebSocket upgrade on /ws (#164) transparently, same as any other request.
-:8082 {
-	reverse_proxy chat:8081
+# One public origin for the whole app (ADR-0012, ADR-0014, #169): Caddy is the single
+# published entrypoint and routes by path — chat's WebSocket (#164) at /ws to the `chat`
+# service, everything else to `app`. Same origin means no WS-origin/CORS check and one
+# TLS certificate to provision in production, and the frontend's socket URL is just
+# `/ws` on the page origin. `reverse_proxy` handles the WebSocket upgrade transparently.
+#
+# Terminating TLS for a real domain (binding :443, mapping the host ports) is a
+# deployment concern layered on in a prod compose overlay, not here — this file is the
+# plain-HTTP :8080 shape every local run shares. PICTOGRAM_APP_UPSTREAM is a
+# compose-internal override: compose.mock-oauth.yaml points it at the namespace `app`
+# shares with the mock OIDC server.
+:8080 {
+	@ws path /ws
+	handle @ws {
+		reverse_proxy chat:8081
+	}
+	handle {
+		reverse_proxy {$PICTOGRAM_APP_UPSTREAM:app:8080} {
+			# Tomcat's RemoteIpValve (server.forward-headers-strategy=native) derives the
+			# public port from X-Forwarded-Port, which reverse_proxy doesn't send by
+			# default — without it the OAuth2 redirect_uri drops :8080.
+			header_up X-Forwarded-Port {http.request.port}
+		}
+	}
 }

@@ -38,6 +38,12 @@ test('opens exactly one socket, offering the fixed subprotocol then the token', 
   expect(FakeWebSocket.instances[0]?.protocols).toEqual(['pictogram-chat', 'a-token']);
 });
 
+test('connects to /ws on the page origin (chat shares app’s Caddy origin, #169)', () => {
+  record('a-token');
+
+  expect(FakeWebSocket.instances[0]?.url).toBe(`ws://${location.host}/ws`);
+});
+
 test('reports connecting then open as the handshake completes', () => {
   const { statuses } = record('a-token');
   expect(statuses).toEqual(['connecting']);

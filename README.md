@@ -75,9 +75,10 @@ profile against the `postgres` and `minio` services. Spring serves the SPA at `/
 hard reload or pasted link on a client route (`/login`, `/onboarding`) forwards to
 `index.html` so the SPA re-resolves it.
 
-`compose.yaml` also brings up `chat` — a separate service, own Gradle build, own
-Dockerfile (ADR-0014) — behind a `caddy` container at <http://localhost:8082>. It has no
-message-handling yet; `/actuator/health` is the only endpoint (#163).
+A `caddy` container is the single published entrypoint on `:8080` (ADR-0012): it routes
+`/ws` to `chat` — a separate service, own Gradle build, own Dockerfile (ADR-0014) — and
+everything else to `app`. Neither `app` nor `chat` publishes a port of its own. `chat`
+has no message-handling yet; its WebSocket handshake is the only endpoint (#163, #164).
 
 ```bash
 docker compose -f compose.yaml down --remove-orphans     # stop      (task down)
@@ -161,9 +162,10 @@ cd frontend && pnpm test:e2e                        # Playwright (after `pnpm ex
 ADR-0014 — no Testcontainers, nothing shared with the backend job), and the frontend lint /
 typecheck / test / build.
 
-The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests, a curl
-through Caddy to chat's health endpoint, and the Playwright journeys against `compose.yaml`
-+ `compose.mock-oauth.yaml` — plus a small container-free `check` job (backend Spotless +
+The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests
+(including a real WebSocket handshake against `chat` through the shared Caddy origin), a
+check that that origin fronts both services, and the Playwright journeys against
+`compose.yaml` + `compose.mock-oauth.yaml` — plus a small container-free `check` job (backend Spotless +
 module-boundary check, a chat check, frontend format / lint / typecheck / unit / build). The
 full backend, chat and frontend suites are **skipped** on this push: with "Require branches
 to be up to date before merging" on, the merged tree already passed them on the PR, so

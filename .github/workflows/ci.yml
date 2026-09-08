@@ -257,10 +257,14 @@ jobs:
       - name: Start the app
         run: docker compose up --build -d --wait
 
-      # Proves #163's other half of the scaffolded path: a request routed through Caddy
-      # (not just a direct hit on chat's own port) reaches chat.
-      - name: Verify chat is reachable through Caddy
-        run: curl --fail http://localhost:${PICTOGRAM_CHAT_PORT:-8082}/actuator/health
+      # The shared Caddy origin (#169) serves `app`, and routes /ws to `chat` — a plain
+      # GET gets 401 from chat's handshake filter, where `app` would 200 the SPA
+      # fallback. The backend blackbox ChatConnectionTests then does the real handshake.
+      - name: Verify the shared origin fronts both app and chat
+        run: |
+          curl -sf -o /dev/null http://localhost:8080/actuator/health
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/ws)
+          [ "$code" = 401 ] || { echo "chat /ws route returned $code, expected 401"; exit 1; }
 
       # @Tag("blackbox") backend tests: the ContainerDriver hits the running stack above.
       - name: Backend blackbox tests

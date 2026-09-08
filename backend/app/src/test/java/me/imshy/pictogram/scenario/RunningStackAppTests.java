@@ -23,15 +23,12 @@ class RunningStackAppTests
         ChatMessageTests {
 
     private PictogramApp pictogramApp;
-    private URI chatBaseUri;
+    private URI baseUri;
 
     @BeforeEach
     void connectToTheRunningStack() {
-        URI baseUri = URI
-            .create(Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
+        baseUri = URI.create(Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
         pictogramApp = new RunningStackApp(baseUri, JsonMapper.builder().build());
-        chatBaseUri = URI
-            .create(Optional.ofNullable(System.getenv("PICTOGRAM_CHAT_BASE_URL")).orElse("http://localhost:8082"));
     }
 
     @Override
@@ -41,6 +38,7 @@ class RunningStackAppTests
 
     @Override
     public URI chatBaseUri() {
-        return chatBaseUri;
+        // Chat shares the app's origin since #169 — routed to the chat service by path.
+        return baseUri;
     }
 }

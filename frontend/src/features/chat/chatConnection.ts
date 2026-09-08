@@ -25,12 +25,13 @@ class ChatConnectionDroppedError extends Error {
 
 function chatSocketUrl(): string {
   const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  // Temporary: chat is its own origin (a separate port, fronted by its own Caddy —
-  // compose.yaml/Caddyfile) until #169 folds it behind app's origin. VITE_CHAT_PORT
-  // overrides the default for host-based `task chat` dev, which runs chat bare on 8081
-  // rather than behind the compose-only Caddy route on 8082.
-  const port: string = import.meta.env.VITE_CHAT_PORT ?? '8082';
-  return `${wsProtocol}//${location.hostname}:${port}/ws`;
+  // Chat shares the app's origin, routed to the chat service by path at the edge
+  // (#169, ADR-0014) — one predictable URL, no second port or TLS certificate.
+  // VITE_CHAT_PORT points host-based `task chat` dev (chat runs bare on 8081, no
+  // Caddy) at that port instead.
+  const devPort = import.meta.env.VITE_CHAT_PORT;
+  const host = devPort ? `${location.hostname}:${devPort}` : location.host;
+  return `${wsProtocol}//${host}/ws`;
 }
 
 function parseChatEvent(raw: unknown): ChatEvent | null {
