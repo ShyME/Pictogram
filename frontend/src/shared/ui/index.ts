@@ -33,4 +33,11 @@ export {
   ToastViewport,
 } from './toast';
 export { Toaster } from './toaster';
-export { dismissToast, toast, useToast, type ToastRecord, type ToastVariant } from './useToast';
+export {
+  dismissToast,
+  toast,
+  useToast,
+  type ToastAction,
+  type ToastRecord,
+  type ToastVariant,
+} from './useToast';

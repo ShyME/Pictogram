@@ -74,8 +74,24 @@ test('a message for another conversation surfaces as a toast naming the sender',
 
   expect(await screen.findByText('New message from Zoe')).toBeInTheDocument();
   expect(await screen.findByText('knock knock')).toBeInTheDocument();
-  const dialog = screen.getByRole('dialog', { name: 'Chat with Ada Lovelace' });
-  expect(within(dialog).queryByText('knock knock')).not.toBeInTheDocument();
+  const adaDialog = screen.getByRole('dialog', { name: 'Chat with Ada Lovelace' });
+  expect(within(adaDialog).queryByText('knock knock')).not.toBeInTheDocument();
+});
+
+test("the message toast opens the sender's conversation, carrying the message across", async () => {
+  mountDock();
+  const socket = connectedSocket();
+  act(() => {
+    openConversation(ada);
+  });
+  act(() => {
+    socket.receive('{"type":"message","senderUserId":"u-zoe","text":"knock knock"}');
+  });
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+
+  const zoeDialog = screen.getByRole('dialog', { name: 'Chat with Zoe' });
+  expect(within(zoeDialog).getByText('knock knock')).toBeInTheDocument();
 });
 
 test('an undelivered notice for the open conversation flips the sent message', () => {

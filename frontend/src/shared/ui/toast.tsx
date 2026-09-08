@@ -44,6 +44,18 @@ export function ToastDescription({
   );
 }
 
+export function ToastAction({ className, ...props }: ComponentProps<typeof ToastPrimitive.Action>) {
+  return (
+    <ToastPrimitive.Action
+      className={cn(
+        'shrink-0 self-center rounded-control border border-border-strong bg-surface px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-surface-muted',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export function ToastClose({ className, ...props }: ComponentProps<typeof ToastPrimitive.Close>) {
   return (
     <ToastPrimitive.Close

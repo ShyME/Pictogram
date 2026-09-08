@@ -1,5 +1,6 @@
 import {
   Toast,
+  ToastAction,
   ToastClose,
   ToastDescription,
   ToastProvider,
@@ -15,7 +16,7 @@ export function Toaster() {
 
   return (
     <ToastProvider duration={DURATION_MS} swipeDirection="right">
-      {toasts.map(({ id, title, description, variant }) => (
+      {toasts.map(({ id, title, description, variant, action }) => (
         <Toast
           key={id}
           variant={variant}
@@ -23,10 +24,15 @@ export function Toaster() {
             if (!isOpen) dismiss(id);
           }}
         >
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             {title !== undefined && <ToastTitle>{title}</ToastTitle>}
             {description !== undefined && <ToastDescription>{description}</ToastDescription>}
           </div>
+          {action && (
+            <ToastAction className="ml-auto" altText={action.label} onClick={action.onClick}>
+              {action.label}
+            </ToastAction>
+          )}
           <ToastClose />
         </Toast>
       ))}

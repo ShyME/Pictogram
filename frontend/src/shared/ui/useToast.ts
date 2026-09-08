@@ -2,11 +2,16 @@ import { useSyncExternalStore } from 'react';
 
 export type ToastVariant = 'default' | 'success' | 'error';
 
+// An optional single call to action rendered as a button in the toast; clicking it also
+// dismisses the toast.
+export type ToastAction = { label: string; onClick: () => void };
+
 export type ToastRecord = {
   id: string;
   title?: string;
   description?: string;
   variant: ToastVariant;
+  action?: ToastAction;
 };
 
 type ToastInput = Omit<ToastRecord, 'id' | 'variant'> & { variant?: ToastVariant };
@@ -37,6 +42,7 @@ export function toast(input: ToastInput): string {
     title: input.title,
     description: input.description,
     variant: input.variant ?? 'default',
+    action: input.action,
   };
   records = [...records, record].slice(-MAX_QUEUED);
   notify();
