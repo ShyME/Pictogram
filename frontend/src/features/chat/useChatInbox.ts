@@ -1,16 +1,34 @@
 import { fetchAccounts, toast } from '@shared';
 import { useEffect } from 'react';
 import { chatEvents } from './chatConnection';
-import { markMessageUndelivered, openConversationPeer, recordReceivedMessage } from './chatStore';
+import {
+  markMessageUndelivered,
+  openConversation,
+  openConversationPeer,
+  recordReceivedMessage,
+} from './chatStore';
 
 // A message for a conversation the overlay isn't currently showing must not be silently
 // missed (ADR-0014) — surface it as a toast, resolving the sender's name client-side since
-// the frame carries only a userId.
+// the frame carries only a userId. When the sender resolves, the toast opens the
+// conversation (seeded with this message) on tap.
 async function toastIncoming(senderUserId: string, text: string): Promise<void> {
   const accounts = await fetchAccounts([senderUserId]).catch(() => null);
   const sender = accounts?.get(senderUserId);
-  const from = sender ? (sender.displayName ?? `@${sender.username}`) : 'someone';
-  toast({ title: `New message from ${from}`, description: text });
+  if (!sender) {
+    toast({ title: 'New message', description: text });
+    return;
+  }
+  toast({
+    title: `New message from ${sender.displayName ?? `@${sender.username}`}`,
+    description: text,
+    action: {
+      label: 'Open',
+      onClick: () => {
+        openConversation(sender, text);
+      },
+    },
+  });
 }
 
 // Mounted once at the app shell: the single reader of chat's inbound stream, routing each

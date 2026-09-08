@@ -42,9 +42,21 @@ function append(message: Omit<ChatMessage, 'id'>): void {
   notify();
 }
 
-export function openConversation(peer: ChatPeer): void {
-  if (conversation?.peer.userId === peer.userId) return;
-  conversation = { peer, messages: [] };
+// `seedIncoming` is the message that was just notified by toast: opening this way keeps it
+// visible instead of dropping it, since there is no history to reopen (ADR-0014).
+export function openConversation(peer: ChatPeer, seedIncoming?: string): void {
+  if (seedIncoming === undefined && conversation?.peer.userId === peer.userId) return;
+  const messages: ChatMessage[] = [];
+  if (seedIncoming !== undefined) {
+    counter += 1;
+    messages.push({
+      id: `msg-${counter.toString()}`,
+      direction: 'incoming',
+      text: seedIncoming,
+      delivered: true,
+    });
+  }
+  conversation = { peer, messages };
   notify();
 }
 

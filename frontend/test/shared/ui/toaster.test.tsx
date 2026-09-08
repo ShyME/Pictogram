@@ -29,4 +29,27 @@ describe('Toaster', () => {
     });
     expect(screen.queryByText('Link copied')).toBeNull();
   });
+
+  it('renders an action button that runs its handler and dismisses the toast', () => {
+    let didRun = false;
+    render(<Toaster />);
+    act(() => {
+      toast({
+        title: 'New message',
+        action: {
+          label: 'Open',
+          onClick: () => {
+            didRun = true;
+          },
+        },
+      });
+    });
+
+    act(() => {
+      screen.getByRole('button', { name: 'Open' }).click();
+    });
+
+    expect(didRun).toBe(true);
+    expect(screen.queryByText('New message')).toBeNull();
+  });
 });

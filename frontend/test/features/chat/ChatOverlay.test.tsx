@@ -110,6 +110,23 @@ test('opening a second conversation replaces the first, with no carried-over mes
   expect(screen.queryByText('note to Ada')).not.toBeInTheDocument();
 });
 
+test('opening with a seed message shows it, and replaces a stale same-peer conversation', () => {
+  render(<ChatOverlay />);
+  act(() => {
+    openConversation(ada);
+  });
+  typeAndSend('note to Ada');
+  expect(screen.getByText('note to Ada')).toBeInTheDocument();
+
+  act(() => {
+    openConversation(ada, 'did you see this?');
+  });
+
+  const dialog = screen.getByRole('dialog', { name: 'Chat with Ada Lovelace' });
+  expect(within(dialog).getByText('did you see this?')).toBeInTheDocument();
+  expect(within(dialog).queryByText('note to Ada')).not.toBeInTheDocument();
+});
+
 test('an unsent draft does not carry across to the next conversation', () => {
   render(<ChatOverlay />);
   act(() => {
