@@ -35,6 +35,9 @@ class Follow implements Persistable<FollowId> {
     }
 
     static Follow of(UserId follower, UserId followed, Instant followedAt) {
+        if (follower.equals(followed)) {
+            throw new SelfFollowException();
+        }
         return new Follow(follower.value(), followed.value(), followedAt);
     }
 
