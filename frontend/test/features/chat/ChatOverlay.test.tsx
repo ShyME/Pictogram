@@ -67,7 +67,7 @@ test('composing and sending echoes the message and writes the protocol frame', (
   typeAndSend('hello Ada');
 
   expect(screen.getByText('hello Ada')).toBeInTheDocument();
-  expect(socket.sent).toEqual(['{"recipientUserId":"u-ada","text":"hello Ada"}']);
+  expect(socket.sent).toContain('{"recipientUserId":"u-ada","text":"hello Ada"}');
   expect(screen.queryByText('Not delivered')).not.toBeInTheDocument();
 });
 
@@ -82,6 +82,23 @@ test('a message that cannot be sent is shown as not delivered', () => {
   const dialog = screen.getByRole('dialog');
   expect(within(dialog).getByText('anyone home?')).toBeInTheDocument();
   expect(within(dialog).getByText('Not delivered')).toBeInTheDocument();
+});
+
+test('opening the overlay asks chat for the peer presence and shows the dot on the answer', () => {
+  const socket = withOpenSocket();
+  render(<ChatOverlay />);
+  act(() => {
+    openConversation(ada);
+  });
+
+  expect(socket.sent).toContain('{"type":"presence-query","userId":"u-ada"}');
+
+  act(() => {
+    socket.receive('{"type":"presence","userId":"u-ada","online":true}');
+  });
+
+  const dialog = screen.getByRole('dialog');
+  expect(within(dialog).getByRole('img', { name: 'Online' })).toBeInTheDocument();
 });
 
 test('the close control discards the overlay', () => {

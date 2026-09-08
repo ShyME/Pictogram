@@ -7,6 +7,7 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 // One instance per connection (#165) — ChatWebSocketConfiguration builds a fresh one per
@@ -43,7 +44,7 @@ class ChatWebSocketHandler implements WebSocketHandler {
         // deliver() can still find this (already-terminated) sink in the registry and
         // silently lose a message to it in the window between the two.
         Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText)
-            .doOnNext(payload -> relay(outbound, payload)).then().doFinally(signal -> {
+            .doOnNext(payload -> handleFrame(outbound, payload)).then().doFinally(signal -> {
                 connections.disconnect(caller, outbound);
                 outbound.tryEmitComplete();
             });
@@ -54,17 +55,29 @@ class ChatWebSocketHandler implements WebSocketHandler {
         return receiving.and(sending);
     }
 
-    // A malformed frame (bad JSON, a non-UUID recipientUserId, or none at all)
-    // drops
-    // silently rather than tearing down the whole connection over one bad message.
-    private void relay(Sinks.Many<OutboundEvent> outbound, String payload) {
-        SendMessageRequest request;
+    // A send frame carries no "type"; a presence query (ADR-0014) tags itself with
+    // one.
+    // Any malformed frame drops silently rather than tearing the connection down.
+    private void handleFrame(Sinks.Many<OutboundEvent> outbound, String payload) {
+        JsonNode frame;
         try {
-            request = json.readValue(payload, SendMessageRequest.class);
+            frame = json.readTree(payload);
         } catch (RuntimeException malformed) {
             return;
         }
-        if (request.recipientUserId() == null || request.text() == null)
+        if ("presence-query".equals(frame.at("/type").asString())) {
+            answerPresenceQuery(outbound, frame.at("/userId").asString());
+            return;
+        }
+
+        SendMessageRequest request;
+        try {
+            request = json.treeToValue(frame, SendMessageRequest.class);
+        } catch (RuntimeException malformed) {
+            return;
+        }
+        // treeToValue returns null for a bare JSON `null` payload rather than throwing.
+        if (request == null || request.recipientUserId() == null || request.text() == null)
             return;
 
         boolean delivered = connections.deliver(caller, request.recipientUserId(), request.text());
@@ -72,5 +85,15 @@ class ChatWebSocketHandler implements WebSocketHandler {
             outbound.emitNext(UndeliveredMessage.of(request.recipientUserId(), request.text()),
                 ConnectionRegistry.emitRetrying());
         }
+    }
+
+    private void answerPresenceQuery(Sinks.Many<OutboundEvent> outbound, String userId) {
+        UserId subject;
+        try {
+            subject = UserId.fromString(userId);
+        } catch (RuntimeException notAUserId) {
+            return;
+        }
+        outbound.emitNext(PresenceStatus.of(subject, connections.isOnline(subject)), ConnectionRegistry.emitRetrying());
     }
 }

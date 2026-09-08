@@ -46,6 +46,26 @@ class ConnectionRegistryTest {
         assertThat(delivered).isFalse();
     }
 
+    @Test
+    void reportsAUserWithAnOpenConnectionAsOnlineAndOneWithoutAsOffline() {
+        UserId online = UserId.random();
+        UserId offline = UserId.random();
+        registry.connect(online, Sinks.many().unicast().onBackpressureBuffer());
+
+        assertThat(registry.isOnline(online)).isTrue();
+        assertThat(registry.isOnline(offline)).isFalse();
+    }
+
+    @Test
+    void reportsAUserAsOfflineOnceTheirLastConnectionDisconnects() {
+        UserId user = UserId.random();
+        Sinks.Many<OutboundEvent> outbound = Sinks.many().unicast().onBackpressureBuffer();
+        registry.connect(user, outbound);
+        registry.disconnect(user, outbound);
+
+        assertThat(registry.isOnline(user)).isFalse();
+    }
+
     private List<OutboundEvent> record(UserId user) {
         List<OutboundEvent> received = new ArrayList<>();
         Sinks.Many<OutboundEvent> outbound = Sinks.many().unicast().onBackpressureBuffer();

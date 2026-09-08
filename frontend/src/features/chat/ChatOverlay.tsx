@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, Button, Textarea, cn } from '@shared';
 import { Send, X } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
+import { PresenceDot } from './PresenceDot';
 import { sendChatMessage } from './chatConnection';
 import {
   type ChatMessage,
@@ -10,6 +11,7 @@ import {
   recordSentMessage,
   useConversation,
 } from './chatStore';
+import { usePresence } from './usePresence';
 
 function peerName(peer: ChatPeer): string {
   return peer.displayName ?? `@${peer.username}`;
@@ -39,6 +41,7 @@ function Bubble({ message }: { message: ChatMessage }) {
 function OpenConversation({ conversation }: { conversation: Conversation }) {
   const { peer, messages } = conversation;
   const name = peerName(peer);
+  const presence = usePresence(peer.userId);
   const [draft, setDraft] = useState('');
 
   const send = () => {
@@ -67,7 +70,10 @@ function OpenConversation({ conversation }: { conversation: Conversation }) {
             <AvatarFallback>{peer.username.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+              <PresenceDot presence={presence} />
+            </div>
             <p className="truncate text-xs text-foreground-muted">@{peer.username}</p>
           </div>
           <Button variant="ghost" size="icon" aria-label="Close chat" onClick={closeConversation}>

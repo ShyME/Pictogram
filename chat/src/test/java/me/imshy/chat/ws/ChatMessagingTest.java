@@ -6,6 +6,7 @@ import java.net.URI;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -92,6 +93,20 @@ class ChatMessagingTest {
     }
 
     @Test
+    void aPresenceQueryReportsOnlineForAConnectedUserAndOfflineForOneWithNoConnection() throws InterruptedException {
+        UserId connectedUser = UserId.random();
+        UserId userWithNoConnection = UserId.random();
+        connect(connectedUser);
+        Connection asker = connect(UserId.random());
+
+        asker.sendRaw(JSON.writeValueAsString(Map.of("type", "presence-query", "userId", connectedUser)));
+        assertThat(receive(asker, PresenceStatus.class)).isEqualTo(PresenceStatus.of(connectedUser, true));
+
+        asker.sendRaw(JSON.writeValueAsString(Map.of("type", "presence-query", "userId", userWithNoConnection)));
+        assertThat(receive(asker, PresenceStatus.class)).isEqualTo(PresenceStatus.of(userWithNoConnection, false));
+    }
+
+    @Test
     void aMalformedFrameIsDroppedRatherThanTearingDownTheConnection() throws InterruptedException {
         UserId sender = UserId.random();
         UserId recipient = UserId.random();
@@ -101,6 +116,7 @@ class ChatMessagingTest {
         senderConnection.sendRaw("{\"text\":\"missing a recipient\"}");
         senderConnection.sendRaw("{\"recipientUserId\":\"not-a-uuid\",\"text\":\"bad id\"}");
         senderConnection.sendRaw("not even json");
+        senderConnection.sendRaw("null");
         senderConnection.send(new SendMessageRequest(recipient, "still works"));
 
         assertThat(receive(recipientConnection, DeliveredMessage.class))
