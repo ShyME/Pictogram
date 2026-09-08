@@ -15,6 +15,25 @@ spring:
       max-file-size: 15MB
       max-request-size: 16MB
 
+  # Kafka carries one externalised flow — social's PostLiked / PostCommented / UserFollowed
+  # into the notifications context, ADR-0015. Nothing is @Externalized or consumed yet
+  # (tickets #196 / #197); this is the connection wiring only.
+  kafka:
+    bootstrap-servers: ${PICTOGRAM_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notifications
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "me.imshy.pictogram.*"
+    producer:
+      # The outbox relay is the only producer — durable, in-order.
+      acks: all
+  modulith:
+    events:
+      # The JPA event-publication registry is the outbox (ADR-0015): resubmit anything that
+      # did not reach the broker before the last shutdown.
+      republish-outstanding-events-on-restart: true
+
 # Google sign-in is off until a client is configured — set
 # spring.security.oauth2.client.registration.google.client-id / .client-secret (env:
 # SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID / ..._CLIENT_SECRET).

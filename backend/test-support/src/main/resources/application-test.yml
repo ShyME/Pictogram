@@ -1,5 +1,13 @@
 # Defaults for every @ModuleIntegrationTest / @SpringBootTest run on the "test" profile.
 spring:
+  # spring-boot-starter-kafka is on the test classpath for the one SharedKafka container the
+  # notifications module needs (ADR-0015). Every other slice — and the app slice — must start
+  # with no broker, so both the client autoconfig and Modulith's Kafka externaliser are off
+  # here. The notifications module's test base (ticket #197) re-includes them.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
+      - org.springframework.modulith.events.kafka.KafkaEventExternalizerConfiguration
   jpa:
     open-in-view: false
     hibernate:

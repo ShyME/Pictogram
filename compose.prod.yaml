@@ -24,6 +24,12 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set it in the box .env — see docs/runbook/deployment.md}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set it in the box .env — see docs/runbook/deployment.md}
 
+  kafka:
+    # Heap is capped in compose.yaml — the box is 4 GB (ADR-0012, ADR-0015). If it genuinely
+    # cannot hold the broker the fallback is Testcontainers-only + a gated consumer, tracked
+    # with the #176 migration off the temporary host.
+    restart: unless-stopped
+
   app:
     image: ghcr.io/shyme/pictogram-app:${PICTOGRAM_TAG:-latest}
     build: !reset null
