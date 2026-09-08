@@ -47,6 +47,42 @@ class ConnectionRegistryTest {
     }
 
     @Test
+    void doesNotReportDeliveredWhenTheRecipientsOnlySinkIsAlreadyTerminated() {
+        UserId sender = UserId.random();
+        UserId recipient = UserId.random();
+        Sinks.Many<OutboundEvent> terminated = Sinks.many().unicast().onBackpressureBuffer();
+        terminated.asFlux().subscribe(event -> {
+        }, error -> {
+        }, () -> {
+        });
+        terminated.tryEmitComplete();
+        registry.connect(recipient, terminated);
+
+        boolean delivered = registry.deliver(sender, recipient, "hello");
+
+        assertThat(delivered).isFalse();
+    }
+
+    @Test
+    void reportsDeliveredWhenAtLeastOneConnectionAcceptsEvenIfAnotherIsTerminated() {
+        UserId sender = UserId.random();
+        UserId recipient = UserId.random();
+        Sinks.Many<OutboundEvent> terminated = Sinks.many().unicast().onBackpressureBuffer();
+        terminated.asFlux().subscribe(event -> {
+        }, error -> {
+        }, () -> {
+        });
+        terminated.tryEmitComplete();
+        List<OutboundEvent> liveTab = record(recipient);
+        registry.connect(recipient, terminated);
+
+        boolean delivered = registry.deliver(sender, recipient, "hello");
+
+        assertThat(delivered).isTrue();
+        assertThat(liveTab).containsExactly(DeliveredMessage.of(sender, "hello"));
+    }
+
+    @Test
     void reportsAUserWithAnOpenConnectionAsOnlineAndOneWithoutAsOffline() {
         UserId online = UserId.random();
         UserId offline = UserId.random();

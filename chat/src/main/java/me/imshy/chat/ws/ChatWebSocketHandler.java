@@ -7,6 +7,7 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.util.concurrent.Queues;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -19,6 +20,12 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // and the opaque token can't be echoed — so the client also offers this fixed
     // value (frontend chatConnection.ts) and getSubProtocols() selects it.
     static final String SUBPROTOCOL = "pictogram-chat";
+
+    // Bounds one connection's outbound buffer so a recipient that stops draining is
+    // terminated instead of growing the heap. Changing it is a heap-safety decision
+    // —
+    // ChatWebSocketHandlerBufferTest pins the value so it isn't done lightly.
+    static final int OUTBOUND_BUFFER_CAPACITY = 256;
 
     private final ConnectionRegistry connections;
     private final ObjectMapper json;
@@ -35,9 +42,13 @@ class ChatWebSocketHandler implements WebSocketHandler {
         return List.of(SUBPROTOCOL);
     }
 
+    static Sinks.Many<OutboundEvent> outboundSink() {
+        return Sinks.many().unicast().onBackpressureBuffer(Queues.<OutboundEvent>get(OUTBOUND_BUFFER_CAPACITY).get());
+    }
+
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        Sinks.Many<OutboundEvent> outbound = Sinks.many().unicast().onBackpressureBuffer();
+        Sinks.Many<OutboundEvent> outbound = outboundSink();
         connections.connect(caller, outbound);
 
         // Disconnect before completing the sink, not after: otherwise a concurrent
@@ -82,8 +93,7 @@ class ChatWebSocketHandler implements WebSocketHandler {
 
         boolean delivered = connections.deliver(caller, request.recipientUserId(), request.text());
         if (!delivered) {
-            outbound.emitNext(UndeliveredMessage.of(request.recipientUserId(), request.text()),
-                ConnectionRegistry.emitRetrying());
+            ConnectionRegistry.emit(outbound, UndeliveredMessage.of(request.recipientUserId(), request.text()));
         }
     }
 
@@ -94,6 +104,6 @@ class ChatWebSocketHandler implements WebSocketHandler {
         } catch (RuntimeException notAUserId) {
             return;
         }
-        outbound.emitNext(PresenceStatus.of(subject, connections.isOnline(subject)), ConnectionRegistry.emitRetrying());
+        ConnectionRegistry.emit(outbound, PresenceStatus.of(subject, connections.isOnline(subject)));
     }
 }
