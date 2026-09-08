@@ -1,12 +1,13 @@
 import { vi } from 'vitest';
 
-type Listener = () => void;
+type Listener = (event: MessageEvent) => void;
 
 export class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
 
   readonly url: string;
   readonly protocols: string[];
+  readonly sent: string[] = [];
   closed = false;
   private readonly listeners = new Map<string, Set<Listener>>();
 
@@ -22,18 +23,29 @@ export class FakeWebSocket {
     this.listeners.set(type, forType);
   }
 
+  send(data: string): void {
+    this.sent.push(data);
+  }
+
   close(): void {
     this.closed = true;
   }
 
   open(): void {
-    const listeners = this.listeners.get('open') ?? [];
-    for (const listener of listeners) listener();
+    this.dispatch('open', new MessageEvent('open'));
+  }
+
+  receive(data: string): void {
+    this.dispatch('message', new MessageEvent('message', { data }));
   }
 
   simulateDrop(): void {
-    const listeners = this.listeners.get('close') ?? [];
-    for (const listener of listeners) listener();
+    this.dispatch('close', new MessageEvent('close'));
+  }
+
+  private dispatch(type: string, event: MessageEvent): void {
+    const listeners = this.listeners.get(type) ?? [];
+    for (const listener of listeners) listener(event);
   }
 }
 

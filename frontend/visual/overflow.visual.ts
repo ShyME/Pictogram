@@ -1,5 +1,5 @@
 import { type Locator, type Page, expect, test } from '@playwright/test';
-import { STRESS_PROFILE_PATH, stubNeedsOnboarding, stubStress } from './appWorld';
+import { STRESS_PROFILE_PATH, stubApp, stubNeedsOnboarding, stubStress } from './appWorld';
 import { stubSignedOut, waitForFonts } from './support';
 
 // ADR-0013 / #139: responsive is a property of finished layouts. Every screen must render
@@ -60,6 +60,23 @@ test.describe('no horizontal overflow with worst-case content', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await page.waitForLoadState('networkidle');
     await expectNoHorizontalOverflow(page);
+  });
+
+  test('chat overlay with a worst-case message', async ({ page }) => {
+    // The overlay pins to the bottom of the viewport on every screen (#166); a long
+    // unbreakable token or bare URL in a message must wrap inside the transcript, not
+    // push the panel — or the page — wide.
+    const worstCase = `unbreakable-${'x'.repeat(90)} https://example.com/${'segment/'.repeat(12)}end`;
+    await stubApp(page);
+    await page.goto('/u/vivian');
+    await page.getByRole('button', { name: 'Message' }).click();
+    const overlay = page.getByRole('dialog', { name: /chat with/i });
+    await expect(overlay).toBeVisible();
+    await overlay.getByRole('textbox').fill(worstCase);
+    await overlay.getByRole('button', { name: 'Send' }).click();
+    await expect(overlay.getByText(/^unbreakable-x+/)).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectContentFits(overlay, 'chat overlay');
   });
 
   test('followers list', async ({ page }) => {
