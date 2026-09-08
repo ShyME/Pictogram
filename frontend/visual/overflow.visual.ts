@@ -1,5 +1,12 @@
-import { type Locator, type Page, expect, test } from '@playwright/test';
-import { STRESS_PROFILE_PATH, stubApp, stubNeedsOnboarding, stubStress } from './appWorld';
+import type { Locator, Page } from '@playwright/test';
+import {
+  expect,
+  STRESS_PROFILE_PATH,
+  stubApp,
+  stubNeedsOnboarding,
+  stubStress,
+  test,
+} from './appWorld';
 import { stubSignedOut, waitForFonts } from './support';
 
 // ADR-0013 / #139: responsive is a property of finished layouts. Every screen must render
