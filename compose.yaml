@@ -36,8 +36,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    ports:
-      - "${PICTOGRAM_PORT:-8080}:8080"
+    # Internal only — reached through the `caddy` entrypoint (ADR-0014, #169).
     environment:
       SPRING_PROFILES_ACTIVE: prod
       # The prod profile refuses to start without a signing key (ADR-0004). This fixed key keeps
@@ -78,22 +77,25 @@ services:
       retries: 20
       start_period: 20s
 
-  # Fronts chat only, for now (ADR-0014) — `app` keeps its own published port above.
+  # The single published entrypoint (ADR-0012, ADR-0014, #169): fronts both `app` and
+  # `chat` on one origin, routed by path in the Caddyfile.
   caddy:
     image: caddy:2-alpine
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     ports:
-      - "${PICTOGRAM_CHAT_PORT:-8082}:8082"
+      - "${PICTOGRAM_PORT:-8080}:8080"
     healthcheck:
-      # Hits chat *through* the route, not just Caddy's own process — this is the
-      # end-to-end check #163 asks for.
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8082/actuator/health"]
+      # Hits `app` *through* the route, so a healthy `caddy` means the origin is
+      # actually serving, not just that the process is up.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 10s
     depends_on:
+      app:
+        condition: service_healthy
       chat:
         condition: service_healthy
 
