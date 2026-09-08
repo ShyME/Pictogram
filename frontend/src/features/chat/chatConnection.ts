@@ -79,12 +79,18 @@ export function sendChatMessage(recipientUserId: string, text: string): MessageD
   return 'sent';
 }
 
-// The token travels as the WebSocket subprotocol, not a query parameter (ADR-0014), so it
+// A fixed subprotocol offered alongside the token: the browser fails the connection unless
+// the server echoes back one of the offered subprotocols (WHATWG "establish a WebSocket
+// connection"), and the server cannot echo the opaque token. chat selects this constant and
+// reads the token from the other offered value — ChatWebSocketHandler#getSubProtocols.
+const CHAT_SUBPROTOCOL = 'pictogram-chat';
+
+// The token travels as a WebSocket subprotocol, not a query parameter (ADR-0014), so it
 // never lands in a proxy's access logs.
 function connect(accessToken: string): Observable<ChatConnectionStatus> {
   return new Observable<ChatConnectionStatus>((subscriber: Observer<ChatConnectionStatus>) => {
     subscriber.next('connecting');
-    const socket = new WebSocket(chatSocketUrl(), [accessToken]);
+    const socket = new WebSocket(chatSocketUrl(), [CHAT_SUBPROTOCOL, accessToken]);
     socket.addEventListener('open', () => {
       openSocket$.next(socket);
       subscriber.next('open');

@@ -1,5 +1,6 @@
 package me.imshy.chat.ws;
 
+import java.util.List;
 import me.imshy.chat.UserId;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
@@ -12,6 +13,12 @@ import tools.jackson.databind.ObjectMapper;
 // handshake, closing over the caller ChatHandshakeFilter already verified.
 class ChatWebSocketHandler implements WebSocketHandler {
 
+    // The browser drops the socket unless the server echoes a subprotocol it
+    // offered,
+    // and the opaque token can't be echoed — so the client also offers this fixed
+    // value (frontend chatConnection.ts) and getSubProtocols() selects it.
+    static final String SUBPROTOCOL = "pictogram-chat";
+
     private final ConnectionRegistry connections;
     private final ObjectMapper json;
     private final UserId caller;
@@ -20,6 +27,11 @@ class ChatWebSocketHandler implements WebSocketHandler {
         this.connections = connections;
         this.json = json;
         this.caller = caller;
+    }
+
+    @Override
+    public List<String> getSubProtocols() {
+        return List.of(SUBPROTOCOL);
     }
 
     @Override
