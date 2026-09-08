@@ -24,9 +24,6 @@ public class Following {
     }
 
     public void follow(ViewerId viewer, UserId followed) {
-        if (viewer.value().equals(followed.value())) {
-            throw new SelfFollowException();
-        }
         if (follows.existsByFollowerIdAndFollowedId(viewer.value(), followed.value())) {
             return;
         }
