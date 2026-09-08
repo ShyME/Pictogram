@@ -73,7 +73,7 @@ interface ChatMessageTests extends AppUnderTest, ChatUnderTest {
 
     private WebSocket connect(String accessToken, WebSocket.Listener listener)
         throws InterruptedException, ExecutionException, TimeoutException {
-        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(accessToken)
+        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(CHAT_SUBPROTOCOL, accessToken)
             .buildAsync(chatWsUri(), listener).get(10, TimeUnit.SECONDS);
     }
 

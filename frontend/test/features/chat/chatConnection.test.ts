@@ -29,11 +29,13 @@ function record(accessToken: string | null): {
   return { tokens, statuses };
 }
 
-test('opens exactly one socket, carrying the token as the subprotocol', () => {
+test('opens exactly one socket, offering the fixed subprotocol then the token', () => {
   record('a-token');
 
   expect(FakeWebSocket.instances).toHaveLength(1);
-  expect(FakeWebSocket.instances[0]?.protocols).toEqual(['a-token']);
+  // The server can only echo a subprotocol it was offered, and it can't echo the opaque
+  // token — so a fixed value goes first for it to select, or the browser drops the socket.
+  expect(FakeWebSocket.instances[0]?.protocols).toEqual(['pictogram-chat', 'a-token']);
 });
 
 test('reports connecting then open as the handshake completes', () => {

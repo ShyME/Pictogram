@@ -35,7 +35,7 @@ interface ChatConnectionTests extends AppUnderTest, ChatUnderTest {
     }
 
     private WebSocket connect(String accessToken) throws InterruptedException, ExecutionException, TimeoutException {
-        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(accessToken)
+        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(CHAT_SUBPROTOCOL, accessToken)
             .buildAsync(chatWsUri(), new WebSocket.Listener() {
             }).get(10, TimeUnit.SECONDS);
     }

@@ -19,7 +19,9 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
+import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
@@ -112,7 +114,7 @@ class ChatMessagingTest {
     }
 
     private Connection connect(UserId user) throws InterruptedException {
-        Connection connection = new Connection(client, wsUri(), protocolHeader(TOKENS.issue(user, clock)));
+        Connection connection = new Connection(client, wsUri(), TOKENS.issue(user, clock));
         connections.add(connection);
         assertThat(connection.ready.await(5, TimeUnit.SECONDS)).as("connection opened within 5s").isTrue();
         return connection;
@@ -120,12 +122,6 @@ class ChatMessagingTest {
 
     private URI wsUri() {
         return URI.create("ws://localhost:" + port + ChatWebSocketConfiguration.WS_PATH);
-    }
-
-    private static HttpHeaders protocolHeader(String token) {
-        var headers = new HttpHeaders();
-        headers.add("Sec-WebSocket-Protocol", token);
-        return headers;
     }
 
     // Holds one client-side connection open in the background for the test to
@@ -145,13 +141,26 @@ class ChatMessagingTest {
         private final Sinks.Empty<Void> closeSignal = Sinks.empty();
         private final Disposable subscription;
 
-        Connection(ReactorNettyWebSocketClient client, URI uri, HttpHeaders headers) {
-            subscription = client.execute(uri, headers, session -> {
-                ready.countDown();
-                Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText).doOnNext(inbound::add)
-                    .then();
-                Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
-                return Mono.when(receiving, sending, closeSignal.asMono());
+        // Offers the fixed subprotocol and the token together, as the browser client
+        // does
+        // (frontend chatConnection.ts) — the token rides as a Sec-WebSocket-Protocol
+        // value
+        // (ADR-0014) and the server echoes back the fixed one.
+        Connection(ReactorNettyWebSocketClient client, URI uri, String token) {
+            subscription = client.execute(uri, new HttpHeaders(), new WebSocketHandler() {
+                @Override
+                public List<String> getSubProtocols() {
+                    return List.of(ChatWebSocketHandler.SUBPROTOCOL, token);
+                }
+
+                @Override
+                public Mono<Void> handle(WebSocketSession session) {
+                    ready.countDown();
+                    Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText)
+                        .doOnNext(inbound::add).then();
+                    Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
+                    return Mono.when(receiving, sending, closeSignal.asMono());
+                }
             }).subscribe();
         }
 
