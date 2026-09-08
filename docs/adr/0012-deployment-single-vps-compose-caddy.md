@@ -95,3 +95,31 @@ recoverable by re-seeding. When that ticket lands: whole-box snapshots (Hetzner'
   rolled forward, not blocked.
 - Secrets live only on the box. Rotating the signing key or the OAuth secret is a manual
   edit to the box's `.env` plus a `compose up -d`.
+
+## Addendum (2026-09-08): the first host is a temporary GCP `e2-medium`
+
+The owner has a $300 GCP free-trial credit and chose to spend it as an explicitly
+**temporary** host rather than pay a flat fee from day one. A GCP `e2-medium` (2 vCPU /
+4 GB, ~$28/month all-in) is architecturally identical to the CX22 class this ADR
+specifies — single VM, Docker Compose, Caddy, named volumes, no managed services — so the
+shape above is unchanged. The 4 GB is deliberate: two JVMs (`app` + `chat`, ADR-0014) plus
+Postgres and MinIO do not fit in 2 GB.
+
+The credit buys roughly ten months. GCP is metered once it expires, so **migrating off GCP
+onto a flat-fee box before then is mandatory** — tracked as #176, blocked by the initial
+deployment (#140). The migration is a box swap, not a re-architecture: provision the new
+host, run the same `compose.yaml` + `compose.prod.yaml` with the same `.env`, repoint DNS.
+
+Images still build in GitHub Actions and push to GHCR; the box only pulls, so its
+RAM/CPU is spent on runtime, not builds.
+
+### The deploy trigger is on-demand, not post-merge
+
+The ADR body and consequences specify a deploy job that runs automatically on every push
+to `main`. That is changed here to **`workflow_dispatch` only** (`.github/workflows/deploy.yml`,
+the "Run workflow" button): a merge to `main` never rolls the box — a human decides when a
+release happens. The rationale for the automatic trigger (fix-forward, no branch
+protection) still holds for what it protects against, but for a single-box portfolio
+deployment the owner prefers an explicit release step over every merge reaching
+production. The job still builds, pushes and validates on dispatch, and takes a `tag`
+input so a prior image can be re-rolled for rollback without a rebuild.
