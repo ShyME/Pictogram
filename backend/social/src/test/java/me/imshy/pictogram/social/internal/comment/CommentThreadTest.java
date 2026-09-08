@@ -157,6 +157,30 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
     }
 
     @Test
+    void aFinalPageOfExactlyTheLimitCarriesNoNextCursor() {
+        for (int minute = 0; minute < 3; minute++) {
+            commentAt("2026-09-04T10:0%d:00Z".formatted(minute), "c" + minute);
+        }
+
+        CommentThread.Page page = thread.pageFor(post, null, 3);
+
+        assertThat(page.comments()).hasSize(3);
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void oneRowBeyondTheLimitYieldsAFullPageAndACursor() {
+        for (int minute = 0; minute < 4; minute++) {
+            commentAt("2026-09-04T10:0%d:00Z".formatted(minute), "c" + minute);
+        }
+
+        CommentThread.Page page = thread.pageFor(post, null, 3);
+
+        assertThat(page.comments()).hasSize(3);
+        assertThat(page.nextCursor()).isNotNull();
+    }
+
+    @Test
     void theThreadIsScopedToOnePost() {
         commentAt("2026-09-04T10:00:00Z", "on this post");
         PostId other = PostId.random();

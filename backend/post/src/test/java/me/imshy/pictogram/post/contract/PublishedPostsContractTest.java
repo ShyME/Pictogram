@@ -149,6 +149,32 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
         assertThat(publishedPosts.byAuthors(List.of(ada), null, 5).nextCursor()).isNull();
     }
 
+    @Test
+    void aFinalPageOfExactlyTheLimitCarriesNoNextCursor() {
+        var ada = UserId.random();
+        for (int minute = 0; minute < 3; minute++) {
+            publishAt(ada, "2026-09-01T10:0%d:00Z".formatted(minute));
+        }
+
+        PublishedPosts.Page page = publishedPosts.byAuthors(List.of(ada), null, 3);
+
+        assertThat(page.posts()).hasSize(3);
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void oneRowBeyondTheLimitYieldsAFullPageAndACursor() {
+        var ada = UserId.random();
+        for (int minute = 0; minute < 4; minute++) {
+            publishAt(ada, "2026-09-01T10:0%d:00Z".formatted(minute));
+        }
+
+        PublishedPosts.Page page = publishedPosts.byAuthors(List.of(ada), null, 3);
+
+        assertThat(page.posts()).hasSize(3);
+        assertThat(page.nextCursor()).isNotNull();
+    }
+
     private PostId publishAt(UserId author, String instant) {
         now = Instant.parse(instant);
         var mediaId = MediaId.random();

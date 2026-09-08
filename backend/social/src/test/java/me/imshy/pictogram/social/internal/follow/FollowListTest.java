@@ -135,6 +135,32 @@ class FollowListTest extends SocialModuleIntegrationTest {
         assertThat(page.nextCursor()).isNull();
     }
 
+    @Test
+    void aFinalPageOfExactlyTheLimitCarriesNoNextCursor() {
+        var target = UserId.random();
+        for (int minute = 0; minute < 3; minute++) {
+            followAt("2026-09-01T10:0%d:00Z".formatted(minute), target);
+        }
+
+        FollowList.Page page = followList.followersOf(target, null, 3);
+
+        assertThat(page.items()).hasSize(3);
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void oneRowBeyondTheLimitYieldsAFullPageAndACursor() {
+        var target = UserId.random();
+        for (int minute = 0; minute < 4; minute++) {
+            followAt("2026-09-01T10:0%d:00Z".formatted(minute), target);
+        }
+
+        FollowList.Page page = followList.followersOf(target, null, 3);
+
+        assertThat(page.items()).hasSize(3);
+        assertThat(page.nextCursor()).isNotNull();
+    }
+
     private UserId followAt(String instant, UserId followed) {
         now = Instant.parse(instant);
         var follower = ViewerId.random();

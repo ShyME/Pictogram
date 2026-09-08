@@ -14,6 +14,28 @@ A second run against a fully-seeded stack does nothing. `task clean` wipes the d
 you want to start over. `PICTOGRAM_BASE_URL` / `PICTOGRAM_OAUTH_URL` override the default
 `task up` topology (`PICTOGRAM_OAUTH_URL` is used for its origin — the issuer's host and port).
 
+## Tests pin behaviour
+
+All work here is test-first (ADR-0007). A test earns its place by pinning a *behaviour* —
+something that would break if the production code regressed. Before adding one, check it
+against these:
+
+- **Assert the state change or the response shape, not just the status.** `status().isOk()`
+  plus one `jsonPath` existence check does not pin much. `PostApiTest` is the bar: after a
+  delete it re-reads the grid and asserts the post is gone. A write test should read the
+  thing back; a response-body test should assert the fields the client depends on.
+- **Assert the negative half.** A happy-path scenario is half a test. Pair it with the
+  other user *not* seeing the resource, the second call being a no-op, the forbidden
+  actor's target being *unchanged* after the 403.
+- **Paging call sites get both boundaries.** For every keyset/cursor read, pin *exactly
+  `pageSize` rows ⇒ no `nextCursor`* and *`pageSize + 1` rows ⇒ full page + a cursor*, not
+  just one mid-range case.
+- **No assertion that restates the code.** If the assertion rebuilds the production
+  expression (same formula, same branch conditions), it passes by construction and pins
+  nothing. Assert against an independently-known expected value instead.
+- **A comment in a test is a constraint, not narration** (`CLAUDE.md`): it names the
+  ordering/timing rule the test exists to hold, or it goes.
+
 ## Formatting
 
 Code layout is machine-enforced. CI and `task test` fail on any drift, so run `task format`

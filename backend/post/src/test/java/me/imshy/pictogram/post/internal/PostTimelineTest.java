@@ -105,6 +105,32 @@ class PostTimelineTest extends PostModuleIntegrationTest {
         assertThat(postTimeline.pageFor(author, null, 5).nextCursor()).isNull();
     }
 
+    @Test
+    void aFinalPageOfExactlyTheLimitCarriesNoNextCursor() {
+        var author = UserId.random();
+        for (int minute = 0; minute < 3; minute++) {
+            publishAt(author, "2026-09-01T10:0%d:00Z".formatted(minute));
+        }
+
+        Page page = postTimeline.pageFor(author, null, 3);
+
+        assertThat(page.items()).hasSize(3);
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void oneRowBeyondTheLimitYieldsAFullPageAndACursor() {
+        var author = UserId.random();
+        for (int minute = 0; minute < 4; minute++) {
+            publishAt(author, "2026-09-01T10:0%d:00Z".formatted(minute));
+        }
+
+        Page page = postTimeline.pageFor(author, null, 3);
+
+        assertThat(page.items()).hasSize(3);
+        assertThat(page.nextCursor()).isNotNull();
+    }
+
     private PostId publishAt(UserId author, String instant) {
         now = Instant.parse(instant);
         var mediaId = MediaId.random();
