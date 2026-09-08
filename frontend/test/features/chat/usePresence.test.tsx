@@ -35,7 +35,7 @@ test('queries chat for the user once the socket is open', () => {
 
   render(<PresenceProbe userId="u-ada" />);
 
-  expect(socket.sent).toEqual(['{"type":"presence-query","userId":"u-ada"}']);
+  expect(socket.sent).toEqual(['{"type":"presence-query","userIds":["u-ada"]}']);
   expect(screen.getByRole('status')).toHaveTextContent('unknown');
 });
 

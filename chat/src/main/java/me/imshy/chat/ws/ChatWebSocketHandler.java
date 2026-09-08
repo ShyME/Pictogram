@@ -1,6 +1,7 @@
 package me.imshy.chat.ws;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 import me.imshy.chat.UserId;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
@@ -28,6 +29,21 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // than buffered into the heap (#174). ChatWebSocketHandlerBufferTest pins the
     // value.
     static final int OUTBOUND_BUFFER_CAPACITY = 256;
+
+    // A batch presence query (#202) is answered for at most this many subjects; a
+    // longer
+    // "userIds" array is truncated rather than walked in full. Well under
+    // OUTBOUND_BUFFER_CAPACITY on purpose: answerPresenceQuery emits every answer
+    // synchronously into the outbound sink, so a batch near the buffer size would
+    // overflow
+    // it mid-loop and drop the connection. The frontend chunks longer follow lists
+    // into
+    // several frames (chatConnection.ts). Still client-driven and within ADR-0014's
+    // intent
+    // — the client asks, chat never emits unprompted.
+    // ChatWebSocketHandlerPresenceQueryTest pins both the truncation and the
+    // headroom.
+    static final int MAX_PRESENCE_QUERY_SUBJECTS = 128;
 
     private final ConnectionRegistry connections;
     private final ObjectMapper json;
@@ -81,7 +97,7 @@ class ChatWebSocketHandler implements WebSocketHandler {
             return;
         }
         if ("presence-query".equals(frame.at("/type").asString())) {
-            answerPresenceQuery(outbound, frame.at("/userId").asString());
+            answerPresenceQuery(outbound, presenceQuerySubjects(frame));
             return;
         }
 
@@ -102,13 +118,33 @@ class ChatWebSocketHandler implements WebSocketHandler {
         }
     }
 
-    private void answerPresenceQuery(Sinks.Many<OutboundEvent> outbound, String userId) {
-        UserId subject;
-        try {
-            subject = UserId.fromString(userId);
-        } catch (RuntimeException notAUserId) {
-            return;
+    // A presence query names its subjects as either one "userId" (usePresence's
+    // single
+    // form) or a "userIds" array (the chat sidebar's batch form, #202). The array
+    // is
+    // truncated to MAX_PRESENCE_QUERY_SUBJECTS so an over-long request is never
+    // walked in
+    // full.
+    static List<String> presenceQuerySubjects(JsonNode frame) {
+        JsonNode userIds = frame.at("/userIds");
+        if (!userIds.isArray())
+            return List.of(frame.at("/userId").asString());
+        return StreamSupport.stream(userIds.spliterator(), false).limit(MAX_PRESENCE_QUERY_SUBJECTS)
+            .map(JsonNode::asString).toList();
+    }
+
+    // One PresenceStatus per subject; an entry that is not a UserId is skipped, not
+    // fatal
+    // to the rest of the frame (matches the original single-subject behaviour).
+    private void answerPresenceQuery(Sinks.Many<OutboundEvent> outbound, List<String> subjectUserIds) {
+        for (String userId : subjectUserIds) {
+            UserId subject;
+            try {
+                subject = UserId.fromString(userId);
+            } catch (RuntimeException notAUserId) {
+                continue;
+            }
+            ConnectionRegistry.emit(outbound, PresenceStatus.of(subject, connections.isOnline(subject)));
         }
-        ConnectionRegistry.emit(outbound, PresenceStatus.of(subject, connections.isOnline(subject)));
     }
 }

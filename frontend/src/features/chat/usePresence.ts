@@ -22,7 +22,7 @@ export function usePresence(userId: string): Presence {
     const asks = chatSocketOpen().subscribe((open) => {
       // Closed socket: chat can't be asked, so drop back to 'unknown' rather than leave a
       // stale dot lit through the reconnect window.
-      if (open) queryPresence(userId);
+      if (open) queryPresence([userId]);
       else setAnswer({ userId, presence: 'unknown' });
     });
     return () => {

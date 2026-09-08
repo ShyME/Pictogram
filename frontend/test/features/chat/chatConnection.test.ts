@@ -83,20 +83,45 @@ test('a dropped connection is retried after a backoff delay', async () => {
   expect(statuses).toEqual(['connecting', 'open', 'connecting', 'open']);
 });
 
-test('queryPresence writes an on-demand presence-query frame to the open socket', () => {
+test('queryPresence writes an on-demand batch presence-query frame to the open socket', () => {
   const { statuses } = record('a-token');
   FakeWebSocket.instances[0]?.open();
   expect(statuses).toContain('open');
 
-  queryPresence('u-ada');
+  queryPresence(['u-ada', 'u-bob']);
 
-  expect(FakeWebSocket.instances[0]?.sent).toEqual(['{"type":"presence-query","userId":"u-ada"}']);
+  expect(FakeWebSocket.instances[0]?.sent).toEqual([
+    '{"type":"presence-query","userIds":["u-ada","u-bob"]}',
+  ]);
 });
 
 test('queryPresence is a no-op with no open socket', () => {
-  queryPresence('u-ada');
+  queryPresence(['u-ada']);
 
   expect(FakeWebSocket.instances).toHaveLength(0);
+});
+
+test('queryPresence sends nothing for an empty id list', () => {
+  record('a-token');
+  FakeWebSocket.instances[0]?.open();
+
+  queryPresence([]);
+
+  expect(FakeWebSocket.instances[0]?.sent).toEqual([]);
+});
+
+test('queryPresence splits a long id list across frames so no single frame overflows chat', () => {
+  record('a-token');
+  FakeWebSocket.instances[0]?.open();
+  const ids = Array.from({ length: 250 }, (_, i) => `u-${i}`);
+
+  queryPresence(ids);
+
+  const frames = (FakeWebSocket.instances[0]?.sent ?? []).map(
+    (raw) => (JSON.parse(raw) as { type: string; userIds: string[] }).userIds,
+  );
+  expect(frames.map((chunk) => chunk.length)).toEqual([100, 100, 50]);
+  expect(frames.flat()).toEqual(ids);
 });
 
 test('chatPresence emits the parsed answer to a presence query', () => {

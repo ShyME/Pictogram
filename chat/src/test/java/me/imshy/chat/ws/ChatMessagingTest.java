@@ -1,10 +1,12 @@
 package me.imshy.chat.ws;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.net.URI;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -104,6 +106,24 @@ class ChatMessagingTest {
 
         asker.sendRaw(JSON.writeValueAsString(Map.of("type", "presence-query", "userId", userWithNoConnection)));
         assertThat(receive(asker, PresenceStatus.class)).isEqualTo(PresenceStatus.of(userWithNoConnection, false));
+    }
+
+    @Test
+    void aBatchPresenceQueryAnswersOncePerRequestedUserAndSkipsMalformedEntries() throws InterruptedException {
+        UserId onlineUser = UserId.random();
+        UserId offlineUser = UserId.random();
+        connect(onlineUser);
+        Connection asker = connect(UserId.random());
+
+        asker.sendRaw(JSON.writeValueAsString(Map.of("type", "presence-query", "userIds",
+            List.of(onlineUser.toString(), "not-a-user-id", offlineUser.toString()))));
+
+        Map<UserId, Boolean> answers = new HashMap<>();
+        for (int i = 0; i < 2; i++) {
+            PresenceStatus status = receive(asker, PresenceStatus.class);
+            answers.put(status.userId(), status.online());
+        }
+        assertThat(answers).containsOnly(entry(onlineUser, true), entry(offlineUser, false));
     }
 
     @Test
