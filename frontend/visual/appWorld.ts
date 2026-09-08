@@ -4,17 +4,12 @@ import type { paths } from '../src/shared/api/schema';
 export { expect } from '@playwright/test';
 
 // A small fixed world used to snapshot the app screens that need a backend. The visual
-// server has none, so every `/api/**` read the router and its pages make is fulfilled here
-// from static fixtures.
+// server has none, so every `/api/**` read is fulfilled here from static fixtures.
 //
-// There is one dispatch table (`TABLE`). It is driven by a `World` — the set of accounts,
-// posts and comments a run sees — so the same handlers serve both the normal screenshots
-// (`stubApp`) and the worst-case overflow run (`stubStress`); the stress run is a different
-// `World`, not a second router. Query-param reads (`?ids=`, `?postIds=`, `?author=`) go
-// through the one `Request` helper. Each JSON handler is typed against the generated
-// `paths`, so a wrong route key or response shape is a compile error. A request that no
-// handler claims is recorded and fails the test (see the `appWorldRoutes` fixture below)
-// instead of returning a silent 404 that screenshots green on an empty state.
+// One dispatch table (`TABLE`) driven by a `World` value, so `stubApp` and `stubStress`
+// share every handler instead of maintaining two routers. Handlers are typed against the
+// generated `paths`. A request no handler claims fails the test (via the `appWorldRoutes`
+// fixture) rather than returning a silent 404 that screenshots green on an empty state.
 
 type ProfileView = {
   userId: string;
@@ -42,8 +37,7 @@ type CommentView = {
 type LikeRow = { likeCount: number; likedByViewer: boolean };
 type FollowRow = { followerCount: number; followingCount: number; followedByViewer: boolean };
 
-// The accounts, posts and comments a single run sees. `stubApp` installs `NORMAL`,
-// `stubStress` installs `STRESS`; every handler reads only from here.
+// The accounts, posts and comments one run sees; every handler reads only from here.
 type World = {
   viewer: ProfileView;
   people: ProfileView[];
@@ -206,9 +200,7 @@ const STRESS_COMMENT: CommentView = {
   createdAt: ago(1 * HOUR),
 };
 
-// A world of exactly one account, `u-stress`, carrying the worst-case strings above. The
-// same handlers run against it, so `?ids=`/`?author=` filtering can never drift from the
-// normal run.
+// One account carrying the worst-case strings above.
 const STRESS: World = {
   viewer: STRESS_PERSON,
   people: [STRESS_PERSON],
@@ -396,14 +388,18 @@ const TABLE: Entry[] = [
 // Only true API calls, not the `/src/shared/api/*` module requests the dev server serves.
 const isApiCall = (url: URL) => url.pathname.startsWith('/api/');
 
-// Requests no handler claimed, per page. The `appWorldRoutes` fixture asserts this is
-// empty after every test, so a missing handler arm turns a screenshot red, not green.
+// Per-page sink for requests no handler claimed. The `appWorldRoutes` fixture owns the
+// array (creates it, asserts it empty in teardown); `install` only appends.
 const unmatched = new WeakMap<Page, string[]>();
 
 async function install(page: Page, world: World): Promise<void> {
   await page.clock.setFixedTime(new Date(NOW));
-  const misses = unmatched.get(page) ?? [];
-  unmatched.set(page, misses);
+  const misses = unmatched.get(page);
+  if (!misses) {
+    throw new Error(
+      'appWorld stub installed without the appWorldRoutes fixture — import { test } from "./appWorld"',
+    );
+  }
 
   await page.route(isApiCall, (route) => {
     const request = route.request();
@@ -445,10 +441,10 @@ export const stubApp = (page: Page): Promise<void> => install(page, NORMAL);
 export const stubStress = (page: Page): Promise<void> => install(page, STRESS);
 
 export const STRESS_PROFILE_PATH = `/u/${STRESS_HANDLE}`;
-export const OWN_PROFILE_PATH = '/u/ansel';
 
-// The one screen shown to a visitor who has authenticated but not yet picked a username:
-// every profile read is a 404, so the app routes to onboarding.
+// The screen shown to a visitor who authenticated but hasn't picked a username: every
+// profile read 404s, so the app routes to onboarding. A deliberate all-404 world, so it
+// doesn't go through `TABLE` or the unmatched-route check.
 export async function stubNeedsOnboarding(page: Page): Promise<void> {
   await page.clock.setFixedTime(new Date(NOW));
   await page.route(isApiCall, (route) => {
@@ -464,8 +460,8 @@ export async function stubNeedsOnboarding(page: Page): Promise<void> {
 
 type Fixtures = { appWorldRoutes: string[] };
 
-// Auto fixture: a stubbed screen that made an `/api/**` call no handler claimed fails the
-// test, so a missing arm turns a screenshot red rather than green on an empty state.
+// Auto fixture: fails any test whose stubbed screen hit an `/api/**` route no handler
+// claimed, so a missing arm turns a screenshot red rather than green on an empty state.
 export const test = base.extend<Fixtures>({
   appWorldRoutes: [
     async ({ page }, use) => {
