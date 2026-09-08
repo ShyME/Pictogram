@@ -1,9 +1,20 @@
-import type { Page, Route } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
+import type { paths } from '../src/shared/api/schema';
+
+export { expect } from '@playwright/test';
 
 // A small fixed world used to snapshot the app screens that need a backend. The visual
-// server has none, so every `/api/**` call the router and its pages make is fulfilled
-// here from static fixtures. Only GET reads are covered — the screenshot suite never
-// mutates.
+// server has none, so every `/api/**` read the router and its pages make is fulfilled here
+// from static fixtures.
+//
+// There is one dispatch table (`TABLE`). It is driven by a `World` — the set of accounts,
+// posts and comments a run sees — so the same handlers serve both the normal screenshots
+// (`stubApp`) and the worst-case overflow run (`stubStress`); the stress run is a different
+// `World`, not a second router. Query-param reads (`?ids=`, `?postIds=`, `?author=`) go
+// through the one `Request` helper. Each JSON handler is typed against the generated
+// `paths`, so a wrong route key or response shape is a compile error. A request that no
+// handler claims is recorded and fails the test (see the `appWorldRoutes` fixture below)
+// instead of returning a silent 404 that screenshots green on an empty state.
 
 type ProfileView = {
   userId: string;
@@ -20,6 +31,31 @@ type PostView = {
   publishedAt: string;
 };
 
+type CommentView = {
+  commentId: string;
+  postId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+type LikeRow = { likeCount: number; likedByViewer: boolean };
+type FollowRow = { followerCount: number; followingCount: number; followedByViewer: boolean };
+
+// The accounts, posts and comments a single run sees. `stubApp` installs `NORMAL`,
+// `stubStress` installs `STRESS`; every handler reads only from here.
+type World = {
+  viewer: ProfileView;
+  people: ProfileView[];
+  posts: PostView[];
+  feed: PostView[];
+  comments: Record<string, CommentView[]>;
+  likes: Map<string, LikeRow>;
+  follows: Map<string, FollowRow>;
+  followerIds: string[];
+  followingIds: string[];
+};
+
 const VIEWER: ProfileView = {
   userId: 'u-ansel',
   username: 'ansel',
@@ -33,9 +69,6 @@ const PEOPLE: ProfileView[] = [
   { userId: 'u-saul', username: 'saul', displayName: 'Saul Leiter', bio: 'Colour, snow, windows.' },
   { userId: 'u-dorothea', username: 'dorothea', displayName: 'Dorothea Lange' },
 ];
-
-const byId = new Map(PEOPLE.map((person) => [person.userId, person]));
-const byUsername = new Map(PEOPLE.map((person) => [person.username, person]));
 
 // Timestamps are relative to the clock the spec pins, so the relative labels are stable.
 const NOW = Date.parse('2026-09-04T12:00:00.000Z');
@@ -94,7 +127,7 @@ const FEED_POSTS: PostView[] = [
   { postId: 'p-d1', authorId: 'u-dorothea', mediaId: 'm-d1', publishedAt: ago(4 * DAY) },
 ];
 
-const LIKES = new Map<string, { likeCount: number; likedByViewer: boolean }>([
+const LIKES = new Map<string, LikeRow>([
   ['p-a1', { likeCount: 34, likedByViewer: false }],
   ['p-a2', { likeCount: 12, likedByViewer: true }],
   ['p-v1', { likeCount: 128, likedByViewer: true }],
@@ -102,26 +135,12 @@ const LIKES = new Map<string, { likeCount: number; likedByViewer: boolean }>([
   ['p-d1', { likeCount: 5, likedByViewer: false }],
 ]);
 
-const FOLLOW = new Map<
-  string,
-  { followerCount: number; followingCount: number; followedByViewer: boolean }
->([
+const FOLLOW = new Map<string, FollowRow>([
   ['u-ansel', { followerCount: 1840, followingCount: 62, followedByViewer: false }],
   ['u-vivian', { followerCount: 900, followingCount: 3, followedByViewer: true }],
   ['u-saul', { followerCount: 540, followingCount: 210, followedByViewer: false }],
   ['u-dorothea', { followerCount: 300, followingCount: 45, followedByViewer: true }],
 ]);
-
-const FOLLOWERS_OF_ANSEL = ['u-vivian', 'u-saul', 'u-dorothea'];
-const ANSEL_FOLLOWS = ['u-vivian', 'u-dorothea'];
-
-type CommentView = {
-  commentId: string;
-  postId: string;
-  authorId: string;
-  body: string;
-  createdAt: string;
-};
 
 const COMMENTS: Record<string, CommentView[]> = {
   'p-v1': [
@@ -142,125 +161,17 @@ const COMMENTS: Record<string, CommentView[]> = {
   ],
 };
 
-function likesFor(postIds: string[]) {
-  return postIds.map((postId) => {
-    const likes = LIKES.get(postId);
-    return {
-      postId,
-      likeCount: likes?.likeCount ?? 0,
-      likedByViewer: likes?.likedByViewer ?? false,
-    };
-  });
-}
-
-function commentCountsFor(postIds: string[]) {
-  return postIds.map((postId) => ({ postId, commentCount: (COMMENTS[postId] ?? []).length }));
-}
-
-function relationshipsFor(userIds: string[]) {
-  return userIds.map((userId) => {
-    const follow = FOLLOW.get(userId);
-    return {
-      userId,
-      followerCount: follow?.followerCount ?? 0,
-      followingCount: follow?.followingCount ?? 0,
-      followedByViewer: follow?.followedByViewer ?? false,
-    };
-  });
-}
-
-// A flat, deterministic image so a card or grid cell looks real without pulling a binary
-// fixture in. The hue is derived from the media id.
-function photo(mediaId: string): string {
-  let hash = 0;
-  for (const char of mediaId) hash = (Math.imul(hash, 131) + (char.codePointAt(0) ?? 0)) >>> 0;
-  // Spread the hue: ids in this world differ only in a trailing digit, so scale the hash
-  // before the wrap or adjacent ids land on near-identical colours.
-  const hue = (hash * 47) % 360;
-  return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640">`,
-    `<rect width="640" height="640" fill="hsl(${hue} 45% 62%)"/>`,
-    `<rect y="420" width="640" height="220" fill="hsl(${(hue + 40) % 360} 40% 40%)"/>`,
-    `</svg>`,
-  ].join('');
-}
-
-function json(route: Route, body: unknown, status = 200): Promise<void> {
-  return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-}
-
-async function handle(route: Route): Promise<void> {
-  const url = new URL(route.request().url());
-  const path = url.pathname;
-
-  if (path === '/api/auth/refresh') return route.fulfill({ status: 401, body: '' });
-
-  const media = /^\/api\/media\/([^/]+)\//.exec(path);
-  if (media) return route.fulfill({ contentType: 'image/svg+xml', body: photo(media[1]) });
-
-  if (path === '/api/profiles/me') return json(route, VIEWER);
-
-  if (path === '/api/profiles') {
-    const ids = url.searchParams.getAll('ids');
-    const wanted = ids.length > 0 ? ids : PEOPLE.map((p) => p.userId);
-    return json(
-      route,
-      wanted.flatMap((id) => {
-        const person = byId.get(id);
-        return person ? [person] : [];
-      }),
-    );
-  }
-
-  const profileMatch = /^\/api\/profiles\/([^/]+)$/.exec(path);
-  if (profileMatch) {
-    const person = byUsername.get(decodeURIComponent(profileMatch[1]));
-    return person
-      ? json(route, person)
-      : json(route, { type: 'https://pictogram.dev/problems/profile-not-found', status: 404 }, 404);
-  }
-
-  if (path === '/api/feed') return json(route, { items: FEED_POSTS, nextCursor: null });
-
-  if (path === '/api/posts') {
-    const author = url.searchParams.get('author');
-    return json(route, {
-      items: OWN_POSTS.filter((post) => post.authorId === author),
-      nextCursor: null,
-    });
-  }
-
-  if (path === '/api/likes') return json(route, likesFor(url.searchParams.getAll('postIds')));
-
-  if (path === '/api/comments')
-    return json(route, commentCountsFor(url.searchParams.getAll('postIds')));
-
-  const commentsMatch = /^\/api\/posts\/([^/]+)\/comments$/.exec(path);
-  if (commentsMatch)
-    return json(route, { items: COMMENTS[commentsMatch[1]] ?? [], nextCursor: null });
-
-  if (path === '/api/follows') return json(route, relationshipsFor(url.searchParams.getAll('ids')));
-
-  const followersMatch = /^\/api\/follows\/([^/]+)\/followers$/.exec(path);
-  if (followersMatch) return json(route, { items: FOLLOWERS_OF_ANSEL, nextCursor: null });
-
-  const followingMatch = /^\/api\/follows\/([^/]+)\/following$/.exec(path);
-  if (followingMatch) return json(route, { items: ANSEL_FOLLOWS, nextCursor: null });
-
-  const relationshipMatch = /^\/api\/follows\/([^/]+)$/.exec(path);
-  if (relationshipMatch) return json(route, relationshipsFor([relationshipMatch[1]])[0]);
-
-  return json(route, { type: 'about:blank', status: 404 }, 404);
-}
-
-// Only true API calls, not the `/src/shared/api/*` module requests the dev server serves.
-const isApiCall = (url: URL) => url.pathname.startsWith('/api/');
-
-// Serve every `/api/**` read from the fixed world above, signed in as `@ansel`.
-export async function stubApp(page: Page): Promise<void> {
-  await page.clock.setFixedTime(new Date(NOW));
-  await page.route(isApiCall, (route) => void handle(route));
-}
+const NORMAL: World = {
+  viewer: VIEWER,
+  people: PEOPLE,
+  posts: OWN_POSTS,
+  feed: FEED_POSTS,
+  comments: COMMENTS,
+  likes: LIKES,
+  follows: FOLLOW,
+  followerIds: ['u-vivian', 'u-saul', 'u-dorothea'],
+  followingIds: ['u-vivian', 'u-dorothea'],
+};
 
 // Worst-case content for the horizontal-overflow assertions (#139): a maximum-length
 // username, an unusually long display name, and a bio carrying one enormous unbreakable
@@ -295,39 +206,249 @@ const STRESS_COMMENT: CommentView = {
   createdAt: ago(1 * HOUR),
 };
 
-// Layered over `stubApp`: a world of exactly one account, `u-stress`, carrying the
-// worst-case strings above. It overrides only the reads that return user-authored text and
-// keeps their filtering semantics (`?author=`, `?ids=`) in step with `handle()` so the two
-// never diverge; everything else falls through to the normal handler.
-const hasStressId = (ids: string[]) => ids.length === 0 || ids.includes('u-stress');
+// A world of exactly one account, `u-stress`, carrying the worst-case strings above. The
+// same handlers run against it, so `?ids=`/`?author=` filtering can never drift from the
+// normal run.
+const STRESS: World = {
+  viewer: STRESS_PERSON,
+  people: [STRESS_PERSON],
+  posts: [STRESS_POST],
+  feed: [STRESS_POST],
+  comments: { [STRESS_POST.postId]: [STRESS_COMMENT] },
+  likes: new Map(),
+  follows: new Map(),
+  followerIds: [STRESS_PERSON.userId],
+  followingIds: [STRESS_PERSON.userId],
+};
 
-export async function stubStress(page: Page): Promise<void> {
-  await stubApp(page);
-  await page.route(isApiCall, async (route) => {
-    const url = new URL(route.request().url());
-    const path = url.pathname;
+// A flat, deterministic image so a card or grid cell looks real without pulling a binary
+// fixture in. The hue is derived from the media id.
+function photo(mediaId: string): string {
+  let hash = 0;
+  for (const char of mediaId) hash = (Math.imul(hash, 131) + (char.codePointAt(0) ?? 0)) >>> 0;
+  // Spread the hue: ids in this world differ only in a trailing digit, so scale the hash
+  // before the wrap or adjacent ids land on near-identical colours.
+  const hue = (hash * 47) % 360;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640">`,
+    `<rect width="640" height="640" fill="hsl(${hue} 45% 62%)"/>`,
+    `<rect y="420" width="640" height="220" fill="hsl(${(hue + 40) % 360} 40% 40%)"/>`,
+    `</svg>`,
+  ].join('');
+}
 
-    if (path === '/api/profiles/me') return json(route, STRESS_PERSON);
-    if (path === '/api/profiles')
-      return json(route, hasStressId(url.searchParams.getAll('ids')) ? [STRESS_PERSON] : []);
-    if (/^\/api\/profiles\/[^/]+$/.test(path)) return json(route, STRESS_PERSON);
-    if (path === '/api/feed') return json(route, { items: [STRESS_POST], nextCursor: null });
-    if (path === '/api/posts')
-      return json(route, {
-        items: url.searchParams.get('author') === 'u-stress' ? [STRESS_POST] : [],
-        nextCursor: null,
+// --- dispatch table -------------------------------------------------------------------
+
+// The reads a request carries: path params from the matched template, plus the one place
+// query-string filtering is spelled out.
+type Request = {
+  params: Record<string, string>;
+  list: (name: string) => string[];
+  value: (name: string) => string | undefined;
+};
+
+type Reply = { status: number; contentType?: string; body: string };
+
+// The JSON body a GET on `P` answers 200 with, straight from the generated contract.
+type JsonGetPath = {
+  [P in keyof paths]: paths[P] extends {
+    get: { responses: { 200: { content: { 'application/json': unknown } } } };
+  }
+    ? P
+    : never;
+}[keyof paths];
+
+type JsonBody<P extends JsonGetPath> = paths[P] extends {
+  get: { responses: { 200: { content: { 'application/json': infer B } } } };
+}
+  ? B
+  : never;
+
+const PROFILE_NOT_FOUND = 'https://pictogram.dev/problems/profile-not-found';
+type Problem = { problem: { type: string; status: number } };
+const notFound = (type: string): Problem => ({ problem: { type, status: 404 } });
+const isProblem = (value: unknown): value is Problem =>
+  typeof value === 'object' && value !== null && 'problem' in value;
+
+type Entry = {
+  method: string;
+  match: (path: string) => Record<string, string> | null;
+  reply: (request: Request, world: World) => Reply;
+};
+
+// `/api/profiles/{username}` -> `^/api/profiles/([^/]+)$`, capturing `username`.
+function matcher(template: string): (path: string) => Record<string, string> | null {
+  const names: string[] = [];
+  const pattern = template.replaceAll(/\{([^}]+)\}/g, (_full, name: string) => {
+    names.push(name);
+    return '([^/]+)';
+  });
+  const regExp = new RegExp(`^${pattern}$`);
+  return (path) => {
+    const found = regExp.exec(path);
+    if (!found) return null;
+    const params: Record<string, string> = {};
+    for (const [index, name] of names.entries())
+      params[name] = decodeURIComponent(found[index + 1]);
+    return params;
+  };
+}
+
+const json = (body: unknown, status = 200): Reply => ({
+  status,
+  contentType: 'application/json',
+  body: JSON.stringify(body),
+});
+
+function readJson<P extends JsonGetPath>(
+  template: P,
+  read: (request: Request, world: World) => JsonBody<P> | Problem,
+): Entry {
+  return {
+    method: 'GET',
+    match: matcher(template),
+    reply: (request, world) => {
+      const result: unknown = read(request, world);
+      return isProblem(result) ? json(result.problem, result.problem.status) : json(result);
+    },
+  };
+}
+
+function readRaw(
+  template: keyof paths,
+  method: 'GET' | 'POST',
+  reply: (request: Request) => Reply,
+): Entry {
+  return { method, match: matcher(template), reply: (request) => reply(request) };
+}
+
+// The fixture world always fits one page: return every item, never a next cursor.
+const pageOf = <T>(items: T[]): { items: T[] } => ({ items });
+
+function relationship(world: World, userId: string): FollowRow {
+  const row = world.follows.get(userId);
+  return {
+    followerCount: row?.followerCount ?? 0,
+    followingCount: row?.followingCount ?? 0,
+    followedByViewer: row?.followedByViewer ?? false,
+  };
+}
+
+const TABLE: Entry[] = [
+  readRaw('/api/auth/refresh', 'POST', () => ({ status: 401, body: '' })),
+  readRaw('/api/media/{mediaId}/original', 'GET', ({ params }) => ({
+    status: 200,
+    contentType: 'image/svg+xml',
+    body: photo(params.mediaId),
+  })),
+  readRaw('/api/media/{mediaId}/thumbnail', 'GET', ({ params }) => ({
+    status: 200,
+    contentType: 'image/svg+xml',
+    body: photo(params.mediaId),
+  })),
+
+  readJson('/api/profiles/me', (_request, world) => world.viewer),
+  readJson('/api/profiles', (request, world) => {
+    const asked = request.list('ids');
+    const ids = asked.length > 0 ? asked : world.people.map((person) => person.userId);
+    return ids.flatMap((id) => {
+      const person = world.people.find((candidate) => candidate.userId === id);
+      return person ? [person] : [];
+    });
+  }),
+  readJson('/api/profiles/{username}', ({ params }, world) => {
+    return (
+      world.people.find((candidate) => candidate.username === params.username) ??
+      notFound(PROFILE_NOT_FOUND)
+    );
+  }),
+
+  readJson('/api/feed', (_request, world) => pageOf(world.feed)),
+  readJson('/api/posts', (request, world) =>
+    pageOf(world.posts.filter((post) => post.authorId === request.value('author'))),
+  ),
+
+  readJson('/api/likes', (request, world) =>
+    request.list('postIds').map((postId) => {
+      const row = world.likes.get(postId);
+      return { postId, likeCount: row?.likeCount ?? 0, likedByViewer: row?.likedByViewer ?? false };
+    }),
+  ),
+  readJson('/api/comments', (request, world) =>
+    request
+      .list('postIds')
+      .map((postId) => ({ postId, commentCount: (world.comments[postId] ?? []).length })),
+  ),
+  readJson('/api/posts/{postId}/comments', ({ params }, world) =>
+    pageOf(world.comments[params.postId] ?? []),
+  ),
+
+  readJson('/api/follows/{userId}/followers', (_request, world) => pageOf(world.followerIds)),
+  readJson('/api/follows/{userId}/following', (_request, world) => pageOf(world.followingIds)),
+  readJson('/api/follows', (request, world) =>
+    request.list('ids').map((userId) => ({ userId, ...relationship(world, userId) })),
+  ),
+  readJson('/api/follows/{userId}', ({ params }, world) => relationship(world, params.userId)),
+];
+
+// --- installation -------------------------------------------------------------------
+
+// Only true API calls, not the `/src/shared/api/*` module requests the dev server serves.
+const isApiCall = (url: URL) => url.pathname.startsWith('/api/');
+
+// Requests no handler claimed, per page. The `appWorldRoutes` fixture asserts this is
+// empty after every test, so a missing handler arm turns a screenshot red, not green.
+const unmatched = new WeakMap<Page, string[]>();
+
+async function install(page: Page, world: World): Promise<void> {
+  await page.clock.setFixedTime(new Date(NOW));
+  const misses = unmatched.get(page) ?? [];
+  unmatched.set(page, misses);
+
+  await page.route(isApiCall, (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const method = request.method();
+
+    for (const entry of TABLE) {
+      if (entry.method !== method) continue;
+      const params = entry.match(url.pathname);
+      if (!params) continue;
+      const reply = entry.reply(
+        {
+          params,
+          list: (name) => url.searchParams.getAll(name),
+          value: (name) => url.searchParams.get(name) ?? undefined,
+        },
+        world,
+      );
+      return route.fulfill({
+        status: reply.status,
+        contentType: reply.contentType,
+        body: reply.body,
       });
-    if (/^\/api\/posts\/[^/]+\/comments$/.test(path))
-      return json(route, { items: [STRESS_COMMENT], nextCursor: null });
-    if (/^\/api\/follows\/[^/]+\/(followers|following)$/.test(path))
-      return json(route, { items: ['u-stress'], nextCursor: null });
-    return route.fallback();
+    }
+
+    misses.push(`${method} ${url.pathname}`);
+    return route.fulfill({
+      status: 599,
+      contentType: 'text/plain',
+      body: `appWorld has no handler for ${method} ${url.pathname}`,
+    });
   });
 }
 
-export const STRESS_PROFILE_PATH = `/u/${STRESS_HANDLE}`;
+// Serve every `/api/**` read from the fixed world above, signed in as `@ansel`.
+export const stubApp = (page: Page): Promise<void> => install(page, NORMAL);
 
-// The one screen shown to a visitor who has authenticated but not yet picked a username.
+// The same handlers over a one-account world carrying the worst-case strings (#139).
+export const stubStress = (page: Page): Promise<void> => install(page, STRESS);
+
+export const STRESS_PROFILE_PATH = `/u/${STRESS_HANDLE}`;
+export const OWN_PROFILE_PATH = '/u/ansel';
+
+// The one screen shown to a visitor who has authenticated but not yet picked a username:
+// every profile read is a 404, so the app routes to onboarding.
 export async function stubNeedsOnboarding(page: Page): Promise<void> {
   await page.clock.setFixedTime(new Date(NOW));
   await page.route(isApiCall, (route) => {
@@ -336,12 +457,23 @@ export async function stubNeedsOnboarding(page: Page): Promise<void> {
     return route.fulfill({
       status: 404,
       contentType: 'application/problem+json',
-      body: JSON.stringify({
-        type: 'https://pictogram.dev/problems/profile-not-found',
-        status: 404,
-      }),
+      body: JSON.stringify({ type: PROFILE_NOT_FOUND, status: 404 }),
     });
   });
 }
 
-export const OWN_PROFILE_PATH = '/u/ansel';
+type Fixtures = { appWorldRoutes: string[] };
+
+// Auto fixture: a stubbed screen that made an `/api/**` call no handler claimed fails the
+// test, so a missing arm turns a screenshot red rather than green on an empty state.
+export const test = base.extend<Fixtures>({
+  appWorldRoutes: [
+    async ({ page }, use) => {
+      const misses: string[] = [];
+      unmatched.set(page, misses);
+      await use(misses);
+      expect(misses, 'appWorld received /api/ requests with no handler').toEqual([]);
+    },
+    { auto: true },
+  ],
+});

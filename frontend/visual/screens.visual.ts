@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { stubApp, stubNeedsOnboarding } from './appWorld';
+import { expect, stubApp, stubNeedsOnboarding, test } from './appWorld';
 import { waitForFonts } from './support';
 
 // One committed screenshot baseline per screen retrofitted onto the design system (#136).
