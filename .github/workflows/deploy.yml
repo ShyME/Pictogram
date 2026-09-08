@@ -38,6 +38,15 @@ jobs:
           REBUILD: ${{ inputs.rebuild }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
+          # `tag` is a free-form dispatch input that flows into $GITHUB_OUTPUT and, via
+          # the roll step, into a command on the production box. A newline would inject
+          # extra output keys (e.g. roll=true); shell metacharacters would run remotely.
+          # Reject anything outside the Docker tag grammar up front — this one gate is
+          # what keeps the echoes below and the roll step safe.
+          if [ -n "$INPUT_TAG" ] && [[ ! "$INPUT_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]; then
+            echo "::error::invalid tag '$INPUT_TAG' — must match ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$"
+            exit 1
+          fi
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "registry=ghcr.io/$owner" >> "$GITHUB_OUTPUT"
           # An explicit tag wins. Otherwise: a rebuild tags the immutable SHA it just
@@ -120,9 +129,11 @@ jobs:
           else
             ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           fi
+          # TAG is validated to the Docker tag grammar in "Resolve target"; the single
+          # quotes keep it one token on the box regardless.
           ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd pictogram \
-             && export PICTOGRAM_TAG=$TAG \
+             && export PICTOGRAM_TAG='$TAG' \
              && docker compose -f compose.yaml -f compose.prod.yaml pull \
              && docker compose -f compose.yaml -f compose.prod.yaml up -d --wait --wait-timeout 180"
 
