@@ -55,13 +55,19 @@ These are deliberate choices a reviewer would otherwise flag:
   modules together and hosts the cross-cutting infrastructure (HTTP security, the `Clock`
   bean, Flyway, OpenAPI). It is the one place the modularity is necessarily porous, and
   `ModulithStructureTest` treats it accordingly.
-- **The published interfaces are not signature-pinned in v1.** `LikeCounts` and
-  `CommentCounts` have one caller each (their sub-domain's web layer); `PublishedPosts` now
-  has two (`feed`'s fan-out and `comment`'s delete-permission check). Each shape is still
-  exercised through its implementation's own tests (`AuthoredPostsTest`, `LikeTallyTest`,
-  `CommentTallyTest`) rather than a dedicated consumer-contract test; before an extraction,
-  promote those to a contract test per interface so a breaking change fails at the boundary.
-  (`FollowGraph` was a fourth such interface until #128 made it in-module.)
+- **The cross-module query interfaces are pinned by consumer-contract tests (#157).**
+  `LikeCounts` (both the viewer and the no-viewer form), `CommentCounts`, and
+  `PublishedPosts` each have a `...ContractTest` in a `contract` test package that drives
+  the published type as an outside module would, separate from the implementation's own
+  tests (`AuthoredPostsTest`, `LikeTallyTest`, `CommentThreadTest`). What is pinned: the
+  batch-read invariants — one row per requested id, an unknown id reads as the zero value,
+  and no viewer state leaks into the no-viewer `LikeCounts` form — plus, for
+  `PublishedPosts`, that `byAuthors` returns only the requested authors' posts and pages
+  the whole set once and `authorOf` is empty for an unknown id. The record shapes
+  themselves are not otherwise version-pinned. `FollowGraph` was a fourth such interface
+  until #128 made it in-module; the structurally identical `GET /api/follows?ids=` batch
+  read is deliberately left unpinned — it has no cross-module consumer, only the SPA (see
+  `backend/social/CONTEXT.md`).
 
 ## Recording decisions
 

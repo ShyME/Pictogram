@@ -6,8 +6,8 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @ApplicationModuleTest
-abstract class PostModuleIntegrationTest extends ModuleIntegrationTest {
+public abstract class PostModuleIntegrationTest extends ModuleIntegrationTest {
 
     @MockitoBean
-    MediaCatalog mediaCatalog;
+    protected MediaCatalog mediaCatalog;
 }
