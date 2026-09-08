@@ -91,7 +91,7 @@ test('opening the overlay asks chat for the peer presence and shows the dot on t
     openConversation(ada);
   });
 
-  expect(socket.sent).toContain('{"type":"presence-query","userId":"u-ada"}');
+  expect(socket.sent).toContain('{"type":"presence-query","userIds":["u-ada"]}');
 
   act(() => {
     socket.receive('{"type":"presence","userId":"u-ada","online":true}');

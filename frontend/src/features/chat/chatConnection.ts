@@ -105,11 +105,23 @@ export function chatSocketOpen(): Observable<boolean> {
   );
 }
 
-// Asks chat whether one user is connected, right now (ADR-0014) — on-demand only, never a
-// poll or a subscription. A no-op with no open socket: the answer would be lost, and the
-// caller shows nothing rather than a stale state.
-export function queryPresence(userId: string): void {
-  openSocket$.value?.send(JSON.stringify({ type: 'presence-query', userId }));
+// Chat emits every answer to a presence query synchronously into its bounded per-connection
+// outbound buffer (chat ChatWebSocketHandler), so one frame naming hundreds of users would
+// overflow it and drop the socket. Split a long list across frames, each well under chat's
+// own MAX_PRESENCE_QUERY_SUBJECTS.
+const PRESENCE_QUERY_CHUNK = 100;
+
+// Asks chat which of these users are connected, right now (ADR-0014) — on-demand only,
+// never a poll or a subscription on chat's side. Chat answers one `PresenceUpdate` per id
+// on the presence stream. A no-op with no open socket, or an empty list: the answers would
+// be lost, and the caller shows nothing rather than a stale state.
+export function queryPresence(userIds: string[]): void {
+  const socket = openSocket$.value;
+  if (!socket) return;
+  for (let from = 0; from < userIds.length; from += PRESENCE_QUERY_CHUNK) {
+    const chunk = userIds.slice(from, from + PRESENCE_QUERY_CHUNK);
+    socket.send(JSON.stringify({ type: 'presence-query', userIds: chunk }));
+  }
 }
 
 export type MessageDelivery = 'sent' | 'no-connection';
