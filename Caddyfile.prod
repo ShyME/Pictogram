@@ -1,0 +1,89 @@
+# Production origin for the public deployment (ADR-0012). One domain, one automatic
+# Let's Encrypt certificate, TLS terminated here; `app` and `chat` stay internal-only.
+# Routing mirrors the base Caddyfile — /ws to `chat`, everything else to `app` (#169) —
+# and adds the ADR-0011 per-IP edge rate limits, which only make sense with a real client
+# IP in front of the stack.
+#
+# Needs the caddy-ratelimit module (caddy/Dockerfile) — plain `caddy:2-alpine` fails to
+# parse the `rate_limit` directive. PICTOGRAM_DOMAIN comes from the box `.env` via
+# compose.prod.yaml. Validate a change with:
+#   docker run --rm -e PICTOGRAM_DOMAIN=example.com \
+#     -v "$PWD/Caddyfile.prod:/etc/caddy/Caddyfile:ro" \
+#     ghcr.io/shyme/pictogram-caddy:latest caddy validate --config /etc/caddy/Caddyfile
+{
+	# caddy-ratelimit is a third-party directive; give it an explicit place in the pipeline.
+	order rate_limit before basic_auth
+}
+
+# Internal plain-HTTP health route — not published (see compose.prod.yaml), reachable
+# only on the compose network. Lets the caddy healthcheck and `up -d --wait` confirm the
+# origin actually serves, the property the base Caddyfile's :8080 block gives locally.
+:8080 {
+	handle /actuator/health {
+		reverse_proxy app:8080
+	}
+	# `handle`, not a bare `respond`: Caddy orders a top-level `respond` ahead of `handle`,
+	# so a bare one here would 404 the health path before it could be routed.
+	handle {
+		respond 404
+	}
+}
+
+{$PICTOGRAM_DOMAIN} {
+	# Per-IP limits on the unauthenticated surface listed in ADR-0011, keyed on the real
+	# client address ({remote_host} — Caddy is the edge). A request is checked against
+	# every zone it matches; exceeding one returns 429. These are starting numbers with
+	# the rationale recorded in docs/runbook/deployment.md; retuning them and the in-app
+	# per-user limiter are #141.
+	rate_limit {
+		zone reads {
+			match {
+				method GET
+				path /api/media/* /api/profiles/* /api/posts* /api/comments* /api/follows/*
+			}
+			key {remote_host}
+			events 60
+			window 1m
+		}
+		zone refresh {
+			match {
+				method POST
+				path /api/auth/refresh
+			}
+			key {remote_host}
+			events 10
+			window 1m
+		}
+		zone comments {
+			match {
+				method POST
+				path /api/posts/*/comments
+			}
+			key {remote_host}
+			events 6
+			window 1m
+		}
+		zone oauth {
+			match {
+				path /oauth2/authorization/*
+			}
+			key {remote_host}
+			events 6
+			window 1m
+		}
+	}
+
+	@ws path /ws
+	handle @ws {
+		reverse_proxy chat:8081
+	}
+	handle {
+		reverse_proxy app:8080 {
+			# Tomcat's RemoteIpValve (server.forward-headers-strategy=native) derives the
+			# public port from X-Forwarded-Port, which reverse_proxy doesn't send by
+			# default — without it the OAuth2 redirect_uri drops the port. On :443 the
+			# value is 443 and Spring omits it, which is what we want.
+			header_up X-Forwarded-Port {http.request.port}
+		}
+	}
+}

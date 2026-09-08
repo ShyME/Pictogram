@@ -1,0 +1,139 @@
+name: Deploy
+
+# Public deployment (ADR-0012). Deliberately **on-demand only** — the "Run workflow"
+# button in the Actions tab, never automatically on a push. A merge to `main` is not a
+# release; a human decides when the box rolls. Build + push + Caddyfile validation always
+# run; the box roll is skipped until DEPLOY_HOST is set (pre-domain, #140).
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Build and push images from this ref before rolling
+        type: boolean
+        default: true
+      tag:
+        description: Image tag to build as / roll to (default — rebuild:true → this run's SHA, rebuild:false → latest)
+        type: string
+        default: ""
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Build, push and roll
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve target
+        id: target
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REBUILD: ${{ inputs.rebuild }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "registry=ghcr.io/$owner" >> "$GITHUB_OUTPUT"
+          # An explicit tag wins. Otherwise: a rebuild tags the immutable SHA it just
+          # built; a no-rebuild roll targets `latest` (the last image a rebuild pushed) —
+          # never a SHA that was never built.
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          elif [ "$REBUILD" = "true" ]; then
+            echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$DEPLOY_HOST" ]; then
+            echo "roll=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "roll=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::DEPLOY_HOST not set — build/push/validate only, skipping the box roll (pre-domain, #140)."
+          fi
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+        if: ${{ inputs.rebuild }}
+
+      - name: Build and push images
+        if: ${{ inputs.rebuild }}
+        env:
+          REGISTRY: ${{ steps.target.outputs.registry }}
+          TAG: ${{ steps.target.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for svc in app chat caddy; do
+            case "$svc" in
+              app)   context=. ;       file=backend/Dockerfile ;;
+              chat)  context=./chat ;  file=./chat/Dockerfile ;;
+              caddy) context=./caddy ; file=./caddy/Dockerfile ;;
+            esac
+            docker buildx build --push \
+              --tag "$REGISTRY/pictogram-$svc:latest" \
+              --tag "$REGISTRY/pictogram-$svc:$TAG" \
+              --cache-from "type=gha,scope=$svc" \
+              --cache-to "type=gha,mode=max,scope=$svc" \
+              -f "$file" "$context"
+          done
+
+      - name: Validate Caddyfile.prod against the caddy image
+        env:
+          REGISTRY: ${{ steps.target.outputs.registry }}
+          TAG: ${{ steps.target.outputs.tag }}
+        run: |
+          docker pull "$REGISTRY/pictogram-caddy:$TAG"
+          docker run --rm -e PICTOGRAM_DOMAIN=example.com \
+            -v "$PWD/Caddyfile.prod:/etc/caddy/Caddyfile:ro" \
+            "$REGISTRY/pictogram-caddy:$TAG" \
+            caddy validate --config /etc/caddy/Caddyfile
+
+      - name: Roll the box
+        if: steps.target.outputs.roll == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          TAG: ${{ steps.target.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Prefer a pinned host key (wizard.sh sets DEPLOY_KNOWN_HOSTS). Fall back to
+          # trust-on-first-use — each run is a fresh runner with an empty known_hosts, so
+          # there is no stale-key clash, but a pinned key is a real MITM check.
+          if [ -n "$DEPLOY_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd pictogram \
+             && export PICTOGRAM_TAG=$TAG \
+             && docker compose -f compose.yaml -f compose.prod.yaml pull \
+             && docker compose -f compose.yaml -f compose.prod.yaml up -d --wait --wait-timeout 180"
+
+      - name: Summary
+        env:
+          TAG: ${{ steps.target.outputs.tag }}
+          ROLLED: ${{ steps.target.outputs.roll }}
+        run: |
+          {
+            echo "### Deploy"
+            echo "- tag: \`$TAG\`"
+            echo "- rebuilt: ${{ inputs.rebuild }}"
+            echo "- box rolled: $ROLLED"
+          } >> "$GITHUB_STEP_SUMMARY"

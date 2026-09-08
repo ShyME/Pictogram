@@ -1,0 +1,68 @@
+# Overlay for the public deployment (ADR-0012):
+#   docker compose -f compose.yaml -f compose.prod.yaml pull
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --wait
+# on the box. Turns the local build stack into an image-pull stack — the Deploy workflow
+# (`.github/workflows/deploy.yml`) builds and pushes app/chat/caddy to GHCR, the box only
+# pulls the tag in PICTOGRAM_TAG.
+#
+# Every value below is a hard `${VAR:?}` guard with no `:-` default: a missing box `.env`
+# entry aborts the compose command with a clear error instead of a container crash loop,
+# and no compose.yaml dev default can be inherited (ADR-0004 prod gate). `scripts/deploy/
+# wizard.sh` generates and writes them; the first-deploy sequence and rollback are in
+# docs/runbook/deployment.md.
+name: pictogram
+
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set it in the box .env — see docs/runbook/deployment.md}
+
+  minio:
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set it in the box .env — see docs/runbook/deployment.md}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set it in the box .env — see docs/runbook/deployment.md}
+
+  app:
+    image: ghcr.io/shyme/pictogram-app:${PICTOGRAM_TAG:-latest}
+    build: !reset null
+    restart: unless-stopped
+    environment:
+      PICTOGRAM_AUTH_SIGNING_KEY: ${PICTOGRAM_AUTH_SIGNING_KEY:?generate a P-256 JWK — see docs/runbook/deployment.md}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?create the prod Google OAuth client — see docs/runbook/deployment.md}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?create the prod Google OAuth client — see docs/runbook/deployment.md}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,email
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_ISSUER_URI: https://accounts.google.com
+
+  chat:
+    image: ghcr.io/shyme/pictogram-chat:${PICTOGRAM_TAG:-latest}
+    build: !reset null
+    restart: unless-stopped
+    environment:
+      # The public half of PICTOGRAM_AUTH_SIGNING_KEY (same JWK, "d" removed) — ADR-0014.
+      PICTOGRAM_AUTH_PUBLIC_KEY: ${PICTOGRAM_AUTH_PUBLIC_KEY:?the signing key without "d" — see docs/runbook/deployment.md}
+
+  caddy:
+    image: ghcr.io/shyme/pictogram-caddy:${PICTOGRAM_TAG:-latest}
+    # Pull-only like app/chat: the Deploy workflow builds caddy/ directly, and the box
+    # never receives the caddy/ context (wizard.sh ships only the compose files + Caddyfile).
+    build: !reset null
+    restart: unless-stopped
+    environment:
+      PICTOGRAM_DOMAIN: ${PICTOGRAM_DOMAIN:?set it in the box .env — see docs/runbook/deployment.md}
+    volumes:
+      # Caddyfile.prod (rate limits + real domain), and named volumes so the issued
+      # Let's Encrypt cert and account key survive a container roll.
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    # The base healthcheck (wget http://localhost:8080/actuator/health) still holds: the
+    # real origin is :443, but Caddyfile.prod keeps an internal :8080 route to that path.
+    ports: !override
+      - "80:80"
+      - "443:443"
+
+volumes:
+  caddy_data:
+  caddy_config:

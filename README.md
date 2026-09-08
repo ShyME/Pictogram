@@ -186,19 +186,35 @@ plus the `check` floor. When the repo goes public — branch protection is free 
 repos — enable **Settings → Branches → `main` → "Require branches to be up to date before
 merging"** and this gap closes (tracked in #123).
 
+## Deployment
+
+Pictogram deploys to a single VPS running the compose topology behind Caddy, which
+terminates TLS for a registered domain (ADR-0012). `compose.prod.yaml` overlays
+`compose.yaml` to pull `app`/`chat`/`caddy` images from GHCR instead of building them. The
+**Deploy** workflow (`.github/workflows/deploy.yml`) is triggered on demand — the "Run
+workflow" button in the Actions tab, never automatically on a push — and builds, pushes
+and rolls the box. `scripts/deploy/wizard.sh` walks the one-time box, DNS and
+OAuth-client setup.
+
+The full first-deploy sequence, the per-IP edge rate-limit numbers and their rationale,
+DNS and OAuth records, rollback and secret rotation are in
+[`docs/runbook/deployment.md`](./docs/runbook/deployment.md).
+
 ## Before serving real traffic
+
+All of this is handled by the deployment runbook above; it is listed here as the checklist.
 
 - **Signing key.** Set `PICTOGRAM_AUTH_SIGNING_KEY` (a P-256 private JWK). The `prod` profile
   refuses to start without it — an ephemeral key breaks multi-replica token verification and
-  logs everyone out on restart.
+  logs everyone out on restart. `compose.prod.yaml` makes it a hard `${VAR:?}` guard.
 - **Cookie transport.** `compose.yaml` keeps the refresh cookie `Secure` by default; only the
   plain-HTTP localhost stacks (`compose.mock-oauth.yaml`, the `local` profile) opt out. Serve
   the deployed app over TLS.
 - **Rate limiting.** The app itself does none. The public unauthenticated surface —
   `GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`, `GET /api/posts`,
-  `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`, `POST /api/auth/refresh`, and the OIDC
-  start at `/oauth2/authorization/google` — must sit behind a reverse proxy or platform rate limit
-  before it takes real traffic.
+  `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`, `POST /api/auth/refresh`,
+  `POST /api/posts/*/comments`, and the OIDC start at `/oauth2/authorization/google` — sits behind
+  Caddy's per-IP `rate_limit` zones (`Caddyfile.prod`), numbers in the runbook.
 - **Media bucket.** `S3BlobStore` auto-creates the bucket on first upload for local dev only.
   Pre-create it during provisioning and withhold `s3:CreateBucket` from the runtime role.
 
