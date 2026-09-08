@@ -53,11 +53,11 @@ class ChatWebSocketConfiguration {
         return new WebSocketHandlerAdapter();
     }
 
-    // A plain SimpleUrlHandlerMapping hands out one shared handler instance for
-    // every
-    // request; this builds a fresh ChatWebSocketHandler per handshake instead, so
-    // each one
-    // can close over the caller ChatHandshakeFilter attributed to that exchange.
+    // SimpleUrlHandlerMapping would hand out one shared handler for every request;
+    // this
+    // builds a fresh ChatWebSocketHandler per handshake so each closes over the
+    // caller
+    // ChatHandshakeFilter attributed to that exchange.
     private static final class ChatWebSocketHandlerMapping implements HandlerMapping, Ordered {
 
         private final ConnectionRegistry connections;

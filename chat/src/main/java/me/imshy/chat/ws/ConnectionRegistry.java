@@ -7,15 +7,15 @@ import java.util.concurrent.locks.LockSupport;
 import me.imshy.chat.UserId;
 import reactor.core.publisher.Sinks;
 
-// Every open connection a user currently has, keyed by UserId — a caller may hold several
-// (one per tab/device, ADR-0014), and a message to that user fans out to all of them.
+// A user's open connections, keyed by UserId — several per user (tab/device, ADR-0014);
+// deliver() fans out to all of them (ConnectionRegistryTest).
 class ConnectionRegistry {
 
-    // Caps how long a foreign thread waits on a sink whose drain is wedged before
-    // giving up
-    // and reporting the message undelivered (best-effort delivery, ADR-0014). A
-    // healthy
-    // sink clears a concurrent-producer clash in microseconds.
+    // How long a foreign thread waits out a concurrent-producer clash on a sink
+    // before
+    // giving up as undelivered (best-effort delivery, ADR-0014).
+    // ConnectionRegistryConcurrencyTest
+    // pins that a contended emit gives up inside this budget rather than spinning.
     private static final long EMIT_CONTENTION_BUDGET_NANOS = Duration.ofMillis(25).toNanos();
     private static final long EMIT_CONTENTION_PARK_NANOS = Duration.ofMillis(1).toNanos();
 
@@ -55,12 +55,11 @@ class ConnectionRegistry {
         return acceptedByAtLeastOne;
     }
 
-    // The single write path to a connection's non-serialized outbound sink. A
-    // producer
-    // clash is waited out — never spun on (busyLooping burned the Netty event
-    // loop), never
-    // thrown (that tore the sender's connection down). Pinned by
-    // ConnectionRegistryConcurrencyTest.
+    // The one write path to a connection's non-serialized sink. A producer clash is
+    // parked
+    // on, never spun (spinning burned the Netty event loop) and never thrown (that
+    // tore the
+    // sender's connection down) — ConnectionRegistryConcurrencyTest pins both.
     static boolean emit(Sinks.Many<OutboundEvent> outbound, OutboundEvent event) {
         long deadline = System.nanoTime() + EMIT_CONTENTION_BUDGET_NANOS;
         while (true) {
@@ -79,10 +78,10 @@ class ConnectionRegistry {
         }
     }
 
-    // The recipient stopped draining and its buffer is full: end the connection
-    // rather than
-    // grow the heap. Retried within the same budget so a concurrent emit can't
-    // swallow it.
+    // Buffer full — the recipient stopped draining: end that connection rather than
+    // grow the
+    // heap (ChatWebSocketHandlerBufferTest). The retry keeps a concurrent emit from
+    // swallowing it.
     private static void terminate(Sinks.Many<OutboundEvent> outbound) {
         long deadline = System.nanoTime() + EMIT_CONTENTION_BUDGET_NANOS;
         while (outbound.tryEmitError(new OutboundBufferOverflowException()) == Sinks.EmitResult.FAIL_NON_SERIALIZED

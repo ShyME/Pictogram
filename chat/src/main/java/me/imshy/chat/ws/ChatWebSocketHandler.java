@@ -11,20 +11,22 @@ import reactor.util.concurrent.Queues;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-// One instance per connection (#165) — ChatWebSocketConfiguration builds a fresh one per
-// handshake, closing over the caller ChatHandshakeFilter already verified.
+// A fresh instance per handshake (built in ChatWebSocketConfiguration), each closing over
+// its own verified caller — ChatMessagingTest pins that a sender's identity is per-connection.
 class ChatWebSocketHandler implements WebSocketHandler {
 
-    // The browser drops the socket unless the server echoes a subprotocol it
-    // offered,
-    // and the opaque token can't be echoed — so the client also offers this fixed
-    // value (frontend chatConnection.ts) and getSubProtocols() selects it.
+    // A browser drops the socket unless the server echoes back a subprotocol the
+    // client
+    // offered, and the opaque token can't be echoed — so the client offers this
+    // fixed value
+    // alongside the token (frontend chatConnection.ts) and getSubProtocols()
+    // selects it.
     static final String SUBPROTOCOL = "pictogram-chat";
 
-    // Bounds one connection's outbound buffer so a recipient that stops draining is
-    // terminated instead of growing the heap. Changing it is a heap-safety decision
-    // —
-    // ChatWebSocketHandlerBufferTest pins the value so it isn't done lightly.
+    // Bounds one connection's outbound buffer so a stalled recipient is terminated
+    // rather
+    // than buffered into the heap (#174). ChatWebSocketHandlerBufferTest pins the
+    // value.
     static final int OUTBOUND_BUFFER_CAPACITY = 256;
 
     private final ConnectionRegistry connections;
@@ -51,9 +53,10 @@ class ChatWebSocketHandler implements WebSocketHandler {
         Sinks.Many<OutboundEvent> outbound = outboundSink();
         connections.connect(caller, outbound);
 
-        // Disconnect before completing the sink, not after: otherwise a concurrent
-        // deliver() can still find this (already-terminated) sink in the registry and
-        // silently lose a message to it in the window between the two.
+        // Disconnect before completing the sink, not after: the reverse order leaves a
+        // completed sink briefly in the registry, where a concurrent deliver() still
+        // routes
+        // to it and the message is lost.
         Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText)
             .doOnNext(payload -> handleFrame(outbound, payload)).then().doFinally(signal -> {
                 connections.disconnect(caller, outbound);
@@ -66,9 +69,10 @@ class ChatWebSocketHandler implements WebSocketHandler {
         return receiving.and(sending);
     }
 
-    // A send frame carries no "type"; a presence query (ADR-0014) tags itself with
-    // one.
-    // Any malformed frame drops silently rather than tearing the connection down.
+    // Malformed frames drop silently rather than tearing the connection down
+    // (ChatMessagingTest). A presence query (ADR-0014) self-tags with "type"; a
+    // send frame
+    // has none, so it is the fall-through case.
     private void handleFrame(Sinks.Many<OutboundEvent> outbound, String payload) {
         JsonNode frame;
         try {
@@ -87,7 +91,8 @@ class ChatWebSocketHandler implements WebSocketHandler {
         } catch (RuntimeException malformed) {
             return;
         }
-        // treeToValue returns null for a bare JSON `null` payload rather than throwing.
+        // treeToValue returns null (not an exception) for a bare `null` frame — pinned
+        // by ChatMessagingTest.
         if (request == null || request.recipientUserId() == null || request.text() == null)
             return;
 

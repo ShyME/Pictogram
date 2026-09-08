@@ -146,6 +146,9 @@ class CommentApiTest {
         mvc.perform(delete("/api/comments/" + commentId).with(jwt().jwt(jwt -> jwt.subject(stranger))))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
+
+        mvc.perform(get("/api/posts/" + post + "/comments")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.items[0].body").value("hands off"));
     }
 
     @Test

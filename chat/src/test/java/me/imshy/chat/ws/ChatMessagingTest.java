@@ -140,15 +140,14 @@ class ChatMessagingTest {
         return URI.create("ws://localhost:" + port + ChatWebSocketConfiguration.WS_PATH);
     }
 
-    // Holds one client-side connection open in the background for the test to
-    // drive:
-    // `ready` fires once the handshake completes (by which point the server has
-    // already
-    // registered the connection, since ChatWebSocketHandler.handle registers
-    // synchronously
-    // before the upgrade response reaches this client), `send` pushes a request
-    // frame, and
-    // `inbound` collects every frame the server sends back.
+    // One client-side connection the test drives in the background. `ready` fires
+    // when the
+    // handshake completes — by which point the server has already registered the
+    // connection,
+    // since ChatWebSocketHandler.handle registers synchronously before the upgrade
+    // response
+    // reaches this client, so a test may send immediately without racing
+    // registration.
     private static final class Connection {
 
         private final BlockingQueue<String> inbound = new LinkedBlockingQueue<>();
@@ -157,11 +156,11 @@ class ChatMessagingTest {
         private final Sinks.Empty<Void> closeSignal = Sinks.empty();
         private final Disposable subscription;
 
-        // Offers the fixed subprotocol and the token together, as the browser client
-        // does
-        // (frontend chatConnection.ts) — the token rides as a Sec-WebSocket-Protocol
-        // value
-        // (ADR-0014) and the server echoes back the fixed one.
+        // Offers the fixed subprotocol and the token together, as the browser does
+        // (frontend
+        // chatConnection.ts): the token rides as a Sec-WebSocket-Protocol value
+        // (ADR-0014)
+        // and the server echoes back only the fixed one.
         Connection(ReactorNettyWebSocketClient client, URI uri, String token) {
             subscription = client.execute(uri, new HttpHeaders(), new WebSocketHandler() {
                 @Override
