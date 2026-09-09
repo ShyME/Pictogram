@@ -59,6 +59,10 @@ Encoded in `RefreshCookieTest` and `SignInCompletionTest`.
   `GET /api/posts`, `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`,
   `POST /api/auth/refresh`, and `/oauth2/authorization/google`) needs a reverse-proxy or
   platform rate limit before real traffic. Noted in the README.
+  `GET /api/notifications/unread-count` (#198) is authenticated, so it is not on that
+  unauthenticated list, but the SPA bell polls it roughly every 30s per open session — it is
+  the one authenticated endpoint that wants a per-user edge limit. Still deferred to #126
+  with the rest; no in-app limiter ships for it in v1.
 - **Media bucket (`SEC-8`)** — `S3BlobStore.ensureBucket()` creates the bucket on first
   upload. That is a local-dev convenience; against real S3 the bucket is pre-created during
   provisioning and `s3:CreateBucket` is withheld from the runtime role, so the branch never

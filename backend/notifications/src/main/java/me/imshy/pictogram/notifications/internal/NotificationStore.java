@@ -1,7 +1,9 @@
 package me.imshy.pictogram.notifications.internal;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
@@ -38,4 +40,29 @@ interface NotificationStore extends ListCrudRepository<Notification, UUID> {
      */
     @Transactional
     int deleteBySubjectId(UUID subjectId);
+
+    // order by matches notification_recipient_page_idx (created_at desc, id desc).
+    @Query("""
+        select n from Notification n
+        where n.recipientId = :recipient
+        order by n.createdAt desc, n.id desc
+        """)
+    List<Notification> newestFor(@Param("recipient") UUID recipient, Limit limit);
+
+    @Query("""
+        select n from Notification n
+        where n.recipientId = :recipient
+          and (n.createdAt < :beforeCreatedAt
+               or (n.createdAt = :beforeCreatedAt and n.id < :beforeId))
+        order by n.createdAt desc, n.id desc
+        """)
+    List<Notification> beforeFor(@Param("recipient") UUID recipient, @Param("beforeCreatedAt") Instant beforeCreatedAt,
+        @Param("beforeId") UUID beforeId, Limit limit);
+
+    long countByRecipientIdAndReadIsFalse(UUID recipientId);
+
+    @Modifying
+    @Transactional
+    @Query("update Notification n set n.read = true where n.recipientId = :recipient and n.read = false")
+    void markAllReadFor(@Param("recipient") UUID recipient);
 }

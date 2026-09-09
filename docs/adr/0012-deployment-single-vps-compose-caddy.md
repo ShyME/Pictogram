@@ -78,6 +78,10 @@ Caddy enforces per-IP limits on the public unauthenticated surface listed in ADR
 in-app write-path limiter is the other half, and both are owned by one deferrable ticket
 that supersedes #126. The concrete numbers live in the deploy runbook.
 
+`GET /api/notifications/unread-count` (#198) is authenticated so it is not on that list,
+but the SPA bell polls it ~every 30s per session — a per-user Caddy limit on it belongs in
+the same deferred ticket (see ADR-0011).
+
 ## Backups
 
 Deferred to a separate ticket — v1 portfolio data is low-stakes and losing it is
