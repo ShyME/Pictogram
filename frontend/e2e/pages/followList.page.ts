@@ -4,10 +4,15 @@ export class FollowListPage {
   readonly heading: Locator;
 
   private readonly page: Page;
+  // Scoped to the list's own `<main>`: the chat rail (#203) is a sibling `<aside>` that
+  // also renders `<li>@handle</li>` rows for everyone the viewer follows, so an unscoped
+  // `listitem` locator matches both it and the list.
+  private readonly main: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole('heading', { level: 1 });
+    this.main = page.getByRole('main');
+    this.heading = this.main.getByRole('heading', { level: 1 });
   }
 
   async openFollowers(username: string): Promise<void> {
@@ -19,7 +24,7 @@ export class FollowListPage {
   }
 
   row(username: string): Locator {
-    return this.page.getByRole('listitem').filter({ has: this.page.getByText(`@${username}`) });
+    return this.main.getByRole('listitem').filter({ has: this.page.getByText(`@${username}`) });
   }
 
   accountLink(username: string): Locator {
@@ -27,6 +32,6 @@ export class FollowListPage {
   }
 
   get emptyState(): Locator {
-    return this.page.getByText(/no followers yet|not following anyone yet/i);
+    return this.main.getByText(/no followers yet|not following anyone yet/i);
   }
 }
