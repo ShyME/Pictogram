@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { clearPeerUnread } from './unreadStore';
 
 // Chat resolves display data itself (ADR-0014) — the caller opening a conversation already
 // holds the peer's profile, so it passes it straight in.
@@ -45,6 +46,9 @@ function append(message: Omit<ChatMessage, 'id'>): void {
 // `seedIncoming` is the message that was just notified by toast: opening this way keeps it
 // visible instead of dropping it, since there is no history to reopen (ADR-0014).
 export function openConversation(peer: ChatPeer, seedIncoming?: string): void {
+  // Opening the conversation is the viewer reading it — drop any unread marker for this
+  // peer, whichever entry point opened it (rail row, toast, profile).
+  clearPeerUnread(peer.userId);
   if (seedIncoming === undefined && conversation?.peer.userId === peer.userId) return;
   const messages: ChatMessage[] = [];
   if (seedIncoming !== undefined) {

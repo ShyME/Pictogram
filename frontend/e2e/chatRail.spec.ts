@@ -49,12 +49,96 @@ test('the chat rail lists followed users with presence and opens a conversation'
     await expect(overlay.getByText('Not delivered')).toBeHidden();
 
     // The peer receives it — a toast, since their overlay is not open on this conversation.
-    await expect(peerPage.getByText(/new message from rail asker/i)).toBeVisible();
-    await expect(peerPage.getByText('first message from the rail')).toBeVisible();
+    // `exact` so the match is the toast body, not Radix's concatenated live-region string.
+    await expect(peerPage.getByText('New message from Rail Asker', { exact: true })).toBeVisible();
+    await expect(peerPage.getByText('first message from the rail', { exact: true })).toBeVisible();
   } finally {
     await askerContext.close();
     await peerContext.close();
   }
+});
+
+// #204 end-to-end, spanning app + chat, at a narrow viewport where the rail is a drawer:
+// a message from a conversation the viewer doesn't have open marks that person's rail row
+// unread and badges the `AppNav` chat icon (alongside the toast); opening the row clears
+// both.
+test.describe('unread markers (narrow viewport)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('a message from a non-open conversation marks the rail row and badges the nav icon', async ({
+    browser,
+  }) => {
+    // Usernames cap at 20 characters, so the prefix has to stay short (see onboarding).
+    const suffix = Date.now().toString(36);
+    const sender = `e2e_un_s_${suffix}`;
+    const viewer = `e2e_un_v_${suffix}`;
+    const other = `e2e_un_o_${suffix}`;
+
+    const senderContext = await browser.newContext();
+    const viewerContext = await browser.newContext();
+    const otherContext = await browser.newContext();
+
+    try {
+      const senderPage = await senderContext.newPage();
+      await onboard(senderPage, sender, 'Unread Sender');
+
+      const viewerPage = await viewerContext.newPage();
+      await onboard(viewerPage, viewer, 'Unread Viewer');
+
+      const otherPage = await otherContext.newPage();
+      await onboard(otherPage, other, 'Unread Other');
+
+      // The viewer follows both, so both are rows on the viewer's rail.
+      for (const target of [sender, other]) {
+        const profile = new ProfilePage(viewerPage);
+        await profile.open(target);
+        await profile.followButton.click();
+        await expect(profile.followingButton).toBeVisible();
+      }
+
+      // The other user stays on a screen so their session socket is connected.
+      await new FeedPage(otherPage).open();
+
+      // The viewer opens a conversation with the other user — not the sender.
+      await viewerPage.goto('/');
+      const rail = new ChatRailPage(viewerPage);
+      await rail.openDrawer();
+      await rail.row('Unread Other').click();
+      await expect(rail.overlay('Unread Other')).toBeVisible();
+      await expect(rail.navUnreadBadge).toBeHidden();
+
+      // The sender messages the viewer from the viewer's profile.
+      const senderViewOfViewer = new ProfilePage(senderPage);
+      await senderViewOfViewer.open(viewer);
+      await senderPage.getByRole('button', { name: /^message$/i }).click();
+      const composed = senderPage.getByRole('dialog', { name: 'Chat with Unread Viewer' });
+      await composed.getByRole('textbox').fill('ping while you were away');
+      await composed.getByRole('button', { name: 'Send' }).click();
+
+      // The viewer gets the toast and the badged nav icon. `exact` so the match is the
+      // toast body, not Radix's concatenated live-region string.
+      await expect(
+        viewerPage.getByText('New message from Unread Sender', { exact: true }),
+      ).toBeVisible();
+      await expect(rail.navUnreadBadge).toBeVisible();
+
+      // The drawer marks the sender's row unread — not the other's.
+      await rail.openDrawer();
+      await expect(rail.unreadMarker('Unread Sender')).toBeVisible();
+      await expect(rail.unreadMarker('Unread Other')).toBeHidden();
+
+      // Opening the sender's row clears both the row marker and the nav badge.
+      await rail.row('Unread Sender').click();
+      await expect(rail.overlay('Unread Sender')).toBeVisible();
+      await expect(rail.navUnreadBadge).toBeHidden();
+      await rail.openDrawer();
+      await expect(rail.unreadMarker('Unread Sender')).toBeHidden();
+    } finally {
+      await senderContext.close();
+      await viewerContext.close();
+      await otherContext.close();
+    }
+  });
 });
 
 async function onboard(page: Page, username: string, displayName: string): Promise<void> {

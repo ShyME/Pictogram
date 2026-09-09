@@ -9,10 +9,12 @@ import { railName } from './orderPeers';
 export function RailRow({
   peer,
   presence,
+  isUnread,
   onOpen,
 }: {
   peer: ChatPeer;
   presence: Presence;
+  isUnread: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -32,6 +34,13 @@ export function RailRow({
           </span>
           <span className="block truncate text-xs text-foreground-muted">@{peer.username}</span>
         </span>
+        {isUnread && (
+          <span
+            role="img"
+            aria-label="Unread messages"
+            className="size-2 shrink-0 rounded-full bg-accent"
+          />
+        )}
       </button>
     </li>
   );

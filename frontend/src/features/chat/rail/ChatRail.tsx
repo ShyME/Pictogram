@@ -2,6 +2,7 @@ import { Button, EmptyState, Input, Spinner, cn, useMediaQuery } from '@shared';
 import { MessageCircleOff, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { openConversation } from '../chatStore';
+import { useUnreadPeerIds } from '../unreadStore';
 import { usePresences } from '../usePresences';
 import { RailRow } from './RailRow';
 import { orderPeers, railName } from './orderPeers';
@@ -147,6 +148,7 @@ function RailBody({ viewerId, onNavigate }: { viewerId: string; onNavigate?: () 
   const { peers, status } = useFollowingPeers(viewerId);
   const peerIds = useMemo(() => peers.map((peer) => peer.userId), [peers]);
   const presences = usePresences(peerIds);
+  const unread = useUnreadPeerIds();
   const [filter, setFilter] = useState('');
 
   const visible = useMemo(() => {
@@ -158,8 +160,8 @@ function RailBody({ viewerId, onNavigate }: { viewerId: string; onNavigate?: () 
             peer.username.toLowerCase().includes(needle),
         )
       : peers;
-    return orderPeers(matched, presences);
-  }, [peers, presences, filter]);
+    return orderPeers(matched, presences, unread);
+  }, [peers, presences, unread, filter]);
 
   if (status === 'loading') {
     return (
@@ -205,6 +207,7 @@ function RailBody({ viewerId, onNavigate }: { viewerId: string; onNavigate?: () 
               key={peer.userId}
               peer={peer}
               presence={presences.get(peer.userId) ?? 'unknown'}
+              isUnread={unread.has(peer.userId)}
               onOpen={() => {
                 openConversation(peer);
                 onNavigate?.();
