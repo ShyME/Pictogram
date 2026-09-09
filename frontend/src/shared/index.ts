@@ -16,4 +16,5 @@ export {
 export { cn } from './lib/cn';
 export { createQueryClient } from './lib/queryClient';
 export { relativeTime } from './lib/relativeTime';
+export { useMediaQuery } from './lib/useMediaQuery';
 export * from './ui';

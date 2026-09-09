@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { chatPresence, chatSocketOpen, queryPresence } from './chatConnection';
 import type { Presence } from './usePresence';
 
@@ -19,7 +19,9 @@ function presenceKey(userIds: string[]): string {
 // to 'unknown' until answered, and all of them fall back to 'unknown' while the socket is
 // closed, since a query sent then is lost.
 export function usePresences(userIds: string[]): Map<string, Presence> {
-  const key = presenceKey(userIds);
+  // Memoised so a caller passing a stable id array only rebuilds the key (a sort + a
+  // stringify over the whole list) when the set actually changes, not every render.
+  const key = useMemo(() => presenceKey(userIds), [userIds]);
   const [presences, setPresences] = useState<Map<string, Presence>>(() => new Map());
 
   useEffect(() => {
