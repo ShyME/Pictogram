@@ -2,12 +2,14 @@
 spring:
   # spring-boot-starter-kafka is on the test classpath for the SharedKafka container the
   # notifications module needs (ADR-0015). Every slice must otherwise start with no broker,
-  # so the client autoconfig and Modulith's Kafka externaliser are off here. Tests that do
-  # need the relay re-include them explicitly (SocialEventKafkaRelayTest; the #197 consumer base).
+  # so the client autoconfig, Modulith's Kafka externaliser and the notifications consumer
+  # are all off here. Tests that do need Kafka re-include what they use explicitly
+  # (SocialEventKafkaRelayTest; NotificationsModuleIntegrationTest).
   autoconfigure:
     exclude:
       - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
       - org.springframework.modulith.events.kafka.KafkaEventExternalizerConfiguration
+      - me.imshy.pictogram.notifications.internal.NotificationsKafkaConsumerAutoConfiguration
   jpa:
     open-in-view: false
     hibernate:

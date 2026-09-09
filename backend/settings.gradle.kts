@@ -18,5 +18,6 @@ include(
     "media",
     "post",
     "social",
+    "notifications",
     "app",
 )

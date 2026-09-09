@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":media"))
     implementation(project(":post"))
     implementation(project(":social"))
+    implementation(project(":notifications"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
