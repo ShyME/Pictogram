@@ -107,6 +107,27 @@ describe('below md', () => {
   });
 });
 
+describe('chat slot', () => {
+  it('renders the slot beside the avatar menu below md', () => {
+    renderNav({ chatSlot: <button type="button">chat entry</button> });
+
+    expect(screen.getByRole('button', { name: 'chat entry' })).toBeInTheDocument();
+  });
+
+  it('does not render the slot in the inline nav at md and wider', () => {
+    stubWideViewport();
+    renderNav({ chatSlot: <button type="button">chat entry</button> });
+
+    expect(screen.queryByRole('button', { name: 'chat entry' })).not.toBeInTheDocument();
+  });
+
+  it('renders nothing extra when no slot is given', () => {
+    renderNav();
+
+    expect(screen.getByRole('button', { name: /open menu/i })).toBeInTheDocument();
+  });
+});
+
 describe('anonymous visitor', () => {
   it('shows only a log-in link, no viewer actions', () => {
     stubWideViewport();

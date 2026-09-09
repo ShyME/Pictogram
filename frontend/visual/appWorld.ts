@@ -437,6 +437,10 @@ async function install(page: Page, world: World): Promise<void> {
 // Serve every `/api/**` read from the fixed world above, signed in as `@ansel`.
 export const stubApp = (page: Page): Promise<void> => install(page, NORMAL);
 
+// The same world with the viewer following nobody — the chat rail's empty state (#203).
+export const stubNoFollows = (page: Page): Promise<void> =>
+  install(page, { ...NORMAL, followingIds: [] });
+
 // The same handlers over a one-account world carrying the worst-case strings (#139).
 export const stubStress = (page: Page): Promise<void> => install(page, STRESS);
 

@@ -32,6 +32,14 @@ test('shows the signed-in nav when there is a viewer', () => {
   expect(screen.queryByRole('link', { name: /log in/i })).not.toBeInTheDocument();
 });
 
+test('carries neither the chat rail nor its nav icon — chat needs auth (#203)', () => {
+  viewer.current = { username: 'ada' };
+  renderAt();
+
+  expect(screen.queryByRole('button', { name: /open messages/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('complementary', { name: 'Messages' })).not.toBeInTheDocument();
+});
+
 test('shows the logged-out nav for an anonymous visitor', () => {
   viewer.current = null;
   renderAt();

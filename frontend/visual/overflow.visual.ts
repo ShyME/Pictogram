@@ -69,6 +69,20 @@ test.describe('no horizontal overflow with worst-case content', () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test('chat rail — docked and drawer, worst-case name', async ({ page }, testInfo) => {
+    // The rail lists a 20-char handle and a long display name (`stubStress`). Each row
+    // must truncate rather than push the rail — or the page — wide, docked or in the drawer.
+    await stubStress(page);
+    await page.goto('/');
+    const isNarrow = (testInfo.project.use.viewport?.width ?? 0) < 768;
+    if (isNarrow) await page.getByRole('button', { name: 'Open messages' }).click();
+    const rail = page.getByRole('complementary', { name: 'Messages' });
+    await expect(rail.getByText(/Aureliano/).first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expectNoHorizontalOverflow(page);
+    await expectContentFits(rail, 'chat rail');
+  });
+
   test('chat overlay with a worst-case message', async ({ page }) => {
     // The overlay pins to the bottom of the viewport on every screen (#166); a long
     // unbreakable token or bare URL in a message must wrap inside the transcript, not

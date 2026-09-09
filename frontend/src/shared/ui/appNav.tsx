@@ -1,6 +1,7 @@
 import { LogOut, Plus, UserRound } from 'lucide-react';
-import { useSyncExternalStore } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { Avatar, AvatarFallback } from './avatar';
 import { Button } from './button';
 import {
@@ -16,30 +17,18 @@ import {
 // avatar dropdown. Matched in JS so only one branch is ever in the DOM.
 const INLINE_NAV = '(min-width: 48rem)';
 
-function subscribeToInlineNav(onChange: () => void): () => void {
-  const query = matchMedia(INLINE_NAV);
-  query.addEventListener('change', onChange);
-  return () => {
-    query.removeEventListener('change', onChange);
-  };
-}
-
-function useIsInlineViewport(): boolean {
-  return useSyncExternalStore(
-    subscribeToInlineNav,
-    () => matchMedia(INLINE_NAV).matches,
-    () => false,
-  );
-}
-
 type AppNavProps = {
   viewer?: { username: string } | null;
   onSignOut?: () => void;
   signingOut?: boolean;
+  // Rendered beside the avatar menu below the inline breakpoint only — where the chat
+  // sidebar (#203) is a drawer rather than a docked rail and needs a way in. `AppLayout`
+  // passes the trigger; `PublicLayout` never does.
+  chatSlot?: ReactNode;
 };
 
-export function AppNav({ viewer, onSignOut, signingOut = false }: AppNavProps) {
-  const isInline = useIsInlineViewport();
+export function AppNav({ viewer, onSignOut, signingOut = false, chatSlot }: AppNavProps) {
+  const isInline = useMediaQuery(INLINE_NAV);
 
   return (
     <header className="border-b border-border bg-surface">
@@ -51,7 +40,10 @@ export function AppNav({ viewer, onSignOut, signingOut = false }: AppNavProps) {
           isInline ? (
             <InlineNav viewer={viewer} onSignOut={onSignOut} signingOut={signingOut} />
           ) : (
-            <AvatarNav viewer={viewer} onSignOut={onSignOut} signingOut={signingOut} />
+            <div className="flex items-center gap-1">
+              {chatSlot}
+              <AvatarNav viewer={viewer} onSignOut={onSignOut} signingOut={signingOut} />
+            </div>
           )
         ) : (
           <Button asChild variant="ghost" size="sm">

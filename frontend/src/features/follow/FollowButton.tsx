@@ -14,7 +14,12 @@ export function FollowButton({ userId }: { userId: string }) {
 
   const toggle = useMutation({
     mutationFn: () => (isFollowing ? unfollowUser(userId) : followUser(userId)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: key }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: key });
+      // The chat rail (#203) lists the viewer's follows from its own query — keep it in
+      // sync when the graph changes here. Prefix mirrors chat/rail `railFollowingKey`.
+      await queryClient.invalidateQueries({ queryKey: ['chat', 'rail', 'following'] });
+    },
   });
 
   const isBusy = loading || toggle.isPending;
