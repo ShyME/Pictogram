@@ -16,15 +16,11 @@ spring:
       max-request-size: 16MB
 
   # Kafka carries one externalised flow — social's PostLiked / PostCommented / UserFollowed
-  # onto pictogram.social, keyed by recipient (ADR-0015, #196). The notifications consumer
-  # lands in #197; the consumer block below is wiring ahead of it.
+  # onto pictogram.social, keyed by recipient (ADR-0015, #196), consumed by the notifications
+  # module (#197). That consumer's group, offset reset, ack mode and retry policy are wired
+  # in code (NotificationsKafkaConsumerAutoConfiguration), not here — only the broker address.
   kafka:
     bootstrap-servers: ${PICTOGRAM_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: notifications
-      auto-offset-reset: earliest
-      properties:
-        spring.json.trusted.packages: "me.imshy.pictogram.*"
     producer:
       # The outbox relay is the only producer — durable, in-order.
       acks: all

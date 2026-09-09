@@ -18,7 +18,8 @@ class ModulithStructureTest {
     void everyBoundedContextIsAModule() {
         var names = MODULES.stream().map(module -> module.getIdentifier().toString()).collect(Collectors.toSet());
 
-        assertThat(names).containsExactlyInAnyOrder("identity", "profile", "media", "post", "social", "shared");
+        assertThat(names).containsExactlyInAnyOrder("identity", "profile", "media", "post", "social", "notifications",
+            "shared");
     }
 
     @Test
