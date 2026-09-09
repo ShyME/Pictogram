@@ -42,6 +42,20 @@
         },
         "type" : "object"
       },
+      "ApiPageNotificationView" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationView"
+            },
+            "type" : "array"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ApiPagePostView" : {
         "properties" : {
           "items" : {
@@ -183,6 +197,27 @@
         "required" : [ "mediaId" ],
         "type" : "object"
       },
+      "NotificationView" : {
+        "properties" : {
+          "actorId" : {
+            "type" : "string"
+          },
+          "occurredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "read" : {
+            "type" : "boolean"
+          },
+          "subjectPostId" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "OnboardingRequest" : {
         "properties" : {
           "bio" : {
@@ -299,6 +334,15 @@
           "mediaId" : {
             "format" : "uuid",
             "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "UnreadCount" : {
+        "properties" : {
+          "count" : {
+            "format" : "int64",
+            "type" : "integer"
           }
         },
         "type" : "object"
@@ -910,6 +954,109 @@
           }
         },
         "tags" : [ "media-controller" ]
+      }
+    },
+    "/api/notifications" : {
+      "get" : {
+        "operationId" : "notifications",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPageNotificationView"
+                }
+              }
+            },
+            "description" : "A page of the caller's notifications, newest first."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The pagination cursor is malformed."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "notification-controller" ]
+      }
+    },
+    "/api/notifications/mark-read" : {
+      "post" : {
+        "operationId" : "markRead",
+        "responses" : {
+          "204" : {
+            "description" : "Every unread notification of the caller is now read (idempotent)."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "notification-controller" ]
+      }
+    },
+    "/api/notifications/unread-count" : {
+      "get" : {
+        "operationId" : "unreadCount",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UnreadCount"
+                }
+              }
+            },
+            "description" : "The caller's unread notification count."
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The caller has no valid access token."
+          }
+        },
+        "tags" : [ "notification-controller" ]
       }
     },
     "/api/posts" : {

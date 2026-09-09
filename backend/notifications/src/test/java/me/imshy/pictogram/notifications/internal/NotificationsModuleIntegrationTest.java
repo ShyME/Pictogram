@@ -73,8 +73,13 @@ abstract class NotificationsModuleIntegrationTest extends ModuleIntegrationTest 
      * ingestion.
      */
     protected final void givenNotification(NotificationType type, UUID recipientId, UUID actorId, UUID subjectId) {
+        givenNotification(type, recipientId, actorId, subjectId, OCCURRED_AT, Instant.now());
+    }
+
+    protected final void givenNotification(NotificationType type, UUID recipientId, UUID actorId, UUID subjectId,
+        Instant occurredAt, Instant createdAt) {
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> store.insertIfNew(UUID.randomUUID(),
-            type.wireName(), recipientId, actorId, subjectId, OCCURRED_AT, Instant.now()));
+            type.wireName(), recipientId, actorId, subjectId, occurredAt, createdAt));
     }
 
     protected final void publish(String key, String json) {

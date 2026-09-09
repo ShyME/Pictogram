@@ -1,9 +1,11 @@
 # Notifications
 
 The in-app notification list: a record, per recipient, that someone liked or commented on
-one of their posts, or started following them. This context only **writes** that list —
-one Kafka flow in, one in-process event reaction, rows in a table. The read side (the
-`GET /api/notifications` API and the SPA bell) lands in #198–#199.
+one of their posts, or started following them. One Kafka flow in, one in-process event
+reaction, rows in a table, and a small read API out (#198): `GET /api/notifications`
+(keyset-paged, newest first, the feed's cursor contract), `GET /api/notifications/unread-count`,
+and `POST /api/notifications/mark-read` (bulk, idempotent). The SPA bell that consumes them
+is #199.
 
 It is a Spring Modulith module inside the monolith even though its one producer (`social`)
 runs in the same JVM. That is deliberate (ADR-0001 / ADR-0015): every context here is built
@@ -90,14 +92,33 @@ the post is deleted is consumed afterwards and re-creates one orphan — the sam
 cosmetic staleness ADR-0015 already accepts for undo events. This is the only in-process
 integration; everything else about this module comes over Kafka.
 
+## The read side (#198)
+
+`NotificationQuery` and `internal.web.NotificationController` serve three endpoints, all
+requiring a viewer (401 otherwise) and all scoped to the caller's own rows:
+
+- `GET /api/notifications` — a keyset page on `(created_at, id)`, newest first, in the
+  ADR-0008 `{ items, nextCursor }` envelope with the exact cursor contract of `GET /api/feed`
+  (`shared.http.Cursor` / `KeysetWindow`). Each item is `type` (the wire discriminator),
+  `actorId`, `subjectPostId` (null for a follow), `occurredAt`, `read`. **No actor
+  enrichment** — per ADR-0005 the SPA batch-resolves `actorId` via `GET /api/profiles?ids=`,
+  so this side gains no dependency on `profile` or `post` (the `post` dependency it already
+  has is for the `PostDeleted` reaction only).
+- `GET /api/notifications/unread-count` → `{ "count": n }` — the value the SPA bell polls.
+- `POST /api/notifications/mark-read` → 204 — flips every unread row of the caller to read
+  in one `update`. Idempotent: a second call matches nothing and still returns 204.
+
 ## What is deliberately not here
 
 - **Undo events.** `PostUnliked`, `CommentDeleted` and `UserUnfollowed` are neither
   externalised by `social` (#196) nor consumed here. A stale "X liked your post" after an
   unlike is a cosmetic inconsistency v1 accepts (ADR-0015).
-- **A published interface.** Nothing outside `notifications` queries it. `Notifications`,
-  the store and the consumer are all package-private in `internal`.
-- **Per-item read state, and any HTTP surface.** Both are #198.
+- **A published Java interface.** Nothing in another module calls into `notifications` — the
+  read side is HTTP only. `Notifications`, the store and the consumer stay package-private in
+  `internal`; `NotificationQuery` and `NotificationView` are public only so the sibling
+  `internal.web` controller can use them, exactly as `social`'s feed does.
+- **Per-item read state.** `read` is flipped only in bulk by `mark-read`; v1 has no
+  mark-one-read endpoint.
 
 ## Schema
 
@@ -115,3 +136,10 @@ shared Kafka broker (`SharedKafka`, ADR-0015). The shared test profile turns the
 client autoconfig off for every other slice; `NotificationsModuleIntegrationTest`
 re-includes it. The unit tests (`SocialEventMessageTest`, `NotificationTypeTest`) need no
 broker.
+
+The read side is proved at three levels: `NotificationQueryTest` (`@ApplicationModuleTest`)
+covers the paging boundaries, the caller-scoped unread count and idempotent mark-read;
+`app`'s `NotificationApiTest` (MockMvc, rows seeded straight into the table) covers the HTTP
+edge — the envelope shape, `actorId`-only, the 401s; and `NotificationScenarioTest` /
+`NotificationTests` drives the whole `social → Kafka → notifications → read API` path through
+the `PictogramApi` driver — the one fast scenario aggregator booted with the broker wired.

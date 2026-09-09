@@ -59,6 +59,14 @@ public interface PictogramApp {
         FeedPage openFeed();
 
         FeedPage openFeed(String cursor, Integer limit);
+
+        NotificationPage openNotifications();
+
+        NotificationPage openNotifications(String cursor, Integer limit);
+
+        long unreadNotificationCount();
+
+        void markNotificationsRead();
     }
 
     enum DeleteOutcome {
@@ -82,6 +90,12 @@ public interface PictogramApp {
     }
 
     record AccountPage(List<String> userIds, String nextCursor) {
+    }
+
+    record Notification(String type, String actorId, String subjectPostId, String occurredAt, boolean read) {
+    }
+
+    record NotificationPage(List<Notification> notifications, String nextCursor) {
     }
 
     record Profile(String userId, String username, String displayName, String bio) {

@@ -321,6 +321,44 @@ class HttpPictogramApp implements PictogramApp {
             return new FeedPage(posts, next.isNull() || next.isMissingNode() ? null : next.asString());
         }
 
+        @Override
+        public NotificationPage openNotifications() {
+            return openNotifications(null, null);
+        }
+
+        @Override
+        public NotificationPage openNotifications(String cursor, Integer limit) {
+            var query = new StringBuilder();
+            if (cursor != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("cursor=").append(cursor);
+            }
+            if (limit != null) {
+                query.append(query.isEmpty() ? '?' : '&').append("limit=").append(limit);
+            }
+            HttpResponse<String> response = call("GET", "/api/notifications" + query, null);
+            require(response, 200, "open notifications");
+            JsonNode page = json.readTree(response.body());
+            List<Notification> notifications = new ArrayList<>();
+            page.path("items")
+                .forEach(node -> notifications.add(new Notification(node.path("type").asString(),
+                    node.path("actorId").asString(), textOrNull(node, "subjectPostId"),
+                    node.path("occurredAt").asString(), node.path("read").asBoolean())));
+            JsonNode next = page.path("nextCursor");
+            return new NotificationPage(notifications, next.isNull() || next.isMissingNode() ? null : next.asString());
+        }
+
+        @Override
+        public long unreadNotificationCount() {
+            HttpResponse<String> response = call("GET", "/api/notifications/unread-count", null);
+            require(response, 200, "read the unread notification count");
+            return json.readTree(response.body()).path("count").asLong();
+        }
+
+        @Override
+        public void markNotificationsRead() {
+            require(call("POST", "/api/notifications/mark-read", null), 204, "mark notifications read");
+        }
+
         private HttpResponse<String> call(String method, String path, String body) {
             var request = HttpRequest.newBuilder(uri(path)).header("Authorization", "Bearer " + accessToken)
                 .method(method, body == null ? BodyPublishers.noBody() : BodyPublishers.ofString(body));

@@ -24,7 +24,7 @@ persistence.
 - [post](./backend/post/CONTEXT.md): the `Post` — one image plus an optional caption, published by an author.
 - [social](./backend/social/CONTEXT.md): the follow graph, the feed assembled from it, and the likes and comments on a post — one context over four internal sub-domains (`follow`, `feed`, `likes`, `comment`).
 - [chat](./chat/CONTEXT.md): live 1:1 messaging between two users — not a module of this deployable; a separate service (ADR-0014).
-- [notifications](./backend/notifications/CONTEXT.md): the in-app notification list, fed by the one Kafka-externalised flow out of `social`. The broker and JPA outbox are wired (#195), `social` publishes to `pictogram.social` (#196), and the module consumes it and stores notifications (#197). The read API and SPA bell are still to come (#198–#199).
+- [notifications](./backend/notifications/CONTEXT.md): the in-app notification list, fed by the one Kafka-externalised flow out of `social`. The broker and JPA outbox are wired (#195), `social` publishes to `pictogram.social` (#196), and the module consumes it and stores notifications (#197). The read API — `GET /api/notifications` (keyset-paged), `/unread-count` and `mark-read` — is in (#198); the SPA bell is still to come (#199).
 
 ## Relationships
 
