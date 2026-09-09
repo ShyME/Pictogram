@@ -441,6 +441,100 @@ export const stubApp = (page: Page): Promise<void> => install(page, NORMAL);
 export const stubNoFollows = (page: Page): Promise<void> =>
   install(page, { ...NORMAL, followingIds: [] });
 
+// The chat rail with live presence and session-local unread markers (#204). The visual
+// server has no chat backend, so this also stands up a fake session WebSocket in the page:
+// it answers presence queries from `online` and pushes a `message` frame from each id in
+// `unreadFrom` once it opens, which is exactly what marks a rail row unread. A token is
+// needed before the app opens the socket at all, so the first `/api/profiles/me` 401s to
+// drive one refresh.
+export async function stubChatRail(
+  page: Page,
+  { online = [], unreadFrom = [] }: { online?: string[]; unreadFrom?: string[] } = {},
+): Promise<void> {
+  await install(page, NORMAL);
+
+  let profileProbes = 0;
+  await page.route('**/api/profiles/me', (route) => {
+    profileProbes += 1;
+    return profileProbes === 1
+      ? route.fulfill({
+          status: 401,
+          contentType: 'application/problem+json',
+          body: JSON.stringify({ type: 'about:blank', status: 401 }),
+        })
+      : route.fallback();
+  });
+  await page.route('**/api/auth/refresh', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ accessToken: 'visual-token', expiresInSeconds: 3600 }),
+    }),
+  );
+
+  await page.addInitScript(
+    ({ online: onlineIds, unreadFrom: unreadIds }) => {
+      class FakeChatSocket {
+        url: string;
+        protocols: string | string[];
+        readyState = 0;
+        private readonly listeners: Record<string, ((event: unknown) => void)[]> = {};
+
+        constructor(url: string, protocols: string | string[]) {
+          this.url = url;
+          this.protocols = protocols;
+          setTimeout(() => {
+            this.readyState = 1;
+            this.emit('open', {});
+            for (const senderUserId of unreadIds) {
+              this.emit('message', {
+                data: JSON.stringify({ type: 'message', senderUserId, text: 'Sent while you were away' }),
+              });
+            }
+          }, 0);
+        }
+
+        addEventListener(type: string, fn: (event: unknown) => void): void {
+          (this.listeners[type] ??= []).push(fn);
+        }
+
+        removeEventListener(type: string, fn: (event: unknown) => void): void {
+          this.listeners[type] = (this.listeners[type] ?? []).filter((l) => l !== fn);
+        }
+
+        send(raw: string): void {
+          let frame: { type?: string; userId?: string; userIds?: string[] };
+          try {
+            frame = JSON.parse(raw) as { type?: string; userId?: string; userIds?: string[] };
+          } catch {
+            return;
+          }
+          if (frame.type !== 'presence-query') return;
+          const ids = frame.userIds ?? (frame.userId === undefined ? [] : [frame.userId]);
+          for (const userId of ids) {
+            this.emit('message', {
+              data: JSON.stringify({ type: 'presence', userId, online: onlineIds.includes(userId) }),
+            });
+          }
+        }
+
+        close(): void {
+          this.readyState = 3;
+          this.emit('close', {});
+        }
+
+        private emit(type: string, event: unknown): void {
+          const forType = this.listeners[type] ?? [];
+          for (const fn of forType) fn(event);
+        }
+      }
+
+      Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: FakeChatSocket });
+    },
+    { online, unreadFrom },
+  );
+}
+
 // The same handlers over a one-account world carrying the worst-case strings (#139).
 export const stubStress = (page: Page): Promise<void> => install(page, STRESS);
 

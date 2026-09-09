@@ -2,6 +2,7 @@ import { ChatRail, ChatRailTrigger } from '@features/chat';
 import { chatConnectionStatus } from '@features/chat/chatConnection';
 import { closeConversation, openConversationPeer } from '@features/chat/chatStore';
 import { closeRailDrawer } from '@features/chat/rail/railStore';
+import { clearPeerUnread, markPeerUnread, unreadPeerIds } from '@features/chat/unreadStore';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { jsonResponse, pathOf, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { FakeWebSocket, stubWebSocket } from '@test-support/stubWebSocket';
@@ -82,6 +83,7 @@ afterEach(() => {
   act(() => {
     closeConversation();
     closeRailDrawer();
+    for (const id of unreadPeerIds()) clearPeerUnread(id);
   });
   vi.unstubAllGlobals();
   localStorage.clear();
@@ -145,6 +147,74 @@ test('clicking a row opens the conversation for that peer', async () => {
     userId: 'u-vivian',
     username: 'vivian',
     displayName: 'Vivian Maier',
+  });
+});
+
+test('marks a row unread and clears it when that conversation is opened', async () => {
+  stubFollowing(['u-vivian', 'u-dorothea']);
+  openSocket();
+  renderRail();
+  const panel = await railPanel();
+  await within(panel).findByText('Vivian Maier');
+
+  act(() => {
+    markPeerUnread('u-vivian');
+  });
+
+  const vivianRow = within(panel)
+    .getByRole('button', { name: /Vivian Maier/ })
+    .closest('li') as HTMLElement;
+  expect(within(vivianRow).getByRole('img', { name: /unread/i })).toBeInTheDocument();
+
+  fireEvent.click(within(panel).getByRole('button', { name: /Vivian Maier/ }));
+
+  await waitFor(() => {
+    expect(within(panel).queryByRole('img', { name: /unread/i })).not.toBeInTheDocument();
+  });
+  expect(unreadPeerIds().has('u-vivian')).toBe(false);
+});
+
+test('unread rows sort above online rows, which sort above offline rows', async () => {
+  stubFollowing(['u-vivian', 'u-dorothea', 'u-saul']);
+  const socket = openSocket();
+  renderRail();
+  const panel = await railPanel();
+  await within(panel).findByText('Vivian Maier');
+
+  act(() => {
+    // Vivian online, Dorothea + Saul offline, then Saul goes unread.
+    socket.receive('{"type":"presence","userId":"u-vivian","online":true}');
+    socket.receive('{"type":"presence","userId":"u-dorothea","online":false}');
+    socket.receive('{"type":"presence","userId":"u-saul","online":false}');
+    markPeerUnread('u-saul');
+  });
+
+  await waitFor(() => {
+    const names = within(panel)
+      .getAllByRole('listitem')
+      .map((li) => within(li).getByText(/Maier|Lange|Leiter/).textContent);
+    expect(names).toEqual(['Saul Leiter', 'Vivian Maier', 'Dorothea Lange']);
+  });
+});
+
+test('the narrow-viewport trigger is badged only while a row is unread', async () => {
+  installViewport(false);
+  stubFollowing(['u-vivian']);
+  openSocket();
+  renderRail(<ChatRailTrigger />);
+
+  expect(screen.queryByRole('img', { name: /unread/i })).not.toBeInTheDocument();
+
+  act(() => {
+    markPeerUnread('u-vivian');
+  });
+  expect(await screen.findByRole('img', { name: /unread/i })).toBeInTheDocument();
+
+  act(() => {
+    clearPeerUnread('u-vivian');
+  });
+  await waitFor(() => {
+    expect(screen.queryByRole('img', { name: /unread/i })).not.toBeInTheDocument();
   });
 });
 

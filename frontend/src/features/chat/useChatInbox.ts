@@ -7,6 +7,7 @@ import {
   openConversationPeer,
   recordReceivedMessage,
 } from './chatStore';
+import { markPeerUnread } from './unreadStore';
 
 // A message for a conversation the overlay isn't currently showing must not be silently
 // missed (ADR-0014) — surface it as a toast, resolving the sender's name client-side since
@@ -39,7 +40,10 @@ export function useChatInbox(): void {
       const peer = openConversationPeer();
       if (event.type === 'message') {
         if (event.senderUserId === peer?.userId) recordReceivedMessage(event.text);
-        else void toastIncoming(event.senderUserId, event.text);
+        else {
+          markPeerUnread(event.senderUserId);
+          void toastIncoming(event.senderUserId, event.text);
+        }
       } else if (event.recipientUserId === peer?.userId) {
         markMessageUndelivered(event.text);
       }

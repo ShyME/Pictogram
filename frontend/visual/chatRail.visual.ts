@@ -1,5 +1,5 @@
 import type { Page, TestInfo } from '@playwright/test';
-import { expect, stubApp, stubNoFollows, test } from './appWorld';
+import { expect, stubApp, stubChatRail, stubNoFollows, test } from './appWorld';
 import { waitForFonts } from './support';
 
 // The chat sidebar (#203): a docked rail beside the feed on a wide viewport, a drawer
@@ -44,6 +44,17 @@ test.describe('docked rail (wide viewport)', () => {
     await expect(rail(page)).toHaveScreenshot('rail-empty.png');
   });
 
+  test('unread rows', async ({ page }, testInfo) => {
+    test.skip(viewportWidth(testInfo) < MD, 'the docked rail only exists at md and wider');
+    await stubChatRail(page, { online: ['u-vivian'], unreadFrom: ['u-dorothea'] });
+    await page.goto('/');
+    await expect(rail(page).getByRole('img', { name: /unread/i })).toBeVisible();
+    await expect(rail(page).getByRole('img', { name: 'Online' })).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await waitForFonts(page);
+    await expect(rail(page)).toHaveScreenshot('rail-unread.png');
+  });
+
   test('collapsed', async ({ page }, testInfo) => {
     test.skip(viewportWidth(testInfo) < MD, 'the docked rail only exists at md and wider');
     await page.addInitScript(() => {
@@ -67,5 +78,17 @@ test.describe('drawer (narrow viewport)', () => {
     await page.waitForLoadState('networkidle');
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('rail-drawer-open.png');
+  });
+
+  test('the AppNav chat icon is badged while a row is unread', async ({ page }, testInfo) => {
+    test.skip(viewportWidth(testInfo) >= MD, 'the drawer only exists below the md breakpoint');
+    await stubChatRail(page, { unreadFrom: ['u-dorothea'] });
+    await page.goto('/');
+    const nav = page
+      .locator('header')
+      .filter({ has: page.getByRole('link', { name: 'Pictogram' }) });
+    await expect(nav.getByRole('img', { name: /unread/i })).toBeVisible();
+    await waitForFonts(page);
+    await expect(nav).toHaveScreenshot('app-nav-unread.png');
   });
 });

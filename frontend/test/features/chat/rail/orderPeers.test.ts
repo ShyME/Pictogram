@@ -9,8 +9,12 @@ const peer = (userId: string, displayName: string | null, username = userId): Ch
   displayName,
 });
 
-function ordered(peers: ChatPeer[], presence: Record<string, Presence>): string[] {
-  return orderPeers(peers, new Map(Object.entries(presence))).map((p) => p.userId);
+function ordered(
+  peers: ChatPeer[],
+  presence: Record<string, Presence>,
+  unread: string[] = [],
+): string[] {
+  return orderPeers(peers, new Map(Object.entries(presence)), new Set(unread)).map((p) => p.userId);
 }
 
 test('online peers sort above everyone else', () => {
@@ -41,6 +45,37 @@ test('sorts each presence group independently', () => {
   ]);
 });
 
+test('unread peers sort above online, which sort above everyone else', () => {
+  const peers = [
+    peer('online-a', 'Online A'),
+    peer('unread-b', 'Unread B'),
+    peer('offline-c', 'Offline C'),
+  ];
+
+  expect(
+    ordered(
+      peers,
+      { 'online-a': 'online', 'unread-b': 'online', 'offline-c': 'offline' },
+      ['unread-b'],
+    ),
+  ).toEqual(['unread-b', 'online-a', 'offline-c']);
+});
+
+test('an unread peer sorts in the unread group even when offline', () => {
+  const peers = [peer('on', 'Bo'), peer('unread-off', 'Ada')];
+
+  expect(ordered(peers, { on: 'online', 'unread-off': 'offline' }, ['unread-off'])).toEqual([
+    'unread-off',
+    'on',
+  ]);
+});
+
+test('within the unread group, orders alphabetically by display name', () => {
+  const peers = [peer('z', 'Zara'), peer('a', 'Ada'), peer('m', 'Mabel')];
+
+  expect(ordered(peers, {}, ['z', 'a', 'm'])).toEqual(['a', 'm', 'z']);
+});
+
 test('treats offline and unknown presence identically', () => {
   const peers = [peer('a', 'Ada'), peer('b', 'Bo')];
 
@@ -49,7 +84,7 @@ test('treats offline and unknown presence identically', () => {
 
 test('does not mutate the input array', () => {
   const peers = [peer('b', 'Bo'), peer('a', 'Ada')];
-  orderPeers(peers, new Map());
+  orderPeers(peers, new Map(), new Set());
 
   expect(peers.map((p) => p.userId)).toEqual(['b', 'a']);
 });
