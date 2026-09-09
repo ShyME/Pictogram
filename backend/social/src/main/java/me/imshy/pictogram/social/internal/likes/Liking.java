@@ -9,6 +9,9 @@ import me.imshy.pictogram.social.PostUnliked;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class Liking {
@@ -16,11 +19,16 @@ public class Liking {
     private final Likes likes;
     private final ApplicationEventPublisher events;
     private final Clock clock;
+    private final TransactionTemplate ownTransaction;
 
-    Liking(Likes likes, ApplicationEventPublisher events, Clock clock) {
+    Liking(Likes likes, ApplicationEventPublisher events, Clock clock, PlatformTransactionManager transactionManager) {
         this.likes = likes;
         this.events = events;
         this.clock = clock;
+        // Own REQUIRES_NEW tx: the like and its PostLiked outbox row (ADR-0015)
+        // commit as one unit. Why not @Transactional: backend/social/CONTEXT.md.
+        this.ownTransaction = new TransactionTemplate(transactionManager);
+        this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     public void like(ViewerId viewer, PostId post) {
@@ -30,11 +38,13 @@ public class Liking {
 
         Instant likedAt = clock.instant();
         try {
-            likes.save(Like.of(viewer, post, likedAt));
-        } catch (DataIntegrityViolationException alreadyLiked) {
-            return;
+            ownTransaction.executeWithoutResult(status -> {
+                likes.save(Like.of(viewer, post, likedAt));
+                events.publishEvent(new PostLiked(post, viewer, likedAt));
+            });
+        } catch (DataIntegrityViolationException lostTheRace) {
+            // A concurrent like won the race and published its own PostLiked.
         }
-        events.publishEvent(new PostLiked(post, viewer, likedAt));
     }
 
     public void unlike(ViewerId viewer, PostId post) {

@@ -16,9 +16,9 @@ dependencies {
     api("org.testcontainers:testcontainers-postgresql")
     api("org.postgresql:postgresql")
 
-    // The one Kafka container for the whole suite (ADR-0015). Only the notifications module
-    // (ticket #197) points at it; SharedKafka is unused for now. spring-boot-starter-kafka
-    // rides along so the consumer factory can be built there — which also puts
+    // The one Kafka container for the whole suite (ADR-0015): the app's relay test (#196)
+    // and the notifications consumer suite (#197) point at it, nothing else. spring-boot-
+    // starter-kafka rides along so the consumer factory can be built there — which also puts
     // KafkaAutoConfiguration on every module slice's test classpath, so the shared test base
     // excludes it (see application-test.yml).
     api("org.springframework.boot:spring-boot-starter-kafka")

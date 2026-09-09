@@ -219,6 +219,29 @@ change was recorded, captured the same way, so for one `(viewer, post)` a later
 `unlikedAt` is never earlier than the matching `likedAt` — the two are directly comparable.
 `PostCommented.commentedAt` is the same `Clock` instant stored on the comment.
 
+### Externalised to Kafka (ADR-0015, #196)
+
+`PostLiked`, `PostCommented` and `UserFollowed` are `@Externalized("pictogram.social")` —
+still ordinary in-process events, additionally relayed to the one Kafka topic for the
+`notifications` context. The undo and lifecycle events — `PostUnliked`, `CommentDeleted`,
+`UserUnfollowed` — are **not** externalised (a stale "X liked your post" after an unlike is
+a cosmetic inconsistency v1 accepts; ADR-0015).
+
+- The wire payload is a `SocialEvent` — `type` discriminator, `recipientId`, `actorId`,
+  `subjectId` (the post; absent for a follow) and `occurredAt` — not the in-process event.
+  `SocialEventExternalization` maps it; `SocialEventWireContractTest` pins the JSON.
+- The Kafka key is the **recipient**: the post author for a like or comment (resolved here
+  via `PublishedPosts.authorOf`, so the consumer needs no call back into `post`), the
+  followed user for a follow. One recipient's notifications stay on one partition, in order.
+- `like()` / `comment()` / `follow()` each run their write and its `PostLiked` /
+  `PostCommented` / `UserFollowed` publication in **one `REQUIRES_NEW` transaction**, so the
+  Modulith JPA event-publication row (the outbox) commits with the domain row or not at all.
+  It is a `TransactionTemplate`, not `@Transactional`, because `like()` / `follow()` catch
+  the lost-race `DataIntegrityViolationException` and return normally — a method-level
+  `@Transactional` would have already marked the transaction rollback-only and failed at
+  commit; `REQUIRES_NEW` also keeps that rollback from touching a caller's transaction. A
+  like or comment on a post with no resolvable author (a delete race) is not externalised.
+
 ## Schema
 
 `follow`, `likes` and `comment` each own a Postgres schema of that name (`feed` has no

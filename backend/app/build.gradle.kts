@@ -25,8 +25,8 @@ dependencies {
     // Kafka for the one externalised flow (social -> notifications, ADR-0015). The
     // composition root is the only place these are wired: spring-modulith-events-jpa is the
     // outbox (the JPA event-publication registry), -jackson serialises the rows, and
-    // -kafka relays them to the broker. No event is @Externalized and nothing is consumed
-    // yet — tickets #196 / #197.
+    // -kafka relays them to the broker. social's three engagement events are @Externalized
+    // onto pictogram.social (#196); nothing consumes the topic yet — ticket #197.
     implementation(libs.spring.kafka)
     implementation(libs.spring.modulith.events.kafka)
     implementation(libs.spring.modulith.events.jpa)

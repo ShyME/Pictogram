@@ -16,8 +16,8 @@ spring:
       max-request-size: 16MB
 
   # Kafka carries one externalised flow — social's PostLiked / PostCommented / UserFollowed
-  # into the notifications context, ADR-0015. Nothing is @Externalized or consumed yet
-  # (tickets #196 / #197); this is the connection wiring only.
+  # onto pictogram.social, keyed by recipient (ADR-0015, #196). The notifications consumer
+  # lands in #197; the consumer block below is wiring ahead of it.
   kafka:
     bootstrap-servers: ${PICTOGRAM_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
