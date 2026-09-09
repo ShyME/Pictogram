@@ -127,8 +127,13 @@ intent is to run it for real.
 - **Consumer side (`notifications`):** integration tests against a **singleton
   Testcontainers Kafka** (one container for the module, `@ServiceConnection`) — produce a
   record onto `pictogram.social`, assert the `notification` row, assert dedup on
-  redelivery, assert DLT routing for a poison record. This is the **only** Gradle module
-  in the build that starts a Kafka container.
+  redelivery, assert DLT routing for a poison record. This is where the broker-backed
+  testing lives.
+- **Outbox restart-safety (`app`):** one test (`SocialEventKafkaRelayTest`, #196) runs the
+  real relay against the shared Testcontainers Kafka — a `PostLiked` whose first send fails
+  leaves an incomplete publication row, and `resubmitIncompletePublications` (the startup
+  hook) forwards it. It is the only `app`-module test that needs a broker; `notifications`
+  (#197) is the only other module that starts one.
 - **Wire contract test** as above.
 - **Blackbox (post-merge, ADR-0007):** the real compose path; the notification assertion
   uses Awaitility polling because the flow is now asynchronous.

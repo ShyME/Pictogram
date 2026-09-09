@@ -10,11 +10,12 @@ import org.testcontainers.utility.DockerImageName;
  * mirroring {@link SharedPostgres}.
  *
  * <p>
- * Only the {@code notifications} module consumes {@code pictogram.social}
- * (ADR-0015), so it is the only module whose tests
- * {@link #registerTo(DynamicPropertyRegistry) point at} this container. Every
- * other slice excludes {@code KafkaAutoConfiguration} and starts with no broker
- * — see {@code application-test.yml}. Unused until ticket #197.
+ * Almost every slice excludes {@code KafkaAutoConfiguration} and starts with no
+ * broker (see {@code application-test.yml}). The exceptions
+ * {@link #registerTo(DynamicPropertyRegistry) point at} this container: the app
+ * module's {@code SocialEventKafkaRelayTest} (#196), and — once it lands — the
+ * {@code notifications} consumer suite (#197), which does the bulk of the
+ * broker-backed testing.
  *
  * <p>
  * The image is the JVM {@code apache/kafka}, not the

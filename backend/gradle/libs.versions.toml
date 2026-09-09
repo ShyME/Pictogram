@@ -29,10 +29,14 @@ modernizer-plugin = { module = "io.github.andygoossens.modernizer:io.github.andy
 # BOMs
 awssdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awssdk" }
 
-# Kafka for the one externalised flow (social -> notifications, ADR-0015). Wired at the
-# composition root only. Versions are BOM-governed — spring-kafka by the Spring Boot BOM,
-# the two spring-modulith-events-* modules by the Modulith BOM — so no version.ref here.
+# Kafka for the one externalised flow (social -> notifications, ADR-0015). The broker-facing
+# pieces (spring-kafka, events-{kafka,jpa,jackson}) are wired at the composition root only;
+# events-api carries the @Externalized annotation and the EventExternalizationConfiguration
+# policy, so it belongs to social — the module that owns the externalised events (#196).
+# Versions are BOM-governed — spring-kafka by the Spring Boot BOM, the spring-modulith-events-*
+# modules by the Modulith BOM — so no version.ref here.
 spring-kafka = { module = "org.springframework.kafka:spring-kafka" }
+spring-modulith-events-api = { module = "org.springframework.modulith:spring-modulith-events-api" }
 spring-modulith-events-kafka = { module = "org.springframework.modulith:spring-modulith-events-kafka" }
 spring-modulith-events-jpa = { module = "org.springframework.modulith:spring-modulith-events-jpa" }
 spring-modulith-events-jackson = { module = "org.springframework.modulith:spring-modulith-events-jackson" }

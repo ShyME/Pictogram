@@ -23,6 +23,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class CommentThread implements CommentCounts {
@@ -34,19 +37,28 @@ public class CommentThread implements CommentCounts {
     private final PublishedPosts publishedPosts;
     private final ApplicationEventPublisher events;
     private final Clock clock;
+    private final TransactionTemplate ownTransaction;
 
-    CommentThread(Comments comments, PublishedPosts publishedPosts, ApplicationEventPublisher events, Clock clock) {
+    CommentThread(Comments comments, PublishedPosts publishedPosts, ApplicationEventPublisher events, Clock clock,
+        PlatformTransactionManager transactionManager) {
         this.comments = comments;
         this.publishedPosts = publishedPosts;
         this.events = events;
         this.clock = clock;
+        // Own REQUIRES_NEW tx: the comment and its PostCommented outbox row (ADR-0015)
+        // commit as one unit. Why not @Transactional: backend/social/CONTEXT.md.
+        this.ownTransaction = new TransactionTemplate(transactionManager);
+        this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     public PostComment comment(ViewerId viewer, PostId post, String body) {
         Instant createdAt = clock.instant();
-        PostComment saved = comments.save(Comment.write(viewer, post, CommentBody.of(body), createdAt)).view();
-        events.publishEvent(new PostCommented(post, saved.commentId(), viewer, createdAt));
-        return saved;
+        CommentBody validated = CommentBody.of(body);
+        return ownTransaction.execute(status -> {
+            PostComment saved = comments.save(Comment.write(viewer, post, validated, createdAt)).view();
+            events.publishEvent(new PostCommented(post, saved.commentId(), viewer, createdAt));
+            return saved;
+        });
     }
 
     public Page pageFor(PostId post, Cursor after, Integer limit) {
