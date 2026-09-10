@@ -1,123 +1,163 @@
 # Pictogram
 
-[![CI](https://github.com/ShyME/pictogram/actions/workflows/ci.yml/badge.svg)](https://github.com/ShyME/pictogram/actions/workflows/ci.yml)
+An Instagram-like portfolio app — image posts, a follow graph, a feed, likes, comments,
+notifications, and live 1:1 chat — built as a **modular monolith** (React 19 + Spring
+Boot 4 / Java 25) to practise DDD and TDD, with [Claude Code](https://claude.com/claude-code).
+It runs publicly at **[pictogram.imshy.me](https://pictogram.imshy.me)**.
 
-An Instagram-like portfolio app — square image posts, a follow graph, and a feed —
-built as a **modular monolith** (React 19 + Spring Boot 4 / Java 25) to practise DDD and
-TDD. It is built with the help of [Claude Code](https://claude.com/claude-code). Architecture
-lives in [`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`](./docs/adr/);
-the backend build is described in [`backend/README.md`](./backend/README.md), the frontend
-in [`frontend/README.md`](./frontend/README.md).
+Architecture is in [`CONTEXT-MAP.md`](./CONTEXT-MAP.md) and [`docs/adr/`](./docs/adr/);
+build details in [`backend/README.md`](./backend/README.md) and
+[`frontend/README.md`](./frontend/README.md).
 
 ## What's built
 
-Five bounded contexts, each a Spring Modulith module with its own schema (`social` owns
-two, `follow` and `likes`), a published interface, and a `CONTEXT.md` glossary
-(indexed from [`CONTEXT-MAP.md`](./CONTEXT-MAP.md)):
+A component view — the Spring Modulith modules inside the one deployable, the separate
+`chat` service, and the infrastructure behind them:
 
-| Context | What it does |
-|---|---|
-| `identity` | Google OIDC sign-in (backend-driven), then Pictogram's own ES256 access + rotating refresh tokens (ADR-0004) |
-| `profile` | Username, display name, bio, and the onboarding step that first creates a profile |
-| `media` | Uploaded images re-encoded server-side to one canonical square JPEG + thumbnail (ADR-0006); orphan collection |
-| `post` | A post — one image plus an optional caption, published by an author; immutable, delete-only |
-| `social` | The follow graph (counts, lists), the feed assembled fan-out-on-read behind a port (ADR-0003), and likes on a post (comments designed, not built) — three `internal/` sub-domains in one module (#128) |
+```mermaid
+flowchart TB
+    browser["Browser · React SPA"]
+    caddy["Caddy · reverse proxy · TLS · :8080"]
 
-The frontend is a React SPA that composes feed cards client-side from batched calls, with no
-BFF (ADR-0005). Every context has `@ApplicationModuleTest` coverage; user journeys are
-written once as `*Scenarios` and run both in-process and black-box against the built image,
-plus a matching set of Playwright browser journeys (ADR-0007).
+    subgraph monolith["app · Spring Boot modular monolith (one deployable)"]
+        direction LR
+        identity ~~~ profile ~~~ media ~~~ post
+        social ~~~ notifications ~~~ shared["shared-kernel"]
+    end
+
+    chat["chat · WebFlux service · no DB"]
+    pg[("PostgreSQL")]
+    minio[("MinIO")]
+    kafka["Kafka · topic pictogram.social"]
+
+    browser --> caddy
+    caddy -->|"/api, /oauth2"| monolith
+    caddy -->|"/ws"| chat
+    monolith --> pg & minio
+    monolith <-->|"outbox + consumer"| kafka
+    monolith -.->|"issues JWT"| chat
+```
+
+**Modules in the monolith** — each a bounded context with its own schema, published
+interface, and `CONTEXT.md` glossary (contexts reference each other by ID only):
+
+- **`identity`** — Google OIDC sign-in (backend-driven), then Pictogram's own ES256 access
+  + rotating refresh tokens (ADR-0004).
+- **`profile`** — username, display name, bio; the onboarding step that first creates a
+  profile.
+- **`media`** — uploaded images re-encoded server-side to one canonical square JPEG +
+  thumbnail (ADR-0006), bytes in MinIO; orphan collection.
+- **`post`** — one image plus an optional caption, published by an author; immutable,
+  delete-only.
+- **`social`** — the follow graph, the fan-out-on-read feed behind a port (ADR-0003),
+  likes, and comments; four `internal/` sub-domains in one module (#128, #137).
+- **`notifications`** — the in-app notification list, fed by the one Kafka-externalised
+  flow out of `social`: `PostLiked` / `PostCommented` / `UserFollowed` relayed through a
+  JPA outbox onto `pictogram.social` and stored recipient-keyed (ADR-0015). Read API done
+  (#198); SPA bell pending (#199).
+- **`shared-kernel`** — the one whitelisted dependency: ID value types and the cross-cutting
+  HTTP edge conventions (Problem Details, pagination, current-user resolution, ADR-0008).
+  No domain behaviour.
+
+**Separate service and infrastructure:**
+
+- **`chat`** — live 1:1 messaging and on-request presence, a separate Spring WebFlux
+  service with its own Gradle build and image (ADR-0014). No database; a message is
+  delivered live or not at all. It knows a caller only by the `UserId` in a verified
+  Pictogram JWT.
+- **Caddy** — the sole published entrypoint (`:8080`), terminates TLS in production, routes
+  `/ws` to `chat` and everything else to `app` (ADR-0012).
+- **PostgreSQL** — one schema per module, Flyway migrations per module (ADR-0009).
+- **MinIO** — S3-compatible blob store for media bytes.
+- **Kafka** — carries the single externalised event flow (`social` → `notifications`);
+  every other integration is a synchronous published-interface call or an in-process event
+  (ADR-0002, ADR-0015).
+
+The frontend is a React SPA — feed cards composed client-side from batched calls, no BFF
+(ADR-0005) — served as static resources from the `app` jar in container mode, and talking
+to `chat` directly over a WebSocket (message dock + follow-list rail, #202–#204).
 
 ## How to run it
 
 ### Prerequisites
 
-- **Docker** (Compose v2) — for the full stack and for the Testcontainers-backed tests.
-- A JDK on `PATH` — only to *launch* Gradle; the Java 25 toolchain the build targets is
-  provisioned automatically.
+- **Docker** (Compose v2) — for the full stack and the Testcontainers-backed tests.
+- A JDK on `PATH` — only to launch Gradle; the Java 25 toolchain is provisioned
+  automatically.
 - **Node 24** + Corepack (`corepack enable`) — only for host frontend development.
-- Optional: [go-task](https://taskfile.dev) (`brew install go-task`) for the shortcuts below.
+- Optional: [go-task](https://taskfile.dev) for the shortcuts used below.
 
-Copy the env template once:
+### Quick start — whole stack in containers
 
 ```bash
-cp .env.example .env
+cp .env.example .env    # gitignored; configures compose.yaml
+task up                 # build + start postgres, minio, kafka, app, chat, caddy
+task seed               # load a fixed 5-persona demo dataset
 ```
 
-`.env` is gitignored and configures `compose.yaml` (the container run). The host-dev path
-(`compose.dev.yaml` + the `local` profile) uses fixed `pictogram`/`pictogram` credentials.
-
-### Whole app in containers
-
-One image serves the API and the built SPA at a single origin. `compose.yaml` has no OIDC
-provider on its own — pick how Google sign-in is wired:
+Open <http://localhost:8080> and sign in as **`alice`** (any username works — `task up`
+bundles a mock Google, so no account is needed). `backend/Dockerfile` is a three-stage
+build: it compiles the SPA, bundles it into the Spring Boot jar as static resources, and
+runs on the `prod` profile.
 
 ```bash
-task up          # bundled mock Google — sign in with any username, no account needed
-task up:google   # real Google — needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env
-task seed        # fill a running `task up` stack with demo data — then sign in as 'alice'
-```
-
-Under the hood each overlays `compose.yaml`:
-
-```bash
-docker compose -f compose.yaml -f compose.mock-oauth.yaml up --build -d --wait
-docker compose -f compose.yaml -f compose.google.yaml     up --build -d --wait
-```
-
-For `up:google`, create an OAuth 2.0 "Web application" client in the Google Cloud console
-with the redirect URI `http://localhost:8080/login/oauth2/code/google`, then put the id and
-secret in `.env` (see `.env.example`).
-
-Open <http://localhost:8080>. `backend/Dockerfile` is a three-stage build: it compiles the
-SPA, bundles it into the Spring Boot jar as static resources, and runs it on the `prod`
-profile against the `postgres` and `minio` services. Spring serves the SPA at `/`, and a
-hard reload or pasted link on a client route (`/login`, `/onboarding`) forwards to
-`index.html` so the SPA re-resolves it.
-
-A `caddy` container is the single published entrypoint on `:8080` (ADR-0012): it routes
-`/ws` to `chat` — a separate service, own Gradle build, own Dockerfile (ADR-0014) — and
-everything else to `app`. Neither `app` nor `chat` publishes a port of its own. `chat`
-has no message-handling yet; its WebSocket handshake is the only endpoint (#163, #164).
-
-```bash
-docker compose -f compose.yaml down --remove-orphans     # stop      (task down)
+docker compose -f compose.yaml down --remove-orphans      # stop           (task down)
 docker compose -f compose.yaml down -v --remove-orphans   # stop + wipe data
 ```
 
-### Apps on the host (development)
+To use real Google instead of the mock, run `task up:google` with `GOOGLE_CLIENT_ID` /
+`GOOGLE_CLIENT_SECRET` in `.env` — create an OAuth 2.0 "Web application" client with
+redirect URI `http://localhost:8080/login/oauth2/code/google`.
+
+### Local development — apps on the host
 
 Infra in containers, the apps on the host with hot reload:
 
 ```bash
-docker compose -f compose.dev.yaml up -d     # Postgres + MinIO + mock-oauth2-server
-                                             #   (task dev)
+docker compose -f compose.dev.yaml up -d   # postgres + minio + kafka + mock-oauth  (task dev)
+cd backend  && ./gradlew :app:bootRun      # local profile auto-starts that infra   (task backend)
+cd frontend && pnpm install && pnpm dev    # Vite proxies /api, /oauth2, /login/oauth2  (task frontend)
+cd chat     && ./gradlew bootRun           # own Gradle build, needs no infra        (task chat)
 ```
 
-Backend — the `local` profile auto-starts that same infra via
-`spring-boot-docker-compose`, so this alone is enough:
+In IntelliJ, running the app picks up the `local` profile and starts the infra itself —
+see `backend/README.md`.
 
-```bash
-cd backend && ./gradlew :app:bootRun         # task backend
-```
+[`Taskfile.yml`](./Taskfile.yml) has every shortcut; `task --list` prints them.
 
-Frontend — the Vite dev server proxies `/api`, `/oauth2` and `/login/oauth2` to the
-host backend:
+## CI/CD
 
-```bash
-cd frontend && pnpm install && pnpm dev      # task frontend
-```
+`.github/workflows/ci.yml` is **on-demand only** — the "Run workflow" button, never on a
+PR or push (Actions-minutes budget). A manual run does the full sweep: backend
+`./gradlew check` (Modulith `verify()`, unit + `@ApplicationModuleTest` + `@Tag("fast")`
+scenarios, `openapi.json` drift), `chat`'s own `./gradlew check` (separate build), the
+frontend lint / typecheck / test / build, the visual-regression suite, and the `blackbox`
+job (backend `@Tag("blackbox")` tests including a real `chat` WebSocket handshake through
+Caddy, plus the Playwright journeys).
 
-Chat — its own Gradle build (ADR-0014), needs no infra:
+Nothing runs on push, so the everyday gate is local: `./gradlew check` (backend and chat),
+`pnpm test` / `pnpm lint` / `pnpm typecheck`, and `task test:blackbox` before a merge or
+deploy. `main` is protected by the **"Main security"** ruleset (PR-only, no force-push or
+deletion, linear history); with no required status checks, merging isn't gated on a green
+run — trigger CI yourself when a change warrants it.
 
-```bash
-cd chat && ./gradlew bootRun                 # task chat
-```
+**Deployment.** The public instance at
+[pictogram.imshy.me](https://pictogram.imshy.me) runs on a single VPS — the compose
+topology behind Caddy, which terminates TLS for the domain (ADR-0012). `compose.prod.yaml` overlays
+`compose.yaml` to pull `app`/`chat`/`caddy` images from GHCR instead of building them. The
+**Deploy** workflow (`.github/workflows/deploy.yml`) is on-demand — it builds, pushes, and
+rolls the box. `scripts/deploy/wizard.sh` walks the one-time box, DNS, and OAuth-client
+setup. First-deploy sequence, edge rate-limit numbers, DNS and OAuth records, rollback,
+and secret rotation are in [`docs/runbook/deployment.md`](./docs/runbook/deployment.md).
 
-In IntelliJ, running the app picks up the `local` profile and the infra starts on its
-own — see `backend/README.md` for the run-configuration setup.
+## Tests
 
-## Spring profiles
+All work here is test-first (ADR-0007), and the suite leans on **real infrastructure over
+mocks**: Testcontainers starts Postgres, MinIO, and Kafka for the backend tests, so
+persistence, Flyway migrations, S3 access, and the Kafka outbox are all exercised for real
+under the `test` profile. Nearly every backend test is an integration test.
+
+### Spring profiles
 
 | Profile | Where | Datasource | Notes |
 |---|---|---|---|
@@ -125,101 +165,30 @@ own — see `backend/README.md` for the run-configuration setup.
 | `test`  | automated tests | Testcontainers | plain-text logs; defined in `:test-support` |
 | `prod`  | `compose.yaml` / any container | `PICTOGRAM_DB_*` env | minimal actuator exposure |
 
-## Tests
+### Layers
+
+- **Unit + `@ApplicationModuleTest`** — every module has slice coverage; `verify()` fails
+  the build on any boundary violation.
+- **`*Scenarios` user journeys** — written once, run two ways: in-process (`@Tag("fast")`)
+  and black-box (`@Tag("blackbox")`) through `ContainerDriver` over HTTP against the built
+  image, with `compose.mock-oauth.yaml` standing in for Google.
+- **Playwright browser journeys** — mirror the scenario set through the real SPA.
+- **Visual regression** — `pnpm test:visual` screenshots `/ui`, `/login`, and every screen
+  at ~375 and ~1440 px against a bare Vite server.
+
+A flaky failure anywhere is a defect, never a retry — Playwright is `retries: 0`, the
+Gradle suite has none.
 
 ```bash
-task test                        # everything
-cd backend && ./gradlew build    # backend + module-boundary check
-cd frontend && pnpm test         # frontend
-```
-
-### Blackbox tier
-
-The whole stack in containers (the `compose.mock-oauth.yaml` overlay stands in for Google),
-exercised two ways: the **`@Tag("blackbox")` backend scenarios** — every `*Scenarios` mixin
-that the in-process suite runs, re-run through `ContainerDriver` over HTTP against the built
-image — and the **Playwright journeys**. On-demand only in CI. A nondeterministic failure here
-is a defect to fix, never a retry: Playwright runs `retries: 0` and the Gradle suite has no
-retry.
-
-```bash
-task test:blackbox   # both: builds + starts the stack, runs backend blackbox + Playwright, tears down
+task test            # everything
+task test:blackbox   # build + start the stack, run backend blackbox + Playwright, tear down
 task test:e2e        # Playwright only
+
+cd backend  && ./gradlew build                     # backend + module-boundary check
+cd backend  && ./gradlew build -PincludeBlackbox   # + blackbox scenarios vs a running `task up`
+cd frontend && pnpm test                           # frontend unit
+cd frontend && pnpm test:e2e                       # Playwright vs a running `task up`
 ```
-
-Against a stack you keep running (`task up`):
-
-```bash
-cd backend  && ./gradlew build -PincludeBlackbox   # backend blackbox scenarios (PICTOGRAM_BASE_URL, default :8080)
-cd frontend && pnpm test:e2e                        # Playwright (after `pnpm exec playwright install` once)
-```
-
-## Continuous integration
-
-`.github/workflows/ci.yml` is **on-demand only** — the "Run workflow" button in the Actions
-tab, never automatically on a PR or a push to `main` (GitHub Actions minutes budget). A
-manual run does the full sweep: the backend `./gradlew check` (Modulith `verify()`, unit +
-`@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the `openapi.json` drift
-check), `chat`'s own `./gradlew check` (a separate Gradle build, ADR-0014 — no
-Testcontainers, nothing shared with the backend job), the frontend lint / typecheck / test /
-build, the visual-regression suite, and the `blackbox` job — the `@Tag("blackbox")` backend
-tests (including a real WebSocket handshake against `chat` through the shared Caddy origin),
-a check that that origin fronts both services, and the Playwright journeys against
-`compose.yaml` + `compose.mock-oauth.yaml`.
-
-Because nothing runs on push, the everyday gate is local: `./gradlew check` (backend and
-chat), `pnpm test` / `pnpm lint` / `pnpm typecheck` (frontend), and `task test:blackbox`
-before a merge or a deploy. Trigger the workflow for a clean-runner belt-and-braces run when
-it matters.
-
-`main` is protected by the **"Main security"** repository ruleset: no direct pushes, no
-force-push, no deletion, linear history, every change via a PR. There are no required status
-checks (CI doesn't run on PRs), so merging is not gated on a green run — it's on you to
-trigger CI when a change warrants it.
-
-## Deployment
-
-Pictogram deploys to a single VPS running the compose topology behind Caddy, which
-terminates TLS for a registered domain (ADR-0012). `compose.prod.yaml` overlays
-`compose.yaml` to pull `app`/`chat`/`caddy` images from GHCR instead of building them. The
-**Deploy** workflow (`.github/workflows/deploy.yml`) is triggered on demand — the "Run
-workflow" button in the Actions tab, never automatically on a push — and builds, pushes
-and rolls the box. `scripts/deploy/wizard.sh` walks the one-time box, DNS and
-OAuth-client setup.
-
-The full first-deploy sequence, the per-IP edge rate-limit numbers and their rationale,
-DNS and OAuth records, rollback and secret rotation are in
-[`docs/runbook/deployment.md`](./docs/runbook/deployment.md).
-
-## Before serving real traffic
-
-All of this is handled by the deployment runbook above; it is listed here as the checklist.
-
-- **Signing key.** Set `PICTOGRAM_AUTH_SIGNING_KEY` (a P-256 private JWK). The `prod` profile
-  refuses to start without it — an ephemeral key breaks multi-replica token verification and
-  logs everyone out on restart. `compose.prod.yaml` makes it a hard `${VAR:?}` guard.
-- **Cookie transport.** `compose.yaml` keeps the refresh cookie `Secure` by default; only the
-  plain-HTTP localhost stacks (`compose.mock-oauth.yaml`, the `local` profile) opt out. Serve
-  the deployed app over TLS.
-- **Rate limiting.** The app itself does none. The public unauthenticated surface —
-  `GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`, `GET /api/posts`,
-  `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`, `POST /api/auth/refresh`,
-  `POST /api/posts/*/comments`, and the OIDC start at `/oauth2/authorization/google` — sits behind
-  Caddy's per-IP `rate_limit` zones (`Caddyfile.prod`), numbers in the runbook.
-- **Media bucket.** `S3BlobStore` auto-creates the bucket on first upload for local dev only.
-  Pre-create it during provisioning and withhold `s3:CreateBucket` from the runtime role.
-- **OAuth consent screen.** Point it at the static `/privacy.html` and `/terms.html` pages
-  (`frontend/public/`), and set the app homepage to `/`.
-
-## Contributing
-
-Formatting is machine-enforced — run `task format` before you push. IDE setup and the
-`git blame` cutover config are in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
-
-## Task reference
-
-`task --list` after installing go-task. Common ones: `up`, `up:google`, `seed`, `down`, `dev`,
-`backend`, `frontend`, `format`, `test`, `test:e2e`, `test:blackbox`, `logs`, `clean`.
 
 ## License
 
