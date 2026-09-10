@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 import me.imshy.pictogram.shared.http.ProblemType;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,39 @@ class PostApiTest {
 
         mvc.perform(get("/api/posts").param("author", author)).andExpect(status().isOk())
             .andExpect(jsonPath("$.items.length()").value(1));
+    }
+
+    @Test
+    void theBatchLookupResolvesKnownPostIdsInOneCallAndOmitsTheRest() throws Exception {
+        var author = UUID.randomUUID().toString();
+        String first = publish(author, uploadPhoto(author), "first");
+        String second = publish(author, uploadPhoto(author), "second");
+        var missing = UUID.randomUUID().toString();
+
+        mvc.perform(
+            get("/api/posts/by-ids").param("ids", first, missing, second).with(jwt().jwt(jwt -> jwt.subject(author))))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2))
+            .andExpect(jsonPath("$.items[?(@.caption == 'first')]").exists())
+            .andExpect(jsonPath("$.items[?(@.caption == 'second')]").exists())
+            .andExpect(jsonPath("$.nextCursor").doesNotExist());
+    }
+
+    @Test
+    void theBatchLookupIsServedWithoutAToken() throws Exception {
+        var author = UUID.randomUUID().toString();
+        String postId = publish(author, uploadPhoto(author), "a post");
+
+        mvc.perform(get("/api/posts/by-ids").param("ids", postId)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(1));
+    }
+
+    @Test
+    void theBatchLookupRejectsMoreIdsThanTheBatchLimit() throws Exception {
+        String[] tooMany = IntStream.rangeClosed(0, 100).mapToObj(i -> UUID.randomUUID().toString())
+            .toArray(String[]::new);
+
+        mvc.perform(get("/api/posts/by-ids").param("ids", tooMany)).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 
     @Test

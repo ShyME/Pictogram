@@ -1156,6 +1156,47 @@
         "tags" : [ "posts-controller" ]
       }
     },
+    "/api/posts/by-ids" : {
+      "get" : {
+        "operationId" : "postsByIds",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "ids",
+          "required" : true,
+          "schema" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPagePostView"
+                }
+              }
+            },
+            "description" : "The batch of posts for the ids that have one, unpaged."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The request asked for more ids than the batch limit."
+          }
+        },
+        "tags" : [ "posts-controller" ]
+      }
+    },
     "/api/posts/{postId}" : {
       "delete" : {
         "operationId" : "delete",

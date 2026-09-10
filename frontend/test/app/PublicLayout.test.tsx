@@ -1,10 +1,20 @@
 import { PublicLayout } from '@app/PublicLayout';
+import { jsonResponse, stubFetch } from '@test-support/mockFetch';
 import { renderWithProviders } from '@test-support/render';
 import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const viewer = vi.hoisted(() => ({ current: null as { username: string } | null }));
+
+// The signed-in nav mounts the notifications bell, which polls the unread count.
+beforeEach(() => {
+  stubFetch(() => jsonResponse({ count: 0 }));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 vi.mock('react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router')>()),

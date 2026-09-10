@@ -26,9 +26,18 @@ type AppNavProps = {
   // sidebar (#203) is a drawer rather than a docked rail and needs a way in. `AppLayout`
   // passes the trigger; `PublicLayout` never does.
   chatSlot?: ReactNode;
+  // The notifications bell (#199) — shown at both breakpoints for a signed-in viewer.
+  // `AppLayout` passes it; `PublicLayout` passes it only when someone is signed in.
+  notificationsSlot?: ReactNode;
 };
 
-export function AppNav({ viewer, onSignOut, signingOut = false, chatSlot }: AppNavProps) {
+export function AppNav({
+  viewer,
+  onSignOut,
+  signingOut = false,
+  chatSlot,
+  notificationsSlot,
+}: AppNavProps) {
   const isInline = useMediaQuery(INLINE_NAV);
 
   return (
@@ -43,9 +52,15 @@ export function AppNav({ viewer, onSignOut, signingOut = false, chatSlot }: AppN
         </Link>
         {viewer ? (
           isInline ? (
-            <InlineNav viewer={viewer} onSignOut={onSignOut} signingOut={signingOut} />
+            <InlineNav
+              viewer={viewer}
+              onSignOut={onSignOut}
+              signingOut={signingOut}
+              notificationsSlot={notificationsSlot}
+            />
           ) : (
             <div className="flex items-center gap-1">
+              {notificationsSlot}
               {chatSlot}
               <AvatarNav viewer={viewer} onSignOut={onSignOut} signingOut={signingOut} />
             </div>
@@ -66,9 +81,15 @@ type ViewerNavProps = {
   signingOut: boolean;
 };
 
-function InlineNav({ viewer, onSignOut, signingOut }: ViewerNavProps) {
+function InlineNav({
+  viewer,
+  onSignOut,
+  signingOut,
+  notificationsSlot,
+}: ViewerNavProps & { notificationsSlot?: ReactNode }) {
   return (
     <div className="flex items-center gap-2">
+      {notificationsSlot}
       <Button asChild size="sm">
         <Link to="/new">
           <Plus /> New post

@@ -388,6 +388,21 @@ async function aliceApi(userId) {
   return { username: 'alice', userId, api: new Api(await redeem(await signIn('alice'))) };
 }
 
+// The likes / comments / follows above are consumed off Kafka into notifications
+// asynchronously (ADR-0015). Wait for alice's bell to go non-empty so `task seed` only
+// reports success once the demo is genuinely complete.
+async function awaitAliceBell(alice) {
+  const deadline = Date.now() + 40_000;
+  for (;;) {
+    const response = await alice.api.call('GET', '/api/notifications/unread-count', { expect: 200 });
+    if ((await response.json()).count > 0) return;
+    if (Date.now() > deadline) {
+      throw new Error("alice's notification bell is still empty after 40s — is Kafka up?");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
+
 async function main() {
   await preflight();
 
@@ -414,6 +429,7 @@ async function main() {
     for (const line of mismatches) console.error(`  ${line}`);
     process.exit(1);
   }
+  await awaitAliceBell(alice);
   log('  self-check passed');
   log(`done. Sign in as 'alice' at ${APP}`);
 }

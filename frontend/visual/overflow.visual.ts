@@ -100,6 +100,27 @@ test.describe('no horizontal overflow with worst-case content', () => {
     await expectContentFits(overlay, 'chat overlay');
   });
 
+  test('notifications screen — worst-case actor name', async ({ page }) => {
+    await stubStress(page);
+    await page.goto('/notifications');
+    await expect(page.getByRole('listitem').first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expectNoHorizontalOverflow(page);
+    await expectContentFits(
+      page.getByRole('list', { name: 'Notifications' }),
+      'notifications list',
+    );
+  });
+
+  test('post detail page — worst-case caption', async ({ page }) => {
+    await stubStress(page);
+    await page.goto('/p/p-stress');
+    await expect(page.getByRole('article')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expectNoHorizontalOverflow(page);
+    await expectContentFits(page.getByRole('article'), 'post detail page');
+  });
+
   test('followers list', async ({ page }) => {
     await stubStress(page);
     await page.goto(`${STRESS_PROFILE_PATH}/followers`);
