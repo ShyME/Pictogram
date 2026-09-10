@@ -49,8 +49,8 @@ ones. `pnpm format:check` runs in `task test` and as a step in the frontend CI j
 
 **Backend — Spotless + palantir-java-format.** Configured in the
 `pictogram.code-quality-conventions` convention plugin (`backend/buildSrc`) and applied to
-every module; `spotlessCheck` runs as part of `check`, so `./gradlew build` and the PR gate
-pick it up with no extra step. palantir-java-format's fixed 4-space indent matches
+every module; `spotlessCheck` runs as part of `check`, so `./gradlew build` and the CI
+workflow pick it up with no extra step. palantir-java-format's fixed 4-space indent matches
 `.editorconfig`. The `*.gradle.kts` build scripts are formatted too, with ktfmt.
 
 ### IntelliJ

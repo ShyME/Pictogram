@@ -1,22 +1,16 @@
 name: CI
 
-# Every change reaches `main` through a PR, so the PR run is the gate: it runs the
-# backend + chat + frontend suites. The post-merge push to `main` runs the blackbox job plus a
-# container-free `check` — with "Require branches to be up to date before merging" on, the
-# merged tree is byte-identical to what the PR already tested, so re-running the full
-# suites is wasted work; `check` is the cheap floor that still catches a push which somehow
-# skipped the PR gate (see the README "Continuous integration" section).
-# `workflow_dispatch` forces a full run on demand.
+# On-demand only — the "Run workflow" button in the Actions tab, never automatically on a
+# PR or a push to `main` (GitHub Actions minutes budget). A manual run does the full sweep:
+# the backend, chat and frontend suites plus the `blackbox` job. Local `./gradlew check` /
+# `pnpm test` / `task test:blackbox` are the everyday gate; this workflow is the belt-and-braces
+# run before a merge or a deploy (see the README "Continuous integration" section).
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Supersede an in-flight PR run on a new push; never cancel a `main` run.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -25,7 +19,6 @@ jobs:
   backend:
     name: Backend build
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
     steps:
       - uses: actions/checkout@v7
 
@@ -72,8 +65,8 @@ jobs:
           docker save postgres:18-alpine -o ~/testcontainers-images/postgres.tar
           docker save minio/minio:RELEASE.2025-09-07T16-13-09Z -o ~/testcontainers-images/minio.tar
 
-      # `check`, not `build`: nothing on the PR path consumes pictogram.jar (the Blackbox job
-      # builds its own image), so `bootJar` is dead weight here. Runs Modulith verify(), the
+      # `check`, not `build`: nothing here consumes pictogram.jar (the Blackbox job
+      # builds its own image), so `bootJar` is dead weight. Runs Modulith verify(), the
       # unit + @ApplicationModuleTest + @Tag("fast") scenario suites, Spotless, and the
       # openapi.json drift check. SharedPostgres drops withReuse because CI is set.
       - name: Check
@@ -93,7 +86,6 @@ jobs:
   chat:
     name: Chat build
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
     steps:
       - uses: actions/checkout@v7
 
@@ -120,7 +112,6 @@ jobs:
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
     defaults:
       run:
         working-directory: frontend
@@ -153,7 +144,6 @@ jobs:
   visual:
     name: Visual regression
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
     defaults:
@@ -177,49 +167,10 @@ jobs:
             frontend/test-results/
           retention-days: 14
 
-  # The `backend`, `chat` and `frontend` jobs are skipped on the push to `main` (the
-  # up-to-date PR already ran them). This container-free job is the floor that still runs on
-  # that push, so a direct push — or a merge made while "Require branches to be up to date
-  # before merging" is off — can't land on `main` with zero lint / type / boundary coverage.
-  # It deliberately skips Testcontainers and Playwright; the deep suites stay on the PR gate.
-  check:
-    name: Fast check (main-push safety net)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-      - uses: gradle/actions/setup-gradle@v6
-      - uses: ./.github/actions/setup-frontend
-
-      - name: Backend format + module boundaries
-        working-directory: backend
-        run: ./gradlew spotlessCheck :app:test --tests "me.imshy.pictogram.ModulithStructureTest"
-
-      - name: Chat check
-        working-directory: chat
-        run: ./gradlew check
-
-      - name: Frontend format / lint / typecheck / unit / build
-        working-directory: frontend
-        run: |
-          pnpm format:check
-          pnpm lint
-          pnpm typecheck
-          pnpm test
-          pnpm build
-
-  # The heavy suite: the whole app in containers, exercised black-box. Runs on the push to
-  # `main` (and on demand) — never on PRs. Feature journeys land here with their tickets.
+  # The heavy suite: the whole app in containers, exercised black-box.
   blackbox:
     name: Blackbox
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     env:
       # compose.mock-oauth.yaml overlays mock-oauth2-server (as Google) so the signed-in
       # journeys can run; every `docker compose` step below picks up both files.
