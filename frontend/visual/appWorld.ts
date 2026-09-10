@@ -488,7 +488,11 @@ export async function stubChatRail(
             this.emit('open', {});
             for (const senderUserId of unreadIds) {
               this.emit('message', {
-                data: JSON.stringify({ type: 'message', senderUserId, text: 'Sent while you were away' }),
+                data: JSON.stringify({
+                  type: 'message',
+                  senderUserId,
+                  text: 'Sent while you were away',
+                }),
               });
             }
           }, 0);
@@ -513,7 +517,11 @@ export async function stubChatRail(
           const ids = frame.userIds ?? (frame.userId === undefined ? [] : [frame.userId]);
           for (const userId of ids) {
             this.emit('message', {
-              data: JSON.stringify({ type: 'presence', userId, online: onlineIds.includes(userId) }),
+              data: JSON.stringify({
+                type: 'presence',
+                userId,
+                online: onlineIds.includes(userId),
+              }),
             });
           }
         }

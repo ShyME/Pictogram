@@ -53,11 +53,9 @@ test('unread peers sort above online, which sort above everyone else', () => {
   ];
 
   expect(
-    ordered(
-      peers,
-      { 'online-a': 'online', 'unread-b': 'online', 'offline-c': 'offline' },
-      ['unread-b'],
-    ),
+    ordered(peers, { 'online-a': 'online', 'unread-b': 'online', 'offline-c': 'offline' }, [
+      'unread-b',
+    ]),
   ).toEqual(['unread-b', 'online-a', 'offline-c']);
 });
 
