@@ -138,7 +138,7 @@ cd frontend && pnpm test         # frontend
 The whole stack in containers (the `compose.mock-oauth.yaml` overlay stands in for Google),
 exercised two ways: the **`@Tag("blackbox")` backend scenarios** — every `*Scenarios` mixin
 that the in-process suite runs, re-run through `ContainerDriver` over HTTP against the built
-image — and the **Playwright journeys**. `main`-only in CI. A nondeterministic failure here
+image — and the **Playwright journeys**. On-demand only in CI. A nondeterministic failure here
 is a defect to fix, never a retry: Playwright runs `retries: 0` and the Gradle suite has no
 retry.
 
@@ -156,35 +156,26 @@ cd frontend && pnpm test:e2e                        # Playwright (after `pnpm ex
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` gates every PR: the backend `./gradlew build` (Modulith
-`verify()`, unit + `@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the
-`openapi.json` drift check), `chat`'s own `./gradlew check` (a separate Gradle build,
-ADR-0014 — no Testcontainers, nothing shared with the backend job), and the frontend lint /
-typecheck / test / build.
+`.github/workflows/ci.yml` is **on-demand only** — the "Run workflow" button in the Actions
+tab, never automatically on a PR or a push to `main` (GitHub Actions minutes budget). A
+manual run does the full sweep: the backend `./gradlew check` (Modulith `verify()`, unit +
+`@ApplicationModuleTest` + in-process `@Tag("fast")` scenarios, and the `openapi.json` drift
+check), `chat`'s own `./gradlew check` (a separate Gradle build, ADR-0014 — no
+Testcontainers, nothing shared with the backend job), the frontend lint / typecheck / test /
+build, the visual-regression suite, and the `blackbox` job — the `@Tag("blackbox")` backend
+tests (including a real WebSocket handshake against `chat` through the shared Caddy origin),
+a check that that origin fronts both services, and the Playwright journeys against
+`compose.yaml` + `compose.mock-oauth.yaml`.
 
-The push to `main` runs the `blackbox` job — the `@Tag("blackbox")` backend tests
-(including a real WebSocket handshake against `chat` through the shared Caddy origin), a
-check that that origin fronts both services, and the Playwright journeys against
-`compose.yaml` + `compose.mock-oauth.yaml` — plus a small container-free `check` job (backend Spotless +
-module-boundary check, a chat check, frontend format / lint / typecheck / unit / build). The
-full backend, chat and frontend suites are **skipped** on this push: with "Require branches
-to be up to date before merging" on, the merged tree already passed them on the PR, so
-re-running is wasted work. `workflow_dispatch` forces a full run.
+Because nothing runs on push, the everyday gate is local: `./gradlew check` (backend and
+chat), `pnpm test` / `pnpm lint` / `pnpm typecheck` (frontend), and `task test:blackbox`
+before a merge or a deploy. Trigger the workflow for a clean-runner belt-and-braces run when
+it matters.
 
-### The `main`-push safety net depends on a branch-protection setting
-
-Skipping the full suites on the `main` push is only sound while **"Require branches to be
-up to date before merging"** is enforced on `main` — that is what guarantees the merged tree
-is byte-identical to the one the PR gate tested. Without it, a PR can merge against a stale
-base and reach `main` with code that no full run ever saw; the `check` job is the floor that
-still runs in that case, but it deliberately skips Testcontainers and Playwright.
-
-Branch protection and rulesets are **not available on this repository's plan** (free +
-private) — the API returns `403 "Upgrade to GitHub Pro or make this repository public"`. So
-today the guarantee rests on discipline (always rebase onto `main` before a rebase-merge)
-plus the `check` floor. When the repo goes public — branch protection is free for public
-repos — enable **Settings → Branches → `main` → "Require branches to be up to date before
-merging"** and this gap closes (tracked in #123).
+`main` is protected by the **"Main security"** repository ruleset: no direct pushes, no
+force-push, no deletion, linear history, every change via a PR. There are no required status
+checks (CI doesn't run on PRs), so merging is not gated on a green run — it's on you to
+trigger CI when a change warrants it.
 
 ## Deployment
 

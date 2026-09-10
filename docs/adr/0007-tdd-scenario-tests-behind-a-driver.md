@@ -48,10 +48,7 @@ against two transports:
   AssertJ, the browser layer uses a page-object/actor layer + Playwright's `expect`.
 - Flakiness is treated as a defect, not a retry target: `retries: 0` in
   `playwright.config.ts`, no Gradle retry.
-- CI runs the `blackbox` job on the push to `main` only — the PR gate already ran the fast
-  suites on the identical up-to-date tree, and building the image + booting the stack is too
-  slow for every PR. A red `blackbox` run is therefore a **fix-forward signal on `main`**,
-  not an automatic merge block: making it one needs branch protection (require the
-  `Blackbox` check + "require branches up to date"), which this repo's plan does not offer.
-  `-PincludeBlackbox` opts the test task out of state tracking so it never reports a cached
-  pass against a stale stack.
+- CI (including the `blackbox` job) runs **on demand only** — building the image + booting
+  the stack is too slow to spend Actions minutes on every PR and push. A red `blackbox` run
+  is a **fix-forward signal**, never an automatic merge block. `-PincludeBlackbox` opts the
+  test task out of state tracking so it never reports a cached pass against a stale stack.

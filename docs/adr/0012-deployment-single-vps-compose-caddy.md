@@ -94,9 +94,8 @@ recoverable by re-seeding. When that ticket lands: whole-box snapshots (Hetzner'
   a running environment; `pictogram.auth.cookie-secure` is left at its default.
 - One box is a single point of failure. Acceptable for a portfolio deployment; revisit if
   uptime starts to matter.
-- The deploy job runs **post-merge on `main`**, the same fix-forward model as the blackbox
-  job (ADR-0007) — this repository's plan offers no branch protection, so a bad deploy is
-  rolled forward, not blocked.
+- The deploy job runs **on demand** (see the 2026-09-08 addendum), the same fix-forward
+  model as the blackbox job (ADR-0007) — a bad deploy is rolled forward, not blocked.
 - Secrets live only on the box. Rotating the signing key or the OAuth secret is a manual
   edit to the box's `.env` plus a `compose up -d`.
 
