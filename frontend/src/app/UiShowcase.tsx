@@ -24,6 +24,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalTitle,
+  PictogramMark,
   Spinner,
   Textarea,
   Toast,
@@ -66,6 +67,18 @@ export function UiShowcase() {
           visual-regression suite.
         </p>
       </header>
+
+      <Section title="Brand">
+        <div className="flex items-center gap-4 text-foreground">
+          <PictogramMark className="size-6" />
+          <PictogramMark className="size-10" />
+          <PictogramMark className="size-16" />
+        </div>
+        <div className="flex items-center gap-2 text-foreground">
+          <PictogramMark className="size-6" />
+          <span className="text-xl font-semibold tracking-tight">Pictogram</span>
+        </div>
+      </Section>
 
       <Section title="AppNav">
         <div className="w-full overflow-hidden rounded-card border border-border">

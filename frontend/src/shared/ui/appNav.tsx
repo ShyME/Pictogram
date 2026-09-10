@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './dropdownMenu';
+import { PictogramMark } from './pictogramMark';
 
 // Tailwind's `md` breakpoint; above it the nav is inline, below it collapses to the
 // avatar dropdown. Matched in JS so only one branch is ever in the DOM.
@@ -33,7 +34,11 @@ export function AppNav({ viewer, onSignOut, signingOut = false, chatSlot }: AppN
   return (
     <header className="border-b border-border bg-surface">
       <nav className="flex items-center justify-between px-4 py-3">
-        <Link to="/" className="font-semibold tracking-tight text-foreground">
+        <Link
+          to="/"
+          className="flex items-center gap-2 font-semibold tracking-tight text-foreground"
+        >
+          <PictogramMark className="size-5 shrink-0" />
           Pictogram
         </Link>
         {viewer ? (
