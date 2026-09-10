@@ -1,0 +1,10 @@
+{
+    "name": "Pictogram",
+    "short_name": "Pictogram",
+    "icons": [
+        { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+        { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" }
+    ],
+    "theme_color": "#fbfbfb",
+    "background_color": "#fbfbfb"
+}

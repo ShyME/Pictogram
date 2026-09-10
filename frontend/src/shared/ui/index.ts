@@ -22,6 +22,7 @@ export {
   ModalHeader,
   ModalTitle,
 } from './modal';
+export { PictogramMark } from './pictogramMark';
 export { Spinner } from './spinner';
 export { Textarea } from './textarea';
 export {
