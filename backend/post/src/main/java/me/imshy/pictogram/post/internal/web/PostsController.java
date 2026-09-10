@@ -6,13 +6,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import me.imshy.pictogram.post.internal.*;
 import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.http.ApiPage;
+import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
 import org.springframework.http.MediaType;
@@ -27,11 +30,14 @@ class PostsController {
     private final PostPublishing postPublishing;
     private final PostDeletion postDeletion;
     private final PostTimeline postTimeline;
+    private final PostDirectory postDirectory;
 
-    PostsController(PostPublishing postPublishing, PostDeletion postDeletion, PostTimeline postTimeline) {
+    PostsController(PostPublishing postPublishing, PostDeletion postDeletion, PostTimeline postTimeline,
+        PostDirectory postDirectory) {
         this.postPublishing = postPublishing;
         this.postDeletion = postDeletion;
         this.postTimeline = postTimeline;
+        this.postDirectory = postDirectory;
     }
 
     record PublishPostRequest(UUID mediaId, String caption) {
@@ -78,5 +84,16 @@ class PostsController {
         Cursor after = cursor == null ? null : Cursor.decode(cursor);
         PostTimeline.Page page = postTimeline.pageFor(new UserId(author), after, limit);
         return ApiPage.of(page.items(), page.nextCursor());
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "The batch of posts for the ids that have one, unpaged."),
+        @ApiResponse(responseCode = "400", description = "The request asked for more ids than the batch limit.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
+    @GetMapping("/by-ids")
+    ApiPage<PostView> postsByIds(@RequestParam("ids") Set<UUID> ids) {
+        List<PostId> postIds = BatchIds.checked(ids).stream().map(PostId::new).toList();
+        return ApiPage.lastPage(postDirectory.byIds(postIds));
     }
 }

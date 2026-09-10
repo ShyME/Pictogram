@@ -25,7 +25,7 @@ class ApiSecurityConfiguration {
             .authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.GET, "/api/profiles/me")
                 .authenticated().requestMatchers(HttpMethod.GET, "/api/profiles/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/by-ids").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/posts/*/comments").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/follows/*").permitAll()

@@ -37,6 +37,14 @@ type CommentView = {
 type LikeRow = { likeCount: number; likedByViewer: boolean };
 type FollowRow = { followerCount: number; followingCount: number; followedByViewer: boolean };
 
+type NotificationView = {
+  type: 'post-liked' | 'post-commented' | 'user-followed';
+  actorId: string;
+  subjectPostId?: string;
+  occurredAt: string;
+  read: boolean;
+};
+
 // The accounts, posts and comments one run sees; every handler reads only from here.
 type World = {
   viewer: ProfileView;
@@ -48,6 +56,7 @@ type World = {
   follows: Map<string, FollowRow>;
   followerIds: string[];
   followingIds: string[];
+  notifications: NotificationView[];
 };
 
 const VIEWER: ProfileView = {
@@ -155,6 +164,24 @@ const COMMENTS: Record<string, CommentView[]> = {
   ],
 };
 
+const NOTIFICATIONS: NotificationView[] = [
+  {
+    type: 'post-liked',
+    actorId: 'u-vivian',
+    subjectPostId: 'p-a1',
+    occurredAt: ago(40 * 60_000),
+    read: false,
+  },
+  {
+    type: 'post-commented',
+    actorId: 'u-saul',
+    subjectPostId: 'p-a2',
+    occurredAt: ago(3 * HOUR),
+    read: false,
+  },
+  { type: 'user-followed', actorId: 'u-dorothea', occurredAt: ago(2 * DAY), read: true },
+];
+
 const NORMAL: World = {
   viewer: VIEWER,
   people: PEOPLE,
@@ -165,6 +192,7 @@ const NORMAL: World = {
   follows: FOLLOW,
   followerIds: ['u-vivian', 'u-saul', 'u-dorothea'],
   followingIds: ['u-vivian', 'u-dorothea'],
+  notifications: NOTIFICATIONS,
 };
 
 // Worst-case content for the horizontal-overflow assertions (#139): a maximum-length
@@ -211,6 +239,16 @@ const STRESS: World = {
   follows: new Map(),
   followerIds: [STRESS_PERSON.userId],
   followingIds: [STRESS_PERSON.userId],
+  notifications: [
+    {
+      type: 'post-liked',
+      actorId: STRESS_PERSON.userId,
+      subjectPostId: STRESS_POST.postId,
+      occurredAt: ago(1 * HOUR),
+      read: false,
+    },
+    { type: 'user-followed', actorId: STRESS_PERSON.userId, occurredAt: ago(2 * HOUR), read: true },
+  ],
 };
 
 // A flat, deterministic image so a card or grid cell looks real without pulling a binary
@@ -359,6 +397,16 @@ const TABLE: Entry[] = [
   readJson('/api/posts', (request, world) =>
     pageOf(world.posts.filter((post) => post.authorId === request.value('author'))),
   ),
+  readJson('/api/posts/by-ids', (request, world) => {
+    const asked = new Set(request.list('ids'));
+    return pageOf([...world.posts, ...world.feed].filter((post) => asked.has(post.postId)));
+  }),
+
+  readJson('/api/notifications', (_request, world) => pageOf(world.notifications)),
+  readJson('/api/notifications/unread-count', (_request, world) => ({
+    count: world.notifications.filter((notification) => !notification.read).length,
+  })),
+  readRaw('/api/notifications/mark-read', 'POST', () => ({ status: 204, body: '' })),
 
   readJson('/api/likes', (request, world) =>
     request.list('postIds').map((postId) => {
@@ -488,7 +536,11 @@ export async function stubChatRail(
             this.emit('open', {});
             for (const senderUserId of unreadIds) {
               this.emit('message', {
-                data: JSON.stringify({ type: 'message', senderUserId, text: 'Sent while you were away' }),
+                data: JSON.stringify({
+                  type: 'message',
+                  senderUserId,
+                  text: 'Sent while you were away',
+                }),
               });
             }
           }, 0);
@@ -513,7 +565,11 @@ export async function stubChatRail(
           const ids = frame.userIds ?? (frame.userId === undefined ? [] : [frame.userId]);
           for (const userId of ids) {
             this.emit('message', {
-              data: JSON.stringify({ type: 'presence', userId, online: onlineIds.includes(userId) }),
+              data: JSON.stringify({
+                type: 'presence',
+                userId,
+                online: onlineIds.includes(userId),
+              }),
             });
           }
         }

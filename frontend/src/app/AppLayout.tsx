@@ -1,5 +1,6 @@
 import { useSignOut } from '@features/auth';
 import { ChatRail, ChatRailTrigger } from '@features/chat';
+import { NotificationsBell } from '@features/notifications';
 import type { Profile } from '@features/profile';
 import { AppNav } from '@shared';
 import { Outlet, useLoaderData } from 'react-router';
@@ -18,6 +19,7 @@ export function AppLayout() {
         onSignOut={signOut}
         signingOut={signingOut}
         chatSlot={<ChatRailTrigger />}
+        notificationsSlot={<NotificationsBell />}
       />
       <div className="flex flex-1">
         <ChatRail viewerId={profile.userId} />

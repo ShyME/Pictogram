@@ -104,6 +104,17 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void theBatchPostLookupIsDocumentedAsAPageOfPostViewWithA400() {
+        JsonNode byIds = spec.at("/paths/~1api~1posts~1by-ids/get/responses");
+
+        String pageRef = byIds.at("/200/content/application~1json/schema/$ref").asString();
+        JsonNode page = spec.at("/components/schemas/" + pageRef.substring("#/components/schemas/".length()));
+        assertThat(page.at("/properties/items/items/$ref").asString()).endsWith("/PostView");
+        assertThat(byIds.at("/400/content/application~1problem+json/schema/$ref").asString())
+            .endsWith("/ProblemDetail");
+    }
+
+    @Test
     void thePostGridIsDocumentedAsAPageOfPostView() {
         JsonNode grid = spec.at("/paths/~1api~1posts/get/responses/200/content/application~1json/schema/$ref");
 

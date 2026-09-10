@@ -3,12 +3,14 @@ import { MessageButton } from '@features/chat';
 import { CommentThread } from '@features/comments';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
 import { LikeButton, LikeCount, prefetchPostLikes } from '@features/likes';
+import { NotificationsPage } from '@features/notifications';
 import { PostGrid } from '@features/post';
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@features/profile';
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
 import { FeedRoute } from './FeedRoute';
 import { NewPostRoute } from './NewPostRoute';
+import { PostDetailRoute } from './PostDetailRoute';
 import { PublicLayout } from './PublicLayout';
 import { RouteError } from './RouteError';
 import { UiShowcase } from './UiShowcase';
@@ -27,6 +29,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <FeedRoute /> },
           { path: '/new', element: <NewPostRoute /> },
+          { path: '/notifications', element: <NotificationsPage /> },
           { path: '/settings/profile', element: <EditProfilePage /> },
           {
             path: '/u/:username/followers',
@@ -81,6 +84,7 @@ export const router = createBrowserRouter([
             ),
             loader: profileLoader,
           },
+          { path: '/p/:postId', element: <PostDetailRoute /> },
         ],
       },
       // Dev/test-only component showcase; the branch and its import fold away in a
