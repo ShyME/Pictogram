@@ -1,0 +1,141 @@
+/*
+ * Standalone stylesheet for the static legal pages (privacy.html, terms.html).
+ * Kept separate from the SPA bundle and free of inline styles so the pages
+ * render under the app's Content-Security-Policy (style-src 'self').
+ */
+
+:root {
+  --canvas: #fafafa;
+  --surface: #ffffff;
+  --foreground: #2b2b2b;
+  --foreground-muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --max-width: 44rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0f0f11;
+    --surface: #17171a;
+    --foreground: #e7e7e9;
+    --foreground-muted: #9aa0a8;
+    --border: #2a2a30;
+    --accent: #a5b4fc;
+    --accent-hover: #c7d2fe;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 3rem 1.25rem 4rem;
+  background: var(--canvas);
+  color: var(--foreground);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 2.5rem;
+}
+
+@media (max-width: 32rem) {
+  body {
+    padding: 1.5rem 0.75rem 3rem;
+  }
+
+  main {
+    padding: 1.5rem;
+  }
+
+  footer {
+    padding: 0 0.75rem;
+  }
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.25;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 2.25rem 0 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+p,
+ul {
+  margin: 0.75rem 0;
+}
+
+ul {
+  padding-left: 1.4rem;
+}
+
+li {
+  margin: 0.3rem 0;
+}
+
+.updated {
+  color: var(--foreground-muted);
+  font-size: 0.9rem;
+  margin: 0 0 2rem;
+}
+
+.lede {
+  font-size: 1.05rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+footer {
+  max-width: var(--max-width);
+  margin: 1.5rem auto 0;
+  padding: 0 2.5rem;
+  color: var(--foreground-muted);
+  font-size: 0.85rem;
+}

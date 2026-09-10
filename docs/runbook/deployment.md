@@ -67,8 +67,11 @@ app assumes the apex.
 - **Production Google OAuth client** (Google Cloud console → APIs & Services →
   Credentials): type *Web application*, authorized redirect URI
   `https://<domain>/login/oauth2/code/google`, and a configured OAuth consent screen
-  (app name, support email, the `openid` + `email` scopes, publishing status *In
-  production* or the test users added). Tests keep `mock-oauth2-server` (ADR-0007) — this
+  (app name, support email, the `openid` + `email` scopes, the app-homepage
+  `https://<domain>/`, the privacy-policy `https://<domain>/privacy.html` and
+  terms-of-service `https://<domain>/terms.html` links, publishing status *In production*
+  or the test users added). Those two pages are static files under `frontend/public/`
+  (`LegalPagesTest` pins the paths). Tests keep `mock-oauth2-server` (ADR-0007) — this
   client is production-only.
 - Fill the box `~/pictogram/.env`: `PICTOGRAM_DOMAIN`, `GOOGLE_CLIENT_ID`,
   `GOOGLE_CLIENT_SECRET`.

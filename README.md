@@ -208,6 +208,8 @@ All of this is handled by the deployment runbook above; it is listed here as the
   Caddy's per-IP `rate_limit` zones (`Caddyfile.prod`), numbers in the runbook.
 - **Media bucket.** `S3BlobStore` auto-creates the bucket on first upload for local dev only.
   Pre-create it during provisioning and withhold `s3:CreateBucket` from the runtime role.
+- **OAuth consent screen.** Point it at the static `/privacy.html` and `/terms.html` pages
+  (`frontend/public/`), and set the app homepage to `/`.
 
 ## Contributing
 
