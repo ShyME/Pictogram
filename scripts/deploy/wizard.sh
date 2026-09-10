@@ -385,16 +385,17 @@ say "cannot serve until it has a domain (for the TLS cert) and a real Google OAu
 say "client. Do the following when the domain is registered, then re-run this wizard"
 say "(the earlier stages will no-op) or apply the steps by hand:"
 printf '\n'
-step "Register the domain (Cloudflare Registrar / Porkbun) and delegate DNS."
-step "DNS: add  A  @  ${DEPLOY_HOST}   (and AAAA if the VM has IPv6). No CNAME on the apex,"
-step "     and DNS-only — NOT proxied (Cloudflare's orange cloud breaks ACME + rate limits)."
+step "Register the domain at Cloudflare Registrar (the zone is on Cloudflare DNS already)."
+step "Pictogram runs on a SUBDOMAIN (e.g. pictogram.imshy.me) so the apex stays free."
+step "DNS: add  A  pictogram  ${DEPLOY_HOST}   (host 'pictogram', not '@'; AAAA too if the"
+step "     VM has IPv6), and DNS-only — NOT proxied (the orange cloud breaks ACME + rate limits)."
 open_url "https://console.cloud.google.com/apis/credentials"
 step "Create an OAuth 2.0 Client ID, type 'Web application'."
 step "Authorized redirect URI:  https://<domain>/login/oauth2/code/google"
 step "Configure the OAuth consent screen (app name, support email, scopes openid + email)."
 printf '\n'
 if confirm "Have the domain and OAuth client details now?"; then
-  ask PICTOGRAM_DOMAIN "Domain (e.g. pictogram.example):"
+  ask PICTOGRAM_DOMAIN "Full subdomain (e.g. pictogram.imshy.me):"
   ask GOOGLE_CLIENT_ID "Google client ID:"
   ask_secret GOOGLE_CLIENT_SECRET "Google client secret:"
   write_env PICTOGRAM_DOMAIN "$PICTOGRAM_DOMAIN"

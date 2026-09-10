@@ -51,14 +51,19 @@ after fixing anything. It covers:
 
 ### Domain-gated tail (needs the registered domain)
 
-- Register the domain (Cloudflare Registrar or Porkbun), delegate DNS.
-- **DNS records:** `A  @  <VM static IP>` and `AAAA  @  <VM IPv6>` if enabled. No `CNAME`
-  on the apex; Caddy needs it to resolve directly for the ACME HTTP-01 challenge on `:80`.
-- **Do not proxy the records.** On Cloudflare set them to *DNS only* (grey cloud). A
-  proxied record makes Cloudflare terminate `:80`/`:443` itself — Caddy's ACME challenge
-  never completes so no certificate issues, and every request then arrives from a
-  Cloudflare IP, collapsing all four `{remote_host}` rate-limit zones into one shared
-  bucket.
+Pictogram is served from a **subdomain** — `pictogram.imshy.me` — so the `imshy.me` apex
+stays free for a separate site. `PICTOGRAM_DOMAIN` is the full subdomain; nothing in the
+app assumes the apex.
+
+- Register the domain (Cloudflare Registrar). The zone's nameservers are Cloudflare's by
+  default — DNS is edited in the Cloudflare dashboard.
+- **DNS record:** one `A  pictogram  <VM static IP>` (host `pictogram`, not `@`), plus
+  `AAAA  pictogram  <VM IPv6>` if the VM has one. Caddy resolves the name directly for the
+  ACME challenge on `:80`.
+- **Do not proxy the record.** On Cloudflare set it to *DNS only* (grey cloud). A proxied
+  record makes Cloudflare terminate `:80`/`:443` itself — Caddy's ACME challenge never
+  completes so no certificate issues, and every request then arrives from a Cloudflare IP,
+  collapsing all four `{remote_host}` rate-limit zones into one shared bucket.
 - **Production Google OAuth client** (Google Cloud console → APIs & Services →
   Credentials): type *Web application*, authorized redirect URI
   `https://<domain>/login/oauth2/code/google`, and a configured OAuth consent screen
@@ -70,6 +75,19 @@ after fixing anything. It covers:
 - Set the CI secrets `DEPLOY_HOST` (the domain) and `DEPLOY_KNOWN_HOSTS` (the box's pinned
   host key, keyed to the domain name). This is what arms the workflow's box-roll step.
 - Run the **Deploy** workflow (below). Caddy issues the certificate on first request.
+
+### Co-hosting another site on the `imshy.me` apex
+
+Pictogram's Caddy owns `:80`/`:443` on the box, but only answers for the one hostname in
+its `{$PICTOGRAM_DOMAIN}` block. To put a second site on the apex without a second box:
+
+1. Point `A @ <VM static IP>` (DNS only) at the same box.
+2. Add a site block to `Caddyfile.prod` for `imshy.me` (and `www.imshy.me`) — static
+   files from a mounted volume, or `reverse_proxy` to another container added to
+   `compose.prod.yaml`. Caddy issues a separate Let's Encrypt certificate for it
+   automatically.
+3. Redeploy. Pictogram's block, rate-limit zones and OAuth redirect are keyed on
+   `{$PICTOGRAM_DOMAIN}` and are unaffected.
 
 ## The deploy workflow
 
