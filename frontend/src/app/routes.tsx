@@ -1,4 +1,4 @@
-import { LoginPage, installApiAuth } from '@features/auth';
+import { LoginPage, installAccessTokenRefreshOnRequest, installApiAuth } from '@features/auth';
 import { MessageButton } from '@features/chat';
 import { CommentThread } from '@features/comments';
 import { FollowButton, FollowCounts, FollowListPage } from '@features/follow';
@@ -18,6 +18,7 @@ import { followListLoader } from './followListLoader';
 import { loginLoader, onboardingLoader, rootLoader, viewerLoader } from './guards';
 
 installApiAuth();
+installAccessTokenRefreshOnRequest();
 
 export const router = createBrowserRouter([
   {

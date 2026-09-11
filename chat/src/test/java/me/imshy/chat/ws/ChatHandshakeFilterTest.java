@@ -3,6 +3,7 @@ package me.imshy.chat.ws;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +41,8 @@ class ChatHandshakeFilterTest {
 
         assertThat(chainRan).isTrue();
         assertThat(exchange.getAttributes()).containsEntry(ChatHandshakeFilter.USER_ID_ATTRIBUTE, sender);
+        assertThat(exchange.getAttributes()).containsEntry(ChatHandshakeFilter.EXPIRES_AT_ATTRIBUTE,
+            clock.instant().plus(Duration.ofMinutes(15)));
     }
 
     @Test

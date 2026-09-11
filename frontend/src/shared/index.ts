@@ -12,7 +12,9 @@ export type { components, paths } from './api/schema';
 export {
   SessionExpiredError,
   accessTokenChanges,
+  accessTokenRefreshRequests,
   publishAccessToken,
+  requestAccessTokenRefresh,
   throwIfSessionExpired,
 } from './api/session';
 export { cn } from './lib/cn';

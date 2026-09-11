@@ -6,6 +6,7 @@ import {
   type ChatConnectionStatus,
   type PresenceUpdate,
 } from '@features/chat/chatConnection';
+import { accessTokenRefreshRequests } from '@shared';
 import { FakeWebSocket, stubWebSocket } from '@test-support/stubWebSocket';
 import { BehaviorSubject } from 'rxjs';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -81,6 +82,32 @@ test('a dropped connection is retried after a backoff delay', async () => {
 
   FakeWebSocket.instances[1]?.open();
   expect(statuses).toEqual(['connecting', 'open', 'connecting', 'open']);
+});
+
+test('a close with the access-token-expired code asks for a token refresh before retrying', () => {
+  const refreshRequests: unknown[] = [];
+  accessTokenRefreshRequests().subscribe(() => {
+    refreshRequests.push(undefined);
+  });
+  record('a-token');
+  FakeWebSocket.instances[0]?.open();
+
+  FakeWebSocket.instances[0]?.simulateDrop(4401);
+
+  expect(refreshRequests).toHaveLength(1);
+});
+
+test('an ordinary drop does not ask for a token refresh', () => {
+  const refreshRequests: unknown[] = [];
+  accessTokenRefreshRequests().subscribe(() => {
+    refreshRequests.push(undefined);
+  });
+  record('a-token');
+  FakeWebSocket.instances[0]?.open();
+
+  FakeWebSocket.instances[0]?.simulateDrop();
+
+  expect(refreshRequests).toHaveLength(0);
 });
 
 test('queryPresence writes an on-demand batch presence-query frame to the open socket', () => {

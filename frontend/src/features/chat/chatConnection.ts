@@ -1,3 +1,4 @@
+import { requestAccessTokenRefresh } from '@shared';
 import { BehaviorSubject, Observable, of, Subject, timer, type Observer } from 'rxjs';
 import { distinctUntilChanged, map, retry, switchMap } from 'rxjs/operators';
 
@@ -142,6 +143,12 @@ export function sendChatMessage(recipientUserId: string, text: string): MessageD
 // reads the token from the other offered value — ChatWebSocketHandler#getSubProtocols.
 const CHAT_SUBPROTOCOL = 'pictogram-chat';
 
+// A dedicated close code (RFC 6455 private-use range) chat sends when it closes a
+// connection because the access token it was handshaked with expired (#192) — distinct
+// from an ordinary drop, so the reconnect below refreshes first rather than retrying the
+// same, now-invalid token. Must match ChatWebSocketHandler.ACCESS_TOKEN_EXPIRED_CLOSE_CODE.
+const ACCESS_TOKEN_EXPIRED_CLOSE_CODE = 4401;
+
 // The token travels as a WebSocket subprotocol, not a query parameter (ADR-0014), so it
 // never lands in a proxy's access logs.
 function connect(accessToken: string): Observable<ChatConnectionStatus> {
@@ -158,8 +165,12 @@ function connect(accessToken: string): Observable<ChatConnectionStatus> {
       if (frame.stream === 'presence') presenceUpdates$.next(frame.update);
       else inboundEvents$.next(frame.event);
     });
-    socket.addEventListener('close', () => {
+    socket.addEventListener('close', (event: CloseEvent) => {
       if (openSocket$.value === socket) openSocket$.next(null);
+      // The switchMap in chatConnectionStatus only picks up a refreshed token once
+      // accessTokenChanges emits one; retrying below with the same, still-expired token in
+      // the meantime is expected — it will keep failing until the refresh lands.
+      if (event.code === ACCESS_TOKEN_EXPIRED_CLOSE_CODE) requestAccessTokenRefresh();
       subscriber.error(new ChatConnectionDroppedError());
     });
     return () => {

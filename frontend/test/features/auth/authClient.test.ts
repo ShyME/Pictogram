@@ -1,6 +1,6 @@
-import { authMiddleware } from '@features/auth/authClient';
+import { authMiddleware, installAccessTokenRefreshOnRequest } from '@features/auth/authClient';
 import { getAccessToken, setAccessToken } from '@features/auth/session';
-import { api } from '@shared';
+import { api, requestAccessTokenRefresh } from '@shared';
 import { stubCookieJar } from '@test-support/cookieJar';
 import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -108,6 +108,19 @@ test('when the refresh fails it returns the 401 and drops the token', async () =
   expect(response.status).toBe(401);
   expect(getAccessToken()).toBeNull();
   expect(calls.filter((c) => pathOf(c) === '/api/profiles/me')).toHaveLength(1);
+});
+
+test('a chat-requested refresh goes through the same refresh call as a 401', async () => {
+  installAccessTokenRefreshOnRequest();
+  setAccessToken('stale');
+  const calls = stubFetch(() => jsonResponse({ accessToken: 'fresh', expiresInSeconds: 900 }));
+
+  requestAccessTokenRefresh();
+  await vi.waitFor(() => {
+    expect(getAccessToken()).toBe('fresh');
+  });
+
+  expect(calls.filter((c) => pathOf(c) === '/api/auth/refresh')).toHaveLength(1);
 });
 
 test('concurrent 401s share a single refresh round-trip', async () => {

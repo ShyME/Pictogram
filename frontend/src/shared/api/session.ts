@@ -1,4 +1,4 @@
-import { BehaviorSubject, type Observable } from 'rxjs';
+import { BehaviorSubject, Subject, type Observable } from 'rxjs';
 
 export class SessionExpiredError extends Error {
   constructor() {
@@ -22,4 +22,18 @@ export function publishAccessToken(token: string | null): void {
 
 export function accessTokenChanges(): Observable<string | null> {
   return accessToken$.asObservable();
+}
+
+// The reverse direction of accessToken$: chat's connection can tell its token expired
+// (a dedicated WebSocket close code, #192) but can't call features/auth's refresh itself
+// (feature-to-feature imports are a boundary violation) — it asks here instead, and
+// features/auth is the one subscriber that acts on the request.
+const refreshRequests$ = new Subject<void>();
+
+export function requestAccessTokenRefresh(): void {
+  refreshRequests$.next();
+}
+
+export function accessTokenRefreshRequests(): Observable<void> {
+  return refreshRequests$.asObservable();
 }

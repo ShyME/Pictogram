@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import me.imshy.chat.UserId;
@@ -20,9 +21,16 @@ class AccessTokenVerifierTest {
     void resolvesTheUserIdOfAValidToken() {
         UserId sender = UserId.random();
 
-        UserId resolved = verifier.resolve(tokens.issue(sender, clock));
+        ResolvedAccessToken resolved = verifier.resolve(tokens.issue(sender, clock));
 
-        assertThat(resolved).isEqualTo(sender);
+        assertThat(resolved.userId()).isEqualTo(sender);
+    }
+
+    @Test
+    void resolvesTheExpiryOfAValidToken() {
+        ResolvedAccessToken resolved = verifier.resolve(tokens.issue(UserId.random(), clock));
+
+        assertThat(resolved.expiresAt()).isEqualTo(clock.instant().plus(Duration.ofMinutes(15)));
     }
 
     @Test
@@ -49,5 +57,12 @@ class AccessTokenVerifierTest {
     @Test
     void rejectsAMalformedToken() {
         assertThatThrownBy(() -> verifier.resolve("not-a-jwt")).isInstanceOf(InvalidAccessTokenException.class);
+    }
+
+    @Test
+    void rejectsATokenWithNoExpiryClaimAtAll() {
+        String noExpiry = tokens.issueWithoutExpiry(UserId.random(), clock);
+
+        assertThatThrownBy(() -> verifier.resolve(noExpiry)).isInstanceOf(InvalidAccessTokenException.class);
     }
 }

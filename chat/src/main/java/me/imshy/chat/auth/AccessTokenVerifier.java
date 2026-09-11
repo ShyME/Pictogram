@@ -9,6 +9,7 @@ import java.time.Clock;
 import java.util.UUID;
 import me.imshy.chat.UserId;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
@@ -31,17 +32,24 @@ public class AccessTokenVerifier {
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(new JwtIssuerValidator(issuer), timestamps));
     }
 
-    public UserId resolve(String accessToken) {
-        String subject;
+    public ResolvedAccessToken resolve(String accessToken) {
+        Jwt jwt;
         try {
-            subject = decoder.decode(accessToken).getSubject();
+            jwt = decoder.decode(accessToken);
         } catch (JwtException invalid) {
             throw new InvalidAccessTokenException("Not a valid Pictogram access token", invalid);
         }
+        UserId userId;
         try {
-            return new UserId(UUID.fromString(subject));
+            userId = new UserId(UUID.fromString(jwt.getSubject()));
         } catch (IllegalArgumentException | NullPointerException notAUserId) {
             throw new InvalidAccessTokenException("Access token subject is not a Pictogram user id", notAUserId);
         }
+        // JwtTimestampValidator accepts a token with no "exp" claim at all; ChatWebSocketHandler
+        // needs a real expiry to schedule its close (#192), so a missing one is rejected here
+        // rather than reaching that Duration.between as a null.
+        if (jwt.getExpiresAt() == null)
+            throw new InvalidAccessTokenException("Access token has no expiry", null);
+        return new ResolvedAccessToken(userId, jwt.getExpiresAt());
     }
 }
