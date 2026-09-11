@@ -1,6 +1,7 @@
 package me.imshy.chat.ws;
 
 import java.time.Clock;
+import java.time.Instant;
 import me.imshy.chat.UserId;
 import me.imshy.chat.auth.AccessTokenVerifier;
 import me.imshy.chat.auth.AuthProperties;
@@ -10,10 +11,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.web.reactive.HandlerMapping;
+import org.springframework.web.reactive.socket.server.WebSocketService;
+import org.springframework.web.reactive.socket.server.support.HandshakeWebSocketService;
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter;
+import org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.server.WebsocketServerSpec;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
@@ -44,13 +49,23 @@ class ChatWebSocketConfiguration {
     }
 
     @Bean
-    HandlerMapping chatWebSocketMapping(ConnectionRegistry connections, ObjectMapper json) {
-        return new ChatWebSocketHandlerMapping(connections, json);
+    HandlerMapping chatWebSocketMapping(ConnectionRegistry connections, ObjectMapper json, Clock clock) {
+        return new ChatWebSocketHandlerMapping(connections, json, clock);
+    }
+
+    // The default HandshakeWebSocketService leaves Reactor Netty's inbound frame size at its
+    // 64 KiB default; ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH is the explicit,
+    // tested bound (#192).
+    @Bean
+    WebSocketService chatWebSocketService() {
+        return new HandshakeWebSocketService(new ReactorNettyRequestUpgradeStrategy(
+            () -> WebsocketServerSpec.builder()
+                .maxFramePayloadLength(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH)));
     }
 
     @Bean
-    WebSocketHandlerAdapter chatWebSocketHandlerAdapter() {
-        return new WebSocketHandlerAdapter();
+    WebSocketHandlerAdapter chatWebSocketHandlerAdapter(WebSocketService chatWebSocketService) {
+        return new WebSocketHandlerAdapter(chatWebSocketService);
     }
 
     // SimpleUrlHandlerMapping would hand out one shared handler for every request;
@@ -62,10 +77,12 @@ class ChatWebSocketConfiguration {
 
         private final ConnectionRegistry connections;
         private final ObjectMapper json;
+        private final Clock clock;
 
-        ChatWebSocketHandlerMapping(ConnectionRegistry connections, ObjectMapper json) {
+        ChatWebSocketHandlerMapping(ConnectionRegistry connections, ObjectMapper json, Clock clock) {
             this.connections = connections;
             this.json = json;
+            this.clock = clock;
         }
 
         @Override
@@ -74,7 +91,8 @@ class ChatWebSocketConfiguration {
                 return Mono.empty();
 
             UserId caller = exchange.getAttribute(ChatHandshakeFilter.USER_ID_ATTRIBUTE);
-            return Mono.just(new ChatWebSocketHandler(connections, json, caller));
+            Instant expiresAt = exchange.getAttribute(ChatHandshakeFilter.EXPIRES_AT_ATTRIBUTE);
+            return Mono.just(new ChatWebSocketHandler(connections, json, caller, expiresAt, clock));
         }
 
         @Override

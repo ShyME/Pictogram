@@ -1,4 +1,4 @@
-import { api } from '@shared';
+import { accessTokenRefreshRequests, api } from '@shared';
 import type { Middleware } from 'openapi-fetch';
 import { refreshAccessToken } from './authApi';
 import { CSRF_HEADER, readCsrfToken } from './csrf';
@@ -55,4 +55,17 @@ export function installApiAuth(): void {
   if (isInstalled) return;
   api.use(authMiddleware);
   isInstalled = true;
+}
+
+let isRefreshOnRequestInstalled = false;
+
+// features/chat can tell its connection's token expired but can't call refreshAccessToken
+// itself (feature-to-feature imports are a boundary violation, ADR-0010) — it asks through
+// shared's accessTokenRefreshRequests instead (#192).
+export function installAccessTokenRefreshOnRequest(): void {
+  if (isRefreshOnRequestInstalled) return;
+  accessTokenRefreshRequests().subscribe(() => {
+    void refreshAccessToken();
+  });
+  isRefreshOnRequestInstalled = true;
 }

@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-type Listener = (event: MessageEvent) => void;
+type Listener = (event: MessageEvent | CloseEvent) => void;
 
 export class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
@@ -39,11 +39,11 @@ export class FakeWebSocket {
     this.dispatch('message', new MessageEvent('message', { data }));
   }
 
-  simulateDrop(): void {
-    this.dispatch('close', new MessageEvent('close'));
+  simulateDrop(code?: number): void {
+    this.dispatch('close', new CloseEvent('close', code === undefined ? {} : { code }));
   }
 
-  private dispatch(type: string, event: MessageEvent): void {
+  private dispatch(type: string, event: MessageEvent | CloseEvent): void {
     const listeners = this.listeners.get(type) ?? [];
     for (const listener of listeners) listener(event);
   }

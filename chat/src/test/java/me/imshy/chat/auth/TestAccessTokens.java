@@ -60,14 +60,35 @@ public final class TestAccessTokens {
         return issue(subject, ISSUER, now.minus(Duration.ofMinutes(30)), now.minus(Duration.ofMinutes(15)), pair);
     }
 
+    // A token still valid at issuance (JwtTimestampValidator's default clock skew tolerance
+    // covers a few seconds either side of `exp`) but expiring almost immediately — for pinning
+    // ChatWebSocketHandler's close-at-expiry behaviour (#192) without waiting out a real 15m
+    // token.
+    public String issueExpiringIn(UserId subject, Clock clock, Duration ttl) {
+        Instant now = clock.instant();
+        return issue(subject, ISSUER, now, now.plus(ttl), pair);
+    }
+
     public String issueWithIssuer(UserId subject, String issuer, Clock clock) {
         Instant now = clock.instant();
         return issue(subject, issuer, now, now.plus(Duration.ofMinutes(15)), pair);
     }
 
+    // AccessTokenVerifier rejects this outright (#192) — ChatWebSocketHandler needs a real
+    // expiry to schedule its close, so a token missing the claim entirely must never resolve.
+    public String issueWithoutExpiry(UserId subject, Clock clock) {
+        JWTClaimsSet claims = new JWTClaimsSet.Builder().issuer(ISSUER).subject(subject.toString())
+            .issueTime(Date.from(clock.instant())).build();
+        return sign(claims, pair);
+    }
+
     private String issue(UserId subject, String issuer, Instant issuedAt, Instant expiresAt, ECKey signingKey) {
         JWTClaimsSet claims = new JWTClaimsSet.Builder().issuer(issuer).subject(subject.toString())
             .issueTime(Date.from(issuedAt)).expirationTime(Date.from(expiresAt)).build();
+        return sign(claims, signingKey);
+    }
+
+    private String sign(JWTClaimsSet claims, ECKey signingKey) {
         try {
             SignedJWT jwt = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(signingKey.getKeyID()).build(), claims);
