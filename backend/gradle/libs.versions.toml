@@ -4,15 +4,15 @@
 # bumping one of them, and vice versa.
 spring-boot = "4.1.1"
 dependency-management = "1.1.7"
-spotless = "8.10.1"
+spotless = "8.10.2"
 modernizer = "2.0.0"
 
 # BOM-managed platforms
 spring-modulith = "2.1.1"
-awssdk = "2.54.10"
+awssdk = "2.54.13"
 
 # Directly-pinned libraries
-twelvemonkeys-imageio = "3.14.0"
+twelvemonkeys-imageio = "3.15.0"
 metadata-extractor = "2.21.0"
 commons-imaging = "1.0.0-alpha6"
 springdoc-openapi = "3.1.0"
