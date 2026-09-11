@@ -237,6 +237,15 @@ test('shows a loading state before the list resolves', async () => {
   expect(await screen.findByText('Vivian Maier')).toBeInTheDocument();
 });
 
+test('shows an error message when the following list fails to load', async () => {
+  stubFetch(() => problemResponse('server-error', 500));
+  openSocket();
+  renderRail();
+
+  expect(await screen.findByText(/couldn.t load your follows/i)).toBeInTheDocument();
+  expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+});
+
 test('with the socket down the list still renders, without presence dots', async () => {
   stubFollowing(['u-vivian', 'u-dorothea']);
   renderRail();

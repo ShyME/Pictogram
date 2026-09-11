@@ -15,6 +15,15 @@ test('shows an empty state when the author has no posts', async () => {
   expect(await screen.findByText('No posts yet')).toBeInTheDocument();
 });
 
+test('shows an error message rather than an endless spinner when the posts fail to load', async () => {
+  stubFetch(() => problemResponse('server-error', 500));
+  renderWithProviders(<PostGrid authorId="u-1" />);
+
+  expect(
+    await screen.findByText(/couldn.t load these posts/i, undefined, { timeout: 3000 }),
+  ).toBeInTheDocument();
+});
+
 test("renders each post's thumbnail, newest first as the server sends them", async () => {
   stubFetch(() =>
     jsonResponse({
