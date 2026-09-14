@@ -645,6 +645,16 @@
               }
             },
             "description" : "The viewer tried to follow themselves."
+          },
+          "429" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The viewer is following too fast."
           }
         },
         "tags" : [ "follow-controller" ]
@@ -831,6 +841,16 @@
         "responses" : {
           "204" : {
             "description" : "The viewer now likes the post (or already did)."
+          },
+          "429" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The viewer is liking too fast."
           }
         },
         "tags" : [ "like-controller" ]
@@ -875,6 +895,16 @@
               }
             },
             "description" : "The upload is missing, empty, or not a readable image."
+          },
+          "413" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The upload would push the owner past their storage quota."
           }
         },
         "tags" : [ "media-controller" ]
@@ -1151,6 +1181,16 @@
               }
             },
             "description" : "The image can't be used — no such media, or it belongs to someone else."
+          },
+          "429" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The author is publishing too fast."
           }
         },
         "tags" : [ "posts-controller" ]
@@ -1348,6 +1388,16 @@
               }
             },
             "description" : "The caller has no valid access token."
+          },
+          "429" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The viewer is commenting too fast."
           }
         },
         "tags" : [ "comment-controller" ]

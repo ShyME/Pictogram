@@ -54,15 +54,17 @@ Encoded in `RefreshCookieTest` and `SignInCompletionTest`.
 
 ## Deployment-time controls this repo can only document
 
-- **Rate limiting (`SEC-4`)** — the application does none. The public unauthenticated
+- **Rate limiting (`SEC-4`)** — mutating `/api/**` calls (publishing, following, liking,
+  commenting) now carry a per-user, per-action in-app limit (#141): a `RateLimiter` seam in
+  `shared-kernel` the write paths call, rejecting past the configured window with a `429`
+  Problem Detail. This supersedes #126. `GET` endpoints carry none — the public unauthenticated
   surface (`GET /api/media/*/original` and `/thumbnail`, `GET /api/profiles/*`,
   `GET /api/posts`, `GET /api/posts/*/comments`, `GET /api/comments`, `GET /api/follows/*`,
-  `POST /api/auth/refresh`, and `/oauth2/authorization/google`) needs a reverse-proxy or
+  `POST /api/auth/refresh`, and `/oauth2/authorization/google`) still needs a reverse-proxy or
   platform rate limit before real traffic. Noted in the README.
   `GET /api/notifications/unread-count` (#198) is authenticated, so it is not on that
   unauthenticated list, but the SPA bell polls it roughly every 30s per open session — it is
-  the one authenticated endpoint that wants a per-user edge limit. Still deferred to #126
-  with the rest; no in-app limiter ships for it in v1.
+  the one authenticated `GET` that wants a per-user edge limit; no in-app limiter covers reads.
 - **Media bucket (`SEC-8`)** — `S3BlobStore.ensureBucket()` creates the bucket on first
   upload. That is a local-dev convenience; against real S3 the bucket is pre-created during
   provisioning and `s3:CreateBucket` is withheld from the runtime role, so the branch never
@@ -94,10 +96,10 @@ carried into #123 and settled there:
    Defense-in-depth on the `/api/auth/**` chain — a `CookieCsrfTokenRepository` plus the SPA
    echoing `X-XSRF-TOKEN` on `refresh` / `logout` — is **implemented** (#125), before the
    repo and app go public. See the per-chain section above.
-2. **Rate limiting** — edge-only for v1: the reverse proxy / platform enforces per-IP
+2. **Rate limiting** — no longer edge-only. The reverse proxy / platform still enforces per-IP
    limits on the public unauthenticated surface, with the numbers recorded in the deploy
-   runbook. An in-app bucket4j limiter is deferred (#126) — picked up only if the deploy
-   target lacks an edge limiter or a concrete abuse pattern appears.
+   runbook, but mutating write paths now also carry a per-user in-app limit as defence in
+   depth (#141, superseding #126) — see the section above.
 3. **CSP `style-src`** — tightened to `'self'`; `'unsafe-inline'` is gone. The one
    runtime-computed style (the crop image position in `SquareCropper`) stays a React
    `style={}` prop: React applies it through the CSSOM property API (`node.style[prop] =

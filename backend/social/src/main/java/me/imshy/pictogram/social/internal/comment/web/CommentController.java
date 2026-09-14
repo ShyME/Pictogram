@@ -13,6 +13,7 @@ import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.RateLimiter;
 import me.imshy.pictogram.social.internal.comment.CommentThread;
 import me.imshy.pictogram.social.internal.comment.PostComment;
 import org.springframework.http.MediaType;
@@ -24,10 +25,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/posts/{postId}/comments")
 class CommentController {
 
-    private final CommentThread thread;
+    private static final String RATE_LIMIT_ACTION = "social.comment";
 
-    CommentController(CommentThread thread) {
+    private final CommentThread thread;
+    private final RateLimiter rateLimiter;
+
+    CommentController(CommentThread thread, RateLimiter rateLimiter) {
         this.thread = thread;
+        this.rateLimiter = rateLimiter;
     }
 
     record CreateCommentRequest(String body) {
@@ -50,10 +55,14 @@ class CommentController {
                 schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
             content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "429", description = "The viewer is commenting too fast.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 schema = @Schema(implementation = ProblemDetail.class)))})
     @PostMapping
     ResponseEntity<CommentView> add(@CurrentUser ViewerId viewer, @PathVariable("postId") UUID postId,
         @RequestBody CreateCommentRequest request) {
+        rateLimiter.requirePermit(viewer.asUserId(), RATE_LIMIT_ACTION);
         CommentView view = CommentView.of(thread.comment(viewer, new PostId(postId), request.body()));
         return ResponseEntity.created(URI.create("/api/comments/" + view.commentId())).body(view);
     }

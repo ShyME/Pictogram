@@ -12,4 +12,7 @@ interface Medias extends CrudRepository<Media, UUID> {
 
     @Query("select m from Media m where m.createdAt < :cutoff order by m.createdAt asc")
     List<Media> uploadedBefore(@Param("cutoff") Instant cutoff, Limit limit);
+
+    @Query("select coalesce(sum(m.sizeBytes), 0) from Media m where m.ownerId = :ownerId")
+    long totalBytesForOwner(@Param("ownerId") UUID ownerId);
 }

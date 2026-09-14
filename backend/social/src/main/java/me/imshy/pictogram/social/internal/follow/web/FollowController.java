@@ -15,6 +15,7 @@ import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.RateLimiter;
 import me.imshy.pictogram.social.internal.FollowGraph;
 import me.imshy.pictogram.social.internal.follow.FollowList;
 import me.imshy.pictogram.social.internal.follow.FollowRelationships;
@@ -28,16 +29,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/follows")
 class FollowController {
 
+    private static final String RATE_LIMIT_ACTION = "social.follow";
+
     private final Following following;
     private final FollowGraph graph;
     private final FollowList lists;
     private final FollowRelationships relationships;
+    private final RateLimiter rateLimiter;
 
-    FollowController(Following following, FollowGraph graph, FollowList lists, FollowRelationships relationships) {
+    FollowController(Following following, FollowGraph graph, FollowList lists, FollowRelationships relationships,
+        RateLimiter rateLimiter) {
         this.following = following;
         this.graph = graph;
         this.lists = lists;
         this.relationships = relationships;
+        this.rateLimiter = rateLimiter;
     }
 
     record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
@@ -55,9 +61,13 @@ class FollowController {
         @ApiResponse(responseCode = "204", description = "The viewer now follows the user (or already did)."),
         @ApiResponse(responseCode = "422", description = "The viewer tried to follow themselves.",
             content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "429", description = "The viewer is following too fast.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 schema = @Schema(implementation = ProblemDetail.class)))})
     @PutMapping("/{userId}")
     ResponseEntity<Void> follow(@CurrentUser ViewerId viewer, @PathVariable("userId") UUID userId) {
+        rateLimiter.requirePermit(viewer.asUserId(), RATE_LIMIT_ACTION);
         following.follow(viewer, new UserId(userId));
         return ResponseEntity.noContent().build();
     }

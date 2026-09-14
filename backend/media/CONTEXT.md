@@ -1,7 +1,10 @@
 # Media
 
 Holds uploaded images as bytes. Every upload is re-encoded to one canonical square format,
-so the rest of the system never deals with orientation, format, or dimensions.
+so the rest of the system never deals with orientation, format, or dimensions. A per-user
+storage quota (`pictogram.media.quota.max-bytes-per-user`, default 100MB) caps the combined
+size of an owner's stored renditions; an upload that would push them past it is rejected
+before anything is written.
 
 ## Language
 

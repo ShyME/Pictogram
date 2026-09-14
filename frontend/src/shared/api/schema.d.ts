@@ -771,6 +771,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
+            /** @description The viewer is following too fast. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
         };
     };
     unfollow: {
@@ -910,6 +919,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description The viewer is liking too fast. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
         };
     };
     unlike: {
@@ -959,6 +977,15 @@ export interface operations {
             };
             /** @description The upload is missing, empty, or not a readable image. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The upload would push the owner past their storage quota. */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1193,6 +1220,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
+            /** @description The author is publishing too fast. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
         };
     };
     postsByIds: {
@@ -1335,6 +1371,15 @@ export interface operations {
             };
             /** @description The caller has no valid access token. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The viewer is commenting too fast. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
