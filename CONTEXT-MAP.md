@@ -13,7 +13,8 @@ the first three were separate contexts in early v1 — kept apart by an `interna
 each and the `InternalSlicingTest` guard. `shared-kernel` is the single exception: a whitelisted module every context may
 depend on. It holds the ID value types (`UserId`, `PostId`, `MediaId`, `ViewerId`) and,
 in its `http` sub-package, the cross-cutting HTTP edge conventions — Problem Details, the
-pagination envelope, current-user resolution (ADR-0008). No domain behaviour, entities, or
+pagination envelope, current-user resolution (ADR-0008), the per-user write-path rate limiter
+(ADR-0011, #141). No domain behaviour, entities, or
 persistence.
 
 ## Contexts

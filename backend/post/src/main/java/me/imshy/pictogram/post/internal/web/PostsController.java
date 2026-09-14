@@ -18,6 +18,7 @@ import me.imshy.pictogram.shared.http.ApiPage;
 import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
 import me.imshy.pictogram.shared.http.Cursor;
+import me.imshy.pictogram.shared.http.RateLimiter;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +28,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/posts")
 class PostsController {
 
+    private static final String RATE_LIMIT_ACTION = "post.publish";
+
     private final PostPublishing postPublishing;
     private final PostDeletion postDeletion;
     private final PostTimeline postTimeline;
     private final PostDirectory postDirectory;
+    private final RateLimiter rateLimiter;
 
     PostsController(PostPublishing postPublishing, PostDeletion postDeletion, PostTimeline postTimeline,
-        PostDirectory postDirectory) {
+        PostDirectory postDirectory, RateLimiter rateLimiter) {
         this.postPublishing = postPublishing;
         this.postDeletion = postDeletion;
         this.postTimeline = postTimeline;
         this.postDirectory = postDirectory;
+        this.rateLimiter = rateLimiter;
     }
 
     record PublishPostRequest(UUID mediaId, String caption) {
@@ -55,9 +60,13 @@ class PostsController {
         @ApiResponse(responseCode = "422",
             description = "The image can't be used — no such media, or it belongs to someone else.",
             content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "429", description = "The author is publishing too fast.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 schema = @Schema(implementation = ProblemDetail.class)))})
     @PostMapping
     ResponseEntity<PostView> publish(@CurrentUser UserId author, @RequestBody PublishPostRequest request) {
+        rateLimiter.requirePermit(author, RATE_LIMIT_ACTION);
         MediaId mediaId = Optional.ofNullable(request.mediaId()).map(MediaId::new)
             .orElseThrow(UnusableMediaException::new);
         PostView post = postPublishing.publish(author, mediaId, request.caption());

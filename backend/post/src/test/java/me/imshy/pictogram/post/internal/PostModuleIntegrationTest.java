@@ -1,6 +1,7 @@
 package me.imshy.pictogram.post.internal;
 
 import me.imshy.pictogram.media.MediaCatalog;
+import me.imshy.pictogram.shared.http.RateLimiter;
 import me.imshy.pictogram.testsupport.ModuleIntegrationTest;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -10,4 +11,7 @@ public abstract class PostModuleIntegrationTest extends ModuleIntegrationTest {
 
     @MockitoBean
     protected MediaCatalog mediaCatalog;
+
+    @MockitoBean
+    protected RateLimiter rateLimiter;
 }

@@ -38,6 +38,9 @@ class MediaController {
             content = @Content(schema = @Schema(implementation = MediaUploadResponse.class))),
         @ApiResponse(responseCode = "400", description = "The upload is missing, empty, or not a readable image.",
             content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "413", description = "The upload would push the owner past their storage quota.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 schema = @Schema(implementation = ProblemDetail.class)))})
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<MediaUploadResponse> upload(@CurrentUser UserId owner, @RequestParam("file") MultipartFile file) {

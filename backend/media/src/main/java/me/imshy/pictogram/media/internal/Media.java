@@ -20,20 +20,24 @@ class Media implements Persistable<UUID> {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "size_bytes")
+    private long sizeBytes;
+
     @Transient
     private boolean persisted;
 
     protected Media() {
     }
 
-    private Media(UUID id, UUID ownerId, Instant createdAt) {
+    private Media(UUID id, UUID ownerId, Instant createdAt, long sizeBytes) {
         this.id = id;
         this.ownerId = ownerId;
         this.createdAt = createdAt;
+        this.sizeBytes = sizeBytes;
     }
 
-    static Media uploadedBy(UserId owner, Instant at) {
-        return new Media(UUID.randomUUID(), owner.value(), at);
+    static Media uploadedBy(UserId owner, Instant at, long sizeBytes) {
+        return new Media(UUID.randomUUID(), owner.value(), at, sizeBytes);
     }
 
     MediaId mediaId() {

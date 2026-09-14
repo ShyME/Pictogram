@@ -13,6 +13,7 @@ import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.shared.http.BatchIds;
 import me.imshy.pictogram.shared.http.CurrentUser;
+import me.imshy.pictogram.shared.http.RateLimiter;
 import me.imshy.pictogram.social.LikeCounts;
 import me.imshy.pictogram.social.internal.likes.Liking;
 import org.springframework.http.MediaType;
@@ -24,12 +25,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/likes")
 class LikeController {
 
+    private static final String RATE_LIMIT_ACTION = "social.like";
+
     private final Liking liking;
     private final LikeCounts counts;
+    private final RateLimiter rateLimiter;
 
-    LikeController(Liking liking, LikeCounts counts) {
+    LikeController(Liking liking, LikeCounts counts, RateLimiter rateLimiter) {
         this.liking = liking;
         this.counts = counts;
+        this.rateLimiter = rateLimiter;
     }
 
     record PostLikesView(UUID postId, long likeCount, boolean likedByViewer) {
@@ -39,9 +44,14 @@ class LikeController {
         }
     }
 
-    @ApiResponses(@ApiResponse(responseCode = "204", description = "The viewer now likes the post (or already did)."))
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "The viewer now likes the post (or already did)."),
+        @ApiResponse(responseCode = "429", description = "The viewer is liking too fast.",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ProblemDetail.class)))})
     @PutMapping("/{postId}")
     ResponseEntity<Void> like(@CurrentUser ViewerId viewer, @PathVariable("postId") UUID postId) {
+        rateLimiter.requirePermit(viewer.asUserId(), RATE_LIMIT_ACTION);
         liking.like(viewer, new PostId(postId));
         return ResponseEntity.noContent().build();
     }

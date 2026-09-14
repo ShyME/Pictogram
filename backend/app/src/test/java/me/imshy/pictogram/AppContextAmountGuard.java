@@ -6,7 +6,7 @@ public final class AppContextAmountGuard extends ContextAmountGuard {
 
     @Override
     protected int limit() {
-        return 9;
+        return 11;
     }
 
     @Override

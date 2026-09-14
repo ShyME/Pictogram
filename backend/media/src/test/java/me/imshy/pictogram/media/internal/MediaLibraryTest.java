@@ -21,6 +21,9 @@ class MediaLibraryTest extends MediaModuleIntegrationTest {
     @Autowired
     MediaCatalog catalog;
 
+    @Autowired
+    Medias medias;
+
     @Test
     void aNonSquarePhotoWithLocationBecomesTheCanonicalSquareRenditionsWithNoMetadata() throws Exception {
         var owner = UserId.random();
@@ -59,6 +62,29 @@ class MediaLibraryTest extends MediaModuleIntegrationTest {
         assertThat(catalog.ownerOf(unknown)).isEmpty();
         assertThatExceptionOfType(MediaNotFoundException.class).isThrownBy(() -> library.original(unknown));
         assertThatExceptionOfType(MediaNotFoundException.class).isThrownBy(() -> library.thumbnail(unknown));
+    }
+
+    @Test
+    void storedBytesAccumulateAcrossUploadsForTheSameOwner() {
+        var owner = UserId.random();
+
+        library.upload(owner, safeUpload());
+        long afterFirst = medias.totalBytesForOwner(owner.value());
+        assertThat(afterFirst).isPositive();
+
+        library.upload(owner, safeUpload());
+        long afterSecond = medias.totalBytesForOwner(owner.value());
+        assertThat(afterSecond).isGreaterThan(afterFirst);
+    }
+
+    @Test
+    void storedBytesAreScopedPerOwner() {
+        var owner = UserId.random();
+        var other = UserId.random();
+
+        library.upload(owner, safeUpload());
+
+        assertThat(medias.totalBytesForOwner(other.value())).isZero();
     }
 
     @Test
