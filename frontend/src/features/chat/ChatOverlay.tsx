@@ -1,6 +1,7 @@
-import { Avatar, AvatarFallback, Button, Textarea, cn } from '@shared';
+import { Avatar, AvatarFallback, Button, Textarea, cn, useMediaQuery } from '@shared';
 import { Send, X } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
+import { Link } from 'react-router';
 import { PresenceDot } from './PresenceDot';
 import { sendChatMessage } from './chatConnection';
 import {
@@ -38,10 +39,15 @@ function Bubble({ message }: { message: ChatMessage }) {
   );
 }
 
+// Matches the overlay's own `sm:` breakpoint above: below it the overlay is full-screen,
+// so a navigate away must close it; at and above it the overlay floats over the page.
+const DESKTOP_OVERLAY = '(min-width: 40rem)';
+
 function OpenConversation({ conversation }: { conversation: Conversation }) {
   const { peer, messages } = conversation;
   const name = peerName(peer);
   const presence = usePresence(peer.userId);
+  const isDesktop = useMediaQuery(DESKTOP_OVERLAY);
   const [draft, setDraft] = useState('');
 
   const send = () => {
@@ -71,7 +77,13 @@ function OpenConversation({ conversation }: { conversation: Conversation }) {
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+              <Link
+                to={`/u/${peer.username}`}
+                onClick={isDesktop ? undefined : closeConversation}
+                className="truncate text-sm font-semibold text-foreground hover:underline"
+              >
+                {name}
+              </Link>
               <PresenceDot presence={presence} />
             </div>
             <p className="truncate text-xs text-foreground-muted">@{peer.username}</p>

@@ -22,10 +22,19 @@ export function clampCrop(crop: Crop, image: ImageSize): Crop {
 }
 
 export function zoomCrop(crop: Crop, factor: number, image: ImageSize): Crop {
-  const centreX = crop.x + crop.size / 2;
-  const centreY = crop.y + crop.size / 2;
+  return zoomCropAt(crop, factor, { x: 0.5, y: 0.5 }, image);
+}
+
+export type Anchor = { x: number; y: number };
+
+// Zooms the crop window so the image point under `anchor` (a fraction of the crop's own
+// width/height, e.g. the cursor position within the frame) stays under it after zooming —
+// `zoomCrop`'s centre-anchored zoom is the special case where anchor is (0.5, 0.5).
+export function zoomCropAt(crop: Crop, factor: number, anchor: Anchor, image: ImageSize): Crop {
+  const anchorX = crop.x + anchor.x * crop.size;
+  const anchorY = crop.y + anchor.y * crop.size;
   const size = crop.size / factor;
-  return clampCrop({ x: centreX - size / 2, y: centreY - size / 2, size }, image);
+  return clampCrop({ x: anchorX - anchor.x * size, y: anchorY - anchor.y * size, size }, image);
 }
 
 export function panCrop(
