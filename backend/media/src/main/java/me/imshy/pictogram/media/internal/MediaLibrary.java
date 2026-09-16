@@ -18,8 +18,10 @@ public class MediaLibrary implements MediaCatalog {
     private final BlobStore blobStore;
     private final Clock clock;
     private final MediaQuotaProperties quota;
-    // Serialises the check-then-save around an owner's quota (single-instance deployment,
-    // ADR-0012): without it, two concurrent uploads from the same owner can both read the
+    // Serialises the check-then-save around an owner's quota (single-instance
+    // deployment,
+    // ADR-0012): without it, two concurrent uploads from the same owner can both
+    // read the
     // pre-upload total, both pass, and jointly exceed the cap.
     private final ConcurrentHashMap<UUID, Object> uploadLocks = new ConcurrentHashMap<>();
 
