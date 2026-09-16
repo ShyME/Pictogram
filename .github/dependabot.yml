@@ -140,7 +140,7 @@ updates:
           - "patch"
     ignore:
       # Upstream repo is archived; a replacement is tracked separately.
-      - dependency-name: "minio/minio"
+      - dependency-name: "quay.io/minio/minio"
       # A Postgres major bump is its own ticket; minor/patch still flow.
       - dependency-name: "postgres"
         update-types:

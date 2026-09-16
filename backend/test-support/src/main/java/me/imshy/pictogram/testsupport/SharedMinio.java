@@ -14,7 +14,9 @@ public final class SharedMinio {
     private static final String BUCKET = "pictogram-media-test";
 
     public static final GenericContainer<?> INSTANCE = new GenericContainer<>(
-        DockerImageName.parse("minio/minio:RELEASE.2025-09-07T16-13-09Z")).withEnv("MINIO_ROOT_USER", ACCESS_KEY)
+        // Docker Hub's minio/minio repo returns 404 as of 2026-09; quay.io is MinIO's current registry.
+        DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")).withEnv("MINIO_ROOT_USER",
+            ACCESS_KEY)
         .withEnv("MINIO_ROOT_PASSWORD", SECRET_KEY).withCommand("server", "/data").withExposedPorts(API_PORT)
         .waitingFor(Wait.forHttp("/minio/health/ready").forPort(API_PORT).withStartupTimeout(Duration.ofSeconds(60)));
 
