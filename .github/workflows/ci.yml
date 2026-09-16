@@ -61,9 +61,9 @@ jobs:
         run: |
           mkdir -p ~/testcontainers-images
           docker pull postgres:18-alpine
-          docker pull minio/minio:RELEASE.2025-09-07T16-13-09Z
+          docker pull quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
           docker save postgres:18-alpine -o ~/testcontainers-images/postgres.tar
-          docker save minio/minio:RELEASE.2025-09-07T16-13-09Z -o ~/testcontainers-images/minio.tar
+          docker save quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z -o ~/testcontainers-images/minio.tar
 
       # `check`, not `build`: nothing here consumes pictogram.jar (the Blackbox job
       # builds its own image), so `bootJar` is dead weight. Runs Modulith verify(), the
