@@ -5,16 +5,17 @@ import { dismissToast, publishAccessToken, Toaster, useToast } from '@shared';
 import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { FakeWebSocket, stubWebSocket } from '@test-support/stubWebSocket';
 import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const ada = { userId: 'u-ada', username: 'ada', displayName: 'Ada Lovelace' };
 
 function mountDock() {
   return render(
-    <>
+    <MemoryRouter>
       <ChatDock />
       <Toaster />
-    </>,
+    </MemoryRouter>,
   );
 }
 

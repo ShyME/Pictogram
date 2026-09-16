@@ -3,8 +3,9 @@ import { chatConnectionStatus } from '@features/chat/chatConnection';
 import { closeConversation, openConversation } from '@features/chat/chatStore';
 import { FakeWebSocket, stubWebSocket } from '@test-support/stubWebSocket';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { BehaviorSubject } from 'rxjs';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 const ada = { userId: 'u-ada', username: 'ada', displayName: 'Ada Lovelace' };
 const bob = { userId: 'u-bob', username: 'bob', displayName: null };
@@ -24,6 +25,33 @@ function typeAndSend(text: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 }
 
+function noop(): void {
+  // the overlay never re-queries `matches` mid-test, so no listener need actually fire
+}
+
+// A matchMedia stand-in: `min-width` queries track `isWide`. The default (no call) leaves
+// every query unmatched, i.e. the narrow, full-screen overlay layout.
+function stubViewport(isWide: boolean) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: isWide && query.includes('min-width'),
+    media: query,
+    onchange: null,
+    addListener: noop,
+    removeListener: noop,
+    addEventListener: noop,
+    removeEventListener: noop,
+    dispatchEvent: () => false,
+  }));
+}
+
+function renderOverlay() {
+  return render(
+    <MemoryRouter>
+      <ChatOverlay />
+    </MemoryRouter>,
+  );
+}
+
 beforeEach(() => {
   stubWebSocket();
 });
@@ -34,10 +62,11 @@ afterEach(() => {
   act(() => {
     closeConversation();
   });
+  vi.unstubAllGlobals();
 });
 
 test('renders nothing until a conversation is opened', () => {
-  const { container } = render(<ChatOverlay />);
+  const { container } = renderOverlay();
   expect(container).toBeEmptyDOMElement();
 
   act(() => {
@@ -49,7 +78,7 @@ test('renders nothing until a conversation is opened', () => {
 });
 
 test('falls back to the handle when the peer has no display name', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(bob);
   });
@@ -59,7 +88,7 @@ test('falls back to the handle when the peer has no display name', () => {
 
 test('composing and sending echoes the message and writes the protocol frame', () => {
   const socket = withOpenSocket();
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -72,7 +101,7 @@ test('composing and sending echoes the message and writes the protocol frame', (
 });
 
 test('a message that cannot be sent is shown as not delivered', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -86,7 +115,7 @@ test('a message that cannot be sent is shown as not delivered', () => {
 
 test('opening the overlay asks chat for the peer presence and shows the dot on the answer', () => {
   const socket = withOpenSocket();
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -102,7 +131,7 @@ test('opening the overlay asks chat for the peer presence and shows the dot on t
 });
 
 test('the close control discards the overlay', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -113,7 +142,7 @@ test('the close control discards the overlay', () => {
 });
 
 test('opening a second conversation replaces the first, with no carried-over messages', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -128,7 +157,7 @@ test('opening a second conversation replaces the first, with no carried-over mes
 });
 
 test('opening with a seed message shows it, and replaces a stale same-peer conversation', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -145,7 +174,7 @@ test('opening with a seed message shows it, and replaces a stale same-peer conve
 });
 
 test('an unsent draft does not carry across to the next conversation', () => {
-  render(<ChatOverlay />);
+  renderOverlay();
   act(() => {
     openConversation(ada);
   });
@@ -156,4 +185,37 @@ test('an unsent draft does not carry across to the next conversation', () => {
   });
 
   expect(screen.getByRole('textbox')).toHaveValue('');
+});
+
+test('the header name links to the peer profile', () => {
+  renderOverlay();
+  act(() => {
+    openConversation(ada);
+  });
+
+  expect(screen.getByRole('link', { name: 'Ada Lovelace' })).toHaveAttribute('href', '/u/ada');
+});
+
+test('on a narrow viewport, following the profile link closes the full-screen overlay', () => {
+  stubViewport(false);
+  renderOverlay();
+  act(() => {
+    openConversation(ada);
+  });
+
+  fireEvent.click(screen.getByRole('link', { name: 'Ada Lovelace' }));
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+test('on a desktop viewport, following the profile link leaves the floating overlay open', () => {
+  stubViewport(true);
+  renderOverlay();
+  act(() => {
+    openConversation(ada);
+  });
+
+  fireEvent.click(screen.getByRole('link', { name: 'Ada Lovelace' }));
+
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
 });

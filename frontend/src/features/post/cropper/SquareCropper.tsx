@@ -4,6 +4,7 @@ import {
   type Ref,
   type SyntheticEvent,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -18,8 +19,24 @@ import {
   initialCrop,
   panCrop,
   zoomCrop,
+  zoomCropAt,
   zoomLevel,
 } from './crop';
+
+// Wheel-zoom rates: per pixel of (normalised) `deltaY`, how much the zoom factor changes.
+// Ctrl+wheel is how browsers report a trackpad pinch, and pinch gestures report smaller
+// deltas than a mouse wheel notch for the same felt gesture, so it gets a steeper rate.
+const WHEEL_ZOOM_RATE = 0.002;
+const PINCH_ZOOM_RATE = 0.006;
+
+// `deltaY` is only in pixels when `deltaMode` is DOM_DELTA_PIXEL (0). Firefox's default
+// mouse-wheel deltas are DOM_DELTA_LINE (1), single-digit values that would make zoom
+// nearly imperceptible if treated as pixels — scale them up to a pixel-ish magnitude.
+// DOM_DELTA_PAGE (2) is rare enough (e.g. some accessibility tools) not to special-case.
+function pixelDeltaY(event: WheelEvent): number {
+  const LINE_HEIGHT_PX = 16;
+  return event.deltaMode === 1 ? event.deltaY * LINE_HEIGHT_PX : event.deltaY;
+}
 
 export type CropperHandle = {
   getCroppedBlob: () => Promise<Blob>;
@@ -48,6 +65,37 @@ export function SquareCropper({ src, ref }: { src: string; ref?: Ref<CropperHand
       observer.disconnect();
     };
   }, []);
+
+  // Registered as a native, non-passive listener rather than React's `onWheel`: React
+  // marks its own wheel listener passive by default, which silently drops
+  // `preventDefault` and lets the page scroll underneath the frame while cropping.
+  //
+  // Updates `crop` functionally, from whatever it is when the update applies rather than
+  // the value closed over when the listener was attached, so a burst of wheel events fired
+  // faster than React re-renders still compounds instead of only the last one landing.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || !image) return;
+    function onWheel(event: WheelEvent) {
+      event.preventDefault();
+      if (!frame || !image) return;
+      const rect = frame.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const anchor = {
+        x: (event.clientX - rect.left) / rect.width,
+        y: (event.clientY - rect.top) / rect.height,
+      };
+      const rate = event.ctrlKey ? PINCH_ZOOM_RATE : WHEEL_ZOOM_RATE;
+      const factor = Math.max(0.1, 1 - pixelDeltaY(event) * rate);
+      setCrop((previousCrop) =>
+        previousCrop ? zoomCropAt(previousCrop, factor, anchor, image) : previousCrop,
+      );
+    }
+    frame.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      frame.removeEventListener('wheel', onWheel);
+    };
+  }, [image]);
 
   useImperativeHandle(
     ref,

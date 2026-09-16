@@ -12,6 +12,7 @@ import { FeedRoute } from './FeedRoute';
 import { NewPostRoute } from './NewPostRoute';
 import { PostDetailRoute } from './PostDetailRoute';
 import { PublicLayout } from './PublicLayout';
+import { RootLayout } from './RootLayout';
 import { RouteError } from './RouteError';
 import { UiShowcase } from './UiShowcase';
 import { followListLoader } from './followListLoader';
@@ -22,6 +23,7 @@ installAccessTokenRefreshOnRequest();
 
 export const router = createBrowserRouter([
   {
+    element: <RootLayout />,
     errorElement: <RouteError />,
     children: [
       {
