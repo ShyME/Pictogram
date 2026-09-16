@@ -6,6 +6,11 @@ storage quota (`pictogram.media.quota.max-bytes-per-user`, default 100MB) caps t
 size of an owner's stored renditions; an upload that would push them past it is rejected
 before anything is written.
 
+Reads (`GET /api/media/{id}/original`, `/thumbnail`) are `permitAll`, with no ownership
+check — deliberate, not an oversight: every post in Pictogram is public, a `MediaId` is an
+unguessable UUID, and an orphan (never posted, or its post since deleted) is bounded by the
+retention sweep below rather than by access control.
+
 ## Language
 
 **Media**:
