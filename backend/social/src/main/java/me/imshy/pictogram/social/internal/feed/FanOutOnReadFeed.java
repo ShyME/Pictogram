@@ -11,9 +11,6 @@ import org.springframework.stereotype.Service;
 @Service
 class FanOutOnReadFeed implements FeedQuery {
 
-    static final int DEFAULT_LIMIT = 12;
-    static final int MAX_LIMIT = 30;
-
     private final FollowGraph followGraph;
     private final PublishedPosts posts;
 
@@ -29,11 +26,7 @@ class FanOutOnReadFeed implements FeedQuery {
             return new Page(List.of(), null);
         }
 
-        PublishedPosts.Page page = posts.byAuthors(followed, after, clamp(limit));
+        PublishedPosts.Page page = posts.byAuthors(followed, after, FeedPageSize.clamp(limit));
         return new Page(page.posts().stream().map(FeedPost::of).toList(), page.nextCursor());
-    }
-
-    private static int clamp(Integer limit) {
-        return limit == null ? DEFAULT_LIMIT : Math.clamp(limit, 1, MAX_LIMIT);
     }
 }

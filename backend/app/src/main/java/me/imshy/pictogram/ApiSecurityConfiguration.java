@@ -33,6 +33,8 @@ class ApiSecurityConfiguration {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/by-ids")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/explore")
+                        .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/*/comments")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments")

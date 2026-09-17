@@ -92,6 +92,15 @@ follows, then asks `post` (`PublishedPosts.byAuthors`) for the next keyset page 
 authors' posts, newest first. Nothing is stored, so a deleted post or a removed follow
 simply stops showing up on the next read.
 
+### Explore
+
+The feed has two scopes (#228): **following** (`GET /api/feed`, authenticated, the fan-out
+above) and **explore** (`GET /api/explore`, `permitAll`, no sign-in needed). Explore is the
+`post` keyset page with the author filter removed — every post, newest first, same cursor
+contract as the feed. There is no ranking, no algorithm, no candidate set; `ExploreQuery` /
+`GlobalExploreFeed` call `PublishedPosts.page` (the `byAuthors` sibling with no author
+filter) directly, with no `FollowGraph` involved at all.
+
 ## Likes
 
 An endorsement a viewer attaches to a post. The post itself is unaware of likes — the
@@ -198,6 +207,7 @@ web-layer only.
 Over HTTP:
 
 - `GET /api/feed` — the viewer's feed page.
+- `GET /api/explore` — the global explore page, `permitAll`.
 - `PUT`/`DELETE /api/follows/{userId}`, `GET /api/follows/{userId}`,
   `GET /api/follows?ids=`, `GET /api/follows/{userId}/followers`, `/following`.
 - `GET /api/likes?postIds=`, `PUT`/`DELETE /api/likes/{postId}`.

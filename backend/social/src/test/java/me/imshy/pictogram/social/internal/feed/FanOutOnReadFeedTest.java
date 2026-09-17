@@ -52,10 +52,10 @@ class FanOutOnReadFeedTest {
         given(posts.byAuthors(any(), any(), anyInt())).willReturn(new PublishedPosts.Page(List.of(), null));
 
         feed.pageFor(viewer, null, null);
-        verify(posts).byAuthors(any(), any(), eq(FanOutOnReadFeed.DEFAULT_LIMIT));
+        verify(posts).byAuthors(any(), any(), eq(FeedPageSize.DEFAULT));
 
         feed.pageFor(viewer, null, 1000);
-        verify(posts).byAuthors(any(), any(), eq(FanOutOnReadFeed.MAX_LIMIT));
+        verify(posts).byAuthors(any(), any(), eq(FeedPageSize.MAX));
 
         feed.pageFor(viewer, null, 0);
         verify(posts).byAuthors(any(), any(), eq(1));

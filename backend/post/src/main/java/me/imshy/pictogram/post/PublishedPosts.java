@@ -11,6 +11,8 @@ public interface PublishedPosts {
 
     Page byAuthors(Collection<UserId> authors, Cursor after, int limit);
 
+    Page page(Cursor after, int limit);
+
     Optional<UserId> authorOf(PostId post);
 
     record Page(List<PublishedPost> posts, Cursor nextCursor) {}
