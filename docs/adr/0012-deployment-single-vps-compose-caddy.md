@@ -96,8 +96,14 @@ recoverable by re-seeding. When that ticket lands: whole-box snapshots (Hetzner'
   uptime starts to matter.
 - The deploy job runs **on demand** (see the 2026-09-08 addendum), the same fix-forward
   model as the blackbox job (ADR-0007) — a bad deploy is rolled forward, not blocked.
-- Secrets live only on the box. Rotating the signing key or the OAuth secret is a manual
-  edit to the box's `.env` plus a `compose up -d`.
+- Secrets live only on the box, all in one `.env`, with no separation of blast radius and
+  no rotation cadence beyond doing it manually when someone remembers (#252). Rotating the
+  signing key or the OAuth secret is a manual edit to the box's `.env` plus a
+  `compose up -d`. **This is accepted as the right tradeoff for a single-box portfolio
+  deployment**: single-digit users, low-value data (re-seedable, see Backups above), and a
+  secrets manager or split-file scheme would add operational surface a solo-maintained box
+  does not need. Revisit if the deployment starts holding data that matters, or gains
+  operators beyond the owner.
 
 ## Addendum (2026-09-08): the first host is a temporary GCP `e2-medium`
 

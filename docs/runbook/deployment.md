@@ -171,7 +171,9 @@ needs a schema undo is a manual `pg_dump` restore, not covered here.
 
 ## Secret rotation
 
-All secrets live only in the box `~/pictogram/.env`. To rotate one: edit `.env`, then
+All secrets live only in the box `~/pictogram/.env`, one flat file with no separation
+between them and no scheduled cadence — accepted as the right tradeoff for a single-box
+portfolio deployment (ADR-0012 Consequences, #252). To rotate one: edit `.env`, then
 `docker compose -f compose.yaml -f compose.prod.yaml up -d`.
 
 - **Signing key** (`PICTOGRAM_AUTH_SIGNING_KEY`): generate a new P-256 JWK, update both it
