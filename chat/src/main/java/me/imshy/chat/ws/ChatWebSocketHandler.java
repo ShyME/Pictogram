@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
 import me.imshy.chat.UserId;
 import org.springframework.web.reactive.socket.CloseStatus;
@@ -70,6 +71,17 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // ACCESS_TOKEN_EXPIRED_CLOSE_CODE.
     static final int ACCESS_TOKEN_EXPIRED_CLOSE_CODE = 4401;
 
+    // A dedicated close code (RFC 6455 private-use range, mirrors HTTP 429) so a
+    // throttled
+    // client can tell "you were sending too fast" apart from an ordinary drop
+    // (#249). Unlike
+    // ACCESS_TOKEN_EXPIRED_CLOSE_CODE, the frontend needs no special-case handling
+    // for this
+    // one: the token is still valid, so chatConnection.ts's generic
+    // backoff-and-retry
+    // reconnects correctly on its own.
+    static final int RATE_LIMIT_EXCEEDED_CLOSE_CODE = 4429;
+
     private final ConnectionRegistry connections;
     private final ObjectMapper json;
     private final UserId caller;
@@ -98,16 +110,30 @@ class ChatWebSocketHandler implements WebSocketHandler {
     public Mono<Void> handle(WebSocketSession session) {
         Sinks.Many<OutboundEvent> outbound = outboundSink();
         connections.connect(caller, outbound);
+        InboundFrameRateLimiter rateLimiter = new InboundFrameRateLimiter(clock);
+        AtomicBoolean rateLimited = new AtomicBoolean(false);
 
         // Disconnect before completing the sink, not after: the reverse order leaves a
         // completed sink briefly in the registry, where a concurrent deliver() still
         // routes
         // to it and the message is lost.
-        Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText)
-            .doOnNext(payload -> handleFrame(outbound, payload)).then().doFinally(signal -> {
-                connections.disconnect(caller, outbound);
-                outbound.tryEmitComplete();
-            });
+        Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText).doOnNext(payload -> {
+            if (!rateLimiter.tryConsume()) {
+                // Every frame still buffered ahead of the actual disconnect would
+                // otherwise
+                // re-enter here and fire its own session.close() — racing close calls on
+                // the same session the way closeAtTokenExpiry's own comment below warns
+                // against (a Netty refCnt error). compareAndSet lets only the first one
+                // through.
+                if (rateLimited.compareAndSet(false, true))
+                    session.close(new CloseStatus(RATE_LIMIT_EXCEEDED_CLOSE_CODE, "rate limit exceeded")).subscribe();
+                return;
+            }
+            handleFrame(outbound, payload);
+        }).then().doFinally(signal -> {
+            connections.disconnect(caller, outbound);
+            outbound.tryEmitComplete();
+        });
 
         Mono<Void> sending = session
             .send(outbound.asFlux().map(event -> session.textMessage(json.writeValueAsString(event))));
