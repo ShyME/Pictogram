@@ -2,11 +2,13 @@ package me.imshy.pictogram.social.internal.likes;
 
 import java.time.Clock;
 import java.time.Instant;
+import me.imshy.pictogram.post.PostDeleted;
 import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.social.PostLiked;
 import me.imshy.pictogram.social.PostUnliked;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -53,5 +55,10 @@ public class Liking {
             return;
         }
         events.publishEvent(new PostUnliked(post, viewer, unlikedAt));
+    }
+
+    @EventListener
+    void onPostDeleted(PostDeleted event) {
+        likes.deleteByPostId(event.postId().value());
     }
 }

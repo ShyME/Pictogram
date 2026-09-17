@@ -110,7 +110,10 @@ _Avoid_: Current user, actor, me
 At most one like per `(viewer, post)` — that pair **is** the row's primary key (there is no
 surrogate id), and that constraint is what makes a concurrent double-like idempotent. There
 is **no self-like rule**: liking your own post is allowed, because the `likes` sub-domain
-has no notion of a post's author (contrast the self-follow guard in `follow`).
+has no notion of a post's author (contrast the self-follow guard in `follow`). When a post
+is deleted its likes are hard-deleted with it (`Liking` consumes `PostDeleted`, #233) —
+otherwise they'd sit orphaned forever, since a like references a `PostId` by value only
+(ADR-0002) with no FK to cascade.
 
 `Liking.like()` checks for an existing like before it saves, rather than relying only on
 the `DataIntegrityViolationException` from the primary key. The check is the fast path *and*
@@ -209,10 +212,11 @@ Over HTTP:
 `UserFollowed` / `UserUnfollowed` and `PostLiked` / `PostUnliked` fire only on a real state
 change — an idempotent no-op emits nothing. `PostCommented` fires once per new comment and
 `CommentDeleted` once per real removal (there is no edit, so neither has a "changed"
-counterpart; the post-deletion cascade clears a thread in bulk and stays event-free). The
-only consumer in v1 is in-module: `comment` reacts to `post`'s `PostDeleted` to clear a
-thread (synchronously, in the deleting transaction — v1 has no event registry, ADR-0002).
-The rest are the module's forward contract (fan-out-on-write feed, notifications).
+counterpart; the post-deletion cascade clears a thread or a post's likes in bulk and stays
+event-free either way). The only consumers in v1 are in-module: `comment` and `likes` each
+react to `post`'s `PostDeleted` to clear their own rows for that post (synchronously, in the
+deleting transaction — v1 has no event registry, ADR-0002). The rest are the module's
+forward contract (fan-out-on-write feed, notifications).
 
 `PostLiked.likedAt` and `PostUnliked.unlikedAt` are both the `Clock` instant at which the
 change was recorded, captured the same way, so for one `(viewer, post)` a later
