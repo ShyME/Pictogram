@@ -155,7 +155,29 @@ services:
       chat:
         condition: service_healthy
 
+  # Ships app/chat/caddy metrics and logs to Grafana Cloud (ADR-0016). Config is a
+  # committed file, not baked into the image (config.alloy). The Grafana Cloud values
+  # below are harmless dev defaults — no account needed for `task up` — that
+  # compose.prod.yaml replaces with hard `${VAR:?}` guards, same as every other secret.
+  alloy:
+    image: grafana/alloy:v1.19.2
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Discovers and tails app/chat/caddy container logs via the Docker API (read-only:
+      # Alloy only lists containers and streams their log output).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloydata:/var/lib/alloy/data
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    environment:
+      GRAFANA_CLOUD_PROMETHEUS_URL: ${GRAFANA_CLOUD_PROMETHEUS_URL:-http://localhost:9999/api/prom/push}
+      GRAFANA_CLOUD_PROMETHEUS_USER: ${GRAFANA_CLOUD_PROMETHEUS_USER:-dev}
+      GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${GRAFANA_CLOUD_PROMETHEUS_API_KEY:-dev}
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL:-http://localhost:9999/loki/api/v1/push}
+      GRAFANA_CLOUD_LOKI_USER: ${GRAFANA_CLOUD_LOKI_USER:-dev}
+      GRAFANA_CLOUD_LOKI_API_KEY: ${GRAFANA_CLOUD_LOKI_API_KEY:-dev}
+
 volumes:
   pgdata:
   miniodata:
   kafkadata:
+  alloydata:
