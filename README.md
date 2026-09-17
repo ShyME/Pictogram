@@ -91,6 +91,7 @@ to `chat` directly over a WebSocket (message dock + follow-list rail, #202–#20
 
 ```bash
 cp .env.example .env    # gitignored; configures compose.yaml
+task hooks:install      # one-time: auto-format staged files on commit
 task up                 # build + start postgres, minio, kafka, app, chat, caddy
 task seed               # load a fixed 5-persona demo dataset
 ```
