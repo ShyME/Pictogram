@@ -142,13 +142,14 @@ These are **starting numbers**; retuning them, and adding the in-app per-user li
 | `refresh`  | `POST /api/auth/refresh`                                                             | 10 / min / IP | The SPA refreshes on load and near token expiry (~15 min) — single digits per minute is generous. Higher would let a stolen refresh cookie be brute-replayed. |
 | `comments` | `POST /api/posts/*/comments`                                                         | 6 / min / IP  | A human writes a few comments a minute at most. This is the only unauthenticated-surface write; keep it tight. |
 | `oauth`    | `/oauth2/authorization/*`                                                            | 6 / min / IP  | Starting a sign-in redirect is rare per person; a flood here is someone hammering the Google round-trip. |
+| `ws`       | `GET /ws`                                                                            | 20 / min / IP | The chat WS handshake (#255). chat's in-app `InboundFrameRateLimiter` (#249) only bounds an already-open connection's frame rate — nothing else bounded how often a new one could be opened. 20/min covers a flapping network's reconnects (`chatConnection.ts`'s backoff starts at 1/sec) while still capping a scripted handshake flood. |
 
 The `reads` zone is deliberately a superset of the issue's list — it also covers the `GET`
 comment endpoints ADR-0011 names, since they are the same read surface.
 
 Tuning: watch Caddy's access log for `429`s. If real users hit `reads`, raise it in steps
 of 30 and redeploy; if a single IP sustains hundreds a minute, that is the limiter doing
-its job. All four numbers are one-line edits to `Caddyfile.prod` — a normal PR, then run
+its job. All five numbers are one-line edits to `Caddyfile.prod` — a normal PR, then run
 the Deploy workflow to pick it up.
 
 ## Rollback
