@@ -24,6 +24,8 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-actuator")
     implementation("org.springframework.modulith:spring-modulith-observability")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    // ADR-0016: auto-configures the Sentry client from `sentry.*` properties.
+    implementation(libs.sentry.spring.boot)
 
     // Kafka for the one externalised flow (social -> notifications, ADR-0015). The
     // composition root is the only place these are wired: spring-modulith-events-jpa is the

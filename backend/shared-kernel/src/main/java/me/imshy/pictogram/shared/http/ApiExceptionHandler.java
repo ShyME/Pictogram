@@ -1,5 +1,6 @@
 package me.imshy.pictogram.shared.http;
 
+import io.sentry.Sentry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -37,6 +38,9 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> handleUnexpected(Exception ex) {
         log.error("Unhandled exception serving an API request", ex);
+        // Caught here and turned into a ProblemDetail response, so it never propagates to the
+        // container — Sentry's default auto-instrumentation would otherwise never see it (ADR-0016).
+        Sentry.captureException(ex);
         var body = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "The server could not process the request. The failure has been logged.");

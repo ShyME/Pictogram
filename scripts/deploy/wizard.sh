@@ -184,7 +184,7 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 
-TOTAL_STAGES=13
+TOTAL_STAGES=14
 
 # Run from the repo root regardless of where the wizard is invoked.
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -209,7 +209,7 @@ gvm() { gcloud compute ssh "$VM_NAME" --zone "$VM_ZONE" --command "$1"; }
 
 banner "Pictogram deployment (ADR-0012)"
 say "Provisions the temporary GCP box, wires CI to it, and prepares the box .env."
-note "Pre-domain stages run now; the domain-gated tail (Stage 13) waits until you own the domain."
+note "Pre-domain stages run now; the domain-gated tail (Stage 14) waits until you own the domain."
 
 # ── Stage 1 ──────────────────────────────────────────────────────────────
 stage "Preflight"
@@ -396,20 +396,51 @@ box_scp compose.yaml compose.prod.yaml Caddyfile.prod "deploy@${DEPLOY_HOST}:pic
 box_scp alloy/config.alloy "deploy@${DEPLOY_HOST}:pictogram/alloy/config.alloy"
 box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
 box_ssh "chmod 600 pictogram/.env && ls -l pictogram/"
-step "box is staged — it will start serving once Stage 13 fills the domain + OAuth values"
+step "box is staged — it will start serving once Stage 14 fills the domain + OAuth values"
 
 # ── Stage 12 ─────────────────────────────────────────────────────────────
 stage "GitHub: the deploy secrets"
 say "The Deploy workflow (.github/workflows/deploy.yml) reads these."
 set_secret DEPLOY_SSH_KEY "$(cat "$CI_KEY")"
 set_secret DEPLOY_USER "$DEPLOY_USER"
-# DEPLOY_HOST (and its pinned host key) are set in Stage 13, not here. The workflow rolls
-# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 13 fills
+# DEPLOY_HOST (and its pinned host key) are set in Stage 14, not here. The workflow rolls
+# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 14 fills
 # the domain + OAuth values — so setting it now would only make dispatches fail on the
 # missing ${PICTOGRAM_DOMAIN} guard. Pre-domain, the workflow builds/pushes/validates only.
-note "DEPLOY_HOST is deliberately unset until Stage 13 — a dispatch now builds and pushes, no box roll."
+note "DEPLOY_HOST is deliberately unset until Stage 14 — a dispatch now builds and pushes, no box roll."
 
 # ── Stage 13 ─────────────────────────────────────────────────────────────
+stage "Sentry: exception tracking (ADR-0016)"
+say "Two Sentry projects — one per half of the app — feeding backend + frontend errors."
+open_url "https://sentry.io/signup/"
+step "Sign up (or sign in) on Sentry's free Developer plan; create an org if you don't have one."
+step "Note your org's slug (the name in its URL, e.g. sentry.io/organizations/<slug>/)."
+ask SENTRY_ORG "Sentry org slug:"
+write_env SENTRY_ORG "$SENTRY_ORG"
+set_var SENTRY_ORG "$SENTRY_ORG"
+open_url "https://sentry.io/organizations/${SENTRY_ORG}/projects/"
+step "Create Project → platform 'Spring Boot' (e.g. 'pictogram-backend')."
+step "Copy its DSN from Settings → Projects → <project> → Client Keys (DSN)."
+note "A DSN is a public identifier, safe to embed in a client bundle — not a secret."
+ask SENTRY_DSN "Backend DSN:"
+write_env SENTRY_DSN "$SENTRY_DSN"
+step "Back on the projects page, Create Project → platform 'React' (e.g. 'pictogram-frontend')."
+step "Note its project slug (the name in its URL) and copy its DSN the same way."
+ask SENTRY_PROJECT "Frontend project slug:"
+write_env SENTRY_PROJECT "$SENTRY_PROJECT"
+set_var SENTRY_PROJECT "$SENTRY_PROJECT"
+ask VITE_SENTRY_DSN "Frontend DSN:"
+write_env VITE_SENTRY_DSN "$VITE_SENTRY_DSN"
+set_var VITE_SENTRY_DSN "$VITE_SENTRY_DSN"
+open_url "https://sentry.io/orgredirect/organizations/${SENTRY_ORG}/settings/auth-tokens/"
+step "Create an org auth token scoped to 'project:releases' (source-map uploads only)."
+ask_secret SENTRY_AUTH_TOKEN "Source-map upload auth token:"
+set_secret SENTRY_AUTH_TOKEN "$SENTRY_AUTH_TOKEN"
+box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
+box_ssh "chmod 600 pictogram/.env"
+step "box.env re-shipped with SENTRY_DSN ✓"
+
+# ── Stage 14 ─────────────────────────────────────────────────────────────
 stage "Domain-gated tail — run this part once you own the domain"
 say "Everything above is done. The box is provisioned and CI can reach it, but it"
 say "cannot serve until it has a domain (for the TLS cert) and a real Google OAuth"
@@ -440,7 +471,7 @@ if confirm "Have the domain and OAuth client details now?"; then
   say "Now trigger the Deploy workflow:  Actions → Deploy → Run workflow"
   say "Then work through the smoke test in docs/runbook/deployment.md."
 else
-  note "No problem — re-run the wizard when you're ready; Stages 1–11 will skip."
+  note "No problem — re-run the wizard when you're ready; Stages 1–13 will skip."
 fi
 
 finish
