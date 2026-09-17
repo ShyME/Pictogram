@@ -20,7 +20,8 @@ public class ChatHandshakeFilter implements WebFilter {
 
     public static final String USER_ID_ATTRIBUTE = "chat.userId";
 
-    // Carried alongside USER_ID_ATTRIBUTE so ChatWebSocketHandler can close the connection
+    // Carried alongside USER_ID_ATTRIBUTE so ChatWebSocketHandler can close the
+    // connection
     // when the token it was handshaked with expires (#192), rather than trusting a
     // once-at-handshake check for the socket's whole (much longer) lifetime.
     public static final String EXPIRES_AT_ATTRIBUTE = "chat.accessTokenExpiresAt";
