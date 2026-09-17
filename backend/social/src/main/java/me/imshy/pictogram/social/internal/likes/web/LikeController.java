@@ -44,8 +44,7 @@ class LikeController {
         }
     }
 
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "The viewer now likes the post (or already did)."),
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "The viewer now likes the post (or already did)."),
         @ApiResponse(responseCode = "429", description = "The viewer is liking too fast.",
             content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 schema = @Schema(implementation = ProblemDetail.class)))})
