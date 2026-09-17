@@ -1,6 +1,6 @@
 import { api } from './client';
+import { orAnonymous } from './publicRead';
 import type { components } from './schema';
-import { throwIfSessionExpired } from './session';
 
 export type Account = {
   userId: string;
@@ -19,11 +19,9 @@ export function toAccount(view: components['schemas']['ProfileView']): Account {
 export async function fetchAccounts(ids: string[]): Promise<Map<string, Account>> {
   if (ids.length === 0) return new Map();
 
-  const { data, response } = await api.GET('/api/profiles', {
-    params: { query: { ids } },
-  });
-  throwIfSessionExpired(response);
-  if (!data) throw new Error(`Profile batch request failed: ${response.status}`);
-
-  return new Map(data.map((view) => [view.userId ?? '', toAccount(view)]));
+  const views = await orAnonymous<components['schemas']['ProfileView'][]>(
+    await api.GET('/api/profiles', { params: { query: { ids } } }),
+    { path: '/api/profiles', query: { ids }, label: 'Profile batch request' },
+  );
+  return new Map(views.map((view) => [view.userId ?? '', toAccount(view)]));
 }

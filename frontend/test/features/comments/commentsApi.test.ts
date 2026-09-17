@@ -80,6 +80,23 @@ test('fetchCommentThread enriches every comment with one batched author lookup',
   expect(calls.filter((call) => pathOf(call) === '/api/profiles')).toHaveLength(1);
 });
 
+test('fetchCommentThread falls back to an anonymous read when the bearer call is unauthorised', async () => {
+  const calls = stubFetch((request, hits) => {
+    const path = pathOf(request);
+    if (path === '/api/posts/p-1/comments') {
+      return hits === 0
+        ? jsonResponse({}, 401)
+        : jsonResponse({ items: [commentView({ authorId: 'u-ada' })], nextCursor: null });
+    }
+    return jsonResponse([{ userId: 'u-ada', username: 'ada', displayName: 'Ada' }]);
+  });
+
+  const page = await fetchCommentThread('p-1');
+
+  expect(page.comments).toHaveLength(1);
+  expect(calls.filter((call) => pathOf(call) === '/api/posts/p-1/comments')).toHaveLength(2);
+});
+
 test('fetchCommentCountsBatch returns one record per requested post', async () => {
   const calls = stubFetch(() =>
     jsonResponse([

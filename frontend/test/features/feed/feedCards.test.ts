@@ -1,6 +1,5 @@
 import type { FeedPost } from '@features/feed/feed';
 import { toFeedCards } from '@features/feed/feedCards';
-import { SessionExpiredError } from '@shared';
 import { jsonResponse, pathOf, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -77,8 +76,15 @@ test('falls back to a placeholder author when a profile is missing from the batc
   expect(card.author).toEqual({ userId: 'ghost', username: '', displayName: null });
 });
 
-test('propagates an expired session from the author batch', async () => {
-  stubFetch(() => jsonResponse({}, 401));
+test('falls back to an anonymous author lookup on a stale-token 401', async () => {
+  const calls = stubFetch((request, hits) =>
+    hits === 0 && pathOf(request) === '/api/profiles'
+      ? jsonResponse({}, 401)
+      : jsonResponse([{ userId: 'u-1', username: 'ada', displayName: 'Ada' }]),
+  );
 
-  await expect(toFeedCards([post()])).rejects.toBeInstanceOf(SessionExpiredError);
+  const [card] = await toFeedCards([post()]);
+
+  expect(card.author).toEqual({ userId: 'u-1', username: 'ada', displayName: 'Ada' });
+  expect(calls.filter((c) => pathOf(c) === '/api/profiles')).toHaveLength(2);
 });

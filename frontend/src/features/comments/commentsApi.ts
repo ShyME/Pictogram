@@ -17,11 +17,16 @@ export async function fetchCommentThread(
   postId: string,
   cursor?: string,
 ): Promise<CommentThreadPage> {
-  const { data, response } = await api.GET('/api/posts/{postId}/comments', {
-    params: { path: { postId }, query: { cursor } },
-  });
-  throwIfSessionExpired(response);
-  if (!data) throw new Error(`Comment thread request failed: ${response.status}`);
+  const data = await orAnonymous<components['schemas']['ApiPageCommentView']>(
+    await api.GET('/api/posts/{postId}/comments', {
+      params: { path: { postId }, query: { cursor } },
+    }),
+    {
+      path: `/api/posts/${encodeURIComponent(postId)}/comments`,
+      query: { cursor },
+      label: 'Comment thread request',
+    },
+  );
 
   const comments = (data.items ?? []).map((item) => toComment(item));
   const authors = await fetchAccounts([...new Set(comments.map((comment) => comment.authorId))]);
