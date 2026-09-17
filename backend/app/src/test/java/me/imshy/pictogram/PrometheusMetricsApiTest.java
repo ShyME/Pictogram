@@ -19,13 +19,14 @@ class PrometheusMetricsApiTest {
 
     @Test
     void exposesHttpJvmAndProductStatGauges() throws Exception {
-        mvc.perform(get("/actuator/prometheus")).andExpect(status().isOk())
-            .andExpect(content().string(containsString("jvm_memory_used_bytes")))
-            .andExpect(content().string(containsString("pictogram_users_count")))
-            .andExpect(content().string(containsString("pictogram_users_active")))
-            .andExpect(content().string(containsString("pictogram_posts_count")))
-            .andExpect(content().string(containsString("pictogram_comments_count")))
-            .andExpect(content().string(containsString("pictogram_likes_count")))
-            .andExpect(content().string(containsString("pictogram_follows_count")));
+        mvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("jvm_memory_used_bytes")))
+                .andExpect(content().string(containsString("pictogram_users_count")))
+                .andExpect(content().string(containsString("pictogram_users_active")))
+                .andExpect(content().string(containsString("pictogram_posts_count")))
+                .andExpect(content().string(containsString("pictogram_comments_count")))
+                .andExpect(content().string(containsString("pictogram_likes_count")))
+                .andExpect(content().string(containsString("pictogram_follows_count")));
     }
 }

@@ -15,7 +15,7 @@ class AccessTokenVerifierTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-09-05T12:00:00Z"), ZoneOffset.UTC);
     private final TestAccessTokens tokens = new TestAccessTokens();
     private final AccessTokenVerifier verifier = new AccessTokenVerifier(
-        PublicSigningKey.fromJwkJson(tokens.publicJwkJson()).jwkSource(), TestAccessTokens.ISSUER, clock);
+            PublicSigningKey.fromJwkJson(tokens.publicJwkJson()).jwkSource(), TestAccessTokens.ISSUER, clock);
 
     @Test
     void resolvesTheUserIdOfAValidToken() {

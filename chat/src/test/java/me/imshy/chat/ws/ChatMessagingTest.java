@@ -79,7 +79,7 @@ class ChatMessagingTest {
         senderConnection.send(new SendMessageRequest(recipientWithNoConnection, "hello"));
 
         assertThat(receive(senderConnection, UndeliveredMessage.class))
-            .isEqualTo(UndeliveredMessage.of(recipientWithNoConnection, "hello"));
+                .isEqualTo(UndeliveredMessage.of(recipientWithNoConnection, "hello"));
     }
 
     @Test
@@ -91,7 +91,7 @@ class ChatMessagingTest {
         connect(sender).send(new SendMessageRequest(recipient, "hi, stranger"));
 
         assertThat(receive(recipientConnection, DeliveredMessage.class))
-            .isEqualTo(DeliveredMessage.of(sender, "hi, stranger"));
+                .isEqualTo(DeliveredMessage.of(sender, "hi, stranger"));
     }
 
     @Test
@@ -115,8 +115,11 @@ class ChatMessagingTest {
         connect(onlineUser);
         Connection asker = connect(UserId.random());
 
-        asker.sendRaw(JSON.writeValueAsString(Map.of("type", "presence-query", "userIds",
-            List.of(onlineUser.toString(), "not-a-user-id", offlineUser.toString()))));
+        asker.sendRaw(JSON.writeValueAsString(Map.of(
+                "type",
+                "presence-query",
+                "userIds",
+                List.of(onlineUser.toString(), "not-a-user-id", offlineUser.toString()))));
 
         Map<UserId, Boolean> answers = new HashMap<>();
         for (int i = 0; i < 2; i++) {
@@ -140,7 +143,7 @@ class ChatMessagingTest {
         senderConnection.send(new SendMessageRequest(recipient, "still works"));
 
         assertThat(receive(recipientConnection, DeliveredMessage.class))
-            .isEqualTo(DeliveredMessage.of(sender, "still works"));
+                .isEqualTo(DeliveredMessage.of(sender, "still works"));
     }
 
     private <T> T receive(Connection connection, Class<T> type) throws InterruptedException {
@@ -152,7 +155,9 @@ class ChatMessagingTest {
     private Connection connect(UserId user) throws InterruptedException {
         Connection connection = new Connection(client, wsUri(), TOKENS.issue(user, clock));
         connections.add(connection);
-        assertThat(connection.ready.await(5, TimeUnit.SECONDS)).as("connection opened within 5s").isTrue();
+        assertThat(connection.ready.await(5, TimeUnit.SECONDS))
+                .as("connection opened within 5s")
+                .isTrue();
         return connection;
     }
 
@@ -183,20 +188,23 @@ class ChatMessagingTest {
         // and the server echoes back only the fixed one.
         Connection(ReactorNettyWebSocketClient client, URI uri, String token) {
             subscription = client.execute(uri, new HttpHeaders(), new WebSocketHandler() {
-                @Override
-                public List<String> getSubProtocols() {
-                    return List.of(ChatWebSocketHandler.SUBPROTOCOL, token);
-                }
+                        @Override
+                        public List<String> getSubProtocols() {
+                            return List.of(ChatWebSocketHandler.SUBPROTOCOL, token);
+                        }
 
-                @Override
-                public Mono<Void> handle(WebSocketSession session) {
-                    ready.countDown();
-                    Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText)
-                        .doOnNext(inbound::add).then();
-                    Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
-                    return Mono.when(receiving, sending, closeSignal.asMono());
-                }
-            }).subscribe();
+                        @Override
+                        public Mono<Void> handle(WebSocketSession session) {
+                            ready.countDown();
+                            Mono<Void> receiving = session.receive()
+                                    .map(WebSocketMessage::getPayloadAsText)
+                                    .doOnNext(inbound::add)
+                                    .then();
+                            Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
+                            return Mono.when(receiving, sending, closeSignal.asMono());
+                        }
+                    })
+                    .subscribe();
         }
 
         void send(SendMessageRequest request) {

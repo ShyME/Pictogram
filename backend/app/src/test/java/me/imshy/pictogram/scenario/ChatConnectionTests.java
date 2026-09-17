@@ -35,9 +35,11 @@ interface ChatConnectionTests extends AppUnderTest, ChatUnderTest {
     }
 
     private WebSocket connect(String accessToken) throws InterruptedException, ExecutionException, TimeoutException {
-        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(CHAT_SUBPROTOCOL, accessToken)
-            .buildAsync(chatWsUri(), new WebSocket.Listener() {
-            }).get(10, TimeUnit.SECONDS);
+        return HttpClient.newHttpClient()
+                .newWebSocketBuilder()
+                .subprotocols(CHAT_SUBPROTOCOL, accessToken)
+                .buildAsync(chatWsUri(), new WebSocket.Listener() {})
+                .get(10, TimeUnit.SECONDS);
     }
 
     private URI chatWsUri() {
@@ -50,6 +52,7 @@ interface ChatConnectionTests extends AppUnderTest, ChatUnderTest {
         String[] parts = jwt.split("\\.");
         byte[] signature = Base64.getUrlDecoder().decode(parts[2]);
         signature[0] ^= 0xFF;
-        return parts[0] + "." + parts[1] + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+        return parts[0] + "." + parts[1] + "."
+                + Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
     }
 }

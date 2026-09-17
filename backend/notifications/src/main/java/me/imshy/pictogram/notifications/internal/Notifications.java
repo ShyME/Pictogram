@@ -33,8 +33,14 @@ class Notifications {
         }
         NotificationType type = NotificationType.fromWire(event.type());
         UUID subjectId = event.subjectId() == null ? null : event.subjectId().value();
-        store.insertIfNew(UUID.randomUUID(), type.wireName(), event.recipientId().value(), event.actorId().value(),
-            subjectId, event.occurredAt(), clock.instant());
+        store.insertIfNew(
+                UUID.randomUUID(),
+                type.wireName(),
+                event.recipientId().value(),
+                event.actorId().value(),
+                subjectId,
+                event.occurredAt(),
+                clock.instant());
     }
 
     @EventListener

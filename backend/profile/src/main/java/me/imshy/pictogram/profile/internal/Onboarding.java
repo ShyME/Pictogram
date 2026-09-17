@@ -33,8 +33,8 @@ public class Onboarding {
             profiles.save(profile);
         } catch (DataIntegrityViolationException lostARace) {
             throw profiles.existsById(userId.value())
-                ? new AlreadyOnboardedException()
-                : new UsernameAlreadyTakenException();
+                    ? new AlreadyOnboardedException()
+                    : new UsernameAlreadyTakenException();
         }
         return ProfileView.of(profile);
     }

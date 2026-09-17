@@ -39,11 +39,13 @@ class SocialEventExternalization {
     EventExternalizationConfiguration pictogramSocialExternalization(@Lazy PublishedPosts publishedPosts) {
         var payloads = new SocialEventPayloads(publishedPosts);
         return EventExternalizationConfiguration.externalizing()
-            .select(EventExternalizationConfiguration.annotatedAsExternalized().and(payloads::canBuildFrom))
-            .mapping(payloads::from)
-            .routeAll(
-                payload -> RoutingTarget.forTarget(TOPIC).andKey(((SocialEvent) payload).recipientId().toString()))
-            .routeMapped().build();
+                .select(EventExternalizationConfiguration.annotatedAsExternalized()
+                        .and(payloads::canBuildFrom))
+                .mapping(payloads::from)
+                .routeAll(payload -> RoutingTarget.forTarget(TOPIC)
+                        .andKey(((SocialEvent) payload).recipientId().toString()))
+                .routeMapped()
+                .build();
     }
 
     /**
@@ -54,10 +56,16 @@ class SocialEventExternalization {
 
         Optional<SocialEvent> tryFrom(Object event) {
             return switch (event) {
-                case PostLiked e -> publishedPosts.authorOf(e.postId())
-                    .map(author -> SocialEvent.postLiked(author, e.viewer().asUserId(), e.postId(), e.likedAt()));
-                case PostCommented e -> publishedPosts.authorOf(e.postId()).map(
-                    author -> SocialEvent.postCommented(author, e.viewer().asUserId(), e.postId(), e.commentedAt()));
+                case PostLiked e ->
+                    publishedPosts
+                            .authorOf(e.postId())
+                            .map(author ->
+                                    SocialEvent.postLiked(author, e.viewer().asUserId(), e.postId(), e.likedAt()));
+                case PostCommented e ->
+                    publishedPosts
+                            .authorOf(e.postId())
+                            .map(author -> SocialEvent.postCommented(
+                                    author, e.viewer().asUserId(), e.postId(), e.commentedAt()));
                 case UserFollowed e ->
                     Optional.of(SocialEvent.userFollowed(e.followed(), e.follower(), e.followedAt()));
                 default -> Optional.empty();
@@ -69,8 +77,9 @@ class SocialEventExternalization {
         }
 
         SocialEvent from(Object event) {
-            return tryFrom(event).orElseThrow(
-                () -> new IllegalStateException("Externalising an event with no resolvable recipient: " + event));
+            return tryFrom(event)
+                    .orElseThrow(() ->
+                            new IllegalStateException("Externalising an event with no resolvable recipient: " + event));
         }
     }
 }

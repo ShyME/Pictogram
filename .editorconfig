@@ -8,6 +8,11 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
+# Palantir Java Format's own settings (4-space indent, 120-column wrap) — see
+# pictogram.code-quality-conventions.gradle.kts and chat/build.gradle.kts.
+[*.java]
+max_line_length = 120
+
 [*.{js,jsx,ts,tsx,mjs,cjs,json,json5,css,html,yml,yaml}]
 indent_size = 2
 

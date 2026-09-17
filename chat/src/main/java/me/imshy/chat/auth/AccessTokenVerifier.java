@@ -22,8 +22,7 @@ public class AccessTokenVerifier {
     public AccessTokenVerifier(JWKSource<SecurityContext> jwkSource, String issuer, Clock clock) {
         var processor = new DefaultJWTProcessor<SecurityContext>();
         processor.setJWSKeySelector(new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, jwkSource));
-        processor.setJWTClaimsSetVerifier((claims, context) -> {
-        });
+        processor.setJWTClaimsSetVerifier((claims, context) -> {});
 
         var timestamps = new JwtTimestampValidator();
         timestamps.setClock(clock);
@@ -50,8 +49,7 @@ public class AccessTokenVerifier {
         // needs a real expiry to schedule its close (#192), so a missing one is
         // rejected here
         // rather than reaching that Duration.between as a null.
-        if (jwt.getExpiresAt() == null)
-            throw new InvalidAccessTokenException("Access token has no expiry", null);
+        if (jwt.getExpiresAt() == null) throw new InvalidAccessTokenException("Access token has no expiry", null);
         return new ResolvedAccessToken(userId, jwt.getExpiresAt());
     }
 }

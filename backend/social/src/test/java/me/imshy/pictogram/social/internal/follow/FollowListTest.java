@@ -97,7 +97,8 @@ class FollowListTest extends SocialModuleIntegrationTest {
             following.follow(viewer, UserId.random());
         }
 
-        List<UserId> wholePage = followList.followingOf(viewer.asUserId(), null, 10).items();
+        List<UserId> wholePage =
+                followList.followingOf(viewer.asUserId(), null, 10).items();
         List<UserId> oneAtATime = drainFollowing(viewer.asUserId(), 1);
 
         assertThat(oneAtATime).hasSize(3).doesNotHaveDuplicates();

@@ -43,7 +43,7 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
         var stranger = UserId.random();
 
         assertThat(followRelationships.of(ViewerId.random(), List.of(stranger)))
-            .containsExactly(new Relationship(stranger, 0, 0, false));
+                .containsExactly(new Relationship(stranger, 0, 0, false));
     }
 
     @Test
@@ -59,7 +59,7 @@ class FollowRelationshipsTest extends SocialModuleIntegrationTest {
         following.follow(ViewerId.of(other), viewer.asUserId());
 
         assertThat(followRelationships.of(viewer, List.of(viewer.asUserId())))
-            .containsExactly(new Relationship(viewer.asUserId(), 1, 1, false));
+                .containsExactly(new Relationship(viewer.asUserId(), 1, 1, false));
     }
 
     private static Map<UserId, Relationship> index(List<Relationship> rows) {

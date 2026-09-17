@@ -37,12 +37,13 @@ class LikeExternalizationTest extends SocialModuleIntegrationTest {
     void aLikeIsPublishedAndExternalisedToTheRecipientKeyedTopic(Scenario scenario) {
         given(publishedPosts.authorOf(post)).willReturn(Optional.of(author));
 
-        scenario.stimulate(() -> liking.like(liker, post)).andWaitForEventOfType(PostLiked.class)
-            .toArriveAndVerify(liked -> {
-                assertThat(externalization.supports(liked)).isTrue();
-                assertThat(externalization.map(liked))
-                    .isEqualTo(SocialEvent.postLiked(author, liker.asUserId(), post, liked.likedAt()));
-                assertThat(externalization.determineTarget(liked).getKey()).isEqualTo(author.toString());
-            });
+        scenario.stimulate(() -> liking.like(liker, post))
+                .andWaitForEventOfType(PostLiked.class)
+                .toArriveAndVerify(liked -> {
+                    assertThat(externalization.supports(liked)).isTrue();
+                    assertThat(externalization.map(liked))
+                            .isEqualTo(SocialEvent.postLiked(author, liker.asUserId(), post, liked.likedAt()));
+                    assertThat(externalization.determineTarget(liked).getKey()).isEqualTo(author.toString());
+                });
     }
 }

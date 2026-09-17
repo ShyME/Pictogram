@@ -18,8 +18,18 @@ class UsernameTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"ad", "twenty_one_characters", "Ada", "ada lovelace", "ada-lovelace", "ada.lovelace",
-        "adaünicode", "", "   "})
+    @ValueSource(
+            strings = {
+                "ad",
+                "twenty_one_characters",
+                "Ada",
+                "ada lovelace",
+                "ada-lovelace",
+                "ada.lovelace",
+                "adaünicode",
+                "",
+                "   "
+            })
     void rejectsAHandleThatDoesNotMatchTheShapeRule(String candidate) {
         assertThatExceptionOfType(MalformedUsernameException.class).isThrownBy(() -> new Username(candidate));
     }
@@ -30,6 +40,7 @@ class UsernameTest {
         var taken = new UsernameAlreadyTakenException();
 
         assertThat(shape.toProblemDetail().getStatus()).isEqualTo(400);
-        assertThat(shape.toProblemDetail().getType()).isNotEqualTo(taken.toProblemDetail().getType());
+        assertThat(shape.toProblemDetail().getType())
+                .isNotEqualTo(taken.toProblemDetail().getType());
     }
 }

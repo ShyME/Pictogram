@@ -8,11 +8,10 @@ import tools.jackson.databind.ObjectMapper;
 
 public final class ProblemDetails {
 
-    private ProblemDetails() {
-    }
+    private ProblemDetails() {}
 
     public static void write(HttpServletResponse response, ObjectMapper objectMapper, ProblemDetail problem)
-        throws IOException {
+            throws IOException {
         response.setStatus(problem.getStatus());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), problem);

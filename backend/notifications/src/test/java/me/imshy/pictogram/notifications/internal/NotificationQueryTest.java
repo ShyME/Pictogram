@@ -64,8 +64,13 @@ class NotificationQueryTest extends NotificationsModuleIntegrationTest {
             cursor = page.nextCursor();
         } while (cursor != null);
 
-        assertThat(walked).containsExactly(oldestFirst.get(4), oldestFirst.get(3), oldestFirst.get(2),
-            oldestFirst.get(1), oldestFirst.get(0));
+        assertThat(walked)
+                .containsExactly(
+                        oldestFirst.get(4),
+                        oldestFirst.get(3),
+                        oldestFirst.get(2),
+                        oldestFirst.get(1),
+                        oldestFirst.get(0));
     }
 
     @Test
@@ -105,7 +110,9 @@ class NotificationQueryTest extends NotificationsModuleIntegrationTest {
         query.markAllReadFor(viewer(caller));
         assertThat(query.unreadCountFor(viewer(caller))).isZero();
 
-        assertThat(query.pageFor(viewer(caller), null, 50).notifications()).hasSize(3).allMatch(NotificationView::read);
+        assertThat(query.pageFor(viewer(caller), null, 50).notifications())
+                .hasSize(3)
+                .allMatch(NotificationView::read);
         assertThat(query.unreadCountFor(viewer(other))).isEqualTo(2);
     }
 
@@ -129,8 +136,13 @@ class NotificationQueryTest extends NotificationsModuleIntegrationTest {
         List<UUID> actors = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             UUID actor = UUID.randomUUID();
-            givenNotification(NotificationType.POST_LIKED, recipient, actor, UUID.randomUUID(),
-                OCCURRED_AT.plusSeconds(i), OCCURRED_AT.plusSeconds(i));
+            givenNotification(
+                    NotificationType.POST_LIKED,
+                    recipient,
+                    actor,
+                    UUID.randomUUID(),
+                    OCCURRED_AT.plusSeconds(i),
+                    OCCURRED_AT.plusSeconds(i));
             actors.add(actor);
         }
         return actors;

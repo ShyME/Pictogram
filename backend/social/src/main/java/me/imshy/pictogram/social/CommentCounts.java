@@ -8,6 +8,5 @@ public interface CommentCounts {
 
     List<PostComments> of(Collection<PostId> posts);
 
-    record PostComments(PostId post, long commentCount) {
-    }
+    record PostComments(PostId post, long commentCount) {}
 }

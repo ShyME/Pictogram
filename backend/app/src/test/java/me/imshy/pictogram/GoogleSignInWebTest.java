@@ -83,21 +83,27 @@ class GoogleSignInWebTest {
         var responses = attempts.stream().map(GoogleSignInWebTest::await).toList();
         assertThat(responses).map(HttpResponse::statusCode).containsExactlyInAnyOrder(200, 401);
 
-        String rotated = responses.stream().filter(response -> response.statusCode() == 200)
-            .flatMap(response -> rotatedRefreshCookieFrom(response).stream()).findFirst().orElseThrow();
+        String rotated = responses.stream()
+                .filter(response -> response.statusCode() == 200)
+                .flatMap(response -> rotatedRefreshCookieFrom(response).stream())
+                .findFirst()
+                .orElseThrow();
         int followUp = refresh(rotated).statusCode();
         assertThat(followUp).isEqualTo(200);
     }
 
     @Test
     void anUnverifiedGoogleEmailEndsAtTheSignInErrorRouteWithNoSession() throws Exception {
-        SharedGoogle.INSTANCE.enqueueCallback(googleUserWithClaims("google-subject-web-unverified",
-            Map.of("email", "unverified@example.com", "email_verified", false)));
+        SharedGoogle.INSTANCE.enqueueCallback(googleUserWithClaims(
+                "google-subject-web-unverified", Map.of("email", "unverified@example.com", "email_verified", false)));
         var cookies = new CookieManager();
 
-        HttpResponse<Void> landing = browser(cookies).send(
-            HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
-            HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> landing = browser(cookies)
+                .send(
+                        HttpRequest.newBuilder(uri("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
 
         assertThat(landing.uri().getPath()).isEqualTo("/login");
         assertThat(landing.uri().getQuery()).isEqualTo("error=email-unverified");
@@ -106,13 +112,16 @@ class GoogleSignInWebTest {
 
     @Test
     void aGoogleResponseWithNoEmailClaimEndsAtTheSignInErrorRoute() throws Exception {
-        SharedGoogle.INSTANCE
-            .enqueueCallback(googleUserWithClaims("google-subject-web-no-email", Map.of("email_verified", true)));
+        SharedGoogle.INSTANCE.enqueueCallback(
+                googleUserWithClaims("google-subject-web-no-email", Map.of("email_verified", true)));
         var cookies = new CookieManager();
 
-        HttpResponse<Void> landing = browser(cookies).send(
-            HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
-            HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> landing = browser(cookies)
+                .send(
+                        HttpRequest.newBuilder(uri("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
 
         assertThat(landing.uri().getPath()).isEqualTo("/login");
         assertThat(landing.uri().getQuery()).isEqualTo("error=email-missing");
@@ -121,9 +130,12 @@ class GoogleSignInWebTest {
 
     @Test
     void aFailedGoogleHandshakeEndsAtTheSignInErrorRoute() throws Exception {
-        HttpResponse<Void> landing = browser(new CookieManager()).send(HttpRequest
-            .newBuilder(uri("/login/oauth2/code/google?error=access_denied&state=nonexistent")).GET().build(),
-            HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> landing = browser(new CookieManager())
+                .send(
+                        HttpRequest.newBuilder(uri("/login/oauth2/code/google?error=access_denied&state=nonexistent"))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
 
         assertThat(landing.uri().getPath()).isEqualTo("/login");
         assertThat(landing.uri().getQuery()).isEqualTo("error=sign-in-failed");
@@ -137,24 +149,43 @@ class GoogleSignInWebTest {
         String handshakeSession = signInCapturingHandshakeSession(cookies);
         assertThat(refreshCookie(cookies)).isPresent();
 
-        HttpResponse<Void> withStaleSession = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
-            .send(HttpRequest.newBuilder(uri("/oauth2/probe")).header("Cookie", "JSESSIONID=" + handshakeSession).GET()
-                .build(), HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> withStaleSession = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(
+                        HttpRequest.newBuilder(uri("/oauth2/probe"))
+                                .header("Cookie", "JSESSIONID=" + handshakeSession)
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
 
         assertThat(withStaleSession.statusCode()).isEqualTo(302);
     }
 
     private String signInCapturingHandshakeSession(CookieManager cookies) throws Exception {
-        HttpResponse<Void> authRequest = HttpClient.newBuilder().cookieHandler(cookies)
-            .followRedirects(HttpClient.Redirect.NEVER).build()
-            .send(HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
-                HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> authRequest = HttpClient.newBuilder()
+                .cookieHandler(cookies)
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(
+                        HttpRequest.newBuilder(uri("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
         String jsessionid = cookies.getCookieStore().getCookies().stream()
-            .filter(cookie -> "JSESSIONID".equals(cookie.getName())).map(HttpCookie::getValue).findFirst()
-            .orElseThrow(() -> new AssertionError("the OIDC handshake set no JSESSIONID"));
-        browser(cookies).send(HttpRequest
-            .newBuilder(URI.create(authRequest.headers().firstValue("Location").orElseThrow())).GET().build(),
-            HttpResponse.BodyHandlers.discarding());
+                .filter(cookie -> "JSESSIONID".equals(cookie.getName()))
+                .map(HttpCookie::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the OIDC handshake set no JSESSIONID"));
+        browser(cookies)
+                .send(
+                        HttpRequest.newBuilder(URI.create(authRequest
+                                        .headers()
+                                        .firstValue("Location")
+                                        .orElseThrow()))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
         return jsessionid;
     }
 
@@ -172,18 +203,26 @@ class GoogleSignInWebTest {
 
     private static Optional<String> setCookieValue(HttpResponse<?> response, String name) {
         String prefix = name + "=";
-        return response.headers().allValues("Set-Cookie").stream().filter(header -> header.startsWith(prefix))
-            .map(header -> {
-                int end = header.indexOf(';');
-                return header.substring(prefix.length(), end < 0 ? header.length() : end);
-            }).filter(value -> !value.isEmpty()).findFirst();
+        return response.headers().allValues("Set-Cookie").stream()
+                .filter(header -> header.startsWith(prefix))
+                .map(header -> {
+                    int end = header.indexOf(';');
+                    return header.substring(prefix.length(), end < 0 ? header.length() : end);
+                })
+                .filter(value -> !value.isEmpty())
+                .findFirst();
     }
 
     private void signInThroughGoogle(CookieManager cookies) throws Exception {
-        browser(cookies).send(HttpRequest.newBuilder(uri("/oauth2/authorization/google")).GET().build(),
-            HttpResponse.BodyHandlers.discarding());
-        assertThat(refreshCookie(cookies)).withFailMessage("Google sign-in set no %s cookie", REFRESH_COOKIE)
-            .isPresent();
+        browser(cookies)
+                .send(
+                        HttpRequest.newBuilder(uri("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
+        assertThat(refreshCookie(cookies))
+                .withFailMessage("Google sign-in set no %s cookie", REFRESH_COOKIE)
+                .isPresent();
     }
 
     private static DefaultOAuth2TokenCallback googleUser(String subject, String email) {
@@ -191,12 +230,15 @@ class GoogleSignInWebTest {
     }
 
     private static DefaultOAuth2TokenCallback googleUserWithClaims(String subject, Map<String, Object> claims) {
-        return new DefaultOAuth2TokenCallback(ISSUER_ID, subject, JOSEObjectType.JWT.getType(), List.of(CLIENT_ID),
-            claims, 3600L);
+        return new DefaultOAuth2TokenCallback(
+                ISSUER_ID, subject, JOSEObjectType.JWT.getType(), List.of(CLIENT_ID), claims, 3600L);
     }
 
     private HttpClient browser(CookieManager cookies) {
-        return HttpClient.newBuilder().cookieHandler(cookies).followRedirects(HttpClient.Redirect.NORMAL).build();
+        return HttpClient.newBuilder()
+                .cookieHandler(cookies)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 
     /**
@@ -210,25 +252,35 @@ class GoogleSignInWebTest {
     }
 
     private HttpResponse<String> refresh(String refreshCookieValue, String csrfToken) throws Exception {
-        return HttpClient.newHttpClient().send(
-            HttpRequest.newBuilder(uri("/api/auth/refresh"))
-                .header("Cookie", REFRESH_COOKIE + "=" + refreshCookieValue + "; XSRF-TOKEN=" + csrfToken)
-                .header("X-XSRF-TOKEN", csrfToken).POST(HttpRequest.BodyPublishers.noBody()).build(),
-            HttpResponse.BodyHandlers.ofString());
+        return HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(uri("/api/auth/refresh"))
+                                .header(
+                                        "Cookie",
+                                        REFRESH_COOKIE + "=" + refreshCookieValue + "; XSRF-TOKEN=" + csrfToken)
+                                .header("X-XSRF-TOKEN", csrfToken)
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
     }
 
     private String mintCsrfToken() throws Exception {
-        HttpResponse<Void> seeded = HttpClient.newHttpClient().send(
-            HttpRequest.newBuilder(uri("/api/auth/refresh")).POST(HttpRequest.BodyPublishers.noBody()).build(),
-            HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> seeded = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(uri("/api/auth/refresh"))
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.discarding());
         assertThat(seeded.statusCode()).isEqualTo(403);
         return setCookieValue(seeded, "XSRF-TOKEN")
-            .orElseThrow(() -> new AssertionError("the CSRF filter seeded no XSRF-TOKEN cookie"));
+                .orElseThrow(() -> new AssertionError("the CSRF filter seeded no XSRF-TOKEN cookie"));
     }
 
     private static java.util.Optional<String> refreshCookie(CookieManager cookies) {
-        return cookies.getCookieStore().getCookies().stream().filter(cookie -> REFRESH_COOKIE.equals(cookie.getName()))
-            .map(HttpCookie::getValue).findFirst();
+        return cookies.getCookieStore().getCookies().stream()
+                .filter(cookie -> REFRESH_COOKIE.equals(cookie.getName()))
+                .map(HttpCookie::getValue)
+                .findFirst();
     }
 
     private URI uri(String path) {

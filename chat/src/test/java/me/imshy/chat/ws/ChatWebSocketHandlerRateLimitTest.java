@@ -61,25 +61,30 @@ class ChatWebSocketHandlerRateLimitTest {
         for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY + 5; frame++)
             connection.send(UserId.random(), "hi");
 
-        assertThat(connection.closed.await(5, TimeUnit.SECONDS)).as("connection closed within 5s").isTrue();
+        assertThat(connection.closed.await(5, TimeUnit.SECONDS))
+                .as("connection closed within 5s")
+                .isTrue();
         assertThat(connection.closedWith.get().getCode())
-            .isEqualTo(ChatWebSocketHandler.RATE_LIMIT_EXCEEDED_CLOSE_CODE);
+                .isEqualTo(ChatWebSocketHandler.RATE_LIMIT_EXCEEDED_CLOSE_CODE);
     }
 
     @Test
     void aBurstWithinTheLimitLeavesTheConnectionOpen() throws InterruptedException {
         Connection connection = connect();
 
-        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++)
-            connection.send(UserId.random(), "hi");
+        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++) connection.send(UserId.random(), "hi");
 
-        assertThat(connection.closed.await(500, TimeUnit.MILLISECONDS)).as("still open past the deadline").isFalse();
+        assertThat(connection.closed.await(500, TimeUnit.MILLISECONDS))
+                .as("still open past the deadline")
+                .isFalse();
     }
 
     private Connection connect() throws InterruptedException {
         Connection connection = new Connection(client, wsUri(), TOKENS.issue(UserId.random(), clock));
         connections.add(connection);
-        assertThat(connection.ready.await(5, TimeUnit.SECONDS)).as("connection opened within 5s").isTrue();
+        assertThat(connection.ready.await(5, TimeUnit.SECONDS))
+                .as("connection opened within 5s")
+                .isTrue();
         return connection;
     }
 
@@ -97,28 +102,32 @@ class ChatWebSocketHandlerRateLimitTest {
 
         Connection(ReactorNettyWebSocketClient client, URI uri, String token) {
             subscription = client.execute(uri, new HttpHeaders(), new WebSocketHandler() {
-                @Override
-                public List<String> getSubProtocols() {
-                    return List.of(ChatWebSocketHandler.SUBPROTOCOL, token);
-                }
+                        @Override
+                        public List<String> getSubProtocols() {
+                            return List.of(ChatWebSocketHandler.SUBPROTOCOL, token);
+                        }
 
-                @Override
-                public Mono<Void> handle(WebSocketSession session) {
-                    ready.countDown();
-                    session.closeStatus().doOnNext(status -> {
-                        closedWith.set(status);
-                        closed.countDown();
-                    }).subscribe();
-                    Mono<Void> receiving = session.receive().then();
-                    Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
-                    return receiving.and(sending);
-                }
-            }).subscribe();
+                        @Override
+                        public Mono<Void> handle(WebSocketSession session) {
+                            ready.countDown();
+                            session.closeStatus()
+                                    .doOnNext(status -> {
+                                        closedWith.set(status);
+                                        closed.countDown();
+                                    })
+                                    .subscribe();
+                            Mono<Void> receiving = session.receive().then();
+                            Mono<Void> sending = session.send(outbound.asFlux().map(session::textMessage));
+                            return receiving.and(sending);
+                        }
+                    })
+                    .subscribe();
         }
 
         void send(UserId recipient, String text) {
-            outbound.emitNext(JSON.writeValueAsString(new SendMessageRequest(recipient, text)),
-                Sinks.EmitFailureHandler.FAIL_FAST);
+            outbound.emitNext(
+                    JSON.writeValueAsString(new SendMessageRequest(recipient, text)),
+                    Sinks.EmitFailureHandler.FAIL_FAST);
         }
 
         void close() {

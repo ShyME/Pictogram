@@ -5,8 +5,7 @@ import me.imshy.chat.UserId;
 // What a connection can receive: someone else's message, an explicit "undelivered"
 // outcome for one this connection's own caller just sent (ADR-0014's Delivery language) —
 // never both for the same send — or the answer to a presence query it asked.
-sealed interface OutboundEvent permits DeliveredMessage, UndeliveredMessage, PresenceStatus {
-}
+sealed interface OutboundEvent permits DeliveredMessage, UndeliveredMessage, PresenceStatus {}
 
 record DeliveredMessage(String type, UserId senderUserId, String text) implements OutboundEvent {
 

@@ -24,8 +24,10 @@ class ChatHandshakeFilterTest {
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-09-05T12:00:00Z"), ZoneOffset.UTC);
     private final TestAccessTokens tokens = new TestAccessTokens();
-    private final ChatHandshakeFilter filter = new ChatHandshakeFilter(PATH, new AccessTokenVerifier(
-        PublicSigningKey.fromJwkJson(tokens.publicJwkJson()).jwkSource(), TestAccessTokens.ISSUER, clock));
+    private final ChatHandshakeFilter filter = new ChatHandshakeFilter(
+            PATH,
+            new AccessTokenVerifier(
+                    PublicSigningKey.fromJwkJson(tokens.publicJwkJson()).jwkSource(), TestAccessTokens.ISSUER, clock));
 
     @Test
     void aValidTokenIsAttributedToItsCallerAndTheRequestProceeds() {
@@ -41,8 +43,10 @@ class ChatHandshakeFilterTest {
 
         assertThat(chainRan).isTrue();
         assertThat(exchange.getAttributes()).containsEntry(ChatHandshakeFilter.USER_ID_ATTRIBUTE, sender);
-        assertThat(exchange.getAttributes()).containsEntry(ChatHandshakeFilter.EXPIRES_AT_ATTRIBUTE,
-            clock.instant().plus(Duration.ofMinutes(15)));
+        assertThat(exchange.getAttributes())
+                .containsEntry(
+                        ChatHandshakeFilter.EXPIRES_AT_ATTRIBUTE,
+                        clock.instant().plus(Duration.ofMinutes(15)));
     }
 
     @Test
@@ -77,7 +81,8 @@ class ChatHandshakeFilterTest {
 
     @Test
     void aMissingTokenIsRejectedBeforeTheChainRuns() {
-        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get(PATH).build());
+        var exchange =
+                MockServerWebExchange.from(MockServerHttpRequest.get(PATH).build());
         var chainRan = new AtomicBoolean(false);
         WebFilterChain chain = ex -> {
             chainRan.set(true);
@@ -93,8 +98,8 @@ class ChatHandshakeFilterTest {
     @Test
     void aValidTokenAmongSeveralCommaJoinedOfferedProtocolsIsAccepted() {
         UserId sender = UserId.random();
-        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get(PATH).header("Sec-WebSocket-Protocol",
-            "some-other-protocol, " + tokens.issue(sender, clock)));
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get(PATH)
+                .header("Sec-WebSocket-Protocol", "some-other-protocol, " + tokens.issue(sender, clock)));
         var chainRan = new AtomicBoolean(false);
         WebFilterChain chain = ex -> {
             chainRan.set(true);
@@ -109,7 +114,8 @@ class ChatHandshakeFilterTest {
 
     @Test
     void requestsOnOtherPathsAreNotIntercepted() {
-        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/actuator/health").build());
+        var exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/actuator/health").build());
         var chainRan = new AtomicBoolean(false);
         WebFilterChain chain = ex -> {
             chainRan.set(true);

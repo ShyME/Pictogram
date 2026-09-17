@@ -38,14 +38,15 @@ class CrossActorAuthorizationApiTest {
         var post = UUID.randomUUID().toString();
 
         mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(delete("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(stranger))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(get("/api/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isOk()).andExpect(jsonPath("$[0].likeCount").value(1))
-            .andExpect(jsonPath("$[0].likedByViewer").value(true));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].likeCount").value(1))
+                .andExpect(jsonPath("$[0].likedByViewer").value(true));
     }
 
     @Test
@@ -55,13 +56,15 @@ class CrossActorAuthorizationApiTest {
         var target = UUID.randomUUID();
 
         mvc.perform(put("/api/follows/" + target).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(delete("/api/follows/" + target).with(jwt().jwt(jwt -> jwt.subject(stranger))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/follows/" + target).with(jwt().jwt(jwt -> jwt.subject(ada)))).andExpect(status().isOk())
-            .andExpect(jsonPath("$.followerCount").value(1)).andExpect(jsonPath("$.followedByViewer").value(true));
+        mvc.perform(get("/api/follows/" + target).with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.followerCount").value(1))
+                .andExpect(jsonPath("$.followedByViewer").value(true));
     }
 
     @Test
@@ -70,10 +73,12 @@ class CrossActorAuthorizationApiTest {
         var commenter = UUID.randomUUID().toString();
         String post = publish(postAuthor, uploadPhoto(postAuthor));
 
-        var created = mvc
-            .perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(commenter)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"not yours to caption\"}"))
-            .andExpect(status().isCreated()).andReturn();
+        var created = mvc.perform(post("/api/posts/" + post + "/comments")
+                        .with(jwt().jwt(jwt -> jwt.subject(commenter)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"not yours to caption\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
 
         String authorId = JsonPath.read(created.getResponse().getContentAsString(), "$.authorId");
         assertThat(authorId).isEqualTo(commenter).isNotEqualTo(postAuthor);
@@ -86,39 +91,50 @@ class CrossActorAuthorizationApiTest {
         var adaUsername = "ada_" + ada.substring(0, 8);
         var bobUsername = "bob_" + bob.substring(0, 8);
 
-        mvc.perform(post("/api/profiles").with(jwt().jwt(jwt -> jwt.subject(ada)))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"%s\"}".formatted(adaUsername)))
-            .andExpect(status().isCreated());
-        mvc.perform(post("/api/profiles").with(jwt().jwt(jwt -> jwt.subject(bob)))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"%s\"}".formatted(bobUsername)))
-            .andExpect(status().isCreated());
+        mvc.perform(post("/api/profiles")
+                        .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"%s\"}".formatted(adaUsername)))
+                .andExpect(status().isCreated());
+        mvc.perform(post("/api/profiles")
+                        .with(jwt().jwt(jwt -> jwt.subject(bob)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"%s\"}".formatted(bobUsername)))
+                .andExpect(status().isCreated());
 
-        mvc.perform(get("/api/profiles/me").with(jwt().jwt(jwt -> jwt.subject(ada)))).andExpect(status().isOk())
-            .andExpect(jsonPath("$.username").value(adaUsername));
-        mvc.perform(get("/api/profiles/me").with(jwt().jwt(jwt -> jwt.subject(bob)))).andExpect(status().isOk())
-            .andExpect(jsonPath("$.username").value(bobUsername));
+        mvc.perform(get("/api/profiles/me").with(jwt().jwt(jwt -> jwt.subject(ada))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(adaUsername));
+        mvc.perform(get("/api/profiles/me").with(jwt().jwt(jwt -> jwt.subject(bob))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(bobUsername));
     }
 
     @Test
     void thereIsNoRouteToWriteAnotherCallersProfileByIdOnlyMe() throws Exception {
         var stranger = UUID.randomUUID().toString();
 
-        mvc.perform(put("/api/profiles/" + UUID.randomUUID()).with(jwt().jwt(jwt -> jwt.subject(stranger)))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"whoever\"}"))
-            .andExpect(status().is4xxClientError());
+        mvc.perform(put("/api/profiles/" + UUID.randomUUID())
+                        .with(jwt().jwt(jwt -> jwt.subject(stranger)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"whoever\"}"))
+                .andExpect(status().is4xxClientError());
     }
 
     private String uploadPhoto(String owner) throws Exception {
         var result = mvc.perform(multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(owner))))
-            .andExpect(status().isCreated()).andReturn();
+                .andExpect(status().isCreated())
+                .andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.mediaId");
     }
 
     private String publish(String author, String mediaId) throws Exception {
-        var result = mvc
-            .perform(post("/api/posts").with(jwt().jwt(jwt -> jwt.subject(author)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"mediaId\":\"%s\"}".formatted(mediaId)))
-            .andExpect(status().isCreated()).andReturn();
+        var result = mvc.perform(post("/api/posts")
+                        .with(jwt().jwt(jwt -> jwt.subject(author)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mediaId\":\"%s\"}".formatted(mediaId)))
+                .andExpect(status().isCreated())
+                .andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.postId");
     }
 

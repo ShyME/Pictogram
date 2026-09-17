@@ -44,7 +44,8 @@ public class LikeTally implements LikeCounts, LikeVolume {
     private List<PostLikes> tally(List<UUID> ids, Set<UUID> likedByViewer) {
         Map<UUID, Long> counts = likes.countsFor(ids).stream().collect(toMap(LikeCount::postId, LikeCount::count));
         return ids.stream()
-            .map(id -> new PostLikes(new PostId(id), counts.getOrDefault(id, 0L), likedByViewer.contains(id))).toList();
+                .map(id -> new PostLikes(new PostId(id), counts.getOrDefault(id, 0L), likedByViewer.contains(id)))
+                .toList();
     }
 
     private static List<UUID> distinctIds(Collection<PostId> posts) {

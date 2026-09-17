@@ -17,15 +17,15 @@ class ProfileDetailsTest {
     void displayNameLengthIsCountedInCodePointsSoAnEmojiCostsOne() {
         assertThatNoException().isThrownBy(() -> DisplayName.of("🎨".repeat(DisplayName.MAX_LENGTH)));
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-            .isThrownBy(() -> DisplayName.of("🎨".repeat(DisplayName.MAX_LENGTH + 1)));
+                .isThrownBy(() -> DisplayName.of("🎨".repeat(DisplayName.MAX_LENGTH + 1)));
     }
 
     @Test
     void displayNameRejectsLineBreaksAndControlCharacters() {
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-            .isThrownBy(() -> DisplayName.of("Ada\nLovelace"));
+                .isThrownBy(() -> DisplayName.of("Ada\nLovelace"));
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-            .isThrownBy(() -> DisplayName.of("Ada\tLovelace"));
+                .isThrownBy(() -> DisplayName.of("Ada\tLovelace"));
     }
 
     @Test
@@ -33,7 +33,7 @@ class ProfileDetailsTest {
         assertThatNoException().isThrownBy(() -> Bio.of("🎨".repeat(Bio.MAX_LENGTH)));
         assertThatNoException().isThrownBy(() -> Bio.of("line one\nline two"));
         assertThatExceptionOfType(InvalidProfileDetailsException.class)
-            .isThrownBy(() -> Bio.of("x".repeat(Bio.MAX_LENGTH + 1)));
+                .isThrownBy(() -> Bio.of("x".repeat(Bio.MAX_LENGTH + 1)));
     }
 
     @Test

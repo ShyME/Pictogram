@@ -36,6 +36,6 @@ interface Comments extends CrudRepository<Comment, UUID> {
           and (c.createdAt > :afterAt or (c.createdAt = :afterAt and c.id > :afterId))
         order by c.createdAt asc, c.id asc
         """)
-    List<Comment> afterFor(@Param("post") UUID post, @Param("afterAt") Instant afterAt, @Param("afterId") UUID afterId,
-        Limit limit);
+    List<Comment> afterFor(
+            @Param("post") UUID post, @Param("afterAt") Instant afterAt, @Param("afterId") UUID afterId, Limit limit);
 }

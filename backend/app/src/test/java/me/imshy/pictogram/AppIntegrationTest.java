@@ -16,5 +16,4 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @Import(SharedWebTestConfig.class)
 @ExtendWith({DatabaseTruncationExtension.class, AppContextAmountGuard.class})
-public @interface AppIntegrationTest {
-}
+public @interface AppIntegrationTest {}

@@ -50,7 +50,7 @@ class LikeCountsContractTest extends SocialModuleIntegrationTest {
         var untouched = PostId.random();
 
         assertThat(likeCounts.of(ViewerId.random(), List.of(untouched)))
-            .containsExactly(new PostLikes(untouched, 0, false));
+                .containsExactly(new PostLikes(untouched, 0, false));
     }
 
     @Test

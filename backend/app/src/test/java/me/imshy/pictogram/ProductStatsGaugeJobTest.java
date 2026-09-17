@@ -80,13 +80,18 @@ class ProductStatsGaugeJobTest {
         job = job();
 
         verify(identityStats).activeSince(since.capture());
-        assertThat(since.getValue()).isCloseTo(clock.instant().minus(Duration.ofHours(24)),
-            within(0, ChronoUnit.SECONDS));
+        assertThat(since.getValue())
+                .isCloseTo(clock.instant().minus(Duration.ofHours(24)), within(0, ChronoUnit.SECONDS));
     }
 
     private ProductStatsGaugeJob job() {
-        return new ProductStatsGaugeJob(identityStats, postStats, socialStats, registry, clock,
-            new ProductStatsProperties(Duration.ofHours(24)));
+        return new ProductStatsGaugeJob(
+                identityStats,
+                postStats,
+                socialStats,
+                registry,
+                clock,
+                new ProductStatsProperties(Duration.ofHours(24)));
     }
 
     private double gauge(String name) {

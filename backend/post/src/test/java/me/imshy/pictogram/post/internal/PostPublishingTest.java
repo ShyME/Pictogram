@@ -33,8 +33,9 @@ class PostPublishingTest extends PostModuleIntegrationTest {
         assertThat(post.mediaId()).isEqualTo(mediaId);
         assertThat(post.caption()).isEqualTo("my first post");
         assertThat(post.publishedAt()).isNotNull();
-        assertThat(postTimeline.pageFor(author, null, null).items()).extracting(PostView::postId)
-            .containsExactly(post.postId());
+        assertThat(postTimeline.pageFor(author, null, null).items())
+                .extracting(PostView::postId)
+                .containsExactly(post.postId());
         assertThat(events.ofType(PostPublished.class)).singleElement().satisfies(event -> {
             assertThat(event.postId()).isEqualTo(post.postId());
             assertThat(event.authorId()).isEqualTo(author);
@@ -56,7 +57,7 @@ class PostPublishingTest extends PostModuleIntegrationTest {
         given(mediaCatalog.ownerOf(any())).willReturn(Optional.empty());
 
         assertThatExceptionOfType(UnusableMediaException.class)
-            .isThrownBy(() -> postPublishing.publish(UserId.random(), MediaId.random(), null));
+                .isThrownBy(() -> postPublishing.publish(UserId.random(), MediaId.random(), null));
     }
 
     @Test
@@ -65,7 +66,7 @@ class PostPublishingTest extends PostModuleIntegrationTest {
         given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(UserId.random()));
 
         assertThatExceptionOfType(UnusableMediaException.class)
-            .isThrownBy(() -> postPublishing.publish(UserId.random(), mediaId, null));
+                .isThrownBy(() -> postPublishing.publish(UserId.random(), mediaId, null));
     }
 
     @Test
@@ -75,7 +76,7 @@ class PostPublishingTest extends PostModuleIntegrationTest {
         given(mediaCatalog.ownerOf(mediaId)).willReturn(Optional.of(author));
 
         assertThatExceptionOfType(CaptionTooLongException.class)
-            .isThrownBy(() -> postPublishing.publish(author, mediaId, "x".repeat(Caption.MAX_LENGTH + 1)));
+                .isThrownBy(() -> postPublishing.publish(author, mediaId, "x".repeat(Caption.MAX_LENGTH + 1)));
     }
 
     @Test
@@ -84,7 +85,7 @@ class PostPublishingTest extends PostModuleIntegrationTest {
         var author = UserId.random();
 
         assertThatExceptionOfType(UnusableMediaException.class)
-            .isThrownBy(() -> postPublishing.publish(author, MediaId.random(), "caption"));
+                .isThrownBy(() -> postPublishing.publish(author, MediaId.random(), "caption"));
 
         assertThat(postTimeline.pageFor(author, null, null).items()).isEmpty();
         assertThat(events.ofType(PostPublished.class)).isEmpty();

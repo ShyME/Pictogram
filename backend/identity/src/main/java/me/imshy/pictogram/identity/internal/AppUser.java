@@ -19,8 +19,7 @@ class AppUser {
     private String email;
     private Instant registeredAt;
 
-    protected AppUser() {
-    }
+    protected AppUser() {}
 
     UserId userId() {
         return new UserId(id);

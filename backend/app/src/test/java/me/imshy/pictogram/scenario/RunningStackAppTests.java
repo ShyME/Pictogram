@@ -8,27 +8,27 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Tag("blackbox")
 class RunningStackAppTests
-    implements
-        CommentTests,
-        PostDeleteTests,
-        ProfileEditTests,
-        FeedTests,
-        FollowTests,
-        FollowListTests,
-        LikeTests,
-        UserOnboardingTests,
-        PostPublishTests,
-        ViewProfileTests,
-        ChatConnectionTests,
-        ChatMessageTests,
-        ChatPresenceTests {
+        implements CommentTests,
+                PostDeleteTests,
+                ProfileEditTests,
+                FeedTests,
+                FollowTests,
+                FollowListTests,
+                LikeTests,
+                UserOnboardingTests,
+                PostPublishTests,
+                ViewProfileTests,
+                ChatConnectionTests,
+                ChatMessageTests,
+                ChatPresenceTests {
 
     private PictogramApp pictogramApp;
     private URI baseUri;
 
     @BeforeEach
     void connectToTheRunningStack() {
-        baseUri = URI.create(Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
+        baseUri = URI.create(
+                Optional.ofNullable(System.getenv("PICTOGRAM_BASE_URL")).orElse("http://localhost:8080"));
         pictogramApp = new RunningStackApp(baseUri, JsonMapper.builder().build());
     }
 

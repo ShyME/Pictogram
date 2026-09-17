@@ -21,9 +21,12 @@ class CommentApiTest {
 
     @Test
     void commentingRequiresAToken() throws Exception {
-        mvc.perform(post("/api/posts/" + UUID.randomUUID() + "/comments").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"body\":\"hi\"}")).andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(post("/api/posts/" + UUID.randomUUID() + "/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"hi\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -31,17 +34,22 @@ class CommentApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"nice shot\"}"))
-            .andExpect(status().isCreated())
-            .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/comments/")))
-            .andExpect(jsonPath("$.postId").value(post)).andExpect(jsonPath("$.authorId").value(ada))
-            .andExpect(jsonPath("$.body").value("nice shot")).andExpect(jsonPath("$.commentId").isNotEmpty())
-            .andExpect(jsonPath("$.createdAt").isNotEmpty());
+        mvc.perform(post("/api/posts/" + post + "/comments")
+                        .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"nice shot\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/comments/")))
+                .andExpect(jsonPath("$.postId").value(post))
+                .andExpect(jsonPath("$.authorId").value(ada))
+                .andExpect(jsonPath("$.body").value("nice shot"))
+                .andExpect(jsonPath("$.commentId").isNotEmpty())
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
 
         mvc.perform(get("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
-            .andExpect(jsonPath("$.items[0].body").value("nice shot"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].body").value("nice shot"));
     }
 
     @Test
@@ -49,12 +57,15 @@ class CommentApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        mvc.perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"visible to all\"}"))
-            .andExpect(status().isCreated());
+        mvc.perform(post("/api/posts/" + post + "/comments")
+                        .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"visible to all\"}"))
+                .andExpect(status().isCreated());
 
-        mvc.perform(get("/api/posts/" + post + "/comments")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.items[0].body").value("visible to all"));
+        mvc.perform(get("/api/posts/" + post + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].body").value("visible to all"));
     }
 
     @Test
@@ -63,31 +74,41 @@ class CommentApiTest {
         var post = UUID.randomUUID().toString();
 
         for (int i = 0; i < 3; i++) {
-            mvc.perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"comment " + i + "\"}"))
-                .andExpect(status().isCreated());
+            mvc.perform(post("/api/posts/" + post + "/comments")
+                            .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"body\":\"comment " + i + "\"}"))
+                    .andExpect(status().isCreated());
         }
 
         var firstPage = mvc.perform(get("/api/posts/" + post + "/comments").param("limit", "2"))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2))
-            .andExpect(jsonPath("$.items[0].body").value("comment 0"))
-            .andExpect(jsonPath("$.items[1].body").value("comment 1")).andExpect(jsonPath("$.nextCursor").isNotEmpty())
-            .andReturn();
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].body").value("comment 0"))
+                .andExpect(jsonPath("$.items[1].body").value("comment 1"))
+                .andExpect(jsonPath("$.nextCursor").isNotEmpty())
+                .andReturn();
 
-        String cursor = com.jayway.jsonpath.JsonPath.read(firstPage.getResponse().getContentAsString(), "$.nextCursor");
+        String cursor =
+                com.jayway.jsonpath.JsonPath.read(firstPage.getResponse().getContentAsString(), "$.nextCursor");
 
-        mvc.perform(get("/api/posts/" + post + "/comments").param("cursor", cursor).param("limit", "2"))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
-            .andExpect(jsonPath("$.items[0].body").value("comment 2"))
-            .andExpect(jsonPath("$.nextCursor").doesNotExist());
+        mvc.perform(get("/api/posts/" + post + "/comments")
+                        .param("cursor", cursor)
+                        .param("limit", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].body").value("comment 2"))
+                .andExpect(jsonPath("$.nextCursor").doesNotExist());
     }
 
     @Test
     void anEmptyCommentIsRejected() throws Exception {
         mvc.perform(post("/api/posts/" + UUID.randomUUID() + "/comments")
-            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"body\":\"   \"}")).andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value("https://pictogram.dev/problems/comment-empty"));
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"   \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("https://pictogram.dev/problems/comment-empty"));
     }
 
     @Test
@@ -95,22 +116,27 @@ class CommentApiTest {
         String tooLong = "x".repeat(1001);
 
         mvc.perform(post("/api/posts/" + UUID.randomUUID() + "/comments")
-            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"body\":\"" + tooLong + "\"}")).andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value("https://pictogram.dev/problems/comment-too-long"));
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"" + tooLong + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("https://pictogram.dev/problems/comment-too-long"));
     }
 
     @Test
     void aMalformedCursorIsRejected() throws Exception {
         mvc.perform(get("/api/posts/" + UUID.randomUUID() + "/comments").param("cursor", "not-a-cursor"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value(ProblemType.INVALID_CURSOR.uri().toString()));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.INVALID_CURSOR.uri().toString()));
     }
 
     @Test
     void deletingACommentRequiresAToken() throws Exception {
-        mvc.perform(delete("/api/comments/" + UUID.randomUUID())).andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(delete("/api/comments/" + UUID.randomUUID()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -118,17 +144,21 @@ class CommentApiTest {
         var ada = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        var created = mvc
-            .perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"my bad\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String commentId = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.commentId");
+        var created = mvc.perform(post("/api/posts/" + post + "/comments")
+                        .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"my bad\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String commentId =
+                com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.commentId");
 
         mvc.perform(delete("/api/comments/" + commentId).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/posts/" + post + "/comments")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.items.length()").value(0));
+        mvc.perform(get("/api/posts/" + post + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
     }
 
     @Test
@@ -137,24 +167,30 @@ class CommentApiTest {
         var stranger = UUID.randomUUID().toString();
         var post = UUID.randomUUID().toString();
 
-        var created = mvc
-            .perform(post("/api/posts/" + post + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"hands off\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String commentId = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.commentId");
+        var created = mvc.perform(post("/api/posts/" + post + "/comments")
+                        .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"hands off\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String commentId =
+                com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.commentId");
 
         mvc.perform(delete("/api/comments/" + commentId).with(jwt().jwt(jwt -> jwt.subject(stranger))))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value(ProblemType.FORBIDDEN.uri().toString()));
 
-        mvc.perform(get("/api/posts/" + post + "/comments")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.items[0].body").value("hands off"));
+        mvc.perform(get("/api/posts/" + post + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].body").value("hands off"));
     }
 
     @Test
     void deletingACommentThatIsNotThereIsAnIdempotent204() throws Exception {
         mvc.perform(delete("/api/comments/" + UUID.randomUUID())
-            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString())))).andExpect(status().isNoContent());
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -164,24 +200,33 @@ class CommentApiTest {
         var quiet = UUID.randomUUID().toString();
 
         for (int i = 0; i < 2; i++) {
-            mvc.perform(post("/api/posts/" + chatty + "/comments").with(jwt().jwt(jwt -> jwt.subject(ada)))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"c" + i + "\"}"))
-                .andExpect(status().isCreated());
+            mvc.perform(post("/api/posts/" + chatty + "/comments")
+                            .with(jwt().jwt(jwt -> jwt.subject(ada)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"body\":\"c" + i + "\"}"))
+                    .andExpect(status().isCreated());
         }
 
-        mvc.perform(get("/api/comments").param("postIds", chatty, quiet)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[?(@.postId == '" + chatty + "')].commentCount").value(contains(2)))
-            .andExpect(jsonPath("$[?(@.postId == '" + quiet + "')].commentCount").value(contains(0)));
+        mvc.perform(get("/api/comments").param("postIds", chatty, quiet))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.postId == '" + chatty + "')].commentCount")
+                        .value(contains(2)))
+                .andExpect(jsonPath("$[?(@.postId == '" + quiet + "')].commentCount")
+                        .value(contains(0)));
     }
 
     @Test
     void theBatchCountReadRejectsMoreIdsThanTheBatchLimit() throws Exception {
-        String[] tooMany = IntStream.rangeClosed(0, 100).mapToObj(i -> UUID.randomUUID().toString())
-            .toArray(String[]::new);
+        String[] tooMany = IntStream.rangeClosed(0, 100)
+                .mapToObj(i -> UUID.randomUUID().toString())
+                .toArray(String[]::new);
 
-        mvc.perform(get("/api/comments").param("postIds", tooMany)
-            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString())))).andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
+        mvc.perform(get("/api/comments")
+                        .param("postIds", tooMany)
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 }

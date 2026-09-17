@@ -41,9 +41,8 @@ class InMemoryRateLimiter implements RateLimiter {
             windows.entrySet().removeIf(entry -> expired(entry.getValue(), now));
         }
         windows.compute(new Key(userId, action), (key, existing) -> {
-            Window window = expired(existing, now)
-                ? new Window(now.plus(properties.window()), new AtomicInteger(0))
-                : existing;
+            Window window =
+                    expired(existing, now) ? new Window(now.plus(properties.window()), new AtomicInteger(0)) : existing;
             if (window.count().incrementAndGet() > properties.capacity()) {
                 throw new RateLimitExceededException(action);
             }
@@ -55,9 +54,7 @@ class InMemoryRateLimiter implements RateLimiter {
         return window == null || !now.isBefore(window.expiresAt());
     }
 
-    private record Key(UserId userId, String action) {
-    }
+    private record Key(UserId userId, String action) {}
 
-    private record Window(Instant expiresAt, AtomicInteger count) {
-    }
+    private record Window(Instant expiresAt, AtomicInteger count) {}
 }

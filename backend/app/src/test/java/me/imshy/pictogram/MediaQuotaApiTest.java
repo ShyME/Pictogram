@@ -32,9 +32,11 @@ class MediaQuotaApiTest {
 
     @Test
     void anUploadThatWouldExceedTheQuotaIsAPayloadTooLargeProblemDetail() throws Exception {
-        mvc.perform(
-            multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
-            .andExpect(status().is(413)).andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-quota-exceeded"));
+        mvc.perform(multipart("/api/media")
+                        .file(imagePart())
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().is(413))
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-quota-exceeded"));
     }
 
     private static MockMultipartFile imagePart() throws Exception {

@@ -16,14 +16,15 @@ class InboundFrameRateLimiterTest {
         InboundFrameRateLimiter limiter = new InboundFrameRateLimiter(new FakeClock());
 
         for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++)
-            assertThat(limiter.tryConsume()).as("frame %d is within the burst capacity", frame).isTrue();
+            assertThat(limiter.tryConsume())
+                    .as("frame %d is within the burst capacity", frame)
+                    .isTrue();
     }
 
     @Test
     void aFrameBeyondTheBurstCapacityIsRejected() {
         InboundFrameRateLimiter limiter = new InboundFrameRateLimiter(new FakeClock());
-        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++)
-            limiter.tryConsume();
+        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++) limiter.tryConsume();
 
         assertThat(limiter.tryConsume()).isFalse();
     }
@@ -32,14 +33,17 @@ class InboundFrameRateLimiterTest {
     void tokensRefillOverTimeRatherThanStayingExhausted() {
         FakeClock clock = new FakeClock();
         InboundFrameRateLimiter limiter = new InboundFrameRateLimiter(clock);
-        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++)
-            limiter.tryConsume();
+        for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++) limiter.tryConsume();
         assertThat(limiter.tryConsume()).as("exhausted right after the burst").isFalse();
 
         clock.advance(InboundFrameRateLimiter.REFILL_PERIOD);
 
-        assertThat(limiter.tryConsume()).as("one refill period grants exactly one more token").isTrue();
-        assertThat(limiter.tryConsume()).as("no further token until the next refill").isFalse();
+        assertThat(limiter.tryConsume())
+                .as("one refill period grants exactly one more token")
+                .isTrue();
+        assertThat(limiter.tryConsume())
+                .as("no further token until the next refill")
+                .isFalse();
     }
 
     @Test
@@ -50,8 +54,12 @@ class InboundFrameRateLimiterTest {
         clock.advance(InboundFrameRateLimiter.REFILL_PERIOD.multipliedBy(InboundFrameRateLimiter.CAPACITY * 10L));
 
         for (int frame = 0; frame < InboundFrameRateLimiter.CAPACITY; frame++)
-            assertThat(limiter.tryConsume()).as("frame %d is within the burst capacity", frame).isTrue();
-        assertThat(limiter.tryConsume()).as("idle time never banks more than the burst capacity").isFalse();
+            assertThat(limiter.tryConsume())
+                    .as("frame %d is within the burst capacity", frame)
+                    .isTrue();
+        assertThat(limiter.tryConsume())
+                .as("idle time never banks more than the burst capacity")
+                .isFalse();
     }
 
     private static final class FakeClock extends Clock {

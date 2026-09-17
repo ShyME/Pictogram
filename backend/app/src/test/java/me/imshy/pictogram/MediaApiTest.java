@@ -26,8 +26,10 @@ class MediaApiTest {
 
     @Test
     void uploadingNeedsAToken() throws Exception {
-        mvc.perform(multipart("/api/media").file(imagePart())).andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(multipart("/api/media").file(imagePart()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -35,32 +37,38 @@ class MediaApiTest {
         var user = UUID.randomUUID().toString();
 
         var upload = mvc.perform(multipart("/api/media").file(imagePart()).with(jwt().jwt(jwt -> jwt.subject(user))))
-            .andExpect(status().isCreated()).andExpect(jsonPath("$.mediaId").exists())
-            .andExpect(header().exists("Location")).andReturn();
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mediaId").exists())
+                .andExpect(header().exists("Location"))
+                .andReturn();
 
         String mediaId = JsonPath.read(upload.getResponse().getContentAsString(), "$.mediaId");
 
-        mvc.perform(get("/api/media/{id}/original", mediaId)).andExpect(status().isOk())
-            .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE));
+        mvc.perform(get("/api/media/{id}/original", mediaId))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE));
 
-        mvc.perform(get("/api/media/{id}/thumbnail", mediaId)).andExpect(status().isOk())
-            .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE));
+        mvc.perform(get("/api/media/{id}/thumbnail", mediaId))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", MediaType.IMAGE_JPEG_VALUE));
     }
 
     @Test
     void bytesThatAreNotAnImageAreABadRequestProblemDetail() throws Exception {
         var notAnImage = new MockMultipartFile("file", "notes.txt", "text/plain", "hello".getBytes());
 
-        mvc.perform(
-            multipart("/api/media").file(notAnImage).with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-undecodable"));
+        mvc.perform(multipart("/api/media")
+                        .file(notAnImage)
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-undecodable"));
     }
 
     @Test
     void anUnknownMediaIdIsANotFoundProblemDetail() throws Exception {
-        mvc.perform(get("/api/media/{id}/original", UUID.randomUUID())).andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-not-found"));
+        mvc.perform(get("/api/media/{id}/original", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "media-not-found"));
     }
 
     private static MockMultipartFile imagePart() throws Exception {

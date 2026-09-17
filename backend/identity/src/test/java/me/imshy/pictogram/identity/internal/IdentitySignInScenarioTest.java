@@ -30,8 +30,10 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
         var session = authentication.authenticate(google);
 
         UserId registered = accessTokens.resolve(session.accessToken());
-        assertThat(users.findByProviderAndSubject("google", "google-sub-001")).get().extracting(AppUser::userId)
-            .isEqualTo(registered);
+        assertThat(users.findByProviderAndSubject("google", "google-sub-001"))
+                .get()
+                .extracting(AppUser::userId)
+                .isEqualTo(registered);
         assertThat(events.ofType(UserRegistered.class)).singleElement().satisfies(event -> {
             assertThat(event.userId()).isEqualTo(registered);
             assertThat(event.email()).isEqualTo("ada@example.com");
@@ -56,7 +58,7 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
 
         time.advance(Duration.ofMinutes(20));
         assertThatExceptionOfType(InvalidAccessTokenException.class)
-            .isThrownBy(() -> accessTokens.resolve(session.accessToken()));
+                .isThrownBy(() -> accessTokens.resolve(session.accessToken()));
 
         var refreshed = authentication.refresh(session.refreshToken());
 
@@ -71,8 +73,8 @@ class IdentitySignInScenarioTest extends ClockControlledModuleTest {
         time.advance(Duration.ofMinutes(1).plusSeconds(1));
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> authentication.refresh(session.refreshToken()));
+                .isThrownBy(() -> authentication.refresh(session.refreshToken()));
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> authentication.refresh(rotated.refreshToken()));
+                .isThrownBy(() -> authentication.refresh(rotated.refreshToken()));
     }
 }

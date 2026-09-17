@@ -33,8 +33,14 @@ interface ChatMessageTests extends AppUnderTest, ChatUnderTest {
 
         send(aliceSocket, bobId, "hi bob");
 
-        assertThat(bobTab1.await()).contains("\"type\":\"message\"").contains(aliceId).contains("hi bob");
-        assertThat(bobTab2.await()).contains("\"type\":\"message\"").contains(aliceId).contains("hi bob");
+        assertThat(bobTab1.await())
+                .contains("\"type\":\"message\"")
+                .contains(aliceId)
+                .contains("hi bob");
+        assertThat(bobTab2.await())
+                .contains("\"type\":\"message\"")
+                .contains(aliceId)
+                .contains("hi bob");
     }
 
     @Test
@@ -47,8 +53,10 @@ interface ChatMessageTests extends AppUnderTest, ChatUnderTest {
 
         send(aliceSocket, recipientWithNoConnection, "hello?");
 
-        assertThat(senderListener.await()).contains("\"type\":\"undelivered\"").contains(recipientWithNoConnection)
-            .contains("hello?");
+        assertThat(senderListener.await())
+                .contains("\"type\":\"undelivered\"")
+                .contains(recipientWithNoConnection)
+                .contains("hello?");
     }
 
     @Test
@@ -64,17 +72,24 @@ interface ChatMessageTests extends AppUnderTest, ChatUnderTest {
 
         send(aliceSocket, bobId, "hi, stranger");
 
-        assertThat(bobListener.await()).contains("\"type\":\"message\"").contains(aliceId).contains("hi, stranger");
+        assertThat(bobListener.await())
+                .contains("\"type\":\"message\"")
+                .contains(aliceId)
+                .contains("hi, stranger");
     }
 
     private static void send(WebSocket socket, String recipientUserId, String text) {
-        socket.sendText("{\"recipientUserId\":\"%s\",\"text\":\"%s\"}".formatted(recipientUserId, text), true).join();
+        socket.sendText("{\"recipientUserId\":\"%s\",\"text\":\"%s\"}".formatted(recipientUserId, text), true)
+                .join();
     }
 
     private WebSocket connect(String accessToken, WebSocket.Listener listener)
-        throws InterruptedException, ExecutionException, TimeoutException {
-        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(CHAT_SUBPROTOCOL, accessToken)
-            .buildAsync(chatWsUri(), listener).get(10, TimeUnit.SECONDS);
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return HttpClient.newHttpClient()
+                .newWebSocketBuilder()
+                .subprotocols(CHAT_SUBPROTOCOL, accessToken)
+                .buildAsync(chatWsUri(), listener)
+                .get(10, TimeUnit.SECONDS);
     }
 
     private URI chatWsUri() {

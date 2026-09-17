@@ -28,8 +28,7 @@ class Profile implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Profile() {
-    }
+    protected Profile() {}
 
     private Profile(UserId userId, Username username, DisplayName displayName, Bio bio, Instant createdAt) {
         this.userId = userId.value();
@@ -45,7 +44,8 @@ class Profile implements Persistable<UUID> {
 
     boolean edit(Username username, DisplayName displayName, Bio bio) {
         boolean changed = !this.username.equals(username.value())
-            || !Objects.equals(this.displayName, displayName.value()) || !Objects.equals(this.bio, bio.value());
+                || !Objects.equals(this.displayName, displayName.value())
+                || !Objects.equals(this.bio, bio.value());
         this.username = username.value();
         this.displayName = displayName.value();
         this.bio = bio.value();

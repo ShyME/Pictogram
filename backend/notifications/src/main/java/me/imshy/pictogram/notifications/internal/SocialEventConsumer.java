@@ -50,19 +50,24 @@ class SocialEventConsumer {
         this.transaction = new TransactionTemplate(transactionManager);
     }
 
-    @KafkaListener(id = LISTENER_ID, topics = TOPIC, groupId = GROUP,
-        containerFactory = NotificationsKafkaConsumerAutoConfiguration.CONTAINER_FACTORY)
+    @KafkaListener(
+            id = LISTENER_ID,
+            topics = TOPIC,
+            groupId = GROUP,
+            containerFactory = NotificationsKafkaConsumerAutoConfiguration.CONTAINER_FACTORY)
     void onSocialEvent(ConsumerRecord<String, String> record, Acknowledgment ack) {
         SocialEventMessage event = json.readValue(record.value(), SocialEventMessage.class);
         transaction.executeWithoutResult(status -> notifications.record(event));
         ack.acknowledge();
     }
 
-    @KafkaListener(topics = DEAD_LETTER_TOPIC, groupId = GROUP + ".dlt",
-        containerFactory = NotificationsKafkaConsumerAutoConfiguration.DEAD_LETTER_CONTAINER_FACTORY)
+    @KafkaListener(
+            topics = DEAD_LETTER_TOPIC,
+            groupId = GROUP + ".dlt",
+            containerFactory = NotificationsKafkaConsumerAutoConfiguration.DEAD_LETTER_CONTAINER_FACTORY)
     void onDeadLetter(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.error("pictogram.social record dead-lettered after retries: key={}, value={}", record.key(),
-            record.value());
+        log.error(
+                "pictogram.social record dead-lettered after retries: key={}, value={}", record.key(), record.value());
         ack.acknowledge();
     }
 }

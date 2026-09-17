@@ -32,19 +32,23 @@ class ApiEdgeTest {
 
     @Test
     void missingAccessTokenIsA401ProblemDetail() throws Exception {
-        mvc.perform(get("/api/_probe/current-user")).andExpect(status().isUnauthorized())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()))
-            .andExpect(jsonPath("$.status").value(401)).andExpect(jsonPath("$.title").value("Authentication required"))
-            .andExpect(jsonPath("$.properties").doesNotExist());
+        mvc.perform(get("/api/_probe/current-user"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Authentication required"))
+                .andExpect(jsonPath("$.properties").doesNotExist());
     }
 
     @Test
     void invalidAccessTokenIsA401ProblemDetail() throws Exception {
         mvc.perform(get("/api/_probe/current-user").header("Authorization", "Bearer not-a-real-token"))
-            .andExpect(status().isUnauthorized())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -52,7 +56,8 @@ class ApiEdgeTest {
         var user = UUID.randomUUID();
 
         mvc.perform(get("/api/_probe/current-user").with(jwt().jwt(jwt -> jwt.subject(user.toString()))))
-            .andExpect(status().isOk()).andExpect(content().string("\"" + user + "\""));
+                .andExpect(status().isOk())
+                .andExpect(content().string("\"" + user + "\""));
     }
 
     @Test
@@ -60,44 +65,53 @@ class ApiEdgeTest {
         var user = UUID.randomUUID();
 
         mvc.perform(get("/api/_probe/current-viewer").with(jwt().jwt(jwt -> jwt.subject(user.toString()))))
-            .andExpect(status().isOk()).andExpect(content().string("\"" + user + "\""));
+                .andExpect(status().isOk())
+                .andExpect(content().string("\"" + user + "\""));
     }
 
     @Test
     void listEndpointsReturnAnEnvelopeWhoseCursorIsAnOpaqueDecodableToken() throws Exception {
         var expectedCursor = new Cursor(Instant.parse("2026-08-30T12:00:00Z"), ProbeController.PAGE_TAIL);
 
-        mvc.perform(get("/api/_probe/page").with(jwt())).andExpect(status().isOk())
-            .andExpect(jsonPath("$.items").isArray()).andExpect(jsonPath("$.items[0]").value("first"))
-            .andExpect(jsonPath("$.nextCursor").value(expectedCursor.encode()))
-            .andExpect(jsonPath("$.nextCursor").value(not(containsString("2026"))));
+        mvc.perform(get("/api/_probe/page").with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items[0]").value("first"))
+                .andExpect(jsonPath("$.nextCursor").value(expectedCursor.encode()))
+                .andExpect(jsonPath("$.nextCursor").value(not(containsString("2026"))));
     }
 
     @Test
     void anApiExceptionRendersAsAProblemDetailWithItsStableType() throws Exception {
-        mvc.perform(get("/api/_probe/boom").with(jwt())).andExpect(status().isConflict())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "probe-conflict"))
-            .andExpect(jsonPath("$.detail").value("the probe blew up"));
+        mvc.perform(get("/api/_probe/boom").with(jwt()))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "probe-conflict"))
+                .andExpect(jsonPath("$.detail").value("the probe blew up"));
     }
 
     @Test
     void aMalformedCursorRendersAsA400ProblemDetail() throws Exception {
-        mvc.perform(get("/api/_probe/by-cursor").param("cursor", "!!not-a-cursor!!").with(jwt()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value(ProblemType.INVALID_CURSOR.uri().toString()));
+        mvc.perform(get("/api/_probe/by-cursor")
+                        .param("cursor", "!!not-a-cursor!!")
+                        .with(jwt()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.INVALID_CURSOR.uri().toString()));
     }
 
     @Test
     void aFrameworkErrorStillRendersAsProblemJson() throws Exception {
-        mvc.perform(get("/api/_probe/no-such-route").with(jwt())).andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+        mvc.perform(get("/api/_probe/no-such-route").with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
     }
 
     @Test
     void timestampsSerializeAsIso8601Utc() throws Exception {
-        mvc.perform(get("/api/_probe/clock").with(jwt())).andExpect(status().isOk())
-            .andExpect(jsonPath("$.at").value("2026-08-30T12:00:00Z"));
+        mvc.perform(get("/api/_probe/clock").with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.at").value("2026-08-30T12:00:00Z"));
     }
 
     @RestController
@@ -106,8 +120,7 @@ class ApiEdgeTest {
 
         static final UUID PAGE_TAIL = UUID.fromString("00000000-0000-0000-0000-0000000000ff");
 
-        record Clock(Instant at) {
-        }
+        record Clock(Instant at) {}
 
         @GetMapping("/current-user")
         UserId currentUser(@CurrentUser UserId user) {
@@ -126,8 +139,8 @@ class ApiEdgeTest {
 
         @GetMapping("/boom")
         void boom() {
-            throw new ApiException(HttpStatus.CONFLICT, new ProblemType("probe-conflict", "Probe conflict"),
-                "the probe blew up");
+            throw new ApiException(
+                    HttpStatus.CONFLICT, new ProblemType("probe-conflict", "Probe conflict"), "the probe blew up");
         }
 
         @GetMapping("/by-cursor")

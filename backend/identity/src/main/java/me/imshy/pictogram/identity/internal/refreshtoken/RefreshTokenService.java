@@ -25,8 +25,12 @@ public class RefreshTokenService {
     private final TransactionTemplate tx;
     private final SecureRandom random = new SecureRandom();
 
-    public RefreshTokenService(RefreshTokens tokens, Clock clock, Duration ttl, Duration rotationGrace,
-        PlatformTransactionManager txManager) {
+    public RefreshTokenService(
+            RefreshTokens tokens,
+            Clock clock,
+            Duration ttl,
+            Duration rotationGrace,
+            PlatformTransactionManager txManager) {
         this.tokens = tokens;
         this.clock = clock;
         this.ttl = ttl;
@@ -34,8 +38,7 @@ public class RefreshTokenService {
         this.tx = new TransactionTemplate(txManager);
     }
 
-    public record Issued(UserId user, String token, Instant expiresAt) {
-    }
+    public record Issued(UserId user, String token, Instant expiresAt) {}
 
     public Issued startSession(UserId user) {
         return tx.execute(status -> issue(user, UUID.randomUUID()));
@@ -58,7 +61,7 @@ public class RefreshTokenService {
 
     private Rotation rotateWithin(String presentedHash) {
         RefreshToken row = tokens.findByTokenHash(presentedHash)
-            .orElseThrow(() -> new InvalidRefreshTokenException("Unknown refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Unknown refresh token"));
         Instant now = clock.instant();
         if (row.isSpent()) {
             return outcomeFor(row.spentState(), row.familyId(), now);
@@ -68,7 +71,7 @@ public class RefreshTokenService {
         }
         if (tokens.consumeIfLive(row.getId(), now) == 0) {
             SpentState spent = tokens.spentStateById(row.getId())
-                .orElseThrow(() -> new InvalidRefreshTokenException("Unknown refresh token"));
+                    .orElseThrow(() -> new InvalidRefreshTokenException("Unknown refresh token"));
             return outcomeFor(spent, row.familyId(), now);
         }
         return new Rotation.Ok(issue(new UserId(row.userId()), row.familyId()));
@@ -76,15 +79,15 @@ public class RefreshTokenService {
 
     private Rotation outcomeFor(SpentState spent, UUID familyId, Instant now) {
         return spent.isBenignRaceWithin(rotationGrace, now)
-            ? new Rotation.BenignReplay()
-            : new Rotation.Reuse(familyId);
+                ? new Rotation.BenignReplay()
+                : new Rotation.Reuse(familyId);
     }
 
     public void revokeFamilyOf(String presentedToken) {
         requireNoAmbientTransaction();
         String presentedHash = hash(presentedToken);
         tx.executeWithoutResult(status -> tokens.findByTokenHash(presentedHash)
-            .ifPresent(row -> tokens.revokeFamily(row.familyId(), clock.instant())));
+                .ifPresent(row -> tokens.revokeFamily(row.familyId(), clock.instant())));
     }
 
     private void revokeFamily(UUID familyId) {
@@ -104,7 +107,7 @@ public class RefreshTokenService {
     private static void requireNoAmbientTransaction() {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("RefreshTokenService drives its own transaction boundaries and "
-                + "must not run inside one — reuse revocation has to survive the reuse exception (ADR-0004)");
+                    + "must not run inside one — reuse revocation has to survive the reuse exception (ADR-0004)");
         }
     }
 
@@ -118,13 +121,10 @@ public class RefreshTokenService {
     }
 
     private sealed interface Rotation {
-        record Ok(Issued issued) implements Rotation {
-        }
+        record Ok(Issued issued) implements Rotation {}
 
-        record BenignReplay() implements Rotation {
-        }
+        record BenignReplay() implements Rotation {}
 
-        record Reuse(UUID familyId) implements Rotation {
-        }
+        record Reuse(UUID familyId) implements Rotation {}
     }
 }

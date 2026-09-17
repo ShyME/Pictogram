@@ -31,8 +31,8 @@ import org.springframework.modulith.events.EventExternalizationConfiguration;
 class SocialEventExternalizationTest {
 
     private final PublishedPosts publishedPosts = Mockito.mock(PublishedPosts.class);
-    private final EventExternalizationConfiguration externalization = new SocialEventExternalization()
-        .pictogramSocialExternalization(publishedPosts);
+    private final EventExternalizationConfiguration externalization =
+            new SocialEventExternalization().pictogramSocialExternalization(publishedPosts);
 
     private final UserId author = UserId.random();
     private final ViewerId actor = ViewerId.random();
@@ -59,7 +59,7 @@ class SocialEventExternalizationTest {
 
         assertThat(externalization.supports(commented)).isTrue();
         assertThat(externalization.map(commented))
-            .isEqualTo(SocialEvent.postCommented(author, actor.asUserId(), post, at));
+                .isEqualTo(SocialEvent.postCommented(author, actor.asUserId(), post, at));
         assertThat(externalization.determineTarget(commented).getKey()).isEqualTo(author.toString());
     }
 
@@ -86,7 +86,9 @@ class SocialEventExternalizationTest {
     @Test
     void theUndoAndLifecycleEventsAreNotExternalised() {
         assertThat(externalization.supports(new PostUnliked(post, actor, at))).isFalse();
-        assertThat(externalization.supports(new UserUnfollowed(actor.asUserId(), author, at))).isFalse();
-        assertThat(externalization.supports(new CommentDeleted(post, UUID.randomUUID(), actor, at))).isFalse();
+        assertThat(externalization.supports(new UserUnfollowed(actor.asUserId(), author, at)))
+                .isFalse();
+        assertThat(externalization.supports(new CommentDeleted(post, UUID.randomUUID(), actor, at)))
+                .isFalse();
     }
 }

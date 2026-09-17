@@ -29,8 +29,9 @@ class SocialEventMessageTest {
             "actorId":"22222222-2222-2222-2222-222222222222",\
             "subjectId":"33333333-3333-3333-3333-333333333333","occurredAt":"2026-09-09T12:00:00Z"}""");
 
-        assertThat(message).isEqualTo(
-            new SocialEventMessage("post-liked", RECIPIENT, ACTOR, SUBJECT, Instant.parse("2026-09-09T12:00:00Z")));
+        assertThat(message)
+                .isEqualTo(new SocialEventMessage(
+                        "post-liked", RECIPIENT, ACTOR, SUBJECT, Instant.parse("2026-09-09T12:00:00Z")));
     }
 
     @Test
@@ -46,9 +47,9 @@ class SocialEventMessageTest {
     @Test
     void aSelfActionIsOneWhoseActorIsItsRecipient() {
         assertThat(new SocialEventMessage("post-liked", RECIPIENT, RECIPIENT, SUBJECT, Instant.now()).isSelfAction())
-            .isTrue();
+                .isTrue();
         assertThat(new SocialEventMessage("post-liked", RECIPIENT, ACTOR, SUBJECT, Instant.now()).isSelfAction())
-            .isFalse();
+                .isFalse();
     }
 
     private SocialEventMessage read(String wire) {

@@ -32,11 +32,12 @@ class ChatWebSocketHandlerPresenceQueryTest {
     @Test
     void anOverLongUserIdsArrayIsTruncatedRatherThanWalkedInFull() {
         String ids = IntStream.range(0, ChatWebSocketHandler.MAX_PRESENCE_QUERY_SUBJECTS * 3)
-            .mapToObj(i -> "\"u-" + i + "\"").collect(Collectors.joining(","));
+                .mapToObj(i -> "\"u-" + i + "\"")
+                .collect(Collectors.joining(","));
         JsonNode frame = JSON.readTree("{\"type\":\"presence-query\",\"userIds\":[" + ids + "]}");
 
         assertThat(ChatWebSocketHandler.presenceQuerySubjects(frame))
-            .hasSize(ChatWebSocketHandler.MAX_PRESENCE_QUERY_SUBJECTS);
+                .hasSize(ChatWebSocketHandler.MAX_PRESENCE_QUERY_SUBJECTS);
     }
 
     // answerPresenceQuery emits one answer per subject synchronously into the
@@ -50,6 +51,6 @@ class ChatWebSocketHandlerPresenceQueryTest {
     @Test
     void theSubjectCapLeavesOutboundBufferHeadroom() {
         assertThat(ChatWebSocketHandler.MAX_PRESENCE_QUERY_SUBJECTS)
-            .isLessThanOrEqualTo(ChatWebSocketHandler.OUTBOUND_BUFFER_CAPACITY / 2);
+                .isLessThanOrEqualTo(ChatWebSocketHandler.OUTBOUND_BUFFER_CAPACITY / 2);
     }
 }

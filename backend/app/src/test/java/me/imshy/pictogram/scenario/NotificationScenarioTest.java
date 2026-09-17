@@ -38,12 +38,13 @@ class NotificationScenarioTest extends AppIntegrationTest {
         alice.completeOnboarding("alice_notif", "Alice", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         String bobId = bob.completeOnboarding("bob_notif", "Bob", null).userId();
-        String post = alice.publishPost(alice.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post = alice.publishPost(alice.uploadPhoto(JpegPhoto.some()), "a photo")
+                .postId();
 
         bob.like(post);
 
         await().atMost(Duration.ofSeconds(20))
-            .untilAsserted(() -> assertThat(alice.unreadNotificationCount()).isEqualTo(1));
+                .untilAsserted(() -> assertThat(alice.unreadNotificationCount()).isEqualTo(1));
 
         assertThat(alice.openNotifications().notifications()).singleElement().satisfies(notification -> {
             assertThat(notification.type()).isEqualTo("post-liked");
@@ -55,7 +56,9 @@ class NotificationScenarioTest extends AppIntegrationTest {
         alice.markNotificationsRead();
 
         assertThat(alice.unreadNotificationCount()).isZero();
-        assertThat(alice.openNotifications().notifications()).singleElement().extracting(Notification::read)
-            .isEqualTo(true);
+        assertThat(alice.openNotifications().notifications())
+                .singleElement()
+                .extracting(Notification::read)
+                .isEqualTo(true);
     }
 }

@@ -28,8 +28,7 @@ class Comment implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Comment() {
-    }
+    protected Comment() {}
 
     private Comment(UUID id, UUID postId, UUID viewerId, String body, Instant createdAt) {
         this.id = id;

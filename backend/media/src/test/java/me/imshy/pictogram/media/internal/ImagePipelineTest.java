@@ -25,7 +25,7 @@ class ImagePipelineTest {
     @Test
     void anEmptyUploadIsRejected() {
         assertThatExceptionOfType(UndecodableImageException.class)
-            .isThrownBy(() -> imagePipeline.transcode(new byte[0]));
+                .isThrownBy(() -> imagePipeline.transcode(new byte[0]));
     }
 
     @Test
@@ -34,13 +34,14 @@ class ImagePipelineTest {
         ImageIO.write(new BufferedImage(64, 64, BufferedImage.TYPE_INT_RGB), "gif", gif);
 
         assertThatExceptionOfType(UndecodableImageException.class)
-            .isThrownBy(() -> imagePipeline.transcode(gif.toByteArray()));
+                .isThrownBy(() -> imagePipeline.transcode(gif.toByteArray()));
     }
 
     @Test
     void theWebpReaderPluginIsOnTheClasspath() {
         assertThat(ImageIO.getImageReadersByFormatName("webp").hasNext())
-            .as("imageio-webp must be registered for WebP uploads to decode").isTrue();
+                .as("imageio-webp must be registered for WebP uploads to decode")
+                .isTrue();
     }
 
     @Test
@@ -78,7 +79,8 @@ class ImagePipelineTest {
     void theCanonicalRenditionIsUprightWhenTheUploadCarriesAnOrientationTag() throws Exception {
         byte[] rotated = TestImages.markedTopLeft(900, 600, 6);
 
-        var original = ImageIO.read(new ByteArrayInputStream(imagePipeline.transcode(rotated).original()));
+        var original = ImageIO.read(
+                new ByteArrayInputStream(imagePipeline.transcode(rotated).original()));
 
         assertThat(brightnessTopRight(original)).isLessThan(brightnessTopLeft(original));
     }
@@ -87,7 +89,8 @@ class ImagePipelineTest {
     void anUploadWithNoMeaningfulOrientationTagIsLeftAsItIs() throws Exception {
         byte[] plain = TestImages.markedTopLeft(900, 600, 1);
 
-        var original = ImageIO.read(new ByteArrayInputStream(imagePipeline.transcode(plain).original()));
+        var original = ImageIO.read(
+                new ByteArrayInputStream(imagePipeline.transcode(plain).original()));
 
         assertThat(brightnessTopLeft(original)).isLessThan(brightnessTopRight(original));
     }

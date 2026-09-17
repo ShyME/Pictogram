@@ -29,7 +29,9 @@ public final class TestAccessTokens {
 
     public TestAccessTokens() {
         try {
-            pair = new ECKeyGenerator(Curve.P_256).keyID(UUID.randomUUID().toString()).generate();
+            pair = new ECKeyGenerator(Curve.P_256)
+                    .keyID(UUID.randomUUID().toString())
+                    .generate();
         } catch (JOSEException e) {
             throw new IllegalStateException(e);
         }
@@ -47,7 +49,9 @@ public final class TestAccessTokens {
     public String issueSignedByAnotherKey(UserId subject, Clock clock) {
         ECKey foreign;
         try {
-            foreign = new ECKeyGenerator(Curve.P_256).keyID(UUID.randomUUID().toString()).generate();
+            foreign = new ECKeyGenerator(Curve.P_256)
+                    .keyID(UUID.randomUUID().toString())
+                    .generate();
         } catch (JOSEException e) {
             throw new IllegalStateException(e);
         }
@@ -82,21 +86,31 @@ public final class TestAccessTokens {
     // expiry to schedule its close, so a token missing the claim entirely must
     // never resolve.
     public String issueWithoutExpiry(UserId subject, Clock clock) {
-        JWTClaimsSet claims = new JWTClaimsSet.Builder().issuer(ISSUER).subject(subject.toString())
-            .issueTime(Date.from(clock.instant())).build();
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .issuer(ISSUER)
+                .subject(subject.toString())
+                .issueTime(Date.from(clock.instant()))
+                .build();
         return sign(claims, pair);
     }
 
     private String issue(UserId subject, String issuer, Instant issuedAt, Instant expiresAt, ECKey signingKey) {
-        JWTClaimsSet claims = new JWTClaimsSet.Builder().issuer(issuer).subject(subject.toString())
-            .issueTime(Date.from(issuedAt)).expirationTime(Date.from(expiresAt)).build();
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .issuer(issuer)
+                .subject(subject.toString())
+                .issueTime(Date.from(issuedAt))
+                .expirationTime(Date.from(expiresAt))
+                .build();
         return sign(claims, signingKey);
     }
 
     private String sign(JWTClaimsSet claims, ECKey signingKey) {
         try {
             SignedJWT jwt = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(signingKey.getKeyID()).build(), claims);
+                    new JWSHeader.Builder(JWSAlgorithm.ES256)
+                            .keyID(signingKey.getKeyID())
+                            .build(),
+                    claims);
             jwt.sign(new ECDSASigner(signingKey));
             return jwt.serialize();
         } catch (JOSEException e) {

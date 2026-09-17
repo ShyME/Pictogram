@@ -5,5 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("pictogram.ratelimit.write")
-record RateLimitProperties(@DefaultValue("20") int capacity, @DefaultValue("1m") Duration window) {
-}
+record RateLimitProperties(
+        @DefaultValue("20") int capacity,
+        @DefaultValue("1m") Duration window) {}

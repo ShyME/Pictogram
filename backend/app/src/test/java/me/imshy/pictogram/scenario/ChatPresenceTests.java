@@ -29,20 +29,29 @@ interface ChatPresenceTests extends AppUnderTest, ChatUnderTest {
         CollectingListener answers = new CollectingListener(2);
         WebSocket askerSocket = connect(asker.accessToken(), answers);
 
-        askerSocket.sendText(
-            "{\"type\":\"presence-query\",\"userIds\":[\"%s\",\"%s\"]}".formatted(connectedId, userWithNoConnection),
-            true).join();
+        askerSocket
+                .sendText(
+                        "{\"type\":\"presence-query\",\"userIds\":[\"%s\",\"%s\"]}"
+                                .formatted(connectedId, userWithNoConnection),
+                        true)
+                .join();
 
         String frames = answers.await();
-        assertThat(frames).contains("\"type\":\"presence\"").contains(connectedId).contains(userWithNoConnection);
+        assertThat(frames)
+                .contains("\"type\":\"presence\"")
+                .contains(connectedId)
+                .contains(userWithNoConnection);
         assertThat(frames).contains("\"userId\":\"" + connectedId + "\",\"online\":true");
         assertThat(frames).contains("\"userId\":\"" + userWithNoConnection + "\",\"online\":false");
     }
 
     private WebSocket connect(String accessToken, WebSocket.Listener listener)
-        throws InterruptedException, ExecutionException, TimeoutException {
-        return HttpClient.newHttpClient().newWebSocketBuilder().subprotocols(CHAT_SUBPROTOCOL, accessToken)
-            .buildAsync(chatWsUri(), listener).get(10, TimeUnit.SECONDS);
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return HttpClient.newHttpClient()
+                .newWebSocketBuilder()
+                .subprotocols(CHAT_SUBPROTOCOL, accessToken)
+                .buildAsync(chatWsUri(), listener)
+                .get(10, TimeUnit.SECONDS);
     }
 
     private URI chatWsUri() {
@@ -66,8 +75,7 @@ interface ChatPresenceTests extends AppUnderTest, ChatUnderTest {
 
         CollectingListener(int expectedFrames) {
             this.expectedFrames = expectedFrames;
-            if (expectedFrames == 0)
-                received.complete("");
+            if (expectedFrames == 0) received.complete("");
         }
 
         @Override
@@ -81,8 +89,7 @@ interface ChatPresenceTests extends AppUnderTest, ChatUnderTest {
             if (last) {
                 all.append(current).append('\n');
                 current.setLength(0);
-                if (++completedFrames >= expectedFrames)
-                    received.complete(all.toString());
+                if (++completedFrames >= expectedFrames) received.complete(all.toString());
             }
             webSocket.request(1);
             return null;

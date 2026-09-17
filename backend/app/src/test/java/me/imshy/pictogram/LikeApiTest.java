@@ -21,8 +21,10 @@ class LikeApiTest {
 
     @Test
     void likingRequiresAToken() throws Exception {
-        mvc.perform(put("/api/likes/" + UUID.randomUUID())).andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+        mvc.perform(put("/api/likes/" + UUID.randomUUID()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
     }
 
     @Test
@@ -31,12 +33,14 @@ class LikeApiTest {
         var post = UUID.randomUUID().toString();
 
         mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(get("/api/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-            .andExpect(jsonPath("$[0].postId").value(post)).andExpect(jsonPath("$[0].likeCount").value(1))
-            .andExpect(jsonPath("$[0].likedByViewer").value(true));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].postId").value(post))
+                .andExpect(jsonPath("$[0].likeCount").value(1))
+                .andExpect(jsonPath("$[0].likedByViewer").value(true));
     }
 
     @Test
@@ -45,17 +49,18 @@ class LikeApiTest {
         var post = UUID.randomUUID().toString();
 
         mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         mvc.perform(delete("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         mvc.perform(delete("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(get("/api/likes").param("postIds", post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isOk()).andExpect(jsonPath("$[0].likeCount").value(0))
-            .andExpect(jsonPath("$[0].likedByViewer").value(false));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].likeCount").value(0))
+                .andExpect(jsonPath("$[0].likedByViewer").value(false));
     }
 
     @Test
@@ -64,11 +69,14 @@ class LikeApiTest {
         var post = UUID.randomUUID().toString();
 
         mvc.perform(put("/api/likes/" + post).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/likes").param("postIds", post)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].postId").value(post))
-            .andExpect(jsonPath("$[0].likeCount").value(1)).andExpect(jsonPath("$[0].likedByViewer").value(false));
+        mvc.perform(get("/api/likes").param("postIds", post))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].postId").value(post))
+                .andExpect(jsonPath("$[0].likeCount").value(1))
+                .andExpect(jsonPath("$[0].likedByViewer").value(false));
     }
 
     @Test
@@ -79,27 +87,36 @@ class LikeApiTest {
         var likedByBobOnly = UUID.randomUUID().toString();
 
         mvc.perform(put("/api/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         mvc.perform(put("/api/likes/" + liked).with(jwt().jwt(jwt -> jwt.subject(bob))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         mvc.perform(put("/api/likes/" + likedByBobOnly).with(jwt().jwt(jwt -> jwt.subject(bob))))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mvc.perform(get("/api/likes").param("postIds", liked, likedByBobOnly).with(jwt().jwt(jwt -> jwt.subject(ada))))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[?(@.postId == '" + liked + "')].likeCount").value(contains(2)))
-            .andExpect(jsonPath("$[?(@.postId == '" + liked + "')].likedByViewer").value(contains(true)))
-            .andExpect(jsonPath("$[?(@.postId == '" + likedByBobOnly + "')].likeCount").value(contains(1)))
-            .andExpect(jsonPath("$[?(@.postId == '" + likedByBobOnly + "')].likedByViewer").value(contains(false)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(
+                        jsonPath("$[?(@.postId == '" + liked + "')].likeCount").value(contains(2)))
+                .andExpect(jsonPath("$[?(@.postId == '" + liked + "')].likedByViewer")
+                        .value(contains(true)))
+                .andExpect(jsonPath("$[?(@.postId == '" + likedByBobOnly + "')].likeCount")
+                        .value(contains(1)))
+                .andExpect(jsonPath("$[?(@.postId == '" + likedByBobOnly + "')].likedByViewer")
+                        .value(contains(false)));
     }
 
     @Test
     void theBatchReadRejectsMoreIdsThanTheBatchLimit() throws Exception {
-        String[] tooMany = IntStream.rangeClosed(0, 100).mapToObj(i -> UUID.randomUUID().toString())
-            .toArray(String[]::new);
+        String[] tooMany = IntStream.rangeClosed(0, 100)
+                .mapToObj(i -> UUID.randomUUID().toString())
+                .toArray(String[]::new);
 
-        mvc.perform(get("/api/likes").param("postIds", tooMany)
-            .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString())))).andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.type").value(ProblemType.OVERSIZED_BATCH.uri().toString()));
+        mvc.perform(get("/api/likes")
+                        .param("postIds", tooMany)
+                        .with(jwt().jwt(jwt -> jwt.subject(UUID.randomUUID().toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type")
+                        .value(ProblemType.OVERSIZED_BATCH.uri().toString()));
     }
 }

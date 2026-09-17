@@ -117,7 +117,9 @@ class LikingTest extends SocialModuleIntegrationTest {
 
         events.publishEvent(new PostDeleted(deleted, UserId.random(), MediaId.random(), Instant.now()));
 
-        assertThat(likeTally.of(List.of(deleted, untouched))).extracting(PostLikes::likeCount).containsExactly(0L, 1L);
+        assertThat(likeTally.of(List.of(deleted, untouched)))
+                .extracting(PostLikes::likeCount)
+                .containsExactly(0L, 1L);
     }
 
     private PostLikes likeStateFor(ViewerId viewer, PostId post) {

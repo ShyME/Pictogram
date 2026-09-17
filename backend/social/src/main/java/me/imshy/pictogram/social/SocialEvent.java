@@ -26,7 +26,9 @@ import me.imshy.pictogram.shared.UserId;
 public record SocialEvent(Type type, UserId recipientId, UserId actorId, PostId subjectId, Instant occurredAt) {
 
     public enum Type {
-        POST_LIKED, POST_COMMENTED, USER_FOLLOWED;
+        POST_LIKED,
+        POST_COMMENTED,
+        USER_FOLLOWED;
 
         @JsonValue
         String wireName() {

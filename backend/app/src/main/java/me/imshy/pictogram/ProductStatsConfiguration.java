@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(ProductStatsProperties.class)
-class ProductStatsConfiguration {
-}
+class ProductStatsConfiguration {}

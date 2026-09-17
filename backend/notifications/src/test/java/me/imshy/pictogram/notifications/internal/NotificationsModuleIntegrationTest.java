@@ -38,7 +38,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @ApplicationModuleTest
 @TestPropertySource(
-    properties = "spring.autoconfigure.exclude=org.springframework.modulith.events.kafka.KafkaEventExternalizerConfiguration")
+        properties =
+                "spring.autoconfigure.exclude=org.springframework.modulith.events.kafka.KafkaEventExternalizerConfiguration")
 abstract class NotificationsModuleIntegrationTest extends ModuleIntegrationTest {
 
     protected static final Instant OCCURRED_AT = Instant.parse("2026-09-09T12:00:00Z");
@@ -64,8 +65,10 @@ abstract class NotificationsModuleIntegrationTest extends ModuleIntegrationTest 
     @BeforeEach
     void awaitConsumerAssignment() {
         var container = listeners.getListenerContainer(SocialEventConsumer.LISTENER_ID);
-        await().atMost(Duration.ofSeconds(30)).until(() -> container.getAssignedPartitions() != null
-            && container.getAssignedPartitions().size() == NotificationsKafkaConsumerAutoConfiguration.PARTITIONS);
+        await().atMost(Duration.ofSeconds(30))
+                .until(() -> container.getAssignedPartitions() != null
+                        && container.getAssignedPartitions().size()
+                                == NotificationsKafkaConsumerAutoConfiguration.PARTITIONS);
     }
 
     /**
@@ -76,25 +79,37 @@ abstract class NotificationsModuleIntegrationTest extends ModuleIntegrationTest 
         givenNotification(type, recipientId, actorId, subjectId, OCCURRED_AT, Instant.now());
     }
 
-    protected final void givenNotification(NotificationType type, UUID recipientId, UUID actorId, UUID subjectId,
-        Instant occurredAt, Instant createdAt) {
-        new TransactionTemplate(transactionManager).executeWithoutResult(status -> store.insertIfNew(UUID.randomUUID(),
-            type.wireName(), recipientId, actorId, subjectId, occurredAt, createdAt));
+    protected final void givenNotification(
+            NotificationType type,
+            UUID recipientId,
+            UUID actorId,
+            UUID subjectId,
+            Instant occurredAt,
+            Instant createdAt) {
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(status -> store.insertIfNew(
+                        UUID.randomUUID(), type.wireName(), recipientId, actorId, subjectId, occurredAt, createdAt));
     }
 
     protected final void publish(String key, String json) {
-        try (var producer = new KafkaProducer<String, String>(
-            Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SharedKafka.INSTANCE.getBootstrapServers(),
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName(),
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName()))) {
-            producer.send(new ProducerRecord<>(SocialEventConsumer.TOPIC, key, json)).get();
+        try (var producer = new KafkaProducer<String, String>(Map.of(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                SharedKafka.INSTANCE.getBootstrapServers(),
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class.getName(),
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class.getName()))) {
+            producer.send(new ProducerRecord<>(SocialEventConsumer.TOPIC, key, json))
+                    .get();
         } catch (Exception e) {
             throw new IllegalStateException("failed to publish to " + SocialEventConsumer.TOPIC, e);
         }
     }
 
     protected final List<Notification> notificationsFor(UUID recipientId) {
-        return store.findAll().stream().filter(n -> n.recipientId().value().equals(recipientId)).toList();
+        return store.findAll().stream()
+                .filter(n -> n.recipientId().value().equals(recipientId))
+                .toList();
     }
 
     /**
@@ -102,11 +117,17 @@ abstract class NotificationsModuleIntegrationTest extends ModuleIntegrationTest 
      * throwaway group.
      */
     protected final List<String> deadLetterValues() {
-        var config = Map.<String, Object>of(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-            SharedKafka.INSTANCE.getBootstrapServers(), ConsumerConfig.GROUP_ID_CONFIG,
-            "dlt-probe-" + UUID.randomUUID(), ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        var config = Map.<String, Object>of(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                SharedKafka.INSTANCE.getBootstrapServers(),
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "dlt-probe-" + UUID.randomUUID(),
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest",
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class.getName(),
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class.getName());
         var values = new ArrayList<String>();
         try (var consumer = new KafkaConsumer<String, String>(config)) {
             consumer.subscribe(List.of(SocialEventConsumer.DEAD_LETTER_TOPIC));

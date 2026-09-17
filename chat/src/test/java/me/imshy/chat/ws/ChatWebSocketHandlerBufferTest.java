@@ -26,8 +26,9 @@ class ChatWebSocketHandlerBufferTest {
 
         Sinks.EmitResult result = Sinks.EmitResult.OK;
         int accepted = 0;
-        for (; result == Sinks.EmitResult.OK
-            && accepted < ChatWebSocketHandler.OUTBOUND_BUFFER_CAPACITY * 4; accepted++) {
+        for (;
+                result == Sinks.EmitResult.OK && accepted < ChatWebSocketHandler.OUTBOUND_BUFFER_CAPACITY * 4;
+                accepted++) {
             result = outbound.tryEmitNext(OutboundSinkFixtures.sampleEvent());
         }
 
@@ -56,11 +57,12 @@ class ChatWebSocketHandlerBufferTest {
         for (int i = 0; !overflowed && i < ChatWebSocketHandler.OUTBOUND_BUFFER_CAPACITY * 4; i++) {
             overflowed = !ConnectionRegistry.emit(outbound, OutboundSinkFixtures.sampleEvent());
         }
-        assertThat(overflowed).as("emit into a full bounded buffer reports not-accepted").isTrue();
+        assertThat(overflowed)
+                .as("emit into a full bounded buffer reports not-accepted")
+                .isTrue();
 
         stalled.request(Long.MAX_VALUE);
 
         assertThat(terminatedWith.get()).isInstanceOf(OutboundBufferOverflowException.class);
     }
-
 }

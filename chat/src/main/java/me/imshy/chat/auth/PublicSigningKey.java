@@ -18,8 +18,8 @@ public final class PublicSigningKey {
     public static PublicSigningKey fromJwkJson(String json) {
         if (json == null || json.isBlank()) {
             throw new IllegalArgumentException(
-                "pictogram.auth.public-key (env PICTOGRAM_AUTH_PUBLIC_KEY) must be set to identity's public "
-                    + "signing JWK — chat has no key of its own to fall back to (ADR-0014)");
+                    "pictogram.auth.public-key (env PICTOGRAM_AUTH_PUBLIC_KEY) must be set to identity's public "
+                            + "signing JWK — chat has no key of its own to fall back to (ADR-0014)");
         }
         ECKey parsed;
         try {

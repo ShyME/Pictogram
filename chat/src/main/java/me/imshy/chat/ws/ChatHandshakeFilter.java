@@ -36,10 +36,10 @@ public class ChatHandshakeFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if (!path.equals(exchange.getRequest().getPath().value()))
-            return chain.filter(exchange);
+        if (!path.equals(exchange.getRequest().getPath().value())) return chain.filter(exchange);
 
-        ResolvedAccessToken caller = resolveCaller(exchange.getRequest().getHeaders().get("Sec-WebSocket-Protocol"));
+        ResolvedAccessToken caller =
+                resolveCaller(exchange.getRequest().getHeaders().get("Sec-WebSocket-Protocol"));
         if (caller == null) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
@@ -56,13 +56,11 @@ public class ChatHandshakeFilter implements WebFilter {
     // candidate rather than assuming the token is the only, or the first, one
     // offered.
     private ResolvedAccessToken resolveCaller(List<String> offeredProtocols) {
-        if (offeredProtocols == null)
-            return null;
+        if (offeredProtocols == null) return null;
         for (String header : offeredProtocols) {
             for (String candidate : header.split(",")) {
                 String token = candidate.trim();
-                if (token.isEmpty())
-                    continue;
+                if (token.isEmpty()) continue;
                 try {
                     return verifier.resolve(token);
                 } catch (InvalidAccessTokenException invalid) {

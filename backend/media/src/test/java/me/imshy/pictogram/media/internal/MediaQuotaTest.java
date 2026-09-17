@@ -27,7 +27,7 @@ class MediaQuotaTest extends MediaModuleIntegrationTest {
         var owner = UserId.random();
 
         assertThatExceptionOfType(MediaQuotaExceededException.class)
-            .isThrownBy(() -> library.upload(owner, TestImages.jpeg(800, 600)));
+                .isThrownBy(() -> library.upload(owner, TestImages.jpeg(800, 600)));
     }
 
     @Test
@@ -35,7 +35,7 @@ class MediaQuotaTest extends MediaModuleIntegrationTest {
         var owner = UserId.random();
 
         assertThatExceptionOfType(MediaQuotaExceededException.class)
-            .isThrownBy(() -> library.upload(owner, TestImages.jpeg(800, 600)));
+                .isThrownBy(() -> library.upload(owner, TestImages.jpeg(800, 600)));
 
         assertThat(medias.totalBytesForOwner(owner.value())).isZero();
     }

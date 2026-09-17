@@ -34,8 +34,11 @@ interface Follows extends CrudRepository<Follow, FollowId> {
           and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.followerId < :beforeId))
         order by f.followedAt desc, f.followerId desc
         """)
-    List<Follow> followersBefore(@Param("user") UUID user, @Param("beforeAt") Instant beforeAt,
-        @Param("beforeId") UUID beforeId, Limit limit);
+    List<Follow> followersBefore(
+            @Param("user") UUID user,
+            @Param("beforeAt") Instant beforeAt,
+            @Param("beforeId") UUID beforeId,
+            Limit limit);
 
     @Query("""
         select f from Follow f
@@ -50,8 +53,11 @@ interface Follows extends CrudRepository<Follow, FollowId> {
           and (f.followedAt < :beforeAt or (f.followedAt = :beforeAt and f.followedId < :beforeId))
         order by f.followedAt desc, f.followedId desc
         """)
-    List<Follow> followingBefore(@Param("user") UUID user, @Param("beforeAt") Instant beforeAt,
-        @Param("beforeId") UUID beforeId, Limit limit);
+    List<Follow> followingBefore(
+            @Param("user") UUID user,
+            @Param("beforeAt") Instant beforeAt,
+            @Param("beforeId") UUID beforeId,
+            Limit limit);
 
     @Query("""
         select new me.imshy.pictogram.social.internal.follow.FollowCount(f.followedId, count(f))

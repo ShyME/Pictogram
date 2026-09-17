@@ -32,7 +32,7 @@ class InMemoryRateLimiterTest {
         limiter.requirePermit(user, "post-publish");
 
         assertThatExceptionOfType(RateLimitExceededException.class)
-            .isThrownBy(() -> limiter.requirePermit(user, "post-publish"));
+                .isThrownBy(() -> limiter.requirePermit(user, "post-publish"));
     }
 
     @Test
@@ -58,7 +58,7 @@ class InMemoryRateLimiterTest {
         UserId user = UserId.random();
         limiter.requirePermit(user, "comment");
         assertThatExceptionOfType(RateLimitExceededException.class)
-            .isThrownBy(() -> limiter.requirePermit(user, "comment"));
+                .isThrownBy(() -> limiter.requirePermit(user, "comment"));
 
         clock.advance(Duration.ofMinutes(1));
 

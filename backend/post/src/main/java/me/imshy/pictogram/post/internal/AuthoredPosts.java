@@ -28,8 +28,8 @@ class AuthoredPosts implements PublishedPosts {
         Set<UUID> authorIds = authors.stream().map(UserId::value).collect(Collectors.toSet());
         Limit fetch = Limit.of(limit + 1);
         List<Post> rows = after == null
-            ? posts.newestByAuthors(authorIds, fetch)
-            : posts.byAuthorsBefore(authorIds, after.at(), after.id(), fetch);
+                ? posts.newestByAuthors(authorIds, fetch)
+                : posts.byAuthorsBefore(authorIds, after.at(), after.id(), fetch);
 
         boolean hasMore = rows.size() > limit;
         List<Post> page = hasMore ? rows.subList(0, limit) : rows;

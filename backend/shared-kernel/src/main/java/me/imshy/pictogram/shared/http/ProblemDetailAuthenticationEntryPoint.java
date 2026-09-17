@@ -16,8 +16,9 @@ public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntr
     }
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-        AuthenticationException authException) throws IOException {
+    public void commence(
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException {
         var problem = new UnauthenticatedException("A valid Pictogram access token is required.").toProblemDetail();
         ProblemDetails.write(response, objectMapper, problem);
     }

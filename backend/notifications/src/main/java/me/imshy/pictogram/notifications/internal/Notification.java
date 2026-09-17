@@ -56,8 +56,7 @@ class Notification implements Persistable<UUID> {
     @Transient
     private boolean persisted;
 
-    protected Notification() {
-    }
+    protected Notification() {}
 
     NotificationType type() {
         return type;

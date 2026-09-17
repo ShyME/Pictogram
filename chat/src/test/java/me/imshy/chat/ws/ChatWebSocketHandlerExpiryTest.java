@@ -83,12 +83,12 @@ class ChatWebSocketHandlerExpiryTest {
     }
 
     private void connect(String token, Function<WebSocketSession, Mono<Void>> body) {
-        connections.add(client.execute(wsUri(), new HttpHeaders(), offering(token, body)).subscribe());
+        connections.add(client.execute(wsUri(), new HttpHeaders(), offering(token, body))
+                .subscribe());
     }
 
     private static void await(BooleanSupplier condition) throws InterruptedException {
-        for (int waited = 0; waited < 100 && !condition.getAsBoolean(); waited++)
-            Thread.sleep(100);
+        for (int waited = 0; waited < 100 && !condition.getAsBoolean(); waited++) Thread.sleep(100);
     }
 
     private static WebSocketHandler offering(String token, Function<WebSocketSession, Mono<Void>> body) {

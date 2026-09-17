@@ -39,11 +39,18 @@ class CommentsController {
     }
 
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "The comment count for each requested post.",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostCommentsView.class)))),
-        @ApiResponse(responseCode = "400", description = "The request asked for more ids than the batch limit.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class)))})
+        @ApiResponse(
+                responseCode = "200",
+                description = "The comment count for each requested post.",
+                content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostCommentsView.class)))),
+        @ApiResponse(
+                responseCode = "400",
+                description = "The request asked for more ids than the batch limit.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @GetMapping(params = "postIds")
     List<PostCommentsView> countsByPostIds(@RequestParam("postIds") Set<UUID> postIds) {
         List<PostId> posts = BatchIds.checked(postIds).stream().map(PostId::new).toList();
@@ -51,12 +58,17 @@ class CommentsController {
     }
 
     @ApiResponses({
-        @ApiResponse(responseCode = "204",
-            description = "The comment is gone (or was never there — the delete is idempotent)."),
-        @ApiResponse(responseCode = "403",
-            description = "The caller is neither the comment's author nor the post's author.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class)))})
+        @ApiResponse(
+                responseCode = "204",
+                description = "The comment is gone (or was never there — the delete is idempotent)."),
+        @ApiResponse(
+                responseCode = "403",
+                description = "The caller is neither the comment's author nor the post's author.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @DeleteMapping("/{commentId}")
     ResponseEntity<Void> deleteComment(@CurrentUser ViewerId viewer, @PathVariable("commentId") UUID commentId) {
         thread.delete(viewer, commentId);

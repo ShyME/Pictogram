@@ -13,7 +13,8 @@ interface LikeTests extends AppUnderTest {
         ada.completeOnboarding("ada_likes", "Ada", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_likes", "Bob", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
 
         assertThat(likeState(ada, post)).isEqualTo(new PostLikes(0, false));
 
@@ -31,7 +32,8 @@ interface LikeTests extends AppUnderTest {
     default void aViewerMayLikeTheirOwnPost() {
         var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_selflike", "Ada", null);
-        String ownPost = ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "mine").postId();
+        String ownPost =
+                ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "mine").postId();
 
         ada.like(ownPost);
 

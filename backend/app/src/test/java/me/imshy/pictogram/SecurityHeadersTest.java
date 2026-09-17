@@ -32,22 +32,28 @@ class SecurityHeadersTest {
 
     @Test
     void apiResponsesCarryTheSameHeaders() {
-        assertHardeningHeaders(
-            http.exchange(http.to("/api/profiles/does-not-exist").header("Accept", "application/json").GET()));
+        assertHardeningHeaders(http.exchange(http.to("/api/profiles/does-not-exist")
+                .header("Accept", "application/json")
+                .GET()));
     }
 
     private static void assertHardeningHeaders(HttpResponse<?> response) {
         var headers = response.headers();
 
         assertThat(headers.firstValue("Content-Security-Policy")).hasValueSatisfying(csp -> assertThat(csp)
-            .contains("default-src 'self'").contains("script-src 'self'").contains("style-src 'self'")
-            .doesNotContain("'unsafe-inline'").contains("object-src 'none'").contains("frame-ancestors 'none'")
-            // Chat's WebSocket shares this origin (#169), so 'self' covers it — no host
-            // exception, no ws:/wss: scheme source.
-            .contains("connect-src 'self'").doesNotContain("connect-src 'self' ws"));
+                .contains("default-src 'self'")
+                .contains("script-src 'self'")
+                .contains("style-src 'self'")
+                .doesNotContain("'unsafe-inline'")
+                .contains("object-src 'none'")
+                .contains("frame-ancestors 'none'")
+                // Chat's WebSocket shares this origin (#169), so 'self' covers it — no host
+                // exception, no ws:/wss: scheme source.
+                .contains("connect-src 'self'")
+                .doesNotContain("connect-src 'self' ws"));
         assertThat(headers.firstValue("Referrer-Policy")).hasValue("strict-origin-when-cross-origin");
         assertThat(headers.firstValue("Permissions-Policy"))
-            .hasValueSatisfying(policy -> assertThat(policy).contains("geolocation=()"));
+                .hasValueSatisfying(policy -> assertThat(policy).contains("geolocation=()"));
         assertThat(headers.firstValue("X-Content-Type-Options")).hasValue("nosniff");
         assertThat(headers.firstValue("X-Frame-Options")).hasValue("DENY");
     }

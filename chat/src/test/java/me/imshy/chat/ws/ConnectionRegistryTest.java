@@ -51,10 +51,7 @@ class ConnectionRegistryTest {
         UserId sender = UserId.random();
         UserId recipient = UserId.random();
         Sinks.Many<OutboundEvent> terminated = Sinks.many().unicast().onBackpressureBuffer();
-        terminated.asFlux().subscribe(event -> {
-        }, error -> {
-        }, () -> {
-        });
+        terminated.asFlux().subscribe(event -> {}, error -> {}, () -> {});
         terminated.tryEmitComplete();
         registry.connect(recipient, terminated);
 
@@ -68,10 +65,7 @@ class ConnectionRegistryTest {
         UserId sender = UserId.random();
         UserId recipient = UserId.random();
         Sinks.Many<OutboundEvent> terminated = Sinks.many().unicast().onBackpressureBuffer();
-        terminated.asFlux().subscribe(event -> {
-        }, error -> {
-        }, () -> {
-        });
+        terminated.asFlux().subscribe(event -> {}, error -> {}, () -> {});
         terminated.tryEmitComplete();
         List<OutboundEvent> liveTab = record(recipient);
         registry.connect(recipient, terminated);

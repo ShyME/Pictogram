@@ -40,8 +40,12 @@ public class CommentThread implements CommentCounts, CommentVolume {
     private final Clock clock;
     private final TransactionTemplate ownTransaction;
 
-    CommentThread(Comments comments, PublishedPosts publishedPosts, ApplicationEventPublisher events, Clock clock,
-        PlatformTransactionManager transactionManager) {
+    CommentThread(
+            Comments comments,
+            PublishedPosts publishedPosts,
+            ApplicationEventPublisher events,
+            Clock clock,
+            PlatformTransactionManager transactionManager) {
         this.comments = comments;
         this.publishedPosts = publishedPosts;
         this.events = events;
@@ -56,7 +60,8 @@ public class CommentThread implements CommentCounts, CommentVolume {
         Instant createdAt = clock.instant();
         CommentBody validated = CommentBody.of(body);
         return ownTransaction.execute(status -> {
-            PostComment saved = comments.save(Comment.write(viewer, post, validated, createdAt)).view();
+            PostComment saved = comments.save(Comment.write(viewer, post, validated, createdAt))
+                    .view();
             events.publishEvent(new PostCommented(post, saved.commentId(), viewer, createdAt));
             return saved;
         });
@@ -67,11 +72,11 @@ public class CommentThread implements CommentCounts, CommentVolume {
 
         Limit fetch = Limit.of(pageSize + 1);
         List<Comment> rows = after == null
-            ? comments.oldestFor(post.value(), fetch)
-            : comments.afterFor(post.value(), after.at(), after.id(), fetch);
+                ? comments.oldestFor(post.value(), fetch)
+                : comments.afterFor(post.value(), after.at(), after.id(), fetch);
 
-        KeysetWindow<Comment> window = KeysetWindow.of(rows, pageSize,
-            last -> new Cursor(last.createdAt(), last.getId()));
+        KeysetWindow<Comment> window =
+                KeysetWindow.of(rows, pageSize, last -> new Cursor(last.createdAt(), last.getId()));
 
         return new Page(window.page().stream().map(Comment::view).toList(), window.nextCursor());
     }
@@ -94,8 +99,10 @@ public class CommentThread implements CommentCounts, CommentVolume {
         if (comment.viewer().value().equals(viewer.value())) {
             return true;
         }
-        return publishedPosts.authorOf(comment.postId()).map(author -> author.value().equals(viewer.value()))
-            .orElse(false);
+        return publishedPosts
+                .authorOf(comment.postId())
+                .map(author -> author.value().equals(viewer.value()))
+                .orElse(false);
     }
 
     @Override
@@ -104,9 +111,11 @@ public class CommentThread implements CommentCounts, CommentVolume {
         if (ids.isEmpty()) {
             return List.of();
         }
-        Map<UUID, Long> counts = comments.countsFor(ids).stream()
-            .collect(toMap(CommentCount::postId, CommentCount::count));
-        return ids.stream().map(id -> new PostComments(new PostId(id), counts.getOrDefault(id, 0L))).toList();
+        Map<UUID, Long> counts =
+                comments.countsFor(ids).stream().collect(toMap(CommentCount::postId, CommentCount::count));
+        return ids.stream()
+                .map(id -> new PostComments(new PostId(id), counts.getOrDefault(id, 0L)))
+                .toList();
     }
 
     @EventListener
@@ -119,6 +128,5 @@ public class CommentThread implements CommentCounts, CommentVolume {
         return comments.count();
     }
 
-    public record Page(List<PostComment> comments, Cursor nextCursor) {
-    }
+    public record Page(List<PostComment> comments, Cursor nextCursor) {}
 }

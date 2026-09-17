@@ -20,13 +20,13 @@ public abstract class ContextAmountGuard implements BeforeEachCallback {
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        Set<ApplicationContext> seen = SEEN.computeIfAbsent(getClass(),
-            key -> Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>())));
+        Set<ApplicationContext> seen = SEEN.computeIfAbsent(
+                getClass(), key -> Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>())));
         seen.add(SpringExtension.getApplicationContext(context));
         if (seen.size() > limit()) {
             throw new AssertionError(
-                "%s booted %d distinct ApplicationContexts (ceiling %d) — a test drifted its context configuration. See #78."
-                    .formatted(scope(), seen.size(), limit()));
+                    "%s booted %d distinct ApplicationContexts (ceiling %d) — a test drifted its context configuration. See #78."
+                            .formatted(scope(), seen.size(), limit()));
         }
     }
 }

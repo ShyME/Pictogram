@@ -29,8 +29,7 @@ class ConnectionRegistryConcurrencyTest {
                 UserId user = UserId.random();
 
                 Sinks.Many<OutboundEvent> firstTab = Sinks.many().unicast().onBackpressureBuffer();
-                firstTab.asFlux().subscribe(event -> {
-                });
+                firstTab.asFlux().subscribe(event -> {});
                 registry.connect(user, firstTab);
 
                 List<OutboundEvent> secondTabReceived = new CopyOnWriteArrayList<>();
@@ -53,12 +52,14 @@ class ConnectionRegistryConcurrencyTest {
                 boolean delivered = registry.deliver(anotherSender, user, "ping");
 
                 assertThat(registry.isOnline(user))
-                    .as("round %s: the second connection was orphaned by the racing disconnect", round).isTrue();
+                        .as("round %s: the second connection was orphaned by the racing disconnect", round)
+                        .isTrue();
                 assertThat(delivered)
-                    .as("round %s: a message to the still-connected second tab was reported undelivered", round)
-                    .isTrue();
-                assertThat(secondTabReceived).as("round %s", round)
-                    .containsExactly(DeliveredMessage.of(anotherSender, "ping"));
+                        .as("round %s: a message to the still-connected second tab was reported undelivered", round)
+                        .isTrue();
+                assertThat(secondTabReceived)
+                        .as("round %s", round)
+                        .containsExactly(DeliveredMessage.of(anotherSender, "ping"));
             }
         } finally {
             pool.shutdownNow();
@@ -77,20 +78,22 @@ class ConnectionRegistryConcurrencyTest {
 
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
-            Future<Boolean> holder = pool
-                .submit(() -> ConnectionRegistry.emit(sink, OutboundSinkFixtures.sampleEvent()));
+            Future<Boolean> holder =
+                    pool.submit(() -> ConnectionRegistry.emit(sink, OutboundSinkFixtures.sampleEvent()));
             assertThat(consumerEntered.await(5, TimeUnit.SECONDS)).isTrue();
 
             long startNanos = System.nanoTime();
-            Future<Boolean> contender = pool
-                .submit(() -> ConnectionRegistry.emit(sink, OutboundSinkFixtures.sampleEvent()));
+            Future<Boolean> contender =
+                    pool.submit(() -> ConnectionRegistry.emit(sink, OutboundSinkFixtures.sampleEvent()));
             boolean contenderAccepted = contender.get(5, TimeUnit.SECONDS);
             Duration blocked = Duration.ofNanos(System.nanoTime() - startNanos);
 
-            assertThat(contenderAccepted).as("a contended emit into a held sink must report not-accepted, not throw")
-                .isFalse();
-            assertThat(blocked).as("a contended emit must give up inside its small budget, not spin or park for ~1s")
-                .isLessThan(Duration.ofMillis(300));
+            assertThat(contenderAccepted)
+                    .as("a contended emit into a held sink must report not-accepted, not throw")
+                    .isFalse();
+            assertThat(blocked)
+                    .as("a contended emit must give up inside its small budget, not spin or park for ~1s")
+                    .isLessThan(Duration.ofMillis(300));
 
             releaseConsumer.countDown();
             holder.get(5, TimeUnit.SECONDS);

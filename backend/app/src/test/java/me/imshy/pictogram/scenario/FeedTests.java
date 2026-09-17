@@ -25,8 +25,10 @@ interface FeedTests extends AppUnderTest {
 
         List<String> publishedOldestFirst = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            publishedOldestFirst.add(bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "bob " + i).postId());
-            publishedOldestFirst.add(carol.publishPost(carol.uploadPhoto(JpegPhoto.some()), "carol " + i).postId());
+            publishedOldestFirst.add(bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "bob " + i)
+                    .postId());
+            publishedOldestFirst.add(carol.publishPost(carol.uploadPhoto(JpegPhoto.some()), "carol " + i)
+                    .postId());
         }
         List<String> newestFirst = publishedOldestFirst.reversed();
 
@@ -44,13 +46,15 @@ interface FeedTests extends AppUnderTest {
 
         List<String> firstBatch = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            firstBatch.add(bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "old " + i).postId());
+            firstBatch.add(bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "old " + i)
+                    .postId());
         }
 
         FeedPage firstPage = ada.openFeed(null, 2);
         assertThat(firstPage.postIds()).containsExactly(firstBatch.get(3), firstBatch.get(2));
 
-        String published = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "brand new").postId();
+        String published =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "brand new").postId();
 
         List<String> rest = new ArrayList<>();
         String cursor = firstPage.nextCursor();

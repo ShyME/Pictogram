@@ -17,6 +17,6 @@ class NotificationTypeTest {
     @Test
     void rejectsAnUnknownWireNameSoTheRecordIsDeadLettered() {
         assertThatThrownBy(() -> NotificationType.fromWire("post-unliked"))
-            .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -19,7 +19,10 @@ class OpenApiConfiguration {
     @Bean
     OpenAPI pictogramOpenApi() {
         return new OpenAPI()
-            .info(new Info().title("Pictogram API").version("v1").description("The HTTP API the Pictogram SPA drives."))
-            .servers(List.of(new Server().url("/")));
+                .info(new Info()
+                        .title("Pictogram API")
+                        .version("v1")
+                        .description("The HTTP API the Pictogram SPA drives."))
+                .servers(List.of(new Server().url("/")));
     }
 }

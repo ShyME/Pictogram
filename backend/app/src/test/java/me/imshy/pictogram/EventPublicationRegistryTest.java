@@ -27,17 +27,27 @@ class EventPublicationRegistryTest {
 
     @Test
     void theRegistryTableIsCreatedByFlyway() {
-        var columns = db
-            .sql("select column_name from information_schema.columns where table_name = 'event_publication'")
-            .query(String.class).list();
+        var columns = db.sql(
+                        "select column_name from information_schema.columns where table_name = 'event_publication'")
+                .query(String.class)
+                .list();
 
-        assertThat(columns).contains("id", "listener_id", "event_type", "serialized_event", "publication_date",
-            "completion_date", "status", "completion_attempts", "last_resubmission_date");
+        assertThat(columns)
+                .contains(
+                        "id",
+                        "listener_id",
+                        "event_type",
+                        "serialized_event",
+                        "publication_date",
+                        "completion_date",
+                        "status",
+                        "completion_attempts",
+                        "last_resubmission_date");
     }
 
     @Test
     void theRegistryIsWiredAndReadsCleanly() {
         assertThatCode(() -> incompletePublications.resubmitIncompletePublications(__ -> false))
-            .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
     }
 }
