@@ -6,10 +6,11 @@ import java.util.*;
 import me.imshy.pictogram.shared.PostId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.social.LikeCounts;
+import me.imshy.pictogram.social.internal.LikeVolume;
 import org.springframework.stereotype.Service;
 
 @Service
-public class LikeTally implements LikeCounts {
+public class LikeTally implements LikeCounts, LikeVolume {
 
     private final Likes likes;
 
@@ -33,6 +34,11 @@ public class LikeTally implements LikeCounts {
             return List.of();
         }
         return tally(ids, Set.of());
+    }
+
+    @Override
+    public long total() {
+        return likes.count();
     }
 
     private List<PostLikes> tally(List<UUID> ids, Set<UUID> likedByViewer) {

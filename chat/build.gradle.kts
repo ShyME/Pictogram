@@ -28,6 +28,8 @@ dependencies {
     // The reactive stack, not spring-boot-starter-web — see ADR-0014.
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // ADR-0016: exposes /actuator/prometheus for Grafana Alloy to scrape.
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     // JWT verification only (NimbusJwtDecoder + validators) — not the resource-server
     // starter, since chat has exactly one authenticated route (the WS handshake) and no
     // use for Spring Security's filter-chain machinery (#164).

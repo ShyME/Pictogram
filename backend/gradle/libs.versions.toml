@@ -36,6 +36,9 @@ awssdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awssdk" }
 # Versions are BOM-governed — spring-kafka by the Spring Boot BOM, the spring-modulith-events-*
 # modules by the Modulith BOM — so no version.ref here.
 spring-kafka = { module = "org.springframework.kafka:spring-kafka" }
+# ADR-0016: exports Actuator's Micrometer registry as /actuator/prometheus for Grafana
+# Alloy to scrape. BOM-governed by the Spring Boot BOM, so no version.ref here.
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 spring-modulith-events-api = { module = "org.springframework.modulith:spring-modulith-events-api" }
 spring-modulith-events-kafka = { module = "org.springframework.modulith:spring-modulith-events-kafka" }
 spring-modulith-events-jpa = { module = "org.springframework.modulith:spring-modulith-events-jpa" }

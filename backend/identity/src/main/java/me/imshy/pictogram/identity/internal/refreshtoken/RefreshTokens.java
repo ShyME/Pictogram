@@ -26,4 +26,10 @@ public interface RefreshTokens extends CrudRepository<RefreshToken, UUID> {
     @Modifying
     @Query("update RefreshToken t set t.revokedAt = :when where t.familyId = :familyId and t.revokedAt is null")
     void revokeFamily(@Param("familyId") UUID familyId, @Param("when") Instant when);
+
+    // "Active user" (backend/identity/CONTEXT.md): issuedAt is a new sign-in,
+    // consumedAt
+    // is a refresh rotation, either counts.
+    @Query("select count(distinct t.userId) from RefreshToken t where t.issuedAt >= :since or t.consumedAt >= :since")
+    long countDistinctUsersActiveSince(@Param("since") Instant since);
 }

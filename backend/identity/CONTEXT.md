@@ -66,3 +66,11 @@ Not a server-side object — Pictogram keeps no session state; the term names th
 Google sign-in handshake needs a short-lived servlet session to hold the authorization
 request; it is invalidated the moment the Pictogram session is minted — ADR-0004 #27.)
 _Avoid_: Login, ticket
+
+**Active user** (ADR-0016, #233):
+A user with a returning session — a refresh token issued or rotated — within a given
+window, read from `refresh_token` issuance/rotation timestamps rather than content
+creation (posting, liking, commenting). Lurking still counts; posting is not required.
+Exists only as a product-stat gauge (`IdentityStats.activeSince`) consumed by `:app`'s
+scheduled gauge job — identity itself has no notion of "activity" beyond this read.
+_Avoid_: Online, logged in (this isn't presence — chat's is a separate concept)

@@ -77,6 +77,12 @@
 	handle @ws {
 		reverse_proxy chat:8081
 	}
+	# /actuator/prometheus (ADR-0016) is not proxied publicly — only /actuator/health is.
+	# Alloy scrapes app/chat directly on the compose network; without this, the catch-all
+	# handle below would forward it to app like any other path.
+	handle /actuator/prometheus {
+		respond 404
+	}
 	handle {
 		reverse_proxy app:8080 {
 			# Tomcat's RemoteIpValve (server.forward-headers-strategy=native) derives the

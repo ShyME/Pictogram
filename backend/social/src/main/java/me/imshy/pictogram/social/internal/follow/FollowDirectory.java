@@ -34,4 +34,9 @@ public class FollowDirectory implements FollowGraph {
     public boolean isFollowing(ViewerId viewer, UserId user) {
         return follows.existsByFollowerIdAndFollowedId(viewer.value(), user.value());
     }
+
+    @Override
+    public long totalFollows() {
+        return follows.count();
+    }
 }

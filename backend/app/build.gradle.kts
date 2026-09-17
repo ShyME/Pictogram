@@ -17,6 +17,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // ADR-0016: exposes /actuator/prometheus for Grafana Alloy to scrape.
+    runtimeOnly(libs.micrometer.registry.prometheus)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-actuator")
