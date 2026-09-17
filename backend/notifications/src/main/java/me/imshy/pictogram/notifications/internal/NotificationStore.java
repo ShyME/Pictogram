@@ -30,9 +30,14 @@ interface NotificationStore extends ListCrudRepository<Notification, UUID> {
             (:id, :type, :recipientId, :actorId, cast(:subjectId as uuid), :occurredAt, false, :createdAt)
         on conflict on constraint notification_natural_key do nothing
         """)
-    int insertIfNew(@Param("id") UUID id, @Param("type") String type, @Param("recipientId") UUID recipientId,
-        @Param("actorId") UUID actorId, @Param("subjectId") UUID subjectId, @Param("occurredAt") Instant occurredAt,
-        @Param("createdAt") Instant createdAt);
+    int insertIfNew(
+            @Param("id") UUID id,
+            @Param("type") String type,
+            @Param("recipientId") UUID recipientId,
+            @Param("actorId") UUID actorId,
+            @Param("subjectId") UUID subjectId,
+            @Param("occurredAt") Instant occurredAt,
+            @Param("createdAt") Instant createdAt);
 
     /**
      * Purge every notification about a post — the #138-style {@code PostDeleted}
@@ -56,8 +61,11 @@ interface NotificationStore extends ListCrudRepository<Notification, UUID> {
                or (n.createdAt = :beforeCreatedAt and n.id < :beforeId))
         order by n.createdAt desc, n.id desc
         """)
-    List<Notification> beforeFor(@Param("recipient") UUID recipient, @Param("beforeCreatedAt") Instant beforeCreatedAt,
-        @Param("beforeId") UUID beforeId, Limit limit);
+    List<Notification> beforeFor(
+            @Param("recipient") UUID recipient,
+            @Param("beforeCreatedAt") Instant beforeCreatedAt,
+            @Param("beforeId") UUID beforeId,
+            Limit limit);
 
     long countByRecipientIdAndReadIsFalse(UUID recipientId);
 

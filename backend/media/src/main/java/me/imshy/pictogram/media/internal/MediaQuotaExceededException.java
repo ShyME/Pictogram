@@ -9,7 +9,9 @@ public final class MediaQuotaExceededException extends ApiException {
     static final ProblemType TYPE = new ProblemType("media-quota-exceeded", "Storage quota exceeded");
 
     public MediaQuotaExceededException() {
-        super(HttpStatus.PAYLOAD_TOO_LARGE, TYPE,
-            "This upload would push your total stored media past your storage quota.");
+        super(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                TYPE,
+                "This upload would push your total stored media past your storage quota.");
     }
 }

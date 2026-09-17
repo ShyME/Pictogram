@@ -7,8 +7,7 @@ import reactor.core.publisher.BaseSubscriber;
 // Shared setup for the tests that exercise a connection's outbound sink directly.
 final class OutboundSinkFixtures {
 
-    private OutboundSinkFixtures() {
-    }
+    private OutboundSinkFixtures() {}
 
     static OutboundEvent sampleEvent() {
         return DeliveredMessage.of(UserId.random(), "m");
@@ -19,8 +18,7 @@ final class OutboundSinkFixtures {
     static BaseSubscriber<OutboundEvent> demandNothing() {
         return new BaseSubscriber<>() {
             @Override
-            protected void hookOnSubscribe(Subscription subscription) {
-            }
+            protected void hookOnSubscribe(Subscription subscription) {}
         };
     }
 }

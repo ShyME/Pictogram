@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(MediaQuotaProperties.class)
-class MediaQuotaConfiguration {
-}
+class MediaQuotaConfiguration {}

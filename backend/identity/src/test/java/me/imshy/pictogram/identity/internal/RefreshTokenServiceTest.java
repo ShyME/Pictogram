@@ -34,7 +34,7 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         assertThat(second.token()).isNotEqualTo(first.token());
         assertThat(second.user()).isEqualTo(user);
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> refreshTokens.rotate(first.token()));
+                .isThrownBy(() -> refreshTokens.rotate(first.token()));
     }
 
     @Test
@@ -45,10 +45,10 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         time.advance(GRACE.plusSeconds(1));
 
         assertThatExceptionOfType(RefreshTokenReuseException.class)
-            .isThrownBy(() -> refreshTokens.rotate(first.token()));
+                .isThrownBy(() -> refreshTokens.rotate(first.token()));
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> refreshTokens.rotate(second.token()));
+                .isThrownBy(() -> refreshTokens.rotate(second.token()));
     }
 
     @Test
@@ -57,7 +57,8 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         var second = refreshTokens.rotate(first.token());
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> refreshTokens.rotate(first.token())).isNotInstanceOf(RefreshTokenReuseException.class);
+                .isThrownBy(() -> refreshTokens.rotate(first.token()))
+                .isNotInstanceOf(RefreshTokenReuseException.class);
 
         assertThatNoException().isThrownBy(() -> refreshTokens.rotate(second.token()));
     }
@@ -80,12 +81,16 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         pool.shutdown();
 
         var outcomes = attempts.stream().map(RefreshTokenServiceTest::valueOf).toList();
-        var winner = outcomes.stream().filter(RefreshTokenService.Issued.class::isInstance)
-            .map(RefreshTokenService.Issued.class::cast).toList();
+        var winner = outcomes.stream()
+                .filter(RefreshTokenService.Issued.class::isInstance)
+                .map(RefreshTokenService.Issued.class::cast)
+                .toList();
         assertThat(winner).hasSize(1);
-        assertThat(outcomes).anySatisfy(outcome -> assertThat(outcome).isInstanceOf(InvalidRefreshTokenException.class)
-            .isNotInstanceOf(RefreshTokenReuseException.class));
-        assertThatNoException().isThrownBy(() -> refreshTokens.rotate(winner.getFirst().token()));
+        assertThat(outcomes).anySatisfy(outcome -> assertThat(outcome)
+                .isInstanceOf(InvalidRefreshTokenException.class)
+                .isNotInstanceOf(RefreshTokenReuseException.class));
+        assertThatNoException()
+                .isThrownBy(() -> refreshTokens.rotate(winner.getFirst().token()));
     }
 
     @Test
@@ -94,7 +99,7 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         var tx = new TransactionTemplate(txManager);
 
         assertThatExceptionOfType(IllegalStateException.class)
-            .isThrownBy(() -> tx.executeWithoutResult(status -> refreshTokens.rotate(first.token())));
+                .isThrownBy(() -> tx.executeWithoutResult(status -> refreshTokens.rotate(first.token())));
     }
 
     private static Object valueOf(Future<Object> future) {
@@ -112,6 +117,6 @@ class RefreshTokenServiceTest extends ClockControlledModuleTest {
         time.advance(TTL.plusDays(1));
 
         assertThatExceptionOfType(InvalidRefreshTokenException.class)
-            .isThrownBy(() -> refreshTokens.rotate(first.token()));
+                .isThrownBy(() -> refreshTokens.rotate(first.token()));
     }
 }

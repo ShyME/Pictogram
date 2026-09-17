@@ -32,7 +32,8 @@ class NotificationsPostDeletedTest extends NotificationsModuleIntegrationTest {
 
         events.publishEvent(new PostDeleted(new PostId(deletedPost), UserId.random(), MediaId.random(), Instant.now()));
 
-        assertThat(notificationsFor(recipient)).singleElement()
-            .satisfies(n -> assertThat(n.subjectId().value()).isEqualTo(otherPost));
+        assertThat(notificationsFor(recipient))
+                .singleElement()
+                .satisfies(n -> assertThat(n.subjectId().value()).isEqualTo(otherPost));
     }
 }

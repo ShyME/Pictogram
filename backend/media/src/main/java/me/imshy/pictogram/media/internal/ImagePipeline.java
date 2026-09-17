@@ -28,14 +28,13 @@ class ImagePipeline {
 
     private static final long MAX_PIXELS = 200_000_000L;
 
-    record PhotoRenditions(byte[] original, byte[] thumbnail) {
-    }
+    record PhotoRenditions(byte[] original, byte[] thumbnail) {}
 
     PhotoRenditions transcode(byte[] upload) {
         BufferedImage upright = applyOrientation(decode(upload), orientationOf(upload));
         BufferedImage square = centreCrop(upright);
-        return new PhotoRenditions(encodeJpeg(scaleTo(square, ORIGINAL_SIZE)),
-            encodeJpeg(scaleTo(square, THUMBNAIL_SIZE)));
+        return new PhotoRenditions(
+                encodeJpeg(scaleTo(square, ORIGINAL_SIZE)), encodeJpeg(scaleTo(square, THUMBNAIL_SIZE)));
     }
 
     private static BufferedImage decode(byte[] bytes) {
@@ -87,16 +86,17 @@ class ImagePipeline {
         int w = src.getWidth();
         int h = src.getHeight();
         boolean swapAxes = orientation >= 5;
-        AffineTransform transform = switch (orientation) {
-            case 2 -> new AffineTransform(-1, 0, 0, 1, w, 0);
-            case 3 -> new AffineTransform(-1, 0, 0, -1, w, h);
-            case 4 -> new AffineTransform(1, 0, 0, -1, 0, h);
-            case 5 -> new AffineTransform(0, 1, 1, 0, 0, 0);
-            case 6 -> new AffineTransform(0, 1, -1, 0, h, 0);
-            case 7 -> new AffineTransform(0, -1, -1, 0, h, w);
-            case 8 -> new AffineTransform(0, -1, 1, 0, 0, w);
-            default -> new AffineTransform();
-        };
+        AffineTransform transform =
+                switch (orientation) {
+                    case 2 -> new AffineTransform(-1, 0, 0, 1, w, 0);
+                    case 3 -> new AffineTransform(-1, 0, 0, -1, w, h);
+                    case 4 -> new AffineTransform(1, 0, 0, -1, 0, h);
+                    case 5 -> new AffineTransform(0, 1, 1, 0, 0, 0);
+                    case 6 -> new AffineTransform(0, 1, -1, 0, h, 0);
+                    case 7 -> new AffineTransform(0, -1, -1, 0, h, w);
+                    case 8 -> new AffineTransform(0, -1, 1, 0, 0, w);
+                    default -> new AffineTransform();
+                };
 
         BufferedImage dst = new BufferedImage(swapAxes ? h : w, swapAxes ? w : h, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = dst.createGraphics();

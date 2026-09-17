@@ -88,8 +88,12 @@ class ChatWebSocketHandler implements WebSocketHandler {
     private final Instant accessTokenExpiresAt;
     private final Clock clock;
 
-    ChatWebSocketHandler(ConnectionRegistry connections, ObjectMapper json, UserId caller, Instant accessTokenExpiresAt,
-        Clock clock) {
+    ChatWebSocketHandler(
+            ConnectionRegistry connections,
+            ObjectMapper json,
+            UserId caller,
+            Instant accessTokenExpiresAt,
+            Clock clock) {
         this.connections = connections;
         this.json = json;
         this.caller = caller;
@@ -103,7 +107,10 @@ class ChatWebSocketHandler implements WebSocketHandler {
     }
 
     static Sinks.Many<OutboundEvent> outboundSink() {
-        return Sinks.many().unicast().onBackpressureBuffer(Queues.<OutboundEvent>get(OUTBOUND_BUFFER_CAPACITY).get());
+        return Sinks.many()
+                .unicast()
+                .onBackpressureBuffer(
+                        Queues.<OutboundEvent>get(OUTBOUND_BUFFER_CAPACITY).get());
     }
 
     @Override
@@ -117,26 +124,31 @@ class ChatWebSocketHandler implements WebSocketHandler {
         // completed sink briefly in the registry, where a concurrent deliver() still
         // routes
         // to it and the message is lost.
-        Mono<Void> receiving = session.receive().map(WebSocketMessage::getPayloadAsText).doOnNext(payload -> {
-            if (!rateLimiter.tryConsume()) {
-                // Every frame still buffered ahead of the actual disconnect would
-                // otherwise
-                // re-enter here and fire its own session.close() — racing close calls on
-                // the same session the way closeAtTokenExpiry's own comment below warns
-                // against (a Netty refCnt error). compareAndSet lets only the first one
-                // through.
-                if (rateLimited.compareAndSet(false, true))
-                    session.close(new CloseStatus(RATE_LIMIT_EXCEEDED_CLOSE_CODE, "rate limit exceeded")).subscribe();
-                return;
-            }
-            handleFrame(outbound, payload);
-        }).then().doFinally(signal -> {
-            connections.disconnect(caller, outbound);
-            outbound.tryEmitComplete();
-        });
+        Mono<Void> receiving = session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .doOnNext(payload -> {
+                    if (!rateLimiter.tryConsume()) {
+                        // Every frame still buffered ahead of the actual disconnect would
+                        // otherwise
+                        // re-enter here and fire its own session.close() — racing close calls on
+                        // the same session the way closeAtTokenExpiry's own comment below warns
+                        // against (a Netty refCnt error). compareAndSet lets only the first one
+                        // through.
+                        if (rateLimited.compareAndSet(false, true))
+                            session.close(new CloseStatus(RATE_LIMIT_EXCEEDED_CLOSE_CODE, "rate limit exceeded"))
+                                    .subscribe();
+                        return;
+                    }
+                    handleFrame(outbound, payload);
+                })
+                .then()
+                .doFinally(signal -> {
+                    connections.disconnect(caller, outbound);
+                    outbound.tryEmitComplete();
+                });
 
-        Mono<Void> sending = session
-            .send(outbound.asFlux().map(event -> session.textMessage(json.writeValueAsString(event))));
+        Mono<Void> sending =
+                session.send(outbound.asFlux().map(event -> session.textMessage(json.writeValueAsString(event))));
 
         // Fired independently: session.close()'s Mono only completes after flushing,
         // which
@@ -153,8 +165,10 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // refCnt error — ChatWebSocketHandlerExpiryTest catches the regression.
     private Disposable closeAtTokenExpiry(WebSocketSession session) {
         Duration untilExpiry = Duration.between(clock.instant(), accessTokenExpiresAt);
-        return Mono.delay(untilExpiry.isNegative() ? Duration.ZERO : untilExpiry).subscribe(tick -> session
-            .close(new CloseStatus(ACCESS_TOKEN_EXPIRED_CLOSE_CODE, "access token expired")).subscribe());
+        return Mono.delay(untilExpiry.isNegative() ? Duration.ZERO : untilExpiry)
+                .subscribe(
+                        tick -> session.close(new CloseStatus(ACCESS_TOKEN_EXPIRED_CLOSE_CODE, "access token expired"))
+                                .subscribe());
     }
 
     // Malformed frames drop silently rather than tearing the connection down
@@ -181,8 +195,7 @@ class ChatWebSocketHandler implements WebSocketHandler {
         }
         // treeToValue returns null (not an exception) for a bare `null` frame — pinned
         // by ChatMessagingTest.
-        if (request == null || request.recipientUserId() == null || request.text() == null)
-            return;
+        if (request == null || request.recipientUserId() == null || request.text() == null) return;
 
         boolean delivered = connections.deliver(caller, request.recipientUserId(), request.text());
         if (!delivered) {
@@ -199,10 +212,11 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // full.
     static List<String> presenceQuerySubjects(JsonNode frame) {
         JsonNode userIds = frame.at("/userIds");
-        if (!userIds.isArray())
-            return List.of(frame.at("/userId").asString());
-        return StreamSupport.stream(userIds.spliterator(), false).limit(MAX_PRESENCE_QUERY_SUBJECTS)
-            .map(JsonNode::asString).toList();
+        if (!userIds.isArray()) return List.of(frame.at("/userId").asString());
+        return StreamSupport.stream(userIds.spliterator(), false)
+                .limit(MAX_PRESENCE_QUERY_SUBJECTS)
+                .map(JsonNode::asString)
+                .toList();
     }
 
     // One PresenceStatus per subject; an entry that is not a UserId is skipped, not

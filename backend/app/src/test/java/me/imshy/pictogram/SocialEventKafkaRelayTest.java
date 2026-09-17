@@ -101,17 +101,19 @@ class SocialEventKafkaRelayTest {
     void aLikeWhoseRelayDiesBeforeForwardingIsResubmittedOnRestart() {
         // The relay's first send fails, as if the process died before the broker ack.
         doAnswer(invocation -> {
-            if (relayIsDown.getAndSet(false)) {
-                return CompletableFuture.failedFuture(new IllegalStateException("relay down"));
-            }
-            return invocation.callRealMethod();
-        }).when(kafka).send(any(Message.class));
+                    if (relayIsDown.getAndSet(false)) {
+                        return CompletableFuture.failedFuture(new IllegalStateException("relay down"));
+                    }
+                    return invocation.callRealMethod();
+                })
+                .when(kafka)
+                .send(any(Message.class));
 
         new TransactionTemplate(transactionManager)
-            .executeWithoutResult(status -> eventPublisher.publishEvent(new PostLiked(POST, LIKER, WHEN)));
+                .executeWithoutResult(status -> eventPublisher.publishEvent(new PostLiked(POST, LIKER, WHEN)));
 
         await().atMost(Duration.ofSeconds(20))
-            .untilAsserted(() -> assertThat(incompletePublicationCount()).isEqualTo(1));
+                .untilAsserted(() -> assertThat(incompletePublicationCount()).isEqualTo(1));
 
         try (var consumer = consumerAt("pictogram.social")) {
             incompletePublications.resubmitIncompletePublications(__ -> true);
@@ -121,13 +123,22 @@ class SocialEventKafkaRelayTest {
                 assertThat(record).isNotNull();
                 assertThat(record.key()).isEqualTo(AUTHOR.toString());
                 assertThat(JsonMapper.builder().build().readValue(record.value(), Map.class))
-                    .containsExactlyInAnyOrderEntriesOf(
-                        Map.of("type", "post-liked", "recipientId", AUTHOR.toString(), "actorId", LIKER.toString(),
-                            "subjectId", POST.toString(), "occurredAt", "2026-09-09T12:00:00Z"));
+                        .containsExactlyInAnyOrderEntriesOf(Map.of(
+                                "type",
+                                "post-liked",
+                                "recipientId",
+                                AUTHOR.toString(),
+                                "actorId",
+                                LIKER.toString(),
+                                "subjectId",
+                                POST.toString(),
+                                "occurredAt",
+                                "2026-09-09T12:00:00Z"));
             });
         }
 
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(incompletePublicationCount()).isZero());
+        await().atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> assertThat(incompletePublicationCount()).isZero());
     }
 
     @Test
@@ -142,12 +153,15 @@ class SocialEventKafkaRelayTest {
     }
 
     private long incompletePublicationCount() {
-        return db.sql("select count(*) from event_publication where completion_date is null").query(Long.class)
-            .single();
+        return db.sql("select count(*) from event_publication where completion_date is null")
+                .query(Long.class)
+                .single();
     }
 
     private long totalPublicationCount() {
-        return db.sql("select count(*) from event_publication").query(Long.class).single();
+        return db.sql("select count(*) from event_publication")
+                .query(Long.class)
+                .single();
     }
 
     private static ConsumerRecord<String, String> poll(KafkaConsumer<String, String> consumer) {
@@ -156,11 +170,17 @@ class SocialEventKafkaRelayTest {
     }
 
     private static KafkaConsumer<String, String> consumerAt(String topic) {
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(
-            Map.of(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, SharedKafka.INSTANCE.getBootstrapServers(),
-                ConsumerConfig.GROUP_ID_CONFIG, "relay-test-" + UUID.randomUUID(),
-                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest", ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                StringDeserializer.class, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class));
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                SharedKafka.INSTANCE.getBootstrapServers(),
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "relay-test-" + UUID.randomUUID(),
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest",
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class,
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class));
         consumer.subscribe(List.of(topic));
         return consumer;
     }

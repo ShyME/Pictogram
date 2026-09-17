@@ -7,7 +7,11 @@ import me.imshy.pictogram.shared.UserId;
 public record NotificationView(String type, UserId actorId, PostId subjectPostId, Instant occurredAt, boolean read) {
 
     static NotificationView of(Notification notification) {
-        return new NotificationView(notification.type().wireName(), notification.actorId(), notification.subjectId(),
-            notification.occurredAt(), notification.read());
+        return new NotificationView(
+                notification.type().wireName(),
+                notification.actorId(),
+                notification.subjectId(),
+                notification.occurredAt(),
+                notification.read());
     }
 }

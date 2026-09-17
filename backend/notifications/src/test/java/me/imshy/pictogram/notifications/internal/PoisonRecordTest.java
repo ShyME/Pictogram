@@ -31,7 +31,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  */
 @ExtendWith(OutputCaptureExtension.class)
 @TestPropertySource(
-    properties = "spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.ByteArraySerializer")
+        properties = "spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.ByteArraySerializer")
 class PoisonRecordTest extends NotificationsModuleIntegrationTest {
 
     private static final Instant WHEN = Instant.parse("2026-09-09T12:00:00Z");
@@ -52,7 +52,8 @@ class PoisonRecordTest extends NotificationsModuleIntegrationTest {
         publish(recipient.toString(), wire("user-followed", recipient, actor, null));
 
         await().atMost(Duration.ofSeconds(40)).untilAsserted(() -> assertThat(notificationsFor(recipient))
-            .singleElement().satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED)));
+                .singleElement()
+                .satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED)));
 
         // First delivery plus at least the three configured retries, all on the poison
         // record (a consumer-group rebalance mid-retry can reset the count and add
@@ -60,12 +61,13 @@ class PoisonRecordTest extends NotificationsModuleIntegrationTest {
         verify(notifications, atLeast(4)).record(argThat(event -> "post-unliked".equals(event.type())));
         assertThat(deadLetterValues()).anySatisfy(value -> assertThat(value).contains("post-unliked"));
         await().atMost(Duration.ofSeconds(10))
-            .untilAsserted(() -> assertThat(output.getOut()).contains("ERROR").contains("dead-lettered"));
+                .untilAsserted(
+                        () -> assertThat(output.getOut()).contains("ERROR").contains("dead-lettered"));
     }
 
     private static String wire(String type, UUID recipient, UUID actor, UUID subject) {
         String subjectField = subject == null ? "" : "\"subjectId\":\"" + subject + "\",";
         return "{\"type\":\"" + type + "\",\"recipientId\":\"" + recipient + "\",\"actorId\":\"" + actor + "\","
-            + subjectField + "\"occurredAt\":\"" + WHEN + "\"}";
+                + subjectField + "\"occurredAt\":\"" + WHEN + "\"}";
     }
 }

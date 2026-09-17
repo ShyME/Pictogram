@@ -21,9 +21,9 @@ interface ProfileEditTests extends AppUnderTest {
         bob.completeOnboarding("ada", "Bob", null);
 
         assertThat(bob.viewProfile("ada"))
-            .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Bob"));
+                .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Bob"));
         assertThat(ada.viewProfile("ada_lovelace"))
-            .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Ada Lovelace"));
+                .hasValueSatisfying(profile -> assertThat(profile.displayName()).isEqualTo("Ada Lovelace"));
     }
 
     @Test
@@ -40,6 +40,6 @@ interface ProfileEditTests extends AppUnderTest {
 
         ada.editProfile("ada", "Ada Lovelace", "Writer of the first algorithm");
         assertThat(ada.currentProfile())
-            .hasValueSatisfying(profile -> assertThat(profile.bio()).isEqualTo("Writer of the first algorithm"));
+                .hasValueSatisfying(profile -> assertThat(profile.bio()).isEqualTo("Writer of the first algorithm"));
     }
 }

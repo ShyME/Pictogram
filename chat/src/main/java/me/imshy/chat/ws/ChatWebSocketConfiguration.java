@@ -34,8 +34,8 @@ class ChatWebSocketConfiguration {
 
     @Bean
     AccessTokenVerifier accessTokenVerifier(AuthProperties properties, Clock clock) {
-        return new AccessTokenVerifier(PublicSigningKey.fromJwkJson(properties.publicKey()).jwkSource(),
-            properties.issuer(), clock);
+        return new AccessTokenVerifier(
+                PublicSigningKey.fromJwkJson(properties.publicKey()).jwkSource(), properties.issuer(), clock);
     }
 
     @Bean
@@ -61,7 +61,7 @@ class ChatWebSocketConfiguration {
     @Bean
     WebSocketService chatWebSocketService() {
         return new HandshakeWebSocketService(new ReactorNettyRequestUpgradeStrategy(() -> WebsocketServerSpec.builder()
-            .maxFramePayloadLength(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH)));
+                .maxFramePayloadLength(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH)));
     }
 
     @Bean
@@ -88,8 +88,7 @@ class ChatWebSocketConfiguration {
 
         @Override
         public Mono<Object> getHandler(ServerWebExchange exchange) {
-            if (!WS_PATH.equals(exchange.getRequest().getPath().value()))
-                return Mono.empty();
+            if (!WS_PATH.equals(exchange.getRequest().getPath().value())) return Mono.empty();
 
             UserId caller = exchange.getAttribute(ChatHandshakeFilter.USER_ID_ATTRIBUTE);
             Instant expiresAt = exchange.getAttribute(ChatHandshakeFilter.EXPIRES_AT_ATTRIBUTE);

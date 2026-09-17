@@ -56,12 +56,15 @@ class HttpPictogramApp implements PictogramApp {
 
     private static String csrfTokenFrom(HttpResponse<?> response) {
         String prefix = "XSRF-TOKEN=";
-        return response.headers().allValues("Set-Cookie").stream().filter(header -> header.startsWith(prefix))
-            .map(header -> {
-                int end = header.indexOf(';');
-                return header.substring(prefix.length(), end < 0 ? header.length() : end);
-            }).filter(value -> !value.isEmpty()).findFirst()
-            .orElseThrow(() -> new AssertionError("the refresh 403 seeded no XSRF-TOKEN cookie"));
+        return response.headers().allValues("Set-Cookie").stream()
+                .filter(header -> header.startsWith(prefix))
+                .map(header -> {
+                    int end = header.indexOf(';');
+                    return header.substring(prefix.length(), end < 0 ? header.length() : end);
+                })
+                .filter(value -> !value.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the refresh 403 seeded no XSRF-TOKEN cookie"));
     }
 
     private final class HttpPictogramApi implements PictogramApi {
@@ -95,23 +98,28 @@ class HttpPictogramApp implements PictogramApp {
 
         @Override
         public Profile completeOnboarding(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("POST", "/api/profiles",
-                profileBody(usernameStrategy.qualify(username), displayName, bio));
+            HttpResponse<String> response =
+                    call("POST", "/api/profiles", profileBody(usernameStrategy.qualify(username), displayName, bio));
             require(response, 201, "complete onboarding");
             return usernameStrategy.strip(profile(response.body()));
         }
 
         @Override
         public Profile editProfile(String username, String displayName, String bio) {
-            HttpResponse<String> response = call("PUT", "/api/profiles/me",
-                profileBody(usernameStrategy.qualify(username), displayName, bio));
+            HttpResponse<String> response =
+                    call("PUT", "/api/profiles/me", profileBody(usernameStrategy.qualify(username), displayName, bio));
             require(response, 200, "edit own profile");
             return usernameStrategy.strip(profile(response.body()));
         }
 
         private String profileBody(String username, String displayName, String bio) {
-            return json.writeValueAsString(Map.of("username", username, "displayName",
-                Optional.ofNullable(displayName).orElse(""), "bio", Optional.ofNullable(bio).orElse("")));
+            return json.writeValueAsString(Map.of(
+                    "username",
+                    username,
+                    "displayName",
+                    Optional.ofNullable(displayName).orElse(""),
+                    "bio",
+                    Optional.ofNullable(bio).orElse("")));
         }
 
         @Override
@@ -127,9 +135,11 @@ class HttpPictogramApp implements PictogramApp {
         @Override
         public String uploadPhoto(byte[] image) {
             String boundary = "----pictogram" + UUID.randomUUID();
-            var request = HttpRequest.newBuilder(uri("/api/media")).header("Authorization", "Bearer " + accessToken)
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(BodyPublishers.ofByteArray(multipartBody(boundary, image))).build();
+            var request = HttpRequest.newBuilder(uri("/api/media"))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(BodyPublishers.ofByteArray(multipartBody(boundary, image)))
+                    .build();
             HttpResponse<String> response = send(http, request);
             require(response, 201, "upload a photo");
             return field(response.body(), "mediaId");
@@ -137,8 +147,8 @@ class HttpPictogramApp implements PictogramApp {
 
         @Override
         public Post publishPost(String mediaId, String caption) {
-            String body = json
-                .writeValueAsString(Map.of("mediaId", mediaId, "caption", Optional.ofNullable(caption).orElse("")));
+            String body = json.writeValueAsString(Map.of(
+                    "mediaId", mediaId, "caption", Optional.ofNullable(caption).orElse("")));
             HttpResponse<String> response = call("POST", "/api/posts", body);
             require(response, 201, "publish a post");
             return post(response.body());
@@ -150,8 +160,9 @@ class HttpPictogramApp implements PictogramApp {
             return switch (response.statusCode()) {
                 case 204 -> DeleteOutcome.DELETED;
                 case 403 -> DeleteOutcome.FORBIDDEN;
-                default -> throw new AssertionError(
-                    "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status deleting a post: " + response.statusCode() + ": " + response.body());
             };
         }
 
@@ -170,8 +181,9 @@ class HttpPictogramApp implements PictogramApp {
             return switch (response.statusCode()) {
                 case 204 -> FollowOutcome.OK;
                 case 422 -> FollowOutcome.SELF_FOLLOW;
-                default -> throw new AssertionError(
-                    "Unexpected status following a user: " + response.statusCode() + ": " + response.body());
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status following a user: " + response.statusCode() + ": " + response.body());
             };
         }
 
@@ -212,8 +224,10 @@ class HttpPictogramApp implements PictogramApp {
             HttpResponse<String> response = call("GET", "/api/follows/" + userId, null);
             require(response, 200, "read a follow relationship");
             JsonNode node = json.readTree(response.body());
-            return new FollowRelationship(node.path("followerCount").asLong(), node.path("followingCount").asLong(),
-                node.path("followedByViewer").asBoolean());
+            return new FollowRelationship(
+                    node.path("followerCount").asLong(),
+                    node.path("followingCount").asLong(),
+                    node.path("followedByViewer").asBoolean());
         }
 
         @Override
@@ -223,9 +237,12 @@ class HttpPictogramApp implements PictogramApp {
             require(response, 200, "read a batch of follow relationships");
             Map<String, FollowRelationship> byId = new LinkedHashMap<>();
             json.readTree(response.body())
-                .forEach(node -> byId.put(node.path("userId").asString(),
-                    new FollowRelationship(node.path("followerCount").asLong(), node.path("followingCount").asLong(),
-                        node.path("followedByViewer").asBoolean())));
+                    .forEach(node -> byId.put(
+                            node.path("userId").asString(),
+                            new FollowRelationship(
+                                    node.path("followerCount").asLong(),
+                                    node.path("followingCount").asLong(),
+                                    node.path("followedByViewer").asBoolean())));
             return byId;
         }
 
@@ -245,15 +262,19 @@ class HttpPictogramApp implements PictogramApp {
             HttpResponse<String> response = call("GET", "/api/likes?" + query, null);
             require(response, 200, "read a batch of post likes");
             Map<String, PostLikes> byId = new LinkedHashMap<>();
-            json.readTree(response.body()).forEach(node -> byId.put(node.path("postId").asString(),
-                new PostLikes(node.path("likeCount").asLong(), node.path("likedByViewer").asBoolean())));
+            json.readTree(response.body())
+                    .forEach(node -> byId.put(
+                            node.path("postId").asString(),
+                            new PostLikes(
+                                    node.path("likeCount").asLong(),
+                                    node.path("likedByViewer").asBoolean())));
             return byId;
         }
 
         @Override
         public Comment comment(String postId, String body) {
-            HttpResponse<String> response = call("POST", "/api/posts/" + postId + "/comments",
-                json.writeValueAsString(Map.of("body", body)));
+            HttpResponse<String> response =
+                    call("POST", "/api/posts/" + postId + "/comments", json.writeValueAsString(Map.of("body", body)));
             require(response, 201, "add a comment");
             return toComment(json.readTree(response.body()));
         }
@@ -282,8 +303,9 @@ class HttpPictogramApp implements PictogramApp {
             return switch (response.statusCode()) {
                 case 204 -> DeleteOutcome.DELETED;
                 case 403 -> DeleteOutcome.FORBIDDEN;
-                default -> throw new AssertionError(
-                    "Unexpected status deleting a comment: " + response.statusCode() + ": " + response.body());
+                default ->
+                    throw new AssertionError(
+                            "Unexpected status deleting a comment: " + response.statusCode() + ": " + response.body());
             };
         }
 
@@ -294,7 +316,9 @@ class HttpPictogramApp implements PictogramApp {
             require(response, 200, "read a batch of post comment counts");
             Map<String, Long> byId = new LinkedHashMap<>();
             json.readTree(response.body())
-                .forEach(node -> byId.put(node.path("postId").asString(), node.path("commentCount").asLong()));
+                    .forEach(node -> byId.put(
+                            node.path("postId").asString(),
+                            node.path("commentCount").asLong()));
             return byId;
         }
 
@@ -340,9 +364,12 @@ class HttpPictogramApp implements PictogramApp {
             JsonNode page = json.readTree(response.body());
             List<Notification> notifications = new ArrayList<>();
             page.path("items")
-                .forEach(node -> notifications.add(new Notification(node.path("type").asString(),
-                    node.path("actorId").asString(), textOrNull(node, "subjectPostId"),
-                    node.path("occurredAt").asString(), node.path("read").asBoolean())));
+                    .forEach(node -> notifications.add(new Notification(
+                            node.path("type").asString(),
+                            node.path("actorId").asString(),
+                            textOrNull(node, "subjectPostId"),
+                            node.path("occurredAt").asString(),
+                            node.path("read").asBoolean())));
             JsonNode next = page.path("nextCursor");
             return new NotificationPage(notifications, next.isNull() || next.isMissingNode() ? null : next.asString());
         }
@@ -360,8 +387,9 @@ class HttpPictogramApp implements PictogramApp {
         }
 
         private HttpResponse<String> call(String method, String path, String body) {
-            var request = HttpRequest.newBuilder(uri(path)).header("Authorization", "Bearer " + accessToken)
-                .method(method, body == null ? BodyPublishers.noBody() : BodyPublishers.ofString(body));
+            var request = HttpRequest.newBuilder(uri(path))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .method(method, body == null ? BodyPublishers.noBody() : BodyPublishers.ofString(body));
             if (body != null) {
                 request.header("Content-Type", "application/json");
             }
@@ -371,8 +399,11 @@ class HttpPictogramApp implements PictogramApp {
 
     private Profile profile(String body) {
         JsonNode node = json.readTree(body);
-        return new Profile(node.path("userId").asString(), node.path("username").asString(),
-            textOrNull(node, "displayName"), textOrNull(node, "bio"));
+        return new Profile(
+                node.path("userId").asString(),
+                node.path("username").asString(),
+                textOrNull(node, "displayName"),
+                textOrNull(node, "bio"));
     }
 
     private Post post(String body) {
@@ -380,19 +411,28 @@ class HttpPictogramApp implements PictogramApp {
     }
 
     private static Comment toComment(JsonNode node) {
-        return new Comment(node.path("commentId").asString(), node.path("postId").asString(),
-            node.path("authorId").asString(), node.path("body").asString(), node.path("createdAt").asString());
+        return new Comment(
+                node.path("commentId").asString(),
+                node.path("postId").asString(),
+                node.path("authorId").asString(),
+                node.path("body").asString(),
+                node.path("createdAt").asString());
     }
 
     private static Post post(JsonNode node) {
-        return new Post(node.path("postId").asString(), node.path("authorId").asString(),
-            node.path("mediaId").asString(), textOrNull(node, "caption"), node.path("publishedAt").asString());
+        return new Post(
+                node.path("postId").asString(),
+                node.path("authorId").asString(),
+                node.path("mediaId").asString(),
+                textOrNull(node, "caption"),
+                node.path("publishedAt").asString());
     }
 
     private static byte[] multipartBody(String boundary, byte[] file) {
         var head = ("--" + boundary + "\r\n"
-            + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
-            + "Content-Type: image/jpeg\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+                        + "Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n"
+                        + "Content-Type: image/jpeg\r\n\r\n")
+                .getBytes(StandardCharsets.UTF_8);
         var tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
         var body = new byte[head.length + file.length + tail.length];
         System.arraycopy(head, 0, body, 0, head.length);

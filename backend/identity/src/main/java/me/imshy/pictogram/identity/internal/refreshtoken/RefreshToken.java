@@ -23,8 +23,7 @@ class RefreshToken implements Persistable<UUID> {
     @Transient
     private boolean unsaved;
 
-    protected RefreshToken() {
-    }
+    protected RefreshToken() {}
 
     RefreshToken(UUID familyId, UUID userId, String tokenHash, Instant issuedAt, Instant expiresAt) {
         this.id = UUID.randomUUID();

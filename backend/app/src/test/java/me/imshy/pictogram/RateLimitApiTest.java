@@ -33,8 +33,9 @@ class RateLimitApiTest {
         like(ada).andExpect(status().isNoContent());
         like(ada).andExpect(status().isNoContent());
 
-        like(ada).andExpect(status().is(429))
-            .andExpect(jsonPath("$.type").value(ProblemType.BASE + "rate-limit-exceeded"));
+        like(ada)
+                .andExpect(status().is(429))
+                .andExpect(jsonPath("$.type").value(ProblemType.BASE + "rate-limit-exceeded"));
     }
 
     @Test

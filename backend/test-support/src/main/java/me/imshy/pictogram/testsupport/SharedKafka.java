@@ -27,15 +27,14 @@ public final class SharedKafka {
 
     private static final boolean REUSE = System.getenv("CI") == null;
 
-    public static final KafkaContainer INSTANCE = new KafkaContainer(DockerImageName.parse("apache/kafka:4.2.1"))
-        .withReuse(REUSE);
+    public static final KafkaContainer INSTANCE =
+            new KafkaContainer(DockerImageName.parse("apache/kafka:4.2.1")).withReuse(REUSE);
 
     static {
         INSTANCE.start();
     }
 
-    private SharedKafka() {
-    }
+    private SharedKafka() {}
 
     public static void registerTo(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", INSTANCE::getBootstrapServers);

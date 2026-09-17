@@ -17,8 +17,7 @@ public final class SharedPostgres {
         INSTANCE.start();
     }
 
-    private SharedPostgres() {
-    }
+    private SharedPostgres() {}
 
     public static void registerTo(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", INSTANCE::getJdbcUrl);

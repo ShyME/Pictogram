@@ -16,8 +16,9 @@ class ActuatorHealthTest {
 
     @Test
     void healthIsPublicAndReportsUpWithNoAuth() throws Exception {
-        mvc.perform(get("/actuator/health")).andExpect(status().isOk())
-            .andExpect(content().string(containsString("\"status\":\"UP\"")))
-            .andExpect(jsonPath("$.status").value("UP"));
+        mvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"status\":\"UP\"")))
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 }

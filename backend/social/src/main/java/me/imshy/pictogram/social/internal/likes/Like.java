@@ -26,8 +26,7 @@ class Like implements Persistable<LikeId> {
     @Transient
     private boolean persisted;
 
-    protected Like() {
-    }
+    protected Like() {}
 
     private Like(UUID postId, UUID viewerId, Instant likedAt) {
         this.postId = postId;

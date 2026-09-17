@@ -24,6 +24,8 @@ public class PostDirectory {
 
     public List<PostView> byIds(Collection<PostId> ids) {
         List<UUID> keys = ids.stream().map(PostId::value).toList();
-        return StreamSupport.stream(posts.findAllById(keys).spliterator(), false).map(PostView::of).toList();
+        return StreamSupport.stream(posts.findAllById(keys).spliterator(), false)
+                .map(PostView::of)
+                .toList();
     }
 }

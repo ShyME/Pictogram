@@ -27,10 +27,15 @@ public class AccessTokens {
 
     public String issue(UserId user) {
         Instant now = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder().issuer(issuer).subject(user.value().toString()).issuedAt(now)
-            .expiresAt(now.plus(ttl)).build();
-        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
-            .getTokenValue();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(issuer)
+                .subject(user.value().toString())
+                .issuedAt(now)
+                .expiresAt(now.plus(ttl))
+                .build();
+        return encoder.encode(JwtEncoderParameters.from(
+                        JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
+                .getTokenValue();
     }
 
     public UserId resolve(String accessToken) {

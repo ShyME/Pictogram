@@ -19,5 +19,4 @@ import org.springframework.test.context.ContextConfiguration;
 @Import(SharedWebTestConfig.class)
 @ContextConfiguration(initializers = SharedGoogleInitializer.class)
 @ExtendWith({DatabaseTruncationExtension.class, AppContextAmountGuard.class})
-public @interface AppOAuthWebIntegrationTest {
-}
+public @interface AppOAuthWebIntegrationTest {}

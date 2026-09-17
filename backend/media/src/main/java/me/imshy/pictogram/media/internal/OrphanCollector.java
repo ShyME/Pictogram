@@ -26,8 +26,12 @@ class OrphanCollector implements OrphanCollection {
     private final Clock clock;
     private final Duration gracePeriod;
 
-    OrphanCollector(Medias medias, BlobStore blobStore, PostReferences postReferences, Clock clock,
-        MediaRetentionProperties retention) {
+    OrphanCollector(
+            Medias medias,
+            BlobStore blobStore,
+            PostReferences postReferences,
+            Clock clock,
+            MediaRetentionProperties retention) {
         this.medias = medias;
         this.blobStore = blobStore;
         this.postReferences = postReferences;
@@ -43,7 +47,8 @@ class OrphanCollector implements OrphanCollection {
             return 0;
         }
 
-        Set<MediaId> referenced = postReferences.referencedAmong(candidates.stream().map(Media::mediaId).toList());
+        Set<MediaId> referenced = postReferences.referencedAmong(
+                candidates.stream().map(Media::mediaId).toList());
         int collected = 0;
         for (Media media : candidates) {
             if (referenced.contains(media.mediaId())) {

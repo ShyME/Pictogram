@@ -71,8 +71,14 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
 
         List<PostId> seen = getPosts(List.of(ada, bob), 2);
 
-        assertThat(seen).containsExactly(published.get(5), published.get(4), published.get(3), published.get(2),
-            published.get(1), published.get(0));
+        assertThat(seen)
+                .containsExactly(
+                        published.get(5),
+                        published.get(4),
+                        published.get(3),
+                        published.get(2),
+                        published.get(1),
+                        published.get(0));
     }
 
     @Test
@@ -109,7 +115,8 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
         var silent = UserId.random();
         var onlyPost = publishAt(ada, "2026-09-01T10:00:00Z");
 
-        assertThat(ids(publishedPosts.byAuthors(List.of(ada, silent), null, 10))).containsExactly(onlyPost);
+        assertThat(ids(publishedPosts.byAuthors(List.of(ada, silent), null, 10)))
+                .containsExactly(onlyPost);
     }
 
     @Test

@@ -16,7 +16,8 @@ class ConnectionRegistry {
     // giving up as undelivered (best-effort delivery, ADR-0014).
     // ConnectionRegistryConcurrencyTest
     // pins that a contended emit gives up inside this budget rather than spinning.
-    private static final long EMIT_CONTENTION_BUDGET_NANOS = Duration.ofMillis(25).toNanos();
+    private static final long EMIT_CONTENTION_BUDGET_NANOS =
+            Duration.ofMillis(25).toNanos();
     private static final long EMIT_CONTENTION_PARK_NANOS = Duration.ofMillis(1).toNanos();
 
     private final ConcurrentHashMap<UserId, Set<Sinks.Many<OutboundEvent>>> connections = new ConcurrentHashMap<>();
@@ -44,8 +45,7 @@ class ConnectionRegistry {
 
     boolean deliver(UserId sender, UserId recipient, String text) {
         Set<Sinks.Many<OutboundEvent>> recipientConnections = connections.get(recipient);
-        if (recipientConnections == null)
-            return false;
+        if (recipientConnections == null) return false;
 
         DeliveredMessage message = DeliveredMessage.of(sender, text);
         boolean acceptedByAtLeastOne = false;
@@ -64,8 +64,7 @@ class ConnectionRegistry {
         long deadline = System.nanoTime() + EMIT_CONTENTION_BUDGET_NANOS;
         while (true) {
             Sinks.EmitResult result = outbound.tryEmitNext(event);
-            if (result == Sinks.EmitResult.OK)
-                return true;
+            if (result == Sinks.EmitResult.OK) return true;
             if (result == Sinks.EmitResult.FAIL_OVERFLOW) {
                 terminate(outbound);
                 return false;
@@ -85,7 +84,7 @@ class ConnectionRegistry {
     private static void terminate(Sinks.Many<OutboundEvent> outbound) {
         long deadline = System.nanoTime() + EMIT_CONTENTION_BUDGET_NANOS;
         while (outbound.tryEmitError(new OutboundBufferOverflowException()) == Sinks.EmitResult.FAIL_NON_SERIALIZED
-            && System.nanoTime() < deadline) {
+                && System.nanoTime() < deadline) {
             LockSupport.parkNanos(EMIT_CONTENTION_PARK_NANOS);
         }
     }

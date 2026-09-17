@@ -18,7 +18,8 @@ interface CommentTests extends AppUnderTest {
         ada.completeOnboarding("ada_comments", "Ada", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_comments", "Bob", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
 
         Comment first = ada.comment(post, "great light");
         Comment second = bob.comment(post, "thanks!");
@@ -35,14 +36,17 @@ interface CommentTests extends AppUnderTest {
         ada.completeOnboarding("ada_thread", "Ada", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_thread", "Bob", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
 
         List<String> written = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             written.add(ada.comment(post, "comment " + i).commentId());
         }
 
-        List<String> whole = bob.commentsOn(post, null, 50).comments().stream().map(Comment::commentId).toList();
+        List<String> whole = bob.commentsOn(post, null, 50).comments().stream()
+                .map(Comment::commentId)
+                .toList();
         List<String> paged = drainThread(bob, post, 2);
 
         assertThat(whole).containsExactlyInAnyOrderElementsOf(written);
@@ -57,8 +61,9 @@ interface CommentTests extends AppUnderTest {
 
         ada.comment(own, "first");
 
-        assertThat(ada.commentsOn(own, null, null).comments()).singleElement()
-            .satisfies(comment -> assertThat(comment.body()).isEqualTo("first"));
+        assertThat(ada.commentsOn(own, null, null).comments())
+                .singleElement()
+                .satisfies(comment -> assertThat(comment.body()).isEqualTo("first"));
     }
 
     @Test
@@ -67,7 +72,8 @@ interface CommentTests extends AppUnderTest {
         ada.completeOnboarding("ada_cmtdel", "Ada", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_cmtdel", "Bob", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
 
         Comment keep = bob.comment(post, "nice");
         Comment remove = ada.comment(post, "oops wrong post");
@@ -75,8 +81,9 @@ interface CommentTests extends AppUnderTest {
 
         assertThat(ada.deleteComment(remove.commentId())).isEqualTo(DeleteOutcome.DELETED);
 
-        assertThat(ada.commentsOn(post, null, null).comments()).extracting(Comment::commentId)
-            .containsExactly(keep.commentId());
+        assertThat(ada.commentsOn(post, null, null).comments())
+                .extracting(Comment::commentId)
+                .containsExactly(keep.commentId());
         assertThat(ada.commentCountsOf(post)).containsEntry(post, 1L);
     }
 
@@ -88,7 +95,8 @@ interface CommentTests extends AppUnderTest {
         bob.completeOnboarding("bob_cmtmod", "Bob", null);
         var cal = pictogram().registerViaGoogle("cal@example.com");
         cal.completeOnboarding("cal_cmtmod", "Cal", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
 
         Comment adasComment = ada.comment(post, "hi bob");
 
@@ -103,7 +111,8 @@ interface CommentTests extends AppUnderTest {
         ada.completeOnboarding("ada_cmtcascade", "Ada", null);
         var bob = pictogram().registerViaGoogle("bob@example.com");
         bob.completeOnboarding("bob_cmtcascade", "Bob", null);
-        String post = bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
+        String post =
+                bob.publishPost(bob.uploadPhoto(JpegPhoto.some()), "a photo").postId();
         ada.comment(post, "one");
         ada.comment(post, "two");
 
@@ -117,8 +126,10 @@ interface CommentTests extends AppUnderTest {
     default void theBatchCountReadReportsEveryRequestedPostIncludingOneWithNoComments() {
         var ada = pictogram().registerViaGoogle("ada@example.com");
         ada.completeOnboarding("ada_cmtcounts", "Ada", null);
-        String chatty = ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "loud").postId();
-        String quiet = ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "silent").postId();
+        String chatty =
+                ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "loud").postId();
+        String quiet =
+                ada.publishPost(ada.uploadPhoto(JpegPhoto.some()), "silent").postId();
 
         ada.comment(chatty, "a");
         ada.comment(chatty, "b");

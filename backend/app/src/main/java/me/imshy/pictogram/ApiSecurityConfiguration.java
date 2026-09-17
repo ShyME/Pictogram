@@ -19,30 +19,48 @@ class ApiSecurityConfiguration {
 
     @Bean
     @Order(1)
-    SecurityFilterChain apiSecurity(HttpSecurity http, JwtDecoder identityJwtDecoder,
-        ProblemDetailAuthenticationEntryPoint entryPoint, ProblemDetailAccessDeniedHandler accessDeniedHandler) {
+    SecurityFilterChain apiSecurity(
+            HttpSecurity http,
+            JwtDecoder identityJwtDecoder,
+            ProblemDetailAuthenticationEntryPoint entryPoint,
+            ProblemDetailAccessDeniedHandler accessDeniedHandler) {
         return http.securityMatcher("/api/**")
-            .authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.GET, "/api/profiles/me")
-                .authenticated().requestMatchers(HttpMethod.GET, "/api/profiles/*").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/by-ids").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/posts/*/comments").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/follows/*").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/likes").permitAll().anyRequest().authenticated())
-            .oauth2ResourceServer(resourceServer -> resourceServer.authenticationEntryPoint(entryPoint)
-                .accessDeniedHandler(accessDeniedHandler).jwt(jwt -> jwt.decoder(identityJwtDecoder)))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .csrf(AbstractHttpConfigurer::disable).headers(WebSecurityHeaders::apply)
-            .exceptionHandling(
-                handling -> handling.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
-            .build();
+                .authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.GET, "/api/profiles/me")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/profiles/*")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/by-ids")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/*/comments")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/follows/*")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/likes")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .oauth2ResourceServer(resourceServer -> resourceServer
+                        .authenticationEntryPoint(entryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                        .jwt(jwt -> jwt.decoder(identityJwtDecoder)))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(WebSecurityHeaders::apply)
+                .exceptionHandling(handling ->
+                        handling.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
+                .build();
     }
 
     @Bean
     @Order(2)
     SecurityFilterChain openEndpoints(HttpSecurity http) {
         return http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-            .csrf(AbstractHttpConfigurer::disable).headers(WebSecurityHeaders::apply).build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(WebSecurityHeaders::apply)
+                .build();
     }
 }

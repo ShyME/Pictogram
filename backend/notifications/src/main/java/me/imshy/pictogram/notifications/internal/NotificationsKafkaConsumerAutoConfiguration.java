@@ -66,12 +66,16 @@ public class NotificationsKafkaConsumerAutoConfiguration {
      */
     @Bean
     NewTopic pictogramSocialTopic() {
-        return TopicBuilder.name(SocialEventConsumer.TOPIC).partitions(PARTITIONS).build();
+        return TopicBuilder.name(SocialEventConsumer.TOPIC)
+                .partitions(PARTITIONS)
+                .build();
     }
 
     @Bean
     NewTopic pictogramSocialDeadLetterTopic() {
-        return TopicBuilder.name(SocialEventConsumer.DEAD_LETTER_TOPIC).partitions(PARTITIONS).build();
+        return TopicBuilder.name(SocialEventConsumer.DEAD_LETTER_TOPIC)
+                .partitions(PARTITIONS)
+                .build();
     }
 
     // This is the app's only Kafka consumer (ADR-0015), so being the sole
@@ -91,7 +95,7 @@ public class NotificationsKafkaConsumerAutoConfiguration {
 
     @Bean(CONTAINER_FACTORY)
     ConcurrentKafkaListenerContainerFactory<String, String> socialEventListenerContainerFactory(
-        ConsumerFactory<String, String> socialEventConsumerFactory, DefaultErrorHandler socialEventErrorHandler) {
+            ConsumerFactory<String, String> socialEventConsumerFactory, DefaultErrorHandler socialEventErrorHandler) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(socialEventConsumerFactory);
         factory.setConcurrency(CONCURRENCY);
@@ -108,7 +112,7 @@ public class NotificationsKafkaConsumerAutoConfiguration {
      */
     @Bean(DEAD_LETTER_CONTAINER_FACTORY)
     ConcurrentKafkaListenerContainerFactory<String, String> deadLetterListenerContainerFactory(
-        ConsumerFactory<String, String> socialEventConsumerFactory) {
+            ConsumerFactory<String, String> socialEventConsumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(socialEventConsumerFactory);
         factory.getContainerProperties().setAckMode(AckMode.MANUAL);
@@ -129,8 +133,8 @@ public class NotificationsKafkaConsumerAutoConfiguration {
         // partition count need not match the source topic's, so the source partition
         // index cannot be copied across.
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
-            new KafkaTemplate<>(this.deadLetterProducers),
-            (record, exception) -> new TopicPartition(SocialEventConsumer.DEAD_LETTER_TOPIC, -1));
+                new KafkaTemplate<>(this.deadLetterProducers),
+                (record, exception) -> new TopicPartition(SocialEventConsumer.DEAD_LETTER_TOPIC, -1));
 
         // 3 retry attempts after the first delivery (backoff 1s, 2s, 4s), then
         // dead-letter the record and commit the offset — a poison record blocks its

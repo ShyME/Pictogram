@@ -34,8 +34,8 @@ class LocalProfileBindGuard implements WebServerFactoryCustomizer<ConfigurableWe
         }
         if (!address.isLoopbackAddress()) {
             throw new IllegalStateException("The 'local' profile exposes every actuator endpoint in full detail and "
-                + "must bind to a loopback address; server.address '" + serverAddress + "' is not loopback. "
-                + "Drop the 'local' profile for any non-local bind.");
+                    + "must bind to a loopback address; server.address '" + serverAddress + "' is not loopback. "
+                    + "Drop the 'local' profile for any non-local bind.");
         }
     }
 }

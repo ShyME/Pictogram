@@ -7,8 +7,9 @@ package me.imshy.pictogram.notifications.internal;
  * a poison record ({@link #fromWire} throws).
  */
 enum NotificationType {
-
-    POST_LIKED("post-liked"), POST_COMMENTED("post-commented"), USER_FOLLOWED("user-followed");
+    POST_LIKED("post-liked"),
+    POST_COMMENTED("post-commented"),
+    USER_FOLLOWED("user-followed");
 
     private final String wireName;
 

@@ -5,5 +5,4 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("pictogram.stats")
-record ProductStatsProperties(@DefaultValue("24h") Duration activeWindow) {
-}
+record ProductStatsProperties(@DefaultValue("24h") Duration activeWindow) {}

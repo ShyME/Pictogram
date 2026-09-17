@@ -35,8 +35,7 @@ class InboundFrameRateLimiter {
 
     boolean tryConsume() {
         refill();
-        if (tokens < 1)
-            return false;
+        if (tokens < 1) return false;
         tokens -= 1;
         return true;
     }
@@ -44,8 +43,7 @@ class InboundFrameRateLimiter {
     private void refill() {
         Instant now = clock.instant();
         Duration elapsed = Duration.between(lastRefill, now);
-        if (!elapsed.isPositive())
-            return;
+        if (!elapsed.isPositive()) return;
         double refilled = (double) elapsed.toNanos() / REFILL_PERIOD.toNanos();
         tokens = Math.min(CAPACITY, tokens + refilled);
         lastRefill = now;

@@ -86,8 +86,9 @@ class OrphanCollectorTest extends MediaModuleIntegrationTest {
 
     private void assertRemoved(MediaId mediaId) {
         assertThatExceptionOfType(MediaNotFoundException.class).isThrownBy(() -> mediaLibrary.original(mediaId));
-        assertThatExceptionOfType(RuntimeException.class).as("bytes for %s are gone from storage too", mediaId)
-            .isThrownBy(() -> blobStore.get(StorageKeys.original(mediaId)));
+        assertThatExceptionOfType(RuntimeException.class)
+                .as("bytes for %s are gone from storage too", mediaId)
+                .isThrownBy(() -> blobStore.get(StorageKeys.original(mediaId)));
     }
 
     private static byte[] jpeg() {

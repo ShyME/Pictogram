@@ -12,8 +12,7 @@ import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 
 final class TestImages {
 
-    private TestImages() {
-    }
+    private TestImages() {}
 
     static byte[] jpeg(int width, int height) throws Exception {
         return encode(solid(width, height), "jpeg");

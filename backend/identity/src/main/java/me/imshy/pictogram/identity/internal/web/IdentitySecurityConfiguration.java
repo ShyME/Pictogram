@@ -22,19 +22,22 @@ class IdentitySecurityConfiguration {
     @Bean
     @Order(-2)
     SecurityFilterChain sessionEndpointsSecurity(HttpSecurity http) {
-        return http.securityMatcher("/api/auth/**").authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
-            .build();
+        return http.securityMatcher("/api/auth/**")
+                .authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .build();
     }
 
     @Bean
     @Order(-1)
-    SecurityFilterChain googleSignInSecurity(HttpSecurity http,
-        ObjectProvider<ClientRegistrationRepository> clientRegistrations,
-        ObjectProvider<OidcSignInSuccessHandler> successHandler, SignInCompletion completion,
-        ObjectProvider<ObjectMapper> objectMapper) {
+    SecurityFilterChain googleSignInSecurity(
+            HttpSecurity http,
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+            ObjectProvider<OidcSignInSuccessHandler> successHandler,
+            SignInCompletion completion,
+            ObjectProvider<ObjectMapper> objectMapper) {
         // The Authorization Code flow is GET-only and its own `state` parameter is the
         // login-CSRF
         // control (ADR-0011); turn off the framework-default session `CsrfFilter` so
@@ -42,14 +45,16 @@ class IdentitySecurityConfiguration {
         // CSRF posture is set here explicitly, not inherited.
         http.securityMatcher("/oauth2/**", "/login/oauth2/**").csrf(AbstractHttpConfigurer::disable);
         if (clientRegistrations.getIfAvailable() == null) {
-            return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll()).build();
+            return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll())
+                    .build();
         }
-        return http
-            .addFilterBefore(new OidcChainErrorFilter(objectMapper.getObject(), completion),
-                OAuth2AuthorizationRequestRedirectFilter.class)
-            .authorizeHttpRequests(requests -> requests.anyRequest().authenticated()).oauth2Login(login -> login
-                .successHandler(successHandler.getObject()).failureHandler(new SignInFailureHandler(completion)))
-            .build();
+        return http.addFilterBefore(
+                        new OidcChainErrorFilter(objectMapper.getObject(), completion),
+                        OAuth2AuthorizationRequestRedirectFilter.class)
+                .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
+                .oauth2Login(login -> login.successHandler(successHandler.getObject())
+                        .failureHandler(new SignInFailureHandler(completion)))
+                .build();
     }
 
     @Bean
@@ -58,8 +63,8 @@ class IdentitySecurityConfiguration {
     }
 
     @Bean
-    OidcSignInSuccessHandler oidcSignInSuccessHandler(IdentityAuthentication authentication,
-        GoogleIdentityProvider google, SignInCompletion completion) {
+    OidcSignInSuccessHandler oidcSignInSuccessHandler(
+            IdentityAuthentication authentication, GoogleIdentityProvider google, SignInCompletion completion) {
         return new OidcSignInSuccessHandler(authentication, google, completion);
     }
 }

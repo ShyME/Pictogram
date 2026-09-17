@@ -28,23 +28,31 @@ final class InteractiveLoginSignIn implements SignInStrategy {
     @Override
     public String authenticate(String subject) {
         var cookies = new CookieManager();
-        HttpClient browser = HttpClient.newBuilder().cookieHandler(cookies).followRedirects(HttpClient.Redirect.NORMAL)
-            .build();
+        HttpClient browser = HttpClient.newBuilder()
+                .cookieHandler(cookies)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
 
-        HttpResponse<String> loginForm = HttpHelper.send(browser,
-            HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google")).GET().build());
+        HttpResponse<String> loginForm = HttpHelper.send(
+                browser,
+                HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google"))
+                        .GET()
+                        .build());
 
         // A non-interactive mock would have finished the dance on that GET already.
         if (HttpHelper.refreshCookie(cookies).isEmpty()) {
             HttpHelper.require(loginForm, 200, "reach the mock login form");
-            HttpHelper.send(browser,
-                HttpRequest.newBuilder(loginForm.uri()).header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers
-                        .ofString("username=" + URLEncoder.encode(subject, StandardCharsets.UTF_8)))
-                    .build());
+            HttpHelper.send(
+                    browser,
+                    HttpRequest.newBuilder(loginForm.uri())
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(HttpRequest.BodyPublishers.ofString(
+                                    "username=" + URLEncoder.encode(subject, StandardCharsets.UTF_8)))
+                            .build());
         }
 
-        return HttpHelper.refreshCookie(cookies).orElseThrow(
-            () -> new AssertionError("No " + HttpHelper.REFRESH_COOKIE + " cookie after the Google sign-in handshake"));
+        return HttpHelper.refreshCookie(cookies)
+                .orElseThrow(() -> new AssertionError(
+                        "No " + HttpHelper.REFRESH_COOKIE + " cookie after the Google sign-in handshake"));
     }
 }

@@ -30,11 +30,11 @@ public class NotificationQuery {
 
         Limit fetch = Limit.of(pageSize + 1);
         List<Notification> rows = after == null
-            ? store.newestFor(recipient.value(), fetch)
-            : store.beforeFor(recipient.value(), after.at(), after.id(), fetch);
+                ? store.newestFor(recipient.value(), fetch)
+                : store.beforeFor(recipient.value(), after.at(), after.id(), fetch);
 
-        KeysetWindow<Notification> window = KeysetWindow.of(rows, pageSize,
-            last -> new Cursor(last.createdAt(), last.getId()));
+        KeysetWindow<Notification> window =
+                KeysetWindow.of(rows, pageSize, last -> new Cursor(last.createdAt(), last.getId()));
 
         return new Page(window.page().stream().map(NotificationView::of).toList(), window.nextCursor());
     }
@@ -47,6 +47,5 @@ public class NotificationQuery {
         store.markAllReadFor(recipient.value());
     }
 
-    public record Page(List<NotificationView> notifications, Cursor nextCursor) {
-    }
+    public record Page(List<NotificationView> notifications, Cursor nextCursor) {}
 }

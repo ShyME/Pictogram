@@ -47,9 +47,10 @@ class ChatWebSocketHandshakeTest {
         var negotiated = new AtomicReference<String>();
 
         client.execute(wsUri(), new HttpHeaders(), offering(token, session -> {
-            negotiated.set(session.getHandshakeInfo().getSubProtocol());
-            return session.close();
-        })).block();
+                    negotiated.set(session.getHandshakeInfo().getSubProtocol());
+                    return session.close();
+                }))
+                .block();
 
         // A browser (and this client) only connects if the server echoes an offered
         // subprotocol — it must be the fixed "pictogram-chat", never the token (#166).
@@ -60,15 +61,16 @@ class ChatWebSocketHandshakeTest {
     void aTamperedAccessTokenIsRejectedAtTheHandshake() {
         String tampered = TOKENS.issueSignedByAnotherKey(UserId.random(), clock);
 
-        assertThatThrownBy(
-            () -> client.execute(wsUri(), new HttpHeaders(), offering(tampered, WebSocketSession::close)).block())
-            .isInstanceOfAny(CompletionException.class, RuntimeException.class);
+        assertThatThrownBy(() -> client.execute(wsUri(), new HttpHeaders(), offering(tampered, WebSocketSession::close))
+                        .block())
+                .isInstanceOfAny(CompletionException.class, RuntimeException.class);
     }
 
     @Test
     void aMissingAccessTokenIsRejectedAtTheHandshake() {
-        assertThatThrownBy(() -> client.execute(wsUri(), new HttpHeaders(), WebSocketSession::close).block())
-            .isInstanceOfAny(CompletionException.class, RuntimeException.class);
+        assertThatThrownBy(() -> client.execute(wsUri(), new HttpHeaders(), WebSocketSession::close)
+                        .block())
+                .isInstanceOfAny(CompletionException.class, RuntimeException.class);
     }
 
     // Mirrors the browser client: the fixed subprotocol and the token offered

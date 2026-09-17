@@ -91,7 +91,7 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         String tooLong = "x".repeat(CommentBody.MAX_LENGTH + 1);
 
         assertThatExceptionOfType(CommentTooLongException.class)
-            .isThrownBy(() -> thread.comment(author, post, tooLong));
+                .isThrownBy(() -> thread.comment(author, post, tooLong));
     }
 
     @Test
@@ -103,7 +103,8 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
 
     @Test
     void commentingOnYourOwnPostIsAllowed() {
-        assertThat(thread.comment(author, new PostId(author.value()), "talking to myself")).isNotNull();
+        assertThat(thread.comment(author, new PostId(author.value()), "talking to myself"))
+                .isNotNull();
     }
 
     @Test
@@ -111,7 +112,9 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         UUID first = commentAt("2026-09-04T10:00:00Z", "morning");
         UUID second = commentAt("2026-09-04T11:00:00Z", "noon");
 
-        List<UUID> ids = thread.pageFor(post, null, null).comments().stream().map(PostComment::commentId).toList();
+        List<UUID> ids = thread.pageFor(post, null, null).comments().stream()
+                .map(PostComment::commentId)
+                .toList();
 
         assertThat(ids).containsExactly(first, second);
     }
@@ -132,7 +135,9 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         commentAt("2026-09-04T10:00:00Z", "b");
         commentAt("2026-09-04T10:00:00Z", "c");
 
-        List<UUID> wholePage = thread.pageFor(post, null, 10).comments().stream().map(PostComment::commentId).toList();
+        List<UUID> wholePage = thread.pageFor(post, null, 10).comments().stream()
+                .map(PostComment::commentId)
+                .toList();
 
         assertThat(drain(1)).hasSize(3).doesNotHaveDuplicates().containsExactlyElementsOf(wholePage);
     }
@@ -212,8 +217,9 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         thread.delete(postAuthor, commentId);
 
         assertThat(thread.pageFor(post, null, null).comments()).isEmpty();
-        assertThat(publishedEvents.ofType(CommentDeleted.class)).singleElement()
-            .satisfies(event -> assertThat(event.viewer()).isEqualTo(postAuthor));
+        assertThat(publishedEvents.ofType(CommentDeleted.class))
+                .singleElement()
+                .satisfies(event -> assertThat(event.viewer()).isEqualTo(postAuthor));
     }
 
     @Test
@@ -221,7 +227,7 @@ class CommentThreadTest extends SocialModuleIntegrationTest {
         UUID commentId = thread.comment(author, post, "leave it").commentId();
 
         assertThatExceptionOfType(ForbiddenException.class)
-            .isThrownBy(() -> thread.delete(ViewerId.random(), commentId));
+                .isThrownBy(() -> thread.delete(ViewerId.random(), commentId));
 
         assertThat(thread.pageFor(post, null, null).comments()).hasSize(1);
         assertThat(publishedEvents.ofType(CommentDeleted.class)).isEmpty();

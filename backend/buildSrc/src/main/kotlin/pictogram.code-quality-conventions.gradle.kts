@@ -11,10 +11,7 @@ val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 spotless {
     java {
         target("src/**/*.java")
-        eclipse()
-            .configFile(
-                rootProject.layout.projectDirectory.file("config/eclipse-java-formatter.xml")
-            )
+        palantirJavaFormat()
         removeUnusedImports()
         importOrder()
         formatAnnotations()

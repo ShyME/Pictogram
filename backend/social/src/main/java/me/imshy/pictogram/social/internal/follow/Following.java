@@ -21,8 +21,11 @@ public class Following {
     private final Clock clock;
     private final TransactionTemplate ownTransaction;
 
-    Following(Follows follows, ApplicationEventPublisher events, Clock clock,
-        PlatformTransactionManager transactionManager) {
+    Following(
+            Follows follows,
+            ApplicationEventPublisher events,
+            Clock clock,
+            PlatformTransactionManager transactionManager) {
         this.follows = follows;
         this.events = events;
         this.clock = clock;

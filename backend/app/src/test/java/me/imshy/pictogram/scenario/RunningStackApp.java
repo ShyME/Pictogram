@@ -23,10 +23,12 @@ final class RunningStackApp implements PictogramApp {
     private final String namespace;
 
     RunningStackApp(URI baseUri, ObjectMapper json) {
-        this.namespace = "bb%s%03d".formatted(Long.toString(SEQUENCE.incrementAndGet(), 36),
-            ThreadLocalRandom.current().nextInt(1000));
-        this.http = new HttpPictogramApp(baseUri, json, new InteractiveLoginSignIn(baseUri),
-            new NamespacedUsernameStrategy(namespace));
+        this.namespace = "bb%s%03d"
+                .formatted(
+                        Long.toString(SEQUENCE.incrementAndGet(), 36),
+                        ThreadLocalRandom.current().nextInt(1000));
+        this.http = new HttpPictogramApp(
+                baseUri, json, new InteractiveLoginSignIn(baseUri), new NamespacedUsernameStrategy(namespace));
     }
 
     @Override

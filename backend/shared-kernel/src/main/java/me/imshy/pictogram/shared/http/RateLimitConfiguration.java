@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(RateLimitProperties.class)
-class RateLimitConfiguration {
-}
+class RateLimitConfiguration {}

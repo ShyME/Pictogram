@@ -13,7 +13,9 @@ class PublicSigningKeyTest {
 
     @Test
     void parsesAPublicEcJwk() throws Exception {
-        ECKey pair = new ECKeyGenerator(Curve.P_256).keyID(UUID.randomUUID().toString()).generate();
+        ECKey pair = new ECKeyGenerator(Curve.P_256)
+                .keyID(UUID.randomUUID().toString())
+                .generate();
 
         PublicSigningKey key = PublicSigningKey.fromJwkJson(pair.toPublicJWK().toJSONString());
 
@@ -22,10 +24,13 @@ class PublicSigningKeyTest {
 
     @Test
     void rejectsAJwkThatCarriesThePrivateKey() throws Exception {
-        ECKey pair = new ECKeyGenerator(Curve.P_256).keyID(UUID.randomUUID().toString()).generate();
+        ECKey pair = new ECKeyGenerator(Curve.P_256)
+                .keyID(UUID.randomUUID().toString())
+                .generate();
 
         assertThatThrownBy(() -> PublicSigningKey.fromJwkJson(pair.toJSONString()))
-            .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("private key");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("private key");
     }
 
     @Test

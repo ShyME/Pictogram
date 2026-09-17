@@ -17,9 +17,17 @@ class AppSmokeTest {
     void livenessAndReadinessProbesReportUp() {
         var client = RestClient.create("http://localhost:" + port);
 
-        assertThat(client.get().uri("/actuator/health/liveness").retrieve().toBodilessEntity().getStatusCode())
-            .isEqualTo(HttpStatus.OK);
-        assertThat(client.get().uri("/actuator/health/readiness").retrieve().toBodilessEntity().getStatusCode())
-            .isEqualTo(HttpStatus.OK);
+        assertThat(client.get()
+                        .uri("/actuator/health/liveness")
+                        .retrieve()
+                        .toBodilessEntity()
+                        .getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+        assertThat(client.get()
+                        .uri("/actuator/health/readiness")
+                        .retrieve()
+                        .toBodilessEntity()
+                        .getStatusCode())
+                .isEqualTo(HttpStatus.OK);
     }
 }

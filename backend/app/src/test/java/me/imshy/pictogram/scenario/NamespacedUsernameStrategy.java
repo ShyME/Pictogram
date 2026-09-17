@@ -29,8 +29,8 @@ final class NamespacedUsernameStrategy implements UsernameStrategy {
         int budget = 20 - namespace.length();
         if (username.length() > budget) {
             throw new IllegalArgumentException(
-                "Scenario username \"%s\" (%d chars) leaves no room for the %d-char blackbox namespace; keep scenario usernames to %d chars."
-                    .formatted(username, username.length(), namespace.length(), budget));
+                    "Scenario username \"%s\" (%d chars) leaves no room for the %d-char blackbox namespace; keep scenario usernames to %d chars."
+                            .formatted(username, username.length(), namespace.length(), budget));
         }
         return namespace + username;
     }
@@ -38,8 +38,11 @@ final class NamespacedUsernameStrategy implements UsernameStrategy {
     @Override
     public Profile strip(Profile profile) {
         return profile.username().startsWith(namespace)
-            ? new Profile(profile.userId(), profile.username().substring(namespace.length()), profile.displayName(),
-                profile.bio())
-            : profile;
+                ? new Profile(
+                        profile.userId(),
+                        profile.username().substring(namespace.length()),
+                        profile.displayName(),
+                        profile.bio())
+                : profile;
     }
 }

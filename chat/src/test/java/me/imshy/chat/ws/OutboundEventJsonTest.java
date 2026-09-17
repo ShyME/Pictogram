@@ -16,19 +16,22 @@ class OutboundEventJsonTest {
 
     @Test
     void aDeliveredMessageIsTaggedMessage() {
-        assertThat(JSON.writeValueAsString(DeliveredMessage.of(USER, "hi there"))).isEqualTo(
-            "{\"type\":\"message\",\"senderUserId\":\"11111111-1111-1111-1111-111111111111\",\"text\":\"hi there\"}");
+        assertThat(JSON.writeValueAsString(DeliveredMessage.of(USER, "hi there")))
+                .isEqualTo(
+                        "{\"type\":\"message\",\"senderUserId\":\"11111111-1111-1111-1111-111111111111\",\"text\":\"hi there\"}");
     }
 
     @Test
     void anUndeliveredMessageIsTaggedUndelivered() {
-        assertThat(JSON.writeValueAsString(UndeliveredMessage.of(USER, "hi there"))).isEqualTo(
-            "{\"type\":\"undelivered\",\"recipientUserId\":\"11111111-1111-1111-1111-111111111111\",\"text\":\"hi there\"}");
+        assertThat(JSON.writeValueAsString(UndeliveredMessage.of(USER, "hi there")))
+                .isEqualTo(
+                        "{\"type\":\"undelivered\",\"recipientUserId\":\"11111111-1111-1111-1111-111111111111\",\"text\":\"hi there\"}");
     }
 
     @Test
     void aPresenceStatusIsTaggedPresence() {
         assertThat(JSON.writeValueAsString(PresenceStatus.of(USER, true)))
-            .isEqualTo("{\"type\":\"presence\",\"userId\":\"11111111-1111-1111-1111-111111111111\",\"online\":true}");
+                .isEqualTo(
+                        "{\"type\":\"presence\",\"userId\":\"11111111-1111-1111-1111-111111111111\",\"online\":true}");
     }
 }

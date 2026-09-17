@@ -22,5 +22,4 @@ import org.springframework.test.context.ActiveProfiles;
 @Tag("fast")
 @Import(SharedWebTestConfig.class)
 @ExtendWith({DatabaseTruncationExtension.class, AppContextAmountGuard.class})
-public @interface AppWebIntegrationTest {
-}
+public @interface AppWebIntegrationTest {}

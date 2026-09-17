@@ -26,8 +26,8 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
 
     @Test
     void theConsumerRunsAtConcurrencyThree() {
-        var container = (ConcurrentMessageListenerContainer<?, ?>) listeners
-            .getListenerContainer(SocialEventConsumer.LISTENER_ID);
+        var container = (ConcurrentMessageListenerContainer<?, ?>)
+                listeners.getListenerContainer(SocialEventConsumer.LISTENER_ID);
 
         assertThat(container.getConcurrency()).isEqualTo(3);
     }
@@ -40,14 +40,15 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
 
         publish(author.toString(), wire("post-liked", author, liker, post, WHEN));
 
-        await().atMost(Duration.ofSeconds(15))
-            .untilAsserted(() -> assertThat(notificationsFor(author)).singleElement().satisfies(n -> {
-                assertThat(n.type()).isEqualTo(NotificationType.POST_LIKED);
-                assertThat(n.actorId().value()).isEqualTo(liker);
-                assertThat(n.subjectId().value()).isEqualTo(post);
-                assertThat(n.occurredAt()).isEqualTo(WHEN);
-                assertThat(n.read()).isFalse();
-            }));
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author))
+                .singleElement()
+                .satisfies(n -> {
+                    assertThat(n.type()).isEqualTo(NotificationType.POST_LIKED);
+                    assertThat(n.actorId().value()).isEqualTo(liker);
+                    assertThat(n.subjectId().value()).isEqualTo(post);
+                    assertThat(n.occurredAt()).isEqualTo(WHEN);
+                    assertThat(n.read()).isFalse();
+                }));
     }
 
     @Test
@@ -58,8 +59,9 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
 
         publish(author.toString(), wire("post-commented", author, commenter, post, WHEN));
 
-        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author)).singleElement()
-            .satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.POST_COMMENTED)));
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author))
+                .singleElement()
+                .satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.POST_COMMENTED)));
     }
 
     @Test
@@ -69,11 +71,12 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
 
         publish(followed.toString(), wire("user-followed", followed, follower, null, WHEN));
 
-        await().atMost(Duration.ofSeconds(15))
-            .untilAsserted(() -> assertThat(notificationsFor(followed)).singleElement().satisfies(n -> {
-                assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED);
-                assertThat(n.subjectId()).isNull();
-            }));
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(followed))
+                .singleElement()
+                .satisfies(n -> {
+                    assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED);
+                    assertThat(n.subjectId()).isNull();
+                }));
     }
 
     @Test
@@ -86,8 +89,9 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
         // self-action has definitely been consumed and skipped by the time we assert.
         publish(author.toString(), wire("user-followed", author, UUID.randomUUID(), null, WHEN));
 
-        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author)).singleElement()
-            .satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED)));
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author))
+                .singleElement()
+                .satisfies(n -> assertThat(n.type()).isEqualTo(NotificationType.USER_FOLLOWED)));
     }
 
     @Test
@@ -100,15 +104,17 @@ class SocialEventConsumerTest extends NotificationsModuleIntegrationTest {
         publish(author.toString(), record);
         publish(author.toString(), record);
 
-        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(notificationsFor(author)).hasSize(1));
+        await().atMost(Duration.ofSeconds(15))
+                .untilAsserted(() -> assertThat(notificationsFor(author)).hasSize(1));
         // Hold long enough that a second insert would have shown up.
-        await().during(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(4))
-            .untilAsserted(() -> assertThat(notificationsFor(author)).hasSize(1));
+        await().during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(4))
+                .untilAsserted(() -> assertThat(notificationsFor(author)).hasSize(1));
     }
 
     private static String wire(String type, UUID recipient, UUID actor, UUID subject, Instant occurredAt) {
         String subjectField = subject == null ? "" : "\"subjectId\":\"" + subject + "\",";
         return "{\"type\":\"" + type + "\",\"recipientId\":\"" + recipient + "\",\"actorId\":\"" + actor + "\","
-            + subjectField + "\"occurredAt\":\"" + occurredAt + "\"}";
+                + subjectField + "\"occurredAt\":\"" + occurredAt + "\"}";
     }
 }

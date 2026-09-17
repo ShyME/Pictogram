@@ -24,13 +24,15 @@ class S3BlobStore implements BlobStore {
     @Override
     public void put(String key, byte[] bytes) {
         ensureBucket();
-        s3Client.putObject(request -> request.bucket(bucket).key(key).contentType(MediaType.IMAGE_JPEG_VALUE),
-            RequestBody.fromBytes(bytes));
+        s3Client.putObject(
+                request -> request.bucket(bucket).key(key).contentType(MediaType.IMAGE_JPEG_VALUE),
+                RequestBody.fromBytes(bytes));
     }
 
     @Override
     public byte[] get(String key) {
-        return s3Client.getObjectAsBytes(request -> request.bucket(bucket).key(key)).asByteArray();
+        return s3Client.getObjectAsBytes(request -> request.bucket(bucket).key(key))
+                .asByteArray();
     }
 
     @Override

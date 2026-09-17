@@ -12,8 +12,7 @@ final class HttpHelper {
 
     static final String REFRESH_COOKIE = "pictogram_refresh";
 
-    private HttpHelper() {
-    }
+    private HttpHelper() {}
 
     static HttpResponse<String> send(HttpClient client, HttpRequest request) {
         try {
@@ -25,13 +24,15 @@ final class HttpHelper {
 
     static void require(HttpResponse<String> response, int expectedStatus, String action) {
         if (response.statusCode() != expectedStatus) {
-            throw new AssertionError("Expected %d to %s but got %d: %s".formatted(expectedStatus, action,
-                response.statusCode(), response.body()));
+            throw new AssertionError("Expected %d to %s but got %d: %s"
+                    .formatted(expectedStatus, action, response.statusCode(), response.body()));
         }
     }
 
     static Optional<String> refreshCookie(CookieManager cookies) {
-        return cookies.getCookieStore().getCookies().stream().filter(cookie -> REFRESH_COOKIE.equals(cookie.getName()))
-            .map(HttpCookie::getValue).findFirst();
+        return cookies.getCookieStore().getCookies().stream()
+                .filter(cookie -> REFRESH_COOKIE.equals(cookie.getName()))
+                .map(HttpCookie::getValue)
+                .findFirst();
     }
 }

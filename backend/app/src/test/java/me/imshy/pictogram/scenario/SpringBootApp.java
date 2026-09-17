@@ -19,8 +19,8 @@ public final class SpringBootApp implements PictogramApp {
     private final HttpPictogramApp api;
 
     public SpringBootApp(URI baseUri, MockOAuth2Server google, ObjectMapper json) {
-        this.api = new HttpPictogramApp(baseUri, json, new MockOAuth2SignIn(baseUri, google),
-            new IdentityUsernameStrategy());
+        this.api = new HttpPictogramApp(
+                baseUri, json, new MockOAuth2SignIn(baseUri, google), new IdentityUsernameStrategy());
     }
 
     @Override
@@ -32,22 +32,32 @@ public final class SpringBootApp implements PictogramApp {
 
         @Override
         public String authenticate(String email) {
-            google.enqueueCallback(new DefaultOAuth2TokenCallback(SharedGoogle.ISSUER_ID, UUID.randomUUID().toString(),
-                JOSEObjectType.JWT.getType(), List.of(SharedGoogle.CLIENT_ID),
-                Map.of("email", email, "email_verified", true), 3600L));
+            google.enqueueCallback(new DefaultOAuth2TokenCallback(
+                    SharedGoogle.ISSUER_ID,
+                    UUID.randomUUID().toString(),
+                    JOSEObjectType.JWT.getType(),
+                    List.of(SharedGoogle.CLIENT_ID),
+                    Map.of("email", email, "email_verified", true),
+                    3600L));
 
             var cookies = new CookieManager();
-            HttpClient browser = HttpClient.newBuilder().cookieHandler(cookies)
-                .followRedirects(HttpClient.Redirect.NORMAL).build();
+            HttpClient browser = HttpClient.newBuilder()
+                    .cookieHandler(cookies)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
             try {
-                browser.send(HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google")).GET().build(),
-                    BodyHandlers.discarding());
+                browser.send(
+                        HttpRequest.newBuilder(baseUri.resolve("/oauth2/authorization/google"))
+                                .GET()
+                                .build(),
+                        BodyHandlers.discarding());
             } catch (Exception e) {
                 throw new IllegalStateException("Google sign-in redirect dance failed", e);
             }
 
-            return HttpHelper.refreshCookie(cookies).orElseThrow(() -> new AssertionError(
-                "No " + HttpHelper.REFRESH_COOKIE + " cookie after the Google redirect dance"));
+            return HttpHelper.refreshCookie(cookies)
+                    .orElseThrow(() -> new AssertionError(
+                            "No " + HttpHelper.REFRESH_COOKIE + " cookie after the Google redirect dance"));
         }
     }
 }

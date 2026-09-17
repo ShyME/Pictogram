@@ -77,25 +77,32 @@ class ResourceServerDecoderContractTest {
             String token = mintPictogramAccessToken(UUID.randomUUID());
 
             mvc.perform(get("/api/profiles/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                .andExpect(status().isNotFound());
+                    .andExpect(status().isNotFound());
 
             mvc.perform(get("/api/profiles/me").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-pictogram-token"))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
         }
     }
 
     private static String mintPictogramAccessToken(UUID user) {
         Instant now = Instant.now();
         var encoder = new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(SIGNING_KEY)));
-        var claims = JwtClaimsSet.builder().issuer(ISSUER).subject(user.toString()).issuedAt(now)
-            .expiresAt(now.plusSeconds(900)).build();
-        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
-            .getTokenValue();
+        var claims = JwtClaimsSet.builder()
+                .issuer(ISSUER)
+                .subject(user.toString())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(900))
+                .build();
+        return encoder.encode(JwtEncoderParameters.from(
+                        JwsHeader.with(SignatureAlgorithm.ES256).build(), claims))
+                .getTokenValue();
     }
 
     private static ECKey generateSigningKey() {
         try {
-            return new ECKeyGenerator(Curve.P_256).keyID("pictogram-test-signing-key").generate();
+            return new ECKeyGenerator(Curve.P_256)
+                    .keyID("pictogram-test-signing-key")
+                    .generate();
         } catch (JOSEException e) {
             throw new IllegalStateException(e);
         }

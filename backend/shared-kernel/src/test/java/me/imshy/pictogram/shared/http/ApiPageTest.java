@@ -42,6 +42,7 @@ class ApiPageTest {
     void isAnUnmodifiableView() {
         var page = ApiPage.lastPage(List.of("a"));
 
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> page.items().add("b"));
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> page.items().add("b"));
     }
 }

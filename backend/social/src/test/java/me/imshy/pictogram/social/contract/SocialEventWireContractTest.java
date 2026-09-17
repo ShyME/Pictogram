@@ -33,22 +33,47 @@ class SocialEventWireContractTest {
     @Test
     void aLikeSerialisesToTheAgreedFieldsAndNothingElse() {
         assertThat(fields(SocialEvent.postLiked(RECIPIENT, ACTOR, SUBJECT, WHEN)))
-            .containsExactlyInAnyOrderEntriesOf(Map.of("type", "post-liked", "recipientId", RECIPIENT.toString(),
-                "actorId", ACTOR.toString(), "subjectId", SUBJECT.toString(), "occurredAt", "2026-09-09T12:00:00Z"));
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        "type",
+                        "post-liked",
+                        "recipientId",
+                        RECIPIENT.toString(),
+                        "actorId",
+                        ACTOR.toString(),
+                        "subjectId",
+                        SUBJECT.toString(),
+                        "occurredAt",
+                        "2026-09-09T12:00:00Z"));
     }
 
     @Test
     void aCommentSerialisesToTheAgreedFieldsAndNothingElse() {
         assertThat(fields(SocialEvent.postCommented(RECIPIENT, ACTOR, SUBJECT, WHEN)))
-            .containsExactlyInAnyOrderEntriesOf(Map.of("type", "post-commented", "recipientId", RECIPIENT.toString(),
-                "actorId", ACTOR.toString(), "subjectId", SUBJECT.toString(), "occurredAt", "2026-09-09T12:00:00Z"));
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        "type",
+                        "post-commented",
+                        "recipientId",
+                        RECIPIENT.toString(),
+                        "actorId",
+                        ACTOR.toString(),
+                        "subjectId",
+                        SUBJECT.toString(),
+                        "occurredAt",
+                        "2026-09-09T12:00:00Z"));
     }
 
     @Test
     void aFollowSerialisesToTheAgreedFieldsAndCarriesNoSubject() {
         assertThat(fields(SocialEvent.userFollowed(RECIPIENT, ACTOR, WHEN)))
-            .containsExactlyInAnyOrderEntriesOf(Map.of("type", "user-followed", "recipientId", RECIPIENT.toString(),
-                "actorId", ACTOR.toString(), "occurredAt", "2026-09-09T12:00:00Z"));
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        "type",
+                        "user-followed",
+                        "recipientId",
+                        RECIPIENT.toString(),
+                        "actorId",
+                        ACTOR.toString(),
+                        "occurredAt",
+                        "2026-09-09T12:00:00Z"));
     }
 
     @SuppressWarnings("unchecked")

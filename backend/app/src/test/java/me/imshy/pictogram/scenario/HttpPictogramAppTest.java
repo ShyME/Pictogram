@@ -62,8 +62,11 @@ class HttpPictogramAppTest {
 
     @Test
     void completeOnboardingSendsProfileJsonAndMapsThe201BodyToAProfile() {
-        stub("POST", "/api/profiles", 201,
-            "{\"userId\":\"u-1\",\"username\":\"ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
+        stub(
+                "POST",
+                "/api/profiles",
+                201,
+                "{\"userId\":\"u-1\",\"username\":\"ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
 
         Profile profile = actor().completeOnboarding("ada_lovelace", "Ada Lovelace", "Countess");
 
@@ -103,35 +106,45 @@ class HttpPictogramAppTest {
     @Test
     void completeOnboardingRoutesTheUsernameThroughTheInjectedPolicy() {
         RecordingUsernameStrategy policy = new RecordingUsernameStrategy();
-        stub("POST", "/api/profiles", 201,
-            "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
+        stub(
+                "POST",
+                "/api/profiles",
+                201,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
 
         Profile profile = actor(policy).completeOnboarding("ada_lovelace", "Ada Lovelace", "Countess");
 
         assertThat(policy.qualifiedUsernames).containsExactly("ada_lovelace");
-        assertThat(only("POST", "/api/profiles").bodyAsJson().path("username").asString()).isEqualTo("q-ada_lovelace");
+        assertThat(only("POST", "/api/profiles").bodyAsJson().path("username").asString())
+                .isEqualTo("q-ada_lovelace");
         assertThat(profile.username()).isEqualTo("ada_lovelace");
     }
 
     @Test
     void editProfileRoutesTheUsernameThroughTheInjectedPolicy() {
         RecordingUsernameStrategy policy = new RecordingUsernameStrategy();
-        stub("PUT", "/api/profiles/me", 200,
-            "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
+        stub(
+                "PUT",
+                "/api/profiles/me",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":\"Ada Lovelace\",\"bio\":\"Countess\"}");
 
         Profile profile = actor(policy).editProfile("ada_lovelace", "Ada Lovelace", "Countess");
 
         assertThat(policy.qualifiedUsernames).containsExactly("ada_lovelace");
         assertThat(only("PUT", "/api/profiles/me").bodyAsJson().path("username").asString())
-            .isEqualTo("q-ada_lovelace");
+                .isEqualTo("q-ada_lovelace");
         assertThat(profile.username()).isEqualTo("ada_lovelace");
     }
 
     @Test
     void viewProfileQualifiesTheLookupUsernameAndStripsTheResult() {
         RecordingUsernameStrategy policy = new RecordingUsernameStrategy();
-        stub("GET", "/api/profiles/q-ada_lovelace", 200,
-            "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
+        stub(
+                "GET",
+                "/api/profiles/q-ada_lovelace",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
 
         Optional<Profile> profile = actor(policy).viewProfile("ada_lovelace");
 
@@ -142,8 +155,11 @@ class HttpPictogramAppTest {
     @Test
     void currentProfileStripsTheReturnedProfile() {
         RecordingUsernameStrategy policy = new RecordingUsernameStrategy();
-        stub("GET", "/api/profiles/me", 200,
-            "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
+        stub(
+                "GET",
+                "/api/profiles/me",
+                200,
+                "{\"userId\":\"u-1\",\"username\":\"q-ada_lovelace\",\"displayName\":null,\"bio\":null}");
 
         assertThat(actor(policy).currentProfile()).contains(new Profile("u-1", "ada_lovelace", null, null));
     }
@@ -160,10 +176,12 @@ class HttpPictogramAppTest {
         assertThat(contentType).startsWith("multipart/form-data; boundary=");
         String boundary = contentType.substring(contentType.indexOf("boundary=") + "boundary=".length());
         String body = new String(request.body, StandardCharsets.ISO_8859_1);
-        assertThat(body).startsWith("--" + boundary + "\r\n")
-            .contains("Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n")
-            .contains("Content-Type: image/jpeg\r\n\r\n").contains(new String(image, StandardCharsets.ISO_8859_1))
-            .endsWith("\r\n--" + boundary + "--\r\n");
+        assertThat(body)
+                .startsWith("--" + boundary + "\r\n")
+                .contains("Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n")
+                .contains("Content-Type: image/jpeg\r\n\r\n")
+                .contains(new String(image, StandardCharsets.ISO_8859_1))
+                .endsWith("\r\n--" + boundary + "--\r\n");
         assertThat(mediaId).isEqualTo("m-42");
     }
 
@@ -181,15 +199,17 @@ class HttpPictogramAppTest {
     }
 
     private Recorded only(String method, String path) {
-        List<Recorded> matches = received.stream().filter(r -> r.method.equals(method) && r.path.equals(path)).toList();
+        List<Recorded> matches = received.stream()
+                .filter(r -> r.method.equals(method) && r.path.equals(path))
+                .toList();
         assertThat(matches).as("requests to %s %s", method, path).hasSize(1);
         return matches.getFirst();
     }
 
     private void handle(HttpExchange exchange) throws IOException {
         byte[] body = exchange.getRequestBody().readAllBytes();
-        var recorded = new Recorded(exchange.getRequestMethod(), exchange.getRequestURI().getPath(),
-            exchange.getRequestHeaders(), body);
+        var recorded = new Recorded(
+                exchange.getRequestMethod(), exchange.getRequestURI().getPath(), exchange.getRequestHeaders(), body);
         received.add(recorded);
 
         Stub stub = stubs.get(recorded.method + " " + recorded.path);
@@ -209,8 +229,7 @@ class HttpPictogramAppTest {
         exchange.close();
     }
 
-    private record Stub(int status, String body) {
-    }
+    private record Stub(int status, String body) {}
 
     private static final class RecordingSignIn implements SignInStrategy {
 
@@ -241,16 +260,22 @@ class HttpPictogramAppTest {
 
         @Override
         public Profile strip(Profile profile) {
-            return new Profile(profile.userId(), profile.username().substring(PREFIX.length()), profile.displayName(),
-                profile.bio());
+            return new Profile(
+                    profile.userId(),
+                    profile.username().substring(PREFIX.length()),
+                    profile.displayName(),
+                    profile.bio());
         }
     }
 
     private record Recorded(String method, String path, Map<String, List<String>> headers, byte[] body) {
 
         private String header(String name) {
-            return headers.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(name))
-                .flatMap(e -> e.getValue().stream()).findFirst().orElse(null);
+            return headers.entrySet().stream()
+                    .filter(e -> e.getKey().equalsIgnoreCase(name))
+                    .flatMap(e -> e.getValue().stream())
+                    .findFirst()
+                    .orElse(null);
         }
 
         private JsonNode bodyAsJson() {

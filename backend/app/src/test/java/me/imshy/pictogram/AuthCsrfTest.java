@@ -27,16 +27,23 @@ class AuthCsrfTest {
 
     @Test
     void refreshWithAHeaderThatDoesNotMatchTheCookieIsForbidden() throws Exception {
-        mvc.perform(post("/api/auth/refresh").cookie(new Cookie("XSRF-TOKEN", "the-real-token")).header("X-XSRF-TOKEN",
-            "a-different-token")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie("XSRF-TOKEN", "the-real-token"))
+                        .header("X-XSRF-TOKEN", "a-different-token"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void theRejectedRequestSeedsAReadableXsrfTokenCookieForTheClientToEcho() throws Exception {
-        var setCookie = mvc.perform(post("/api/auth/refresh")).andExpect(status().isForbidden()).andReturn()
-            .getResponse().getHeaders("Set-Cookie");
+        var setCookie = mvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getHeaders("Set-Cookie");
 
-        assertThat(setCookie).anySatisfy(header -> assertThat(header).startsWith("XSRF-TOKEN=")
-            .doesNotContain("XSRF-TOKEN=;").doesNotContain("HttpOnly"));
+        assertThat(setCookie).anySatisfy(header -> assertThat(header)
+                .startsWith("XSRF-TOKEN=")
+                .doesNotContain("XSRF-TOKEN=;")
+                .doesNotContain("HttpOnly"));
     }
 }

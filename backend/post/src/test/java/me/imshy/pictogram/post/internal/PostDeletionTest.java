@@ -52,17 +52,18 @@ class PostDeletionTest extends PostModuleIntegrationTest {
         PostView post = postPublishing.publish(author, mediaId, null);
 
         assertThatExceptionOfType(ForbiddenException.class)
-            .isThrownBy(() -> postDeletion.delete(interloper, post.postId()));
+                .isThrownBy(() -> postDeletion.delete(interloper, post.postId()));
 
-        assertThat(timeline.pageFor(author, null, null).items()).extracting(PostView::postId)
-            .containsExactly(post.postId());
+        assertThat(timeline.pageFor(author, null, null).items())
+                .extracting(PostView::postId)
+                .containsExactly(post.postId());
         assertThat(events.ofType(PostDeleted.class)).isEmpty();
     }
 
     @Test
     void rejectsAPostIdNoPostHas() {
         assertThatExceptionOfType(PostNotFoundException.class)
-            .isThrownBy(() -> postDeletion.delete(UserId.random(), PostId.random()));
+                .isThrownBy(() -> postDeletion.delete(UserId.random(), PostId.random()));
     }
 
     @Test
@@ -77,6 +78,8 @@ class PostDeletionTest extends PostModuleIntegrationTest {
 
         postDeletion.delete(author, dropped);
 
-        assertThat(timeline.pageFor(author, null, null).items()).extracting(PostView::postId).containsExactly(kept);
+        assertThat(timeline.pageFor(author, null, null).items())
+                .extracting(PostView::postId)
+                .containsExactly(kept);
     }
 }

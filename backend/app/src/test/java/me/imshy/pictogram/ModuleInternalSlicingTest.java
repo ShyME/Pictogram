@@ -10,10 +10,14 @@ import org.junit.jupiter.api.Test;
 class ModuleInternalSlicingTest {
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
-        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages("me.imshy.pictogram");
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("me.imshy.pictogram");
 
     @Test
     void internalSubpackagesDoNotDependOnEachOther() {
-        slices().matching("me.imshy.pictogram.(*).internal.(*)..").should().notDependOnEachOther().check(CLASSES);
+        slices().matching("me.imshy.pictogram.(*).internal.(*)..")
+                .should()
+                .notDependOnEachOther()
+                .check(CLASSES);
     }
 }

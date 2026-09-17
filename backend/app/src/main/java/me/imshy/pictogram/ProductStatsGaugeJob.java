@@ -35,8 +35,13 @@ class ProductStatsGaugeJob {
     private final AtomicLong likesTotal = new AtomicLong();
     private final AtomicLong followsTotal = new AtomicLong();
 
-    ProductStatsGaugeJob(IdentityStats identityStats, PostStats postStats, SocialStats socialStats,
-        MeterRegistry registry, Clock clock, ProductStatsProperties properties) {
+    ProductStatsGaugeJob(
+            IdentityStats identityStats,
+            PostStats postStats,
+            SocialStats socialStats,
+            MeterRegistry registry,
+            Clock clock,
+            ProductStatsProperties properties) {
         this.identityStats = identityStats;
         this.postStats = postStats;
         this.socialStats = socialStats;

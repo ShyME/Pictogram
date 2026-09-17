@@ -11,6 +11,5 @@ public interface LikeCounts {
 
     List<PostLikes> of(Collection<PostId> posts);
 
-    record PostLikes(PostId post, long likeCount, boolean likedByViewer) {
-    }
+    record PostLikes(PostId post, long likeCount, boolean likedByViewer) {}
 }

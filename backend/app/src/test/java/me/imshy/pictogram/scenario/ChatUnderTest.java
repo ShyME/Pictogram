@@ -10,5 +10,4 @@ interface ChatUnderTest {
     String CHAT_SUBPROTOCOL = "pictogram-chat";
 
     URI chatBaseUri();
-
 }

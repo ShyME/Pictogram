@@ -25,8 +25,8 @@ public class MediaLibrary implements MediaCatalog {
     // pre-upload total, both pass, and jointly exceed the cap.
     private final ConcurrentHashMap<UUID, Object> uploadLocks = new ConcurrentHashMap<>();
 
-    MediaLibrary(Medias medias, ImagePipeline imagePipeline, BlobStore blobStore, Clock clock,
-        MediaQuotaProperties quota) {
+    MediaLibrary(
+            Medias medias, ImagePipeline imagePipeline, BlobStore blobStore, Clock clock, MediaQuotaProperties quota) {
         this.medias = medias;
         this.imagePipeline = imagePipeline;
         this.blobStore = blobStore;
@@ -39,7 +39,8 @@ public class MediaLibrary implements MediaCatalog {
         long size = (long) renditions.original().length + renditions.thumbnail().length;
 
         synchronized (uploadLocks.computeIfAbsent(owner.value(), key -> new Object())) {
-            if (medias.totalBytesForOwner(owner.value()) + size > quota.maxBytesPerUser().toBytes()) {
+            if (medias.totalBytesForOwner(owner.value()) + size
+                    > quota.maxBytesPerUser().toBytes()) {
                 throw new MediaQuotaExceededException();
             }
 

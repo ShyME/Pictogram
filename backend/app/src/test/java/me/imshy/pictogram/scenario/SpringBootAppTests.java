@@ -7,15 +7,13 @@ package me.imshy.pictogram.scenario;
  * {@code OrphanMediaCollectionTest} stays separate (it needs in-process beans).
  */
 class SpringBootAppTests extends AppIntegrationTest
-    implements
-        CommentTests,
-        PostDeleteTests,
-        ProfileEditTests,
-        FeedTests,
-        FollowTests,
-        FollowListTests,
-        LikeTests,
-        UserOnboardingTests,
-        PostPublishTests,
-        ViewProfileTests {
-}
+        implements CommentTests,
+                PostDeleteTests,
+                ProfileEditTests,
+                FeedTests,
+                FollowTests,
+                FollowListTests,
+                LikeTests,
+                UserOnboardingTests,
+                PostPublishTests,
+                ViewProfileTests {}

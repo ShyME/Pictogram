@@ -6,20 +6,29 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 
 final class WebSecurityHeaders {
 
-    private static final String CONTENT_SECURITY_POLICY = String.join("; ", "default-src 'self'", "script-src 'self'",
-        "style-src 'self'", "img-src 'self' blob: data:", "font-src 'self'", "connect-src 'self'", "object-src 'none'",
-        "base-uri 'self'", "frame-ancestors 'none'", "form-action 'self'");
+    private static final String CONTENT_SECURITY_POLICY = String.join(
+            "; ",
+            "default-src 'self'",
+            "script-src 'self'",
+            "style-src 'self'",
+            "img-src 'self' blob: data:",
+            "font-src 'self'",
+            "connect-src 'self'",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "frame-ancestors 'none'",
+            "form-action 'self'");
 
-    private static final String PERMISSIONS_POLICY = "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), "
-        + "fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), "
-        + "midi=(), payment=(), usb=()";
+    private static final String PERMISSIONS_POLICY =
+            "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), "
+                    + "fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), "
+                    + "midi=(), payment=(), usb=()";
 
-    private WebSecurityHeaders() {
-    }
+    private WebSecurityHeaders() {}
 
     static void apply(HeadersConfigurer<HttpSecurity> headers) {
         headers.contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY))
-            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-            .permissionsPolicyHeader(permissions -> permissions.policy(PERMISSIONS_POLICY));
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .permissionsPolicyHeader(permissions -> permissions.policy(PERMISSIONS_POLICY));
     }
 }

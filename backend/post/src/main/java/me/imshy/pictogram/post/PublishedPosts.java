@@ -13,6 +13,5 @@ public interface PublishedPosts {
 
     Optional<UserId> authorOf(PostId post);
 
-    record Page(List<PublishedPost> posts, Cursor nextCursor) {
-    }
+    record Page(List<PublishedPost> posts, Cursor nextCursor) {}
 }

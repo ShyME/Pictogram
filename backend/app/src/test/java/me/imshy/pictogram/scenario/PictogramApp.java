@@ -70,39 +70,32 @@ public interface PictogramApp {
     }
 
     enum DeleteOutcome {
-        DELETED, FORBIDDEN
+        DELETED,
+        FORBIDDEN
     }
 
     enum FollowOutcome {
-        OK, SELF_FOLLOW
+        OK,
+        SELF_FOLLOW
     }
 
-    record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {
-    }
+    record FollowRelationship(long followerCount, long followingCount, boolean followedByViewer) {}
 
-    record PostLikes(long likeCount, boolean likedByViewer) {
-    }
+    record PostLikes(long likeCount, boolean likedByViewer) {}
 
-    record Comment(String commentId, String postId, String authorId, String body, String createdAt) {
-    }
+    record Comment(String commentId, String postId, String authorId, String body, String createdAt) {}
 
-    record CommentPage(List<Comment> comments, String nextCursor) {
-    }
+    record CommentPage(List<Comment> comments, String nextCursor) {}
 
-    record AccountPage(List<String> userIds, String nextCursor) {
-    }
+    record AccountPage(List<String> userIds, String nextCursor) {}
 
-    record Notification(String type, String actorId, String subjectPostId, String occurredAt, boolean read) {
-    }
+    record Notification(String type, String actorId, String subjectPostId, String occurredAt, boolean read) {}
 
-    record NotificationPage(List<Notification> notifications, String nextCursor) {
-    }
+    record NotificationPage(List<Notification> notifications, String nextCursor) {}
 
-    record Profile(String userId, String username, String displayName, String bio) {
-    }
+    record Profile(String userId, String username, String displayName, String bio) {}
 
-    record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {
-    }
+    record Post(String postId, String authorId, String mediaId, String caption, String publishedAt) {}
 
     record FeedPage(List<Post> posts, String nextCursor) {
 

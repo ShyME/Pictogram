@@ -29,41 +29,62 @@ class NotificationController {
         this.notifications = notifications;
     }
 
-    record UnreadCount(long count) {
-    }
+    record UnreadCount(long count) {}
 
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "A page of the caller's notifications, newest first."),
-        @ApiResponse(responseCode = "400", description = "The pagination cursor is malformed.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class))),
-        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class)))})
+        @ApiResponse(
+                responseCode = "400",
+                description = "The pagination cursor is malformed.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "401",
+                description = "The caller has no valid access token.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @GetMapping
-    ApiPage<NotificationView> notifications(@CurrentUser ViewerId viewer,
-        @RequestParam(name = "cursor", required = false) String cursor,
-        @RequestParam(name = "limit", required = false) Integer limit) {
+    ApiPage<NotificationView> notifications(
+            @CurrentUser ViewerId viewer,
+            @RequestParam(name = "cursor", required = false) String cursor,
+            @RequestParam(name = "limit", required = false) Integer limit) {
         Cursor after = cursor == null ? null : Cursor.decode(cursor);
         NotificationQuery.Page page = notifications.pageFor(viewer, after, limit);
         return ApiPage.of(page.notifications(), page.nextCursor());
     }
 
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "The caller's unread notification count."),
-        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class)))})
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "The caller's unread notification count."),
+        @ApiResponse(
+                responseCode = "401",
+                description = "The caller has no valid access token.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @GetMapping("/unread-count")
     UnreadCount unreadCount(@CurrentUser ViewerId viewer) {
         return new UnreadCount(notifications.unreadCountFor(viewer));
     }
 
     @ApiResponses({
-        @ApiResponse(responseCode = "204",
-            description = "Every unread notification of the caller is now read (idempotent)."),
-        @ApiResponse(responseCode = "401", description = "The caller has no valid access token.",
-            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                schema = @Schema(implementation = ProblemDetail.class)))})
+        @ApiResponse(
+                responseCode = "204",
+                description = "Every unread notification of the caller is now read (idempotent)."),
+        @ApiResponse(
+                responseCode = "401",
+                description = "The caller has no valid access token.",
+                content =
+                        @Content(
+                                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                schema = @Schema(implementation = ProblemDetail.class)))
+    })
     @PostMapping("/mark-read")
     ResponseEntity<Void> markRead(@CurrentUser ViewerId viewer) {
         notifications.markAllReadFor(viewer);
