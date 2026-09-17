@@ -39,7 +39,7 @@
 		zone reads {
 			match {
 				method GET
-				path /api/media/* /api/profiles/* /api/posts* /api/comments* /api/follows/*
+				path /api/media/* /api/profiles /api/profiles/* /api/posts* /api/comments* /api/follows/* /api/explore*
 			}
 			key {remote_host}
 			events 60
