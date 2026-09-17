@@ -53,14 +53,15 @@ class ChatWebSocketConfiguration {
         return new ChatWebSocketHandlerMapping(connections, json, clock);
     }
 
-    // The default HandshakeWebSocketService leaves Reactor Netty's inbound frame size at its
-    // 64 KiB default; ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH is the explicit,
+    // The default HandshakeWebSocketService leaves Reactor Netty's inbound frame
+    // size at its
+    // 64 KiB default; ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH is the
+    // explicit,
     // tested bound (#192).
     @Bean
     WebSocketService chatWebSocketService() {
-        return new HandshakeWebSocketService(new ReactorNettyRequestUpgradeStrategy(
-            () -> WebsocketServerSpec.builder()
-                .maxFramePayloadLength(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH)));
+        return new HandshakeWebSocketService(new ReactorNettyRequestUpgradeStrategy(() -> WebsocketServerSpec.builder()
+            .maxFramePayloadLength(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH)));
     }
 
     @Bean

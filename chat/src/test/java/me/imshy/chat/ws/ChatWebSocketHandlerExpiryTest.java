@@ -53,7 +53,8 @@ class ChatWebSocketHandlerExpiryTest {
 
     @Test
     void aConnectionIsClosedWithTheDedicatedCodeWhenItsAccessTokenExpires() throws InterruptedException {
-        // Comfortably longer than a first-request-to-a-fresh-context warmup (JIT, lazy codec
+        // Comfortably longer than a first-request-to-a-fresh-context warmup (JIT, lazy
+        // codec
         // setup), so a slow handshake never masquerades as an already-expired token.
         String expiringSoon = TOKENS.issueExpiringIn(UserId.random(), clock, Duration.ofSeconds(2));
         AtomicReference<CloseStatus> closedWith = new AtomicReference<>();

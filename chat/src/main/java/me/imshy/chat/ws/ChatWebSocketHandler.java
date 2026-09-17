@@ -50,15 +50,22 @@ class ChatWebSocketHandler implements WebSocketHandler {
     // headroom.
     static final int MAX_PRESENCE_QUERY_SUBJECTS = 128;
 
-    // Reactor Netty's WebsocketServerSpec defaults inbound frames to 64 KiB, never set
-    // explicitly — a cheap heap-pressure vector on a service that otherwise carefully
-    // bounds memory (#192). A chat message is a short text; this is generous headroom
-    // while still an explicit, tested bound. ChatWebSocketHandlerInboundFrameLimitTest
-    // pins it: an over-limit frame closes the connection rather than being buffered.
+    // Reactor Netty's WebsocketServerSpec defaults inbound frames to 64 KiB, never
+    // set
+    // explicitly — a cheap heap-pressure vector on a service that otherwise
+    // carefully
+    // bounds memory (#192). A chat message is a short text; this is generous
+    // headroom
+    // while still an explicit, tested bound.
+    // ChatWebSocketHandlerInboundFrameLimitTest
+    // pins it: an over-limit frame closes the connection rather than being
+    // buffered.
     static final int MAX_INBOUND_FRAME_PAYLOAD_LENGTH = 8192;
 
-    // A dedicated close code (RFC 6455 private-use range) so the frontend can tell "the
-    // access token this connection was handshaked with expired, refresh and re-handshake"
+    // A dedicated close code (RFC 6455 private-use range) so the frontend can tell
+    // "the
+    // access token this connection was handshaked with expired, refresh and
+    // re-handshake"
     // apart from an ordinary drop (#192). Must match chatConnection.ts's
     // ACCESS_TOKEN_EXPIRED_CLOSE_CODE.
     static final int ACCESS_TOKEN_EXPIRED_CLOSE_CODE = 4401;
@@ -69,8 +76,8 @@ class ChatWebSocketHandler implements WebSocketHandler {
     private final Instant accessTokenExpiresAt;
     private final Clock clock;
 
-    ChatWebSocketHandler(ConnectionRegistry connections, ObjectMapper json, UserId caller,
-        Instant accessTokenExpiresAt, Clock clock) {
+    ChatWebSocketHandler(ConnectionRegistry connections, ObjectMapper json, UserId caller, Instant accessTokenExpiresAt,
+        Clock clock) {
         this.connections = connections;
         this.json = json;
         this.caller = caller;
@@ -105,20 +112,23 @@ class ChatWebSocketHandler implements WebSocketHandler {
         Mono<Void> sending = session
             .send(outbound.asFlux().map(event -> session.textMessage(json.writeValueAsString(event))));
 
-        // Fired independently: session.close()'s Mono only completes after flushing, which
-        // deadlocks against `sending` holding the outbound slot on a never-ending sink (#192).
+        // Fired independently: session.close()'s Mono only completes after flushing,
+        // which
+        // deadlocks against `sending` holding the outbound slot on a never-ending sink
+        // (#192).
         Disposable expiryTimer = closeAtTokenExpiry(session);
         return receiving.and(sending).doFinally(signal -> expiryTimer.dispose());
     }
 
-    // Nested subscribe, not one chain: folding the close call into the returned Disposable
-    // lets its dispose() above race the close-frame write and drop the connection with a Netty
+    // Nested subscribe, not one chain: folding the close call into the returned
+    // Disposable
+    // lets its dispose() above race the close-frame write and drop the connection
+    // with a Netty
     // refCnt error — ChatWebSocketHandlerExpiryTest catches the regression.
     private Disposable closeAtTokenExpiry(WebSocketSession session) {
         Duration untilExpiry = Duration.between(clock.instant(), accessTokenExpiresAt);
-        return Mono.delay(untilExpiry.isNegative() ? Duration.ZERO : untilExpiry)
-            .subscribe(tick -> session.close(new CloseStatus(ACCESS_TOKEN_EXPIRED_CLOSE_CODE, "access token expired"))
-                .subscribe());
+        return Mono.delay(untilExpiry.isNegative() ? Duration.ZERO : untilExpiry).subscribe(tick -> session
+            .close(new CloseStatus(ACCESS_TOKEN_EXPIRED_CLOSE_CODE, "access token expired")).subscribe());
     }
 
     // Malformed frames drop silently rather than tearing the connection down

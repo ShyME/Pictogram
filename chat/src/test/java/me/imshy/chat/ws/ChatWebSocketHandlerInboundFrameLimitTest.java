@@ -66,8 +66,10 @@ class ChatWebSocketHandlerInboundFrameLimitTest {
     @Test
     void aFrameAtTheLimitIsAcceptedRatherThanClosingTheConnection() throws InterruptedException {
         UserId recipient = UserId.random();
-        // Well below the limit, not right at it: the frame is the JSON envelope around this
-        // text, and SendMessageRequest's field names and the recipient's UUID add their own
+        // Well below the limit, not right at it: the frame is the JSON envelope around
+        // this
+        // text, and SendMessageRequest's field names and the recipient's UUID add their
+        // own
         // bytes on top.
         String atLimit = "x".repeat(ChatWebSocketHandler.MAX_INBOUND_FRAME_PAYLOAD_LENGTH - 200);
         Connection connection = connect();

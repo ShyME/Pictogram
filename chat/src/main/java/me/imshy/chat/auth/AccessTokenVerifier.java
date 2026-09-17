@@ -45,8 +45,10 @@ public class AccessTokenVerifier {
         } catch (IllegalArgumentException | NullPointerException notAUserId) {
             throw new InvalidAccessTokenException("Access token subject is not a Pictogram user id", notAUserId);
         }
-        // JwtTimestampValidator accepts a token with no "exp" claim at all; ChatWebSocketHandler
-        // needs a real expiry to schedule its close (#192), so a missing one is rejected here
+        // JwtTimestampValidator accepts a token with no "exp" claim at all;
+        // ChatWebSocketHandler
+        // needs a real expiry to schedule its close (#192), so a missing one is
+        // rejected here
         // rather than reaching that Duration.between as a null.
         if (jwt.getExpiresAt() == null)
             throw new InvalidAccessTokenException("Access token has no expiry", null);
