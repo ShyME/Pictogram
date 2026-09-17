@@ -71,6 +71,17 @@
 			events 6
 			window 1m
 		}
+		# The chat WS handshake (#249's in-app limiter only bounds an already-open
+		# connection's frame rate, not how often a new one is opened — #255).
+		zone ws {
+			match {
+				method GET
+				path /ws
+			}
+			key {remote_host}
+			events 20
+			window 1m
+		}
 	}
 
 	@ws path /ws
