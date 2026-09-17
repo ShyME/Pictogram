@@ -41,7 +41,7 @@ export function AppNav({
   const isInline = useMediaQuery(INLINE_NAV);
 
   return (
-    <header className="border-b border-border bg-surface">
+    <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <nav className="flex items-center justify-between px-4 py-3">
         <Link
           to="/"

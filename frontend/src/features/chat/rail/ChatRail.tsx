@@ -36,8 +36,10 @@ function DockedRail({ viewerId }: { viewerId: string }) {
     >
       <aside
         aria-label="Messages"
+        // top/height match AppNav's rendered height (h-8 buttons + py-3 = 3.5rem) so the
+        // rail sits directly under the now-sticky nav instead of sliding beneath it.
         className={cn(
-          'sticky top-0 flex h-dvh flex-col overflow-hidden',
+          'sticky top-14 flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden',
           isCollapsed && 'items-center py-2.5',
         )}
       >
