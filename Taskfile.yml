@@ -94,6 +94,12 @@ tasks:
       - pnpm install
       - pnpm format
 
+  hooks:install:
+    desc: One-time setup — installs the pre-commit hook that auto-formats staged files
+    cmds:
+      - git config core.hooksPath .githooks
+      - 'echo "Pre-commit formatting hook installed (core.hooksPath = .githooks)"'
+
   test:
     desc: Run all checks — backend build, chat build, frontend lint/typecheck/tests, scripts
     cmds:

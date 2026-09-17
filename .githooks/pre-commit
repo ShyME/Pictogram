@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Auto-formats staged files before a commit is created. Installed via `task hooks:install`
+# (sets core.hooksPath to this directory) — see README.md.
+set -euo pipefail
+
+staged_list="$(git diff --cached --name-only --diff-filter=ACMR)"
+[ -z "$staged_list" ] && exit 0
+
+staged=()
+while IFS= read -r -d '' f; do
+    staged+=("$f")
+done < <(printf '%s\n' "$staged_list" | tr '\n' '\0')
+
+# Reformatting rewrites whole files on disk, which would silently fold any *unstaged*
+# hunks in the same file into the commit (breaking `git add -p` partial staging). So:
+# snapshot the unstaged diff for just the staged files, reset their working-tree copies
+# to the index, format + restage, then reapply the snapshot on top of the result — this
+# trap runs on every exit path (including a formatter failure) so an unstaged edit is
+# never silently lost.
+patch_file="$(mktemp)"
+patch_applied=0
+
+restore_unstaged() {
+    if [ "$patch_applied" -eq 0 ] && [ -s "$patch_file" ]; then
+        if git apply --whitespace=nowarn --reject "$patch_file" 2>/dev/null; then
+            patch_applied=1
+        else
+            echo "pre-commit: could not fully reapply your unstaged edits after formatting; the diff is saved at $patch_file — apply it manually with 'git apply $patch_file'" >&2
+        fi
+    fi
+    if [ "$patch_applied" -eq 1 ]; then
+        rm -f "$patch_file"
+    fi
+}
+trap restore_unstaged EXIT
+
+git diff -- "${staged[@]}" >"$patch_file"
+if [ -s "$patch_file" ]; then
+    git checkout -- "${staged[@]}"
+fi
+
+# Spotless has no reliable way to format a specific file list (its -PspotlessFiles knob
+# doesn't scope the task in current versions), so format the whole module — spotlessApply
+# is a no-op on already-clean files, and only originally staged paths get re-added below.
+if printf '%s\n' "$staged_list" | grep -qE '^backend/.*\.(java|kts)$'; then
+    (cd backend && ./gradlew --quiet spotlessApply)
+fi
+
+if printf '%s\n' "$staged_list" | grep -qE '^chat/.*\.(java|kts)$'; then
+    (cd chat && ./gradlew --quiet spotlessApply)
+fi
+
+frontend_files=()
+while IFS= read -r -d '' f; do
+    frontend_files+=("${f#frontend/}")
+done < <(printf '%s\n' "$staged_list" | grep -E '^frontend/.*\.(ts|tsx|js|jsx|json|css|md|yml|yaml|html)$' | tr '\n' '\0' || true)
+
+if [ "${#frontend_files[@]}" -gt 0 ]; then
+    (cd frontend && pnpm exec prettier --write --ignore-unknown "${frontend_files[@]}")
+fi
+
+git add -- "${staged[@]}"
