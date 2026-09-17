@@ -2,8 +2,12 @@ package me.imshy.pictogram.social.internal.likes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.List;
+import me.imshy.pictogram.post.PostDeleted;
+import me.imshy.pictogram.shared.MediaId;
 import me.imshy.pictogram.shared.PostId;
+import me.imshy.pictogram.shared.UserId;
 import me.imshy.pictogram.shared.ViewerId;
 import me.imshy.pictogram.social.LikeCounts.PostLikes;
 import me.imshy.pictogram.social.PostLiked;
@@ -11,6 +15,7 @@ import me.imshy.pictogram.social.PostUnliked;
 import me.imshy.pictogram.social.internal.SocialModuleIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.modulith.test.AssertablePublishedEvents;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -22,6 +27,9 @@ class LikingTest extends SocialModuleIntegrationTest {
 
     @Autowired
     LikeTally likeTally;
+
+    @Autowired
+    ApplicationEventPublisher events;
 
     @Autowired
     PlatformTransactionManager transactionManager;
@@ -96,6 +104,20 @@ class LikingTest extends SocialModuleIntegrationTest {
         liking.like(author, post);
 
         assertThat(likeStateFor(author, post)).isEqualTo(new PostLikes(post, 1, true));
+    }
+
+    // ---- onPostDeleted() : orphaned-like cleanup ----
+
+    @Test
+    void deletingAPostRemovesItsLikesAndLeavesOtherPostsLikesAlone() {
+        var deleted = PostId.random();
+        var untouched = PostId.random();
+        liking.like(ViewerId.random(), deleted);
+        liking.like(ViewerId.random(), untouched);
+
+        events.publishEvent(new PostDeleted(deleted, UserId.random(), MediaId.random(), Instant.now()));
+
+        assertThat(likeTally.of(List.of(deleted, untouched))).extracting(PostLikes::likeCount).containsExactly(0L, 1L);
     }
 
     private PostLikes likeStateFor(ViewerId viewer, PostId post) {

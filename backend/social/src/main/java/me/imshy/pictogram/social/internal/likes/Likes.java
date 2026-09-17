@@ -15,6 +15,9 @@ interface Likes extends CrudRepository<Like, LikeId> {
     @Transactional
     int deleteByPostIdAndViewerId(UUID postId, UUID viewerId);
 
+    @Transactional
+    int deleteByPostId(UUID postId);
+
     @Query("""
         select new me.imshy.pictogram.social.internal.likes.LikeCount(l.postId, count(l))
         from Like l
