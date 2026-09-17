@@ -19,6 +19,7 @@ import me.imshy.pictogram.shared.http.Limits;
 import me.imshy.pictogram.social.CommentCounts;
 import me.imshy.pictogram.social.CommentDeleted;
 import me.imshy.pictogram.social.PostCommented;
+import me.imshy.pictogram.social.internal.CommentVolume;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Limit;
@@ -28,7 +29,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
-public class CommentThread implements CommentCounts {
+public class CommentThread implements CommentCounts, CommentVolume {
 
     static final int DEFAULT_LIMIT = 20;
     static final int MAX_LIMIT = 50;
@@ -111,6 +112,11 @@ public class CommentThread implements CommentCounts {
     @EventListener
     void onPostDeleted(PostDeleted event) {
         comments.deleteByPostId(event.postId().value());
+    }
+
+    @Override
+    public long total() {
+        return comments.count();
     }
 
     public record Page(List<PostComment> comments, Cursor nextCursor) {

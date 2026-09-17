@@ -69,6 +69,14 @@ pictogram:
     # window a composer mid-caption has before its upload can be swept.
     retention:
       collection-cron: ${PICTOGRAM_MEDIA_RETENTION_CRON:0 0 * * * *}
+  # ADR-0016: product-level counts a metrics dashboard can't get from HTTP/JVM meters
+  # alone, published as Micrometer gauges by ProductStatsGaugeJob. "Active" reads
+  # identity.refresh_token issuance/rotation over this window (a returning session) —
+  # ProductStatsProperties.activeWindow's own @DefaultValue is its only default; this key
+  # isn't repeated here so there's one source of truth for it, unlike collection-cron
+  # above, which has to live in a live SpEL string for @Scheduled to resolve.
+  stats:
+    publish-cron: ${PICTOGRAM_STATS_PUBLISH_CRON:0 */5 * * * *}
 
 # The OpenAPI document is exported to backend/openapi.json (the `generateOpenApiSpec` Gradle
 # task) and the frontend generates its typed client from that file. Swagger UI is not on the
@@ -94,7 +102,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # No Caddy route is added for prometheus (Caddyfile.prod) — it stays reachable
+        # only on the compose network, this app's existing internal trust boundary
+        # (ADR-0016).
+        include: health, info, prometheus
   endpoint:
     health:
       probes:
