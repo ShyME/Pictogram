@@ -11,6 +11,8 @@ dependencies {
     api("org.springframework.boot:spring-boot-autoconfigure")
 
     api(libs.swagger.annotations.jakarta)
+    // ADR-0016: ApiExceptionHandler's catch-all explicitly captures to Sentry.
+    implementation(libs.sentry.core)
 
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     compileOnly("org.springframework.modulith:spring-modulith-core")

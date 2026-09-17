@@ -1,7 +1,13 @@
+import { captureException } from '@sentry/react';
+import { useEffect } from 'react';
 import { useRouteError } from 'react-router';
 
 export function RouteError() {
   const error = useRouteError();
+
+  useEffect(() => {
+    captureException(error);
+  }, [error]);
 
   return (
     <main className="grid min-h-dvh place-items-center bg-neutral-50 p-6">

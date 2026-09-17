@@ -78,6 +78,14 @@ pictogram:
   stats:
     publish-cron: ${PICTOGRAM_STATS_PUBLISH_CRON:0 */5 * * * *}
 
+# Exception tracking (ADR-0016). An unset dsn disables the SDK outright (no-op locally/CI).
+# send-default-pii and max-request-body-size are both off — the DSN, once set, goes to a
+# third party the privacy policy discloses as a subprocessor, not as a PII sink.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  send-default-pii: false
+  max-request-body-size: none
+
 # The OpenAPI document is exported to backend/openapi.json (the `generateOpenApiSpec` Gradle
 # task) and the frontend generates its typed client from that file. Swagger UI is not on the
 # classpath — the JSON at /v3/api-docs is the whole surface, and it's disabled in production.

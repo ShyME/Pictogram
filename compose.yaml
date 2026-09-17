@@ -101,6 +101,8 @@ services:
       PICTOGRAM_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER:-pictogram}
       PICTOGRAM_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-pictogram}
       PICTOGRAM_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # ADR-0016: unset by default — Sentry stays disabled until a real deployment sets it.
+      SENTRY_DSN: ${SENTRY_DSN:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
       interval: 5s

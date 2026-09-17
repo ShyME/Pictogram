@@ -81,21 +81,39 @@ jobs:
         env:
           REGISTRY: ${{ steps.target.outputs.registry }}
           TAG: ${{ steps.target.outputs.tag }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           set -euo pipefail
+          # sentry_auth_token.txt never lands in an image layer — it's a build --secret mount
+          # (backend/Dockerfile), read once by the frontend build stage and discarded (ADR-0016).
+          printf '%s' "$SENTRY_AUTH_TOKEN" > sentry_auth_token.txt
           for svc in app chat caddy; do
             case "$svc" in
               app)   context=. ;       file=backend/Dockerfile ;;
               chat)  context=./chat ;  file=./chat/Dockerfile ;;
               caddy) context=./caddy ; file=./caddy/Dockerfile ;;
             esac
+            args=()
+            if [ "$svc" = app ]; then
+              args=(
+                --build-arg "VITE_SENTRY_DSN=$VITE_SENTRY_DSN"
+                --build-arg "SENTRY_ORG=$SENTRY_ORG"
+                --build-arg "SENTRY_PROJECT=$SENTRY_PROJECT"
+                --secret "id=sentry_auth_token,src=sentry_auth_token.txt"
+              )
+            fi
             docker buildx build --push \
               --tag "$REGISTRY/pictogram-$svc:latest" \
               --tag "$REGISTRY/pictogram-$svc:$TAG" \
               --cache-from "type=gha,scope=$svc" \
               --cache-to "type=gha,mode=max,scope=$svc" \
+              "${args[@]}" \
               -f "$file" "$context"
           done
+          rm -f sentry_auth_token.txt
 
       - name: Validate Caddyfile.prod against the caddy image
         env:

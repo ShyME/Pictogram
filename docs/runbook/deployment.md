@@ -54,7 +54,13 @@ after fixing anything. It covers:
    the moment `DEPLOY_HOST` exists, and the box cannot serve until the tail fills
    `PICTOGRAM_DOMAIN` + the OAuth values, so a dispatch before then would only fail on the
    missing `${PICTOGRAM_DOMAIN}` guard.
-8. It then **pauses** and prints the domain-gated tail (below), which cannot run until the
+8. **Sentry** (ADR-0016) — sign up, create a backend (Spring Boot) and a frontend (React)
+   project, write the backend DSN to the box `.env` as `SENTRY_DSN`, and the frontend DSN,
+   org slug and frontend project slug to the GitHub Actions variables `VITE_SENTRY_DSN`,
+   `SENTRY_ORG`, `SENTRY_PROJECT` (all build-time, non-secret — a DSN is a public
+   identifier). A `project:releases`-scoped org auth token goes to the CI secret
+   `SENTRY_AUTH_TOKEN`, used only to upload frontend source maps during the image build.
+9. It then **pauses** and prints the domain-gated tail (below), which cannot run until the
    domain is registered.
 
 ### Domain-gated tail (needs the registered domain)
@@ -133,7 +139,7 @@ build + push + validate still run, so the pipeline is exercised.
 user's `authorized_keys`), `DEPLOY_USER` (`deploy`), `DEPLOY_HOST` (the domain; set in the
 domain-gated tail), and `DEPLOY_KNOWN_HOSTS` (the box's pinned host key — `ssh-keyscan`
 output; without it CI falls back to trust-on-first-use). Rebuilding the box (#176)
-invalidates `DEPLOY_HOST`/`DEPLOY_KNOWN_HOSTS` — re-run wizard Stage 13. GHCR push uses the
+invalidates `DEPLOY_HOST`/`DEPLOY_KNOWN_HOSTS` — re-run wizard Stage 14. GHCR push uses the
 built-in `GITHUB_TOKEN`
 (`packages: write`).
 
@@ -215,6 +221,8 @@ portfolio deployment (ADR-0012 Consequences, #252). To rotate one: edit `.env`, 
 - **DB / MinIO passwords**: change in Postgres/MinIO first, then `.env`, then roll.
 - **Grafana Cloud API keys**: revoke and regenerate in the Grafana Cloud console (separately
   for Prometheus and Loki), update `.env`, roll `alloy`.
+- **Sentry auth token**: revoke and reissue in Sentry's org settings, update the
+  `SENTRY_AUTH_TOKEN` CI secret — no box roll, it's used only during the CI image build.
 
 ## Backups
 
@@ -236,6 +244,10 @@ Against `https://<domain>`:
 - [ ] Grafana Cloud (ADR-0016): `app`/`chat` metrics (e.g. `pictogram_users_total`,
       from #233) show up in Explore; a sample `app`/`chat`/`caddy` log line shows up in
       Loki with no email address or IP address in it.
+- [ ] Throw a test exception on each side (a broken API call; a thrown error from a route)
+      and confirm both show up in Sentry, tagged `environment: production`.
+- [ ] Open a frontend event in Sentry and confirm the stack trace resolves to source (not
+      minified) — proves the source-map upload worked.
 
 ## Migrating off GCP (#176)
 
