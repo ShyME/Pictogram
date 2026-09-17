@@ -120,6 +120,34 @@ local and CI environments only (Testcontainers) and gate the `notifications` con
 behind a profile; the feature is then laptop-and-CI only until the box grows. The
 intent is to run it for real.
 
+## Producer trust boundary
+
+The `notifications` consumer trusts every record on `pictogram.social` implicitly — no
+SASL/mTLS/ACLs anywhere, every listener in `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP` maps to
+`PLAINTEXT`. This is the accepted v1 posture, not an oversight, because two things hold
+today:
+
+- Kafka is reachable only on the compose network (ADR-0012) — nothing outside the box's
+  containers can dial `kafka:9092`.
+- `social` is the sole producer wired to `pictogram.social` (above) — there is no second
+  writer to distinguish from an impersonator, so an ACL would have nothing to restrict.
+
+Hardening now would also cost more than it looks: `apache/kafka-native`, the GraalVM image
+this ADR's Deployment section runs for its footprint, has no SASL support at all (missing
+`java.security.AccessController` reflection config — KAFKA-19584). Adding SASL/SCRAM means
+switching the broker to the JVM `apache/kafka` image first, which is exactly the
+memory-pressure move Deployment already ties to the #176 box migration. Paying that cost
+for a boundary nothing currently crosses is not the right trade at this scale.
+
+**Revisit when either trigger fires:**
+- A second producer is wired to `pictogram.social` — there is now an identity to
+  distinguish `social` from, and an ACL has something to restrict; **or**
+- `notifications` or the broker moves off this box/VPC (the #176 migration) — network
+  isolation stops being the thing doing the work.
+
+At that point: switch the broker to the JVM `apache/kafka` image and add SASL/SCRAM + ACLs
+restricting produce rights on `pictogram.social` to `social`'s client.
+
 ## Testing
 
 - **Producer side (`social`):** Spring Modulith's `Scenario` / `PublishedEvents` support
