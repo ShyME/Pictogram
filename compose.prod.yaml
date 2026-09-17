@@ -49,6 +49,16 @@ services:
       # The public half of PICTOGRAM_AUTH_SIGNING_KEY (same JWK, "d" removed) — ADR-0014.
       PICTOGRAM_AUTH_PUBLIC_KEY: ${PICTOGRAM_AUTH_PUBLIC_KEY:?the signing key without "d" — see docs/runbook/deployment.md}
 
+  alloy:
+    restart: unless-stopped
+    environment:
+      GRAFANA_CLOUD_PROMETHEUS_URL: ${GRAFANA_CLOUD_PROMETHEUS_URL:?set it in the box .env — see docs/runbook/deployment.md}
+      GRAFANA_CLOUD_PROMETHEUS_USER: ${GRAFANA_CLOUD_PROMETHEUS_USER:?set it in the box .env — see docs/runbook/deployment.md}
+      GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${GRAFANA_CLOUD_PROMETHEUS_API_KEY:?set it in the box .env — see docs/runbook/deployment.md}
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL:?set it in the box .env — see docs/runbook/deployment.md}
+      GRAFANA_CLOUD_LOKI_USER: ${GRAFANA_CLOUD_LOKI_USER:?set it in the box .env — see docs/runbook/deployment.md}
+      GRAFANA_CLOUD_LOKI_API_KEY: ${GRAFANA_CLOUD_LOKI_API_KEY:?set it in the box .env — see docs/runbook/deployment.md}
+
   caddy:
     image: ghcr.io/shyme/pictogram-caddy:${PICTOGRAM_TAG:-latest}
     # Pull-only like app/chat: the Deploy workflow builds caddy/ directly, and the box

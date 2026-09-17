@@ -184,14 +184,14 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 
-TOTAL_STAGES=12
+TOTAL_STAGES=13
 
 # Run from the repo root regardless of where the wizard is invoked.
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$REPO_ROOT"
 
 # All wizard state is local until it's shipped to the box: the box .env is built
-# up here, then scp'd across in Stage 10. Both dirs are gitignored.
+# up here, then scp'd across in Stage 11. Both dirs are gitignored.
 STATE_DIR="scripts/deploy/.state"
 SSH_DIR="scripts/deploy/.ssh"
 mkdir -p "$STATE_DIR" "$SSH_DIR"
@@ -209,7 +209,7 @@ gvm() { gcloud compute ssh "$VM_NAME" --zone "$VM_ZONE" --command "$1"; }
 
 banner "Pictogram deployment (ADR-0012)"
 say "Provisions the temporary GCP box, wires CI to it, and prepares the box .env."
-note "Pre-domain stages run now; the domain-gated tail (Stage 12) waits until you own the domain."
+note "Pre-domain stages run now; the domain-gated tail (Stage 13) waits until you own the domain."
 
 # ── Stage 1 ──────────────────────────────────────────────────────────────
 stage "Preflight"
@@ -359,26 +359,55 @@ write_env PICTOGRAM_TAG "latest"
 step "box.env now holds $(grep -c '=' "$ENV_FILE") values"
 
 # ── Stage 10 ─────────────────────────────────────────────────────────────
-stage "Ship the compose files and .env to the box"
-say "Copies compose.yaml, compose.prod.yaml and Caddyfile.prod into ~/pictogram,"
-say "and the assembled box.env as ~/pictogram/.env."
-box_scp compose.yaml compose.prod.yaml Caddyfile.prod "deploy@${DEPLOY_HOST}:pictogram/"
-box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
-box_ssh "chmod 600 pictogram/.env && ls -l pictogram/"
-step "box is staged — it will start serving once Stage 12 fills the domain + OAuth values"
+stage "Grafana Cloud: metrics + logs credentials (ADR-0016)"
+say "A single free-tier org gives Alloy somewhere to push app/chat metrics and scrubbed"
+say "app/chat/caddy logs. Free tier is plenty for a portfolio app's traffic."
+open_url "https://grafana.com/auth/sign-up/create-user"
+step "Sign up (or sign in) and create a free org — it provisions a default stack."
+open_url "https://grafana.com/orgs"
+step "Open your org, then its default stack, to find the Prometheus and Loki details below."
+say "On the stack's detail page, under 'Prometheus':"
+step "Copy the 'Remote Write Endpoint' URL and the 'Username / Instance ID'."
+ask GRAFANA_CLOUD_PROMETHEUS_URL "Prometheus remote-write URL:"
+ask GRAFANA_CLOUD_PROMETHEUS_USER "Prometheus username / instance ID:"
+step "Click 'Generate now' for a Prometheus API key (scope: metrics:write) and copy it."
+ask_secret GRAFANA_CLOUD_PROMETHEUS_API_KEY "Prometheus API key:"
+say "Under 'Loki' on the same page:"
+step "Copy the 'URL' (the push endpoint) and the 'Username / Instance ID'."
+ask GRAFANA_CLOUD_LOKI_URL "Loki push URL:"
+ask GRAFANA_CLOUD_LOKI_USER "Loki username / instance ID:"
+step "Generate a Loki API key (scope: logs:write) and copy it."
+ask_secret GRAFANA_CLOUD_LOKI_API_KEY "Loki API key:"
+write_env GRAFANA_CLOUD_PROMETHEUS_URL "$GRAFANA_CLOUD_PROMETHEUS_URL"
+write_env GRAFANA_CLOUD_PROMETHEUS_USER "$GRAFANA_CLOUD_PROMETHEUS_USER"
+write_env GRAFANA_CLOUD_PROMETHEUS_API_KEY "$GRAFANA_CLOUD_PROMETHEUS_API_KEY"
+write_env GRAFANA_CLOUD_LOKI_URL "$GRAFANA_CLOUD_LOKI_URL"
+write_env GRAFANA_CLOUD_LOKI_USER "$GRAFANA_CLOUD_LOKI_USER"
+write_env GRAFANA_CLOUD_LOKI_API_KEY "$GRAFANA_CLOUD_LOKI_API_KEY"
 
 # ── Stage 11 ─────────────────────────────────────────────────────────────
+stage "Ship the compose files and .env to the box"
+say "Copies compose.yaml, compose.prod.yaml, Caddyfile.prod and the Alloy config into"
+say "~/pictogram, and the assembled box.env as ~/pictogram/.env."
+box_ssh "mkdir -p pictogram/alloy"
+box_scp compose.yaml compose.prod.yaml Caddyfile.prod "deploy@${DEPLOY_HOST}:pictogram/"
+box_scp alloy/config.alloy "deploy@${DEPLOY_HOST}:pictogram/alloy/config.alloy"
+box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
+box_ssh "chmod 600 pictogram/.env && ls -l pictogram/"
+step "box is staged — it will start serving once Stage 13 fills the domain + OAuth values"
+
+# ── Stage 12 ─────────────────────────────────────────────────────────────
 stage "GitHub: the deploy secrets"
 say "The Deploy workflow (.github/workflows/deploy.yml) reads these."
 set_secret DEPLOY_SSH_KEY "$(cat "$CI_KEY")"
 set_secret DEPLOY_USER "$DEPLOY_USER"
-# DEPLOY_HOST (and its pinned host key) are set in Stage 12, not here. The workflow rolls
-# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 12 fills
+# DEPLOY_HOST (and its pinned host key) are set in Stage 13, not here. The workflow rolls
+# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 13 fills
 # the domain + OAuth values — so setting it now would only make dispatches fail on the
 # missing ${PICTOGRAM_DOMAIN} guard. Pre-domain, the workflow builds/pushes/validates only.
-note "DEPLOY_HOST is deliberately unset until Stage 12 — a dispatch now builds and pushes, no box roll."
+note "DEPLOY_HOST is deliberately unset until Stage 13 — a dispatch now builds and pushes, no box roll."
 
-# ── Stage 12 ─────────────────────────────────────────────────────────────
+# ── Stage 13 ─────────────────────────────────────────────────────────────
 stage "Domain-gated tail — run this part once you own the domain"
 say "Everything above is done. The box is provisioned and CI can reach it, but it"
 say "cannot serve until it has a domain (for the TLS cert) and a real Google OAuth"
