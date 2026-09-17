@@ -12,3 +12,6 @@
 
 # Frontend: filename-case rename to camelCase (#75)
 62447e1ea741b0ae9655af98c450de1054edb9a2
+
+# Backend/chat: Eclipse -> Palantir Java Format
+f73b97a8bc123fd32aac9e1ee17dfe6ad3ed249f
