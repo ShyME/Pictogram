@@ -469,6 +469,50 @@
         "tags" : [ "comments-controller" ]
       }
     },
+    "/api/explore" : {
+      "get" : {
+        "operationId" : "explore",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiPageFeedPost"
+                }
+              }
+            },
+            "description" : "A page of every post newest first, across every author, no sign-in needed."
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The pagination cursor is malformed."
+          }
+        },
+        "tags" : [ "explore-controller" ]
+      }
+    },
     "/api/feed" : {
       "get" : {
         "operationId" : "feed",

@@ -31,6 +31,27 @@ class AuthoredPosts implements PublishedPosts {
                 ? posts.newestByAuthors(authorIds, fetch)
                 : posts.byAuthorsBefore(authorIds, after.at(), after.id(), fetch);
 
+        return keysetPage(rows, limit);
+    }
+
+    @Override
+    public Page page(Cursor after, int limit) {
+        if (limit < 1) {
+            return new Page(List.of(), null);
+        }
+
+        Limit fetch = Limit.of(limit + 1);
+        List<Post> rows = after == null ? posts.newest(fetch) : posts.before(after.at(), after.id(), fetch);
+
+        return keysetPage(rows, limit);
+    }
+
+    @Override
+    public Optional<UserId> authorOf(PostId post) {
+        return posts.findById(post.value()).map(Post::author);
+    }
+
+    private static Page keysetPage(List<Post> rows, int limit) {
         boolean hasMore = rows.size() > limit;
         List<Post> page = hasMore ? rows.subList(0, limit) : rows;
 
@@ -41,11 +62,6 @@ class AuthoredPosts implements PublishedPosts {
         }
 
         return new Page(page.stream().map(AuthoredPosts::toPublished).toList(), nextCursor);
-    }
-
-    @Override
-    public Optional<UserId> authorOf(PostId post) {
-        return posts.findById(post.value()).map(Post::author);
     }
 
     private static PublishedPost toPublished(Post post) {

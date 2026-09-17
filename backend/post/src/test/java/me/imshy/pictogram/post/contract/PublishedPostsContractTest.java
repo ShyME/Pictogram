@@ -182,6 +182,79 @@ class PublishedPostsContractTest extends PostModuleIntegrationTest {
         assertThat(page.nextCursor()).isNotNull();
     }
 
+    @Test
+    void pageMergesEveryAuthorsPostsIntoOneGlobalNewestFirstStreamWithNoAuthorFilter() {
+        var ada = UserId.random();
+        var bob = UserId.random();
+
+        var a1 = publishAt(ada, "2026-09-01T10:00:00Z");
+        var b1 = publishAt(bob, "2026-09-01T10:30:00Z");
+        var a2 = publishAt(ada, "2026-09-01T11:00:00Z");
+        var b2 = publishAt(bob, "2026-09-01T11:30:00Z");
+
+        assertThat(ids(publishedPosts.page(null, 10))).containsExactly(b2, a2, b1, a1);
+    }
+
+    @Test
+    void pageBreaksAPublishedAtTieOnTheIdSoPagingStaysStable() {
+        var ada = UserId.random();
+        var bob = UserId.random();
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(bob, "2026-09-01T10:00:00Z");
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(bob, "2026-09-01T10:00:00Z");
+
+        List<PostId> wholePage = ids(publishedPosts.page(null, 10));
+        List<PostId> pagedOneAtATime = getGlobalPage(1);
+
+        assertThat(pagedOneAtATime).hasSize(4).doesNotHaveDuplicates();
+        assertThat(pagedOneAtATime).containsExactlyElementsOf(wholePage);
+    }
+
+    @Test
+    void aDeletedPostLeavesTheGlobalStream() {
+        var ada = UserId.random();
+        var keep = publishAt(ada, "2026-09-01T10:00:00Z");
+        var drop = publishAt(ada, "2026-09-01T11:00:00Z");
+
+        postDeletion.delete(ada, drop);
+
+        assertThat(ids(publishedPosts.page(null, 10))).containsExactly(keep);
+    }
+
+    @Test
+    void theGlobalPagesLastPageHasNoNextCursor() {
+        var ada = UserId.random();
+        publishAt(ada, "2026-09-01T10:00:00Z");
+        publishAt(ada, "2026-09-01T11:00:00Z");
+
+        assertThat(publishedPosts.page(null, 5).nextCursor()).isNull();
+    }
+
+    @Test
+    void oneRowBeyondTheGlobalPagesLimitYieldsAFullPageAndACursor() {
+        var ada = UserId.random();
+        for (int minute = 0; minute < 4; minute++) {
+            publishAt(ada, "2026-09-01T10:0%d:00Z".formatted(minute));
+        }
+
+        PublishedPosts.Page page = publishedPosts.page(null, 3);
+
+        assertThat(page.posts()).hasSize(3);
+        assertThat(page.nextCursor()).isNotNull();
+    }
+
+    private List<PostId> getGlobalPage(int pageSize) {
+        List<PostId> ids = new ArrayList<>();
+        Cursor cursor = null;
+        do {
+            PublishedPosts.Page page = publishedPosts.page(cursor, pageSize);
+            ids.addAll(ids(page));
+            cursor = page.nextCursor();
+        } while (cursor != null);
+        return ids;
+    }
+
     private PostId publishAt(UserId author, String instant) {
         now = Instant.parse(instant);
         var mediaId = MediaId.random();
