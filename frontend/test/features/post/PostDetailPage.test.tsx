@@ -57,6 +57,30 @@ test('renders the post with its author, image and caption, and the injected cont
   expect(screen.getByText('comments for u-1')).toBeInTheDocument();
 });
 
+test('still renders the post when the author lookup fails outright', async () => {
+  stubFetch((request) => {
+    if (pathOf(request) === '/api/posts/by-ids') {
+      return jsonResponse({
+        items: [
+          {
+            postId: 'p-1',
+            authorId: 'u-1',
+            mediaId: 'm-1',
+            caption: 'a clearing storm',
+            publishedAt: '2026-09-04T10:00:00Z',
+          },
+        ],
+      });
+    }
+    return new Response(null, { status: 500 });
+  });
+
+  renderAt('p-1');
+
+  expect(await screen.findByText('a clearing storm')).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /ansel/i })).not.toBeInTheDocument();
+});
+
 test('shows a not-found state when the post is missing', async () => {
   stubFetch((request) => {
     if (pathOf(request) === '/api/posts/by-ids') return jsonResponse({ items: [] });

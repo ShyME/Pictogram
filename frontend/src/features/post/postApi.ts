@@ -1,4 +1,4 @@
-import { api, problemSlug, throwIfSessionExpired } from '@shared';
+import { api, type components, orAnonymous, problemSlug, throwIfSessionExpired } from '@shared';
 import { type Post, toPost } from './post';
 
 export async function uploadPhoto(image: Blob): Promise<string> {
@@ -53,11 +53,10 @@ export async function deletePost(postId: string): Promise<void> {
 export type PostPage = { posts: Post[]; nextCursor: string | null };
 
 export async function fetchPostsByAuthor(authorId: string, cursor?: string): Promise<PostPage> {
-  const { data, response } = await api.GET('/api/posts', {
-    params: { query: { author: authorId, cursor } },
-  });
-  throwIfSessionExpired(response);
-  if (!data) throw new Error(`Post grid request failed: ${response.status}`);
+  const data = await orAnonymous<components['schemas']['ApiPagePostView']>(
+    await api.GET('/api/posts', { params: { query: { author: authorId, cursor } } }),
+    { path: '/api/posts', query: { author: authorId, cursor }, label: 'Post grid request' },
+  );
 
   return {
     posts: (data.items ?? []).map((item) => toPost(item)),

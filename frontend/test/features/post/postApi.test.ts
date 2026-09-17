@@ -131,3 +131,12 @@ test('fetchPostsByAuthor passes a cursor and reports the last page as null', asy
   });
   expect(new URL(calls[0].url).searchParams.get('cursor')).toBe('CURSOR');
 });
+
+test('fetchPostsByAuthor falls back to an anonymous read when the bearer call is unauthorised', async () => {
+  const calls = stubFetch((_request, hits) =>
+    hits === 0 ? jsonResponse({}, 401) : jsonResponse({ items: [], nextCursor: null }),
+  );
+
+  await expect(fetchPostsByAuthor('u-1')).resolves.toEqual({ posts: [], nextCursor: null });
+  expect(calls).toHaveLength(2);
+});

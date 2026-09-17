@@ -85,13 +85,19 @@ class ProfileReadApiTest {
     }
 
     @Test
-    void theCarveOutIsOneSegmentWideSoBatchAndMeStillNeedAToken() throws Exception {
+    void theMeCarveOutStillNeedsAToken() throws Exception {
         mvc.perform(get("/api/profiles/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(
                         jsonPath("$.type").value(ProblemType.UNAUTHORIZED.uri().toString()));
+    }
 
-        mvc.perform(get("/api/profiles").param("ids", UUID.randomUUID().toString()))
-                .andExpect(status().isUnauthorized());
+    @Test
+    void theBatchLookupNeedsNoTokenAtAll() throws Exception {
+        var ada = onboard("ada", "Ada");
+
+        mvc.perform(get("/api/profiles").param("ids", ada))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].username").value("ada"));
     }
 }

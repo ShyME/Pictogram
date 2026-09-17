@@ -27,7 +27,7 @@ class ApiSecurityConfiguration {
         return http.securityMatcher("/api/**")
                 .authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.GET, "/api/profiles/me")
                         .authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/profiles/*")
+                        .requestMatchers(HttpMethod.GET, "/api/profiles", "/api/profiles/*")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/media/*/original", "/api/media/*/thumbnail")
                         .permitAll()

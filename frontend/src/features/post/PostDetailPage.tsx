@@ -33,8 +33,6 @@ export function PostDetailPage({
       const posts = await fetchPosts([postId]);
       const post = posts.get(postId);
       if (!post) return null;
-      // The batch profile read needs a token; a signed-out deep-link still shows the post,
-      // just without the author's name.
       const authors = await fetchAccounts([post.authorId]).catch(
         (): Map<string, Account> => new Map(),
       );
