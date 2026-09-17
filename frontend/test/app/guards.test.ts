@@ -1,5 +1,6 @@
 import { loginLoader, onboardingLoader, rootLoader, viewerLoader } from '@app/guards';
 import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
+import type { LoaderFunctionArgs } from 'react-router';
 import { afterEach, expect, test, vi } from 'vitest';
 
 function profileEndpoint(status: number, body: unknown = {}) {
@@ -15,15 +16,36 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('rootLoader: 401 -> /login, 404 -> /onboarding, 200 -> the profile', async () => {
+function loaderArgs(pathname: string): LoaderFunctionArgs {
+  return { request: new Request(`http://localhost${pathname}`) } as LoaderFunctionArgs;
+}
+
+test('rootLoader on the home route: 401 -> /explore, 404 -> /onboarding, 200 -> the profile', async () => {
+  const home = loaderArgs('/');
+
   profileEndpoint(401);
-  expect(redirectTarget(await rootLoader())).toBe('/login');
+  expect(redirectTarget(await rootLoader(home))).toBe('/explore');
 
   profileEndpoint(404);
-  expect(redirectTarget(await rootLoader())).toBe('/onboarding');
+  expect(redirectTarget(await rootLoader(home))).toBe('/onboarding');
 
   profileEndpoint(200, { userId: 'u-1', username: 'ada' });
-  expect(await rootLoader()).toEqual({
+  expect(await rootLoader(home)).toEqual({
+    profile: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
+  });
+});
+
+test('rootLoader on any other AppLayout route sends a signed-out visitor to /login, not /explore', async () => {
+  const settings = loaderArgs('/settings/profile');
+
+  profileEndpoint(401);
+  expect(redirectTarget(await rootLoader(settings))).toBe('/login');
+
+  profileEndpoint(404);
+  expect(redirectTarget(await rootLoader(settings))).toBe('/onboarding');
+
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
+  expect(await rootLoader(settings)).toEqual({
     profile: { userId: 'u-1', username: 'ada', displayName: null, bio: null },
   });
 });

@@ -8,6 +8,13 @@ export async function requireOnboarded(): Promise<Profile> {
   return me.profile;
 }
 
+export async function requireOnboardedOrPublic(): Promise<Profile> {
+  const me = await fetchMyProfile();
+  if (me.status === 'unauthenticated') throw redirect('/explore');
+  if (me.status === 'not-onboarded') throw redirect('/onboarding');
+  return me.profile;
+}
+
 export async function fetchViewerOrNull(): Promise<Profile | null> {
   const me = await fetchMyProfile().catch(() => ({ status: 'unauthenticated' }) as const);
   return me.status === 'onboarded' ? me.profile : null;

@@ -8,6 +8,7 @@ import { PostGrid } from '@features/post';
 import { EditProfilePage, OnboardingPage, ProfilePage, profileLoader } from '@features/profile';
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './AppLayout';
+import { ExploreRoute } from './ExploreRoute';
 import { FeedRoute } from './FeedRoute';
 import { NewPostRoute } from './NewPostRoute';
 import { PostDetailRoute } from './PostDetailRoute';
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
             loader: profileLoader,
           },
           { path: '/p/:postId', element: <PostDetailRoute /> },
+          { path: '/explore', element: <ExploreRoute /> },
         ],
       },
       // Dev/test-only component showcase; the branch and its import fold away in a

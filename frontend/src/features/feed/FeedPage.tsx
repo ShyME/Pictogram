@@ -4,22 +4,25 @@ import { Images } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router';
 import type { FeedCard } from './feed';
-import { fetchFeedPage } from './feedApi';
+import { type FeedSource, followingSource } from './feedApi';
 import { toFeedCards } from './feedCards';
 import { FeedCardView } from './FeedCardView';
-import { feedKey } from './queryKeys';
 
 function FeedShell({ children }: { children: ReactNode }) {
   return <main className="mx-auto min-h-dvh max-w-xl px-4 py-8">{children}</main>;
 }
 
 export function FeedPage({
+  source = followingSource,
+  toolbar,
   renderLike,
   renderCommentCount,
   preloadLikes,
   preloadComments,
   renderPostDetail,
 }: {
+  source?: FeedSource;
+  toolbar?: ReactNode;
   renderLike?: (postId: string) => ReactNode;
   renderCommentCount?: (postId: string) => ReactNode;
   preloadLikes?: (client: QueryClient, postIds: string[]) => Promise<void>;
@@ -32,9 +35,9 @@ export function FeedPage({
   const queryClient = useQueryClient();
   const [openCard, setOpenCard] = useState<FeedCard | null>(null);
   const feed = useInfiniteQuery({
-    queryKey: feedKey(),
+    queryKey: source.queryKey,
     queryFn: async ({ pageParam }) => {
-      const page = await fetchFeedPage(pageParam);
+      const page = await source.fetchPage(pageParam);
       const cards = await composeCards(page.posts, {
         hydrate: toFeedCards,
         idOf: (card) => card.postId,
@@ -59,8 +62,9 @@ export function FeedPage({
   if (feed.isPending) {
     return (
       <FeedShell>
+        {toolbar}
         <div className="flex justify-center py-10">
-          <Spinner label="Loading your feed" />
+          <Spinner label={source.loadingLabel} />
         </div>
       </FeedShell>
     );
@@ -70,9 +74,8 @@ export function FeedPage({
     if (feed.error instanceof SessionExpiredError) return <Navigate to="/login" replace />;
     return (
       <FeedShell>
-        <p className="text-center text-sm text-danger-text">
-          We couldn&rsquo;t load your feed. Try again in a moment.
-        </p>
+        {toolbar}
+        <p className="text-center text-sm text-danger-text">{source.loadErrorMessage}</p>
       </FeedShell>
     );
   }
@@ -82,11 +85,12 @@ export function FeedPage({
   if (cards.length === 0) {
     return (
       <FeedShell>
+        {toolbar}
         <div className="rounded-card border border-dashed border-border-strong bg-surface">
           <EmptyState
             icon={Images}
-            title="Your feed is quiet"
-            description="Find people to follow and their posts will show up here."
+            title={source.emptyTitle}
+            description={source.emptyDescription}
           />
         </div>
       </FeedShell>
@@ -95,6 +99,7 @@ export function FeedPage({
 
   return (
     <FeedShell>
+      {toolbar}
       <div className="space-y-6">
         {cards.map((card) => (
           <FeedCardView
