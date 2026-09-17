@@ -1,4 +1,9 @@
-import { requireAnonymous, requireOnboarded, requireOnboardedOrAnon } from '@app/accessGate';
+import {
+  requireAnonymous,
+  requireOnboarded,
+  requireOnboardedOrAnon,
+  requireOnboardedOrPublic,
+} from '@app/accessGate';
 import { jsonResponse, problemResponse, stubFetch } from '@test-support/mockFetch';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -42,6 +47,29 @@ test('requireOnboarded sends a signed-in visitor with no profile to /onboarding'
   profileEndpoint(404);
 
   expect(await redirectFrom(requireOnboarded())).toBe('/onboarding');
+});
+
+test('requireOnboardedOrPublic hands an onboarded visitor their profile', async () => {
+  profileEndpoint(200, { userId: 'u-1', username: 'ada' });
+
+  await expect(requireOnboardedOrPublic()).resolves.toEqual({
+    userId: 'u-1',
+    username: 'ada',
+    displayName: null,
+    bio: null,
+  });
+});
+
+test('requireOnboardedOrPublic sends a visitor with no session to /explore', async () => {
+  profileEndpoint(401);
+
+  expect(await redirectFrom(requireOnboardedOrPublic())).toBe('/explore');
+});
+
+test('requireOnboardedOrPublic sends a signed-in visitor with no profile to /onboarding', async () => {
+  profileEndpoint(404);
+
+  expect(await redirectFrom(requireOnboardedOrPublic())).toBe('/onboarding');
 });
 
 test('requireAnonymous lets a visitor with no session through', async () => {
