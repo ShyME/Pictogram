@@ -100,6 +100,16 @@ _existing() {
   printf '%s' "${line#*=}"
 }
 
+# have KEY...: true if every KEY already has a saved value in ENV_FILE. Guards
+# an open_url + its guided steps, so a re-run with everything already
+# captured doesn't send the human back into the browser for it.
+have() {
+  local key
+  for key in "$@"; do
+    [[ -n "$(_existing "$key" || true)" ]] || return 1
+  done
+}
+
 # ask KEY "Prompt" reads a value into $KEY. Offers the existing .env value as
 # a default on re-runs (Enter keeps it). Visible input (non-secret).
 ask() {
@@ -156,6 +166,15 @@ set_secret() {
   fi
   SKIPPED+=("GitHub secret $name (set it manually: gh secret set $name)")
   warn "skipped GitHub secret $name: gh not ready; set it later"
+}
+
+# secret_exists NAME: true if a GitHub Actions secret NAME is already set on
+# this repo. gh can report a secret's existence, never its value, so this is
+# how a value that's deliberately never written to ENV_FILE (an API token) is
+# still "remembered" across wizard re-runs.
+secret_exists() {
+  command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1 || return 1
+  gh secret list --json name -q '.[].name' 2>/dev/null | grep -qx "$1"
 }
 
 # set_var NAME VALUE sets a GitHub Actions repo variable (non-secret).
@@ -363,10 +382,18 @@ stage_2() {
 stage 2
 say "The box lives in a GCP project you own. This uses the \$300 free-trial credit"
 say "as an explicitly temporary host — migrating off GCP before it expires is #176."
-open_url "https://console.cloud.google.com/projectcreate"
-step "Create a project (e.g. 'pictogram') or note an existing project ID."
-say "Signing in to gcloud (a browser window will open):"
-gcloud auth login
+if have GCP_PROJECT; then
+  note "GCP project already saved — skipping project creation."
+else
+  open_url "https://console.cloud.google.com/projectcreate"
+  step "Create a project (e.g. 'pictogram') or note an existing project ID."
+fi
+if gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | grep -q .; then
+  note "gcloud already signed in ✓"
+else
+  say "Signing in to gcloud (a browser window will open):"
+  gcloud auth login
+fi
 ask GCP_PROJECT "Project ID:"
 gcloud config set project "$GCP_PROJECT"
 write_env GCP_PROJECT "$GCP_PROJECT"
@@ -377,8 +404,12 @@ stage_3() {
 stage 3
 require GCP_PROJECT "Stage 2"
 say "The project needs the billing account that carries the free-trial credit."
-open_url "https://console.cloud.google.com/billing"
-step "Copy the Billing account ID of the account holding the credit (format 0X0X0X-0X0X0X-0X0X0X)."
+if have GCP_BILLING; then
+  note "Billing account already saved — skipping the billing page."
+else
+  open_url "https://console.cloud.google.com/billing"
+  step "Copy the Billing account ID of the account holding the credit (format 0X0X0X-0X0X0X-0X0X0X)."
+fi
 ask GCP_BILLING "Billing account ID:"
 gcloud billing projects link "$GCP_PROJECT" --billing-account "$GCP_BILLING"
 write_env GCP_BILLING "$GCP_BILLING"
@@ -469,13 +500,17 @@ stage 8
 require DEPLOY_HOST "Stage 5"
 require_file "$CI_KEY" "Stage 6"
 say "The box pulls the app/chat/caddy images from GitHub Container Registry."
-open_url "https://github.com/settings/tokens/new?scopes=read:packages&description=pictogram-box-ghcr"
-step "Generate a classic token with only 'read:packages'. Copy it."
-ask GHCR_USER "Your GitHub username:"
-ask_secret GHCR_TOKEN "Paste the read:packages token:"
-box_ssh "docker login ghcr.io -u '$GHCR_USER' --password-stdin" <<<"$GHCR_TOKEN" \
-  && step "GHCR login stored on the box ✓"
-note "Not written anywhere local — it lives only in the box's docker config."
+if box_ssh "grep -q ghcr.io ~/.docker/config.json 2>/dev/null"; then
+  note "GHCR login already stored on the box — skipping."
+else
+  open_url "https://github.com/settings/tokens/new?scopes=read:packages&description=pictogram-box-ghcr"
+  step "Generate a classic token with only 'read:packages'. Copy it."
+  ask GHCR_USER "Your GitHub username:"
+  ask_secret GHCR_TOKEN "Paste the read:packages token:"
+  box_ssh "docker login ghcr.io -u '$GHCR_USER' --password-stdin" <<<"$GHCR_TOKEN" \
+    && step "GHCR login stored on the box ✓"
+  note "Not written anywhere local — it lives only in the box's docker config."
+fi
 }
 
 # ── Stage 9 ──────────────────────────────────────────────────────────────
@@ -510,23 +545,28 @@ stage_10() {
 stage 10
 say "A single free-tier org gives Alloy somewhere to push app/chat metrics and scrubbed"
 say "app/chat/caddy logs. Free tier is plenty for a portfolio app's traffic."
-open_url "https://grafana.com/products/cloud/"
-step "Click 'Create free account' (sign in instead if you already have one)."
-note "The signup flow moves around on grafana.com — if a step here doesn't match what you"
-note "see, grafana.com/docs/grafana-cloud/get-started/create-account/ has the current one."
-say "Signing up drops you straight into the Cloud Portal for your new org's default stack."
-step "If you land elsewhere: sign in at grafana.com, then click 'My Account' to reach it."
-say "In the Cloud Portal, under your stack's 'Prometheus' section:"
-step "Copy the 'Remote Write Endpoint' URL and the 'Username / Instance ID'."
+if have GRAFANA_CLOUD_PROMETHEUS_URL GRAFANA_CLOUD_PROMETHEUS_USER GRAFANA_CLOUD_PROMETHEUS_API_KEY \
+        GRAFANA_CLOUD_LOKI_URL GRAFANA_CLOUD_LOKI_USER GRAFANA_CLOUD_LOKI_API_KEY; then
+  note "Grafana Cloud values already saved — keeping them without reopening the browser."
+else
+  open_url "https://grafana.com/products/cloud/"
+  step "Click 'Create free account' (sign in instead if you already have one)."
+  note "The signup flow moves around on grafana.com — if a step here doesn't match what you"
+  note "see, grafana.com/docs/grafana-cloud/get-started/create-account/ has the current one."
+  say "Signing up drops you straight into the Cloud Portal for your new org's default stack."
+  step "If you land elsewhere: sign in at grafana.com, then click 'My Account' to reach it."
+  say "In the Cloud Portal, under your stack's 'Prometheus' section:"
+  step "Copy the 'Remote Write Endpoint' URL and the 'Username / Instance ID'."
+  step "Click 'Generate now' for a Prometheus API key (scope: metrics:write) and copy it."
+  say "Under 'Loki' on the same page:"
+  step "Copy the 'URL' (the push endpoint) and the 'Username / Instance ID'."
+  step "Generate a Loki API key (scope: logs:write) and copy it."
+fi
 ask GRAFANA_CLOUD_PROMETHEUS_URL "Prometheus remote-write URL:"
 ask GRAFANA_CLOUD_PROMETHEUS_USER "Prometheus username / instance ID:"
-step "Click 'Generate now' for a Prometheus API key (scope: metrics:write) and copy it."
 ask_secret GRAFANA_CLOUD_PROMETHEUS_API_KEY "Prometheus API key:"
-say "Under 'Loki' on the same page:"
-step "Copy the 'URL' (the push endpoint) and the 'Username / Instance ID'."
 ask GRAFANA_CLOUD_LOKI_URL "Loki push URL:"
 ask GRAFANA_CLOUD_LOKI_USER "Loki username / instance ID:"
-step "Generate a Loki API key (scope: logs:write) and copy it."
 ask_secret GRAFANA_CLOUD_LOKI_API_KEY "Loki API key:"
 write_env GRAFANA_CLOUD_PROMETHEUS_URL "$GRAFANA_CLOUD_PROMETHEUS_URL"
 write_env GRAFANA_CLOUD_PROMETHEUS_USER "$GRAFANA_CLOUD_PROMETHEUS_USER"
@@ -571,30 +611,44 @@ stage 13
 require DEPLOY_HOST "Stage 5"
 require_file "$CI_KEY" "Stage 6"
 say "Two Sentry projects — one per half of the app — feeding backend + frontend errors."
-open_url "https://sentry.io/signup/"
-step "Sign up (or sign in) on Sentry's free Developer plan; create an org if you don't have one."
-step "Note your org's slug (the name in its URL, e.g. sentry.io/organizations/<slug>/)."
+if have SENTRY_ORG; then
+  note "Sentry org slug already saved — skipping signup."
+else
+  open_url "https://sentry.io/signup/"
+  step "Sign up (or sign in) on Sentry's free Developer plan; create an org if you don't have one."
+  step "Note your org's slug (the name in its URL, e.g. sentry.io/organizations/<slug>/)."
+fi
 ask SENTRY_ORG "Sentry org slug:"
 write_env SENTRY_ORG "$SENTRY_ORG"
 set_var SENTRY_ORG "$SENTRY_ORG"
-open_url "https://sentry.io/organizations/${SENTRY_ORG}/projects/"
-step "Create Project → platform 'Spring Boot' (e.g. 'pictogram-backend')."
-step "Copy its DSN from Settings → Projects → <project> → Client Keys (DSN)."
-note "A DSN is a public identifier, safe to embed in a client bundle — not a secret."
+if have SENTRY_DSN SENTRY_PROJECT VITE_SENTRY_DSN; then
+  note "Sentry project slugs and DSNs already saved — skipping the projects page."
+else
+  open_url "https://sentry.io/organizations/${SENTRY_ORG}/projects/"
+  step "Create Project → platform 'Spring Boot' (e.g. 'pictogram-backend')."
+  step "Copy its DSN from Settings → Projects → <project> → Client Keys (DSN)."
+  note "A DSN is a public identifier, safe to embed in a client bundle — not a secret."
+fi
 ask SENTRY_DSN "Backend DSN:"
 write_env SENTRY_DSN "$SENTRY_DSN"
-step "Back on the projects page, Create Project → platform 'React' (e.g. 'pictogram-frontend')."
-step "Note its project slug (the name in its URL) and copy its DSN the same way."
+if ! have SENTRY_PROJECT VITE_SENTRY_DSN; then
+  step "Back on the projects page, Create Project → platform 'React' (e.g. 'pictogram-frontend')."
+  step "Note its project slug (the name in its URL) and copy its DSN the same way."
+fi
 ask SENTRY_PROJECT "Frontend project slug:"
 write_env SENTRY_PROJECT "$SENTRY_PROJECT"
 set_var SENTRY_PROJECT "$SENTRY_PROJECT"
 ask VITE_SENTRY_DSN "Frontend DSN:"
 write_env VITE_SENTRY_DSN "$VITE_SENTRY_DSN"
 set_var VITE_SENTRY_DSN "$VITE_SENTRY_DSN"
-open_url "https://sentry.io/orgredirect/organizations/${SENTRY_ORG}/settings/auth-tokens/"
-step "Create an org auth token scoped to 'project:releases' (source-map uploads only)."
-ask_secret SENTRY_AUTH_TOKEN "Source-map upload auth token:"
-set_secret SENTRY_AUTH_TOKEN "$SENTRY_AUTH_TOKEN"
+if secret_exists SENTRY_AUTH_TOKEN; then
+  note "GitHub secret SENTRY_AUTH_TOKEN already set — skipping."
+else
+  open_url "https://sentry.io/orgredirect/organizations/${SENTRY_ORG}/settings/auth-tokens/"
+  step "Create an org auth token scoped to 'project:releases' (source-map uploads only)."
+  ask_secret SENTRY_AUTH_TOKEN "Source-map upload auth token:"
+  set_secret SENTRY_AUTH_TOKEN "$SENTRY_AUTH_TOKEN"
+fi
 box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
 box_ssh "chmod 600 pictogram/.env"
 step "box.env re-shipped with SENTRY_DSN ✓"
@@ -614,10 +668,14 @@ step "Register the domain at Cloudflare Registrar (the zone is on Cloudflare DNS
 step "Pictogram runs on a SUBDOMAIN (e.g. pictogram.imshy.me) so the apex stays free."
 step "DNS: add  A  pictogram  ${DEPLOY_HOST}   (host 'pictogram', not '@'; AAAA too if the"
 step "     VM has IPv6), and DNS-only — NOT proxied (the orange cloud breaks ACME + rate limits)."
-open_url "https://console.cloud.google.com/apis/credentials"
-step "Create an OAuth 2.0 Client ID, type 'Web application'."
-step "Authorized redirect URI:  https://<domain>/login/oauth2/code/google"
-step "Configure the OAuth consent screen (app name, support email, scopes openid + email)."
+if have GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; then
+  note "Google OAuth client already saved — skipping the credentials page."
+else
+  open_url "https://console.cloud.google.com/apis/credentials"
+  step "Create an OAuth 2.0 Client ID, type 'Web application'."
+  step "Authorized redirect URI:  https://<domain>/login/oauth2/code/google"
+  step "Configure the OAuth consent screen (app name, support email, scopes openid + email)."
+fi
 printf '\n'
 if confirm "Have the domain and OAuth client details now?"; then
   ask PICTOGRAM_DOMAIN "Full subdomain (e.g. pictogram.imshy.me):"
