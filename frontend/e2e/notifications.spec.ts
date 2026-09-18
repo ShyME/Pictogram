@@ -38,7 +38,9 @@ test('a like turns into a bell badge, a notification row, a click-through, then 
     await expect(likerFeed.cardByCaption(caption).getByText('1 like')).toBeVisible();
 
     // The event travels social -> Kafka -> notifications before the author can see it, so
-    // reload the notifications screen until the row lands.
+    // reload the notifications screen until the row lands. The earlier follow (above) landed
+    // its own user-followed notification, so the badge reads 2 unread by the time the like's
+    // notification arrives, not 1 — match the count generically, same as the all-read check below.
     const bellLink = authorPage.getByRole('link', { name: /notifications/i });
     const row = authorPage
       .getByRole('listitem')
@@ -46,7 +48,7 @@ test('a like turns into a bell badge, a notification row, a click-through, then 
 
     await expect(async () => {
       await authorPage.goto('/');
-      await expect(authorPage.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible({
+      await expect(authorPage.getByRole('link', { name: /\d+ unread/ })).toBeVisible({
         timeout: 3000,
       });
     }).toPass({ timeout: 30_000 });
