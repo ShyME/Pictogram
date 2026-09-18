@@ -32,7 +32,10 @@ secret as a hard `${VAR:?}` guard so a missing `.env` value fails the deploy imm
 ## One-time setup
 
 Run `scripts/deploy/wizard.sh` from a clone. It is idempotent and resumable — re-run it
-after fixing anything. It covers:
+after fixing anything. `scripts/deploy/wizard.sh -l` lists every stage's number and name;
+`scripts/deploy/wizard.sh 9` (or a range/list like `9-12` or `9,11,13`) re-runs only those
+stages, e.g. to redo just the box secrets or just the Sentry signup without walking the
+whole thing again. With no argument it runs every stage, in order. It covers:
 
 1. **GCP** — install `gcloud`, `gcloud auth login`, create/select the project, link the
    billing account carrying the credit, enable `compute.googleapis.com`.

@@ -35,24 +35,29 @@ _clear() {
   if command -v tput >/dev/null 2>&1; then tput clear; else printf '\033[2J\033[3J\033[H'; fi
 }
 
-# banner "Title" shows the opening frame: what this wizard does.
+# banner "Title" ["note"] shows the opening frame: what this wizard does, and
+# (when running a subset of stages) which ones.
 banner() {
   _clear
   printf '\n%s%s  %s%s\n' "$BOLD" "$BLUE" "$1" "$RESET"
-  printf '%s  %s stages%s\n\n' "$DIM" "$TOTAL_STAGES" "$RESET"
+  printf '%s  %s stages%s\n' "$DIM" "$TOTAL_STAGES" "$RESET"
+  if [[ -n "${2:-}" ]]; then
+    printf '%s  %s%s\n' "$DIM" "$2" "$RESET"
+  fi
+  printf '\n'
   printf '%s  You drive the browser; this wizard tells you exactly what to do and\n' "$DIM"
   printf '  captures the values you copy back. Stop any time with Ctrl-C and re-run\n'
   printf '  later, since it remembers values already saved.%s\n' "$RESET"
   pause "Ready to start?"
 }
 
-# stage "Name" clears the screen, then announces a stage and shows progress.
-# Clearing keeps only the current step on screen.
+# stage N clears the screen, then announces stage N (its name comes from
+# STAGE_TITLES, authored in the stages section) and shows progress.
 stage() {
+  _STAGE_INDEX="$1"
   _clear
-  _STAGE_INDEX=$((_STAGE_INDEX + 1))
   printf '\n%s%s▸ Stage %s/%s · %s%s\n' \
-    "$BOLD" "$BLUE" "$_STAGE_INDEX" "$TOTAL_STAGES" "$1" "$RESET"
+    "$BOLD" "$BLUE" "$_STAGE_INDEX" "$TOTAL_STAGES" "${STAGE_TITLES[$1 - 1]}" "$RESET"
 }
 
 # say "..." prints a plain instruction line.
@@ -186,6 +191,118 @@ finish() {
 
 TOTAL_STAGES=14
 
+# One title per stage, in order — stage() looks up its own name here, and
+# it backs --list and the stage-selection usage message below.
+STAGE_TITLES=(
+  "Preflight"
+  "GCP: sign in and pick the project"
+  "GCP: link billing and enable Compute"
+  "GCP: static IP and firewall"
+  "GCP: create the VM"
+  "CI deploy key + the deploy user"
+  "Box: install Docker"
+  "Box: log in to GHCR"
+  "Generate the box secrets"
+  "Grafana Cloud: metrics + logs credentials (ADR-0016)"
+  "Ship the compose files and .env to the box"
+  "GitHub: the deploy secrets"
+  "Sentry: exception tracking (ADR-0016)"
+  "Domain-gated tail — run this part once you own the domain"
+)
+
+# ── Stage selection ─────────────────────────────────────────────────────
+# No argument: every stage runs, in order (first-time setup). A stage spec —
+# a number, a range "A-B", or a comma-separated mix of either ("9,11-13") —
+# runs only those, still in ascending order. A stage that reads a value an
+# earlier, unselected stage would normally have computed (DEPLOY_HOST,
+# VM_ZONE, GCP_PROJECT) falls back to what's already in ENV_FILE, below.
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [STAGE_SPEC | -l | -h]
+
+  STAGE_SPEC   run only these stages, e.g. "9", "9-12", "9,11,13"
+  -l, --list   print every stage's number and name, then exit
+  -h, --help   this message
+
+With no argument, every stage runs (first-time setup).
+EOF
+}
+
+SELECTED_LIST=()
+
+# is_selected N: true if stage N is in SELECTED_LIST.
+is_selected() {
+  local target="$1" n
+  for n in "${SELECTED_LIST[@]}"; do
+    [[ "$n" == "$target" ]] && return 0
+  done
+  return 1
+}
+
+# parse_stage_spec "9,11-13": validates and appends each stage number in the
+# spec to SELECTED_LIST.
+parse_stage_spec() {
+  local spec="$1" part lo hi n
+  for part in ${spec//,/ }; do
+    if [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+      lo="${BASH_REMATCH[1]}"; hi="${BASH_REMATCH[2]}"
+    elif [[ "$part" =~ ^[0-9]+$ ]]; then
+      lo="$part"; hi="$part"
+    else
+      printf 'error: not a stage number or range: %s\n' "$part" >&2
+      exit 1
+    fi
+    if (( lo < 1 || hi > TOTAL_STAGES || lo > hi )); then
+      printf 'error: stage out of range 1-%s: %s\n' "$TOTAL_STAGES" "$part" >&2
+      exit 1
+    fi
+    for ((n = lo; n <= hi; n++)); do SELECTED_LIST+=("$n"); done
+  done
+}
+
+# require NAME "Stage N": exits with a clear message if $NAME (an ENV_FILE-
+# backed value like GCP_PROJECT/VM_ZONE/DEPLOY_HOST, preloaded below) is
+# still empty — the stage that normally sets it hasn't run yet, in this
+# invocation or any prior one. Without this, a standalone stage run would
+# instead fail deep inside gcloud/ssh with a cryptic empty-argument error.
+require() {
+  local name="$1" prereq="$2"
+  if [[ -z "${!name:-}" ]]; then
+    warn "Stage $_STAGE_INDEX needs \$$name, which $prereq sets — run that first."
+    exit 1
+  fi
+}
+
+# require_file PATH "Stage N": same as require, for a file a prior stage
+# must have created (the CI SSH key) rather than an ENV_FILE value.
+require_file() {
+  local path="$1" prereq="$2"
+  if [[ ! -f "$path" ]]; then
+    warn "Stage $_STAGE_INDEX needs $path, which $prereq creates — run that first."
+    exit 1
+  fi
+}
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  -l|--list)
+    printf 'Stages:\n'
+    for ((n = 1; n <= TOTAL_STAGES; n++)); do
+      printf '  %2d  %s\n' "$n" "${STAGE_TITLES[n - 1]}"
+    done
+    exit 0
+    ;;
+  '')
+    for ((n = 1; n <= TOTAL_STAGES; n++)); do SELECTED_LIST+=("$n"); done
+    ;;
+  *)
+    parse_stage_spec "$1"
+    ;;
+esac
+
 # Run from the repo root regardless of where the wizard is invoked.
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$REPO_ROOT"
@@ -198,6 +315,15 @@ mkdir -p "$STATE_DIR" "$SSH_DIR"
 chmod 700 "$SSH_DIR"
 ENV_FILE="$STATE_DIR/box.env"          # every write_env below lands here
 CI_KEY="$SSH_DIR/pictogram_deploy"     # the key CI uses to reach the box
+VM_NAME="pictogram"                    # fixed, not user-provided — never in ENV_FILE
+DEPLOY_USER=deploy                     # ditto; box_ssh/box_scp below hardcode it too
+
+# A stage run standalone (via STAGE_SPEC) may skip the stage that would
+# normally have computed one of these in this same invocation — fall back to
+# the value a prior run already saved. A stage that DOES run overwrites it.
+GCP_PROJECT="$(_existing GCP_PROJECT || true)"
+VM_ZONE="$(_existing VM_ZONE || true)"
+DEPLOY_HOST="$(_existing DEPLOY_HOST || true)"
 
 # ssh/scp into the box as the `deploy` user with the CI key (no agent, no host
 # prompt — the wizard has already trusted the host in Stage 5).
@@ -207,12 +333,9 @@ box_scp()  { scp  -i "$CI_KEY" -o StrictHostKeyChecking=accept-new "$@"; }
 # (it manages its keys and the OS Login / metadata dance).
 gvm() { gcloud compute ssh "$VM_NAME" --zone "$VM_ZONE" --command "$1"; }
 
-banner "Pictogram deployment (ADR-0012)"
-say "Provisions the temporary GCP box, wires CI to it, and prepares the box .env."
-note "Pre-domain stages run now; the domain-gated tail (Stage 14) waits until you own the domain."
-
 # ── Stage 1 ──────────────────────────────────────────────────────────────
-stage "Preflight"
+stage_1() {
+stage 1
 say "Checking the tools this wizard drives."
 missing=0
 for bin in gcloud gh node ssh scp openssl; do
@@ -233,9 +356,11 @@ else
   say "gh is not logged in. In another terminal run:  gh auth login  (needs the 'repo' scope)"
   pause "Press Enter once gh auth login succeeds"
 fi
+}
 
 # ── Stage 2 ──────────────────────────────────────────────────────────────
-stage "GCP: sign in and pick the project"
+stage_2() {
+stage 2
 say "The box lives in a GCP project you own. This uses the \$300 free-trial credit"
 say "as an explicitly temporary host — migrating off GCP before it expires is #176."
 open_url "https://console.cloud.google.com/projectcreate"
@@ -245,9 +370,12 @@ gcloud auth login
 ask GCP_PROJECT "Project ID:"
 gcloud config set project "$GCP_PROJECT"
 write_env GCP_PROJECT "$GCP_PROJECT"
+}
 
 # ── Stage 3 ──────────────────────────────────────────────────────────────
-stage "GCP: link billing and enable Compute"
+stage_3() {
+stage 3
+require GCP_PROJECT "Stage 2"
 say "The project needs the billing account that carries the free-trial credit."
 open_url "https://console.cloud.google.com/billing"
 step "Copy the Billing account ID of the account holding the credit (format 0X0X0X-0X0X0X-0X0X0X)."
@@ -256,9 +384,11 @@ gcloud billing projects link "$GCP_PROJECT" --billing-account "$GCP_BILLING"
 write_env GCP_BILLING "$GCP_BILLING"
 say "Enabling the Compute Engine API (takes ~1 min):"
 gcloud services enable compute.googleapis.com
+}
 
 # ── Stage 4 ──────────────────────────────────────────────────────────────
-stage "GCP: static IP and firewall"
+stage_4() {
+stage 4
 ask VM_REGION "Region [europe-west1]:"; VM_REGION="${VM_REGION:-europe-west1}"
 ask VM_ZONE   "Zone [${VM_REGION}-b]:"; VM_ZONE="${VM_ZONE:-${VM_REGION}-b}"
 write_env VM_REGION "$VM_REGION"
@@ -272,12 +402,14 @@ say "Opening 22/80/443 to the box ('pictogram-ingress'):"
 gcloud compute firewall-rules create pictogram-ingress \
   --allow tcp:22,tcp:80,tcp:443 --target-tags pictogram --direction INGRESS 2>/dev/null \
   || note "pictogram-ingress already exists — reusing it"
+}
 
 # ── Stage 5 ──────────────────────────────────────────────────────────────
-stage "GCP: create the VM"
+stage_5() {
+stage 5
+require VM_ZONE "Stage 4"
 say "e2-medium (2 vCPU / 4 GB), Ubuntu LTS, 30 GB disk, tagged 'pictogram'."
 note "~\$28/month all-in, covered by the credit for ~10 months."
-VM_NAME="pictogram"
 if gcloud compute instances describe "$VM_NAME" --zone "$VM_ZONE" >/dev/null 2>&1; then
   note "Instance 'pictogram' already exists — skipping creation."
 else
@@ -294,9 +426,13 @@ write_env DEPLOY_HOST "$DEPLOY_HOST"
 say "Waiting for SSH on the box to come up..."
 until gvm "true" >/dev/null 2>&1; do printf '.'; sleep 5; done
 printf '\n'; step "box reachable ✓"
+}
 
 # ── Stage 6 ──────────────────────────────────────────────────────────────
-stage "CI deploy key + the deploy user"
+stage_6() {
+stage 6
+require VM_ZONE "Stage 4"
+require DEPLOY_HOST "Stage 5"
 say "CI reaches the box over SSH as a dedicated 'deploy' user with its own key."
 if [[ -f "$CI_KEY" ]]; then
   note "Key already generated at $CI_KEY — reusing it."
@@ -311,19 +447,27 @@ gvm "sudo useradd -m -s /bin/bash deploy 2>/dev/null || true; \
      echo '$CI_PUBKEY' | sudo tee /home/deploy/.ssh/authorized_keys >/dev/null; \
      sudo chmod 700 /home/deploy/.ssh; sudo chmod 600 /home/deploy/.ssh/authorized_keys; \
      sudo chown -R deploy:deploy /home/deploy/.ssh /home/deploy/pictogram"
-DEPLOY_USER=deploy
 write_env DEPLOY_USER "$DEPLOY_USER"
 box_ssh "echo connected as \$(whoami)" && step "CI key works ✓"
+}
 
 # ── Stage 7 ──────────────────────────────────────────────────────────────
-stage "Box: install Docker"
+stage_7() {
+stage 7
+require VM_ZONE "Stage 4"
+require DEPLOY_HOST "Stage 5"
+require_file "$CI_KEY" "Stage 6"
 say "Docker Engine + the compose plugin, from Docker's official convenience script."
 gvm "command -v docker >/dev/null 2>&1 && echo present || (curl -fsSL https://get.docker.com | sudo sh)"
 gvm "sudo usermod -aG docker deploy"
 box_ssh "docker version --format '{{.Server.Version}}'" && step "docker ready for the deploy user ✓"
+}
 
 # ── Stage 8 ──────────────────────────────────────────────────────────────
-stage "Box: log in to GHCR"
+stage_8() {
+stage 8
+require DEPLOY_HOST "Stage 5"
+require_file "$CI_KEY" "Stage 6"
 say "The box pulls the app/chat/caddy images from GitHub Container Registry."
 open_url "https://github.com/settings/tokens/new?scopes=read:packages&description=pictogram-box-ghcr"
 step "Generate a classic token with only 'read:packages'. Copy it."
@@ -332,9 +476,11 @@ ask_secret GHCR_TOKEN "Paste the read:packages token:"
 box_ssh "docker login ghcr.io -u '$GHCR_USER' --password-stdin" <<<"$GHCR_TOKEN" \
   && step "GHCR login stored on the box ✓"
 note "Not written anywhere local — it lives only in the box's docker config."
+}
 
 # ── Stage 9 ──────────────────────────────────────────────────────────────
-stage "Generate the box secrets"
+stage_9() {
+stage 9
 say "Signing key (ADR-0004), its public half for chat (ADR-0014), and DB / MinIO creds."
 if [[ -n "$(_existing PICTOGRAM_AUTH_SIGNING_KEY || true)" ]] && ! confirm "Signing key already generated — regenerate it?"; then
   note "Keeping the existing signing key."
@@ -357,9 +503,11 @@ fi
 [[ -n "$(_existing MINIO_ROOT_PASSWORD || true)" ]] || write_env MINIO_ROOT_PASSWORD "$(openssl rand -hex 24)"
 write_env PICTOGRAM_TAG "latest"
 step "box.env now holds $(grep -c '=' "$ENV_FILE") values"
+}
 
 # ── Stage 10 ─────────────────────────────────────────────────────────────
-stage "Grafana Cloud: metrics + logs credentials (ADR-0016)"
+stage_10() {
+stage 10
 say "A single free-tier org gives Alloy somewhere to push app/chat metrics and scrubbed"
 say "app/chat/caddy logs. Free tier is plenty for a portfolio app's traffic."
 open_url "https://grafana.com/products/cloud/"
@@ -386,9 +534,13 @@ write_env GRAFANA_CLOUD_PROMETHEUS_API_KEY "$GRAFANA_CLOUD_PROMETHEUS_API_KEY"
 write_env GRAFANA_CLOUD_LOKI_URL "$GRAFANA_CLOUD_LOKI_URL"
 write_env GRAFANA_CLOUD_LOKI_USER "$GRAFANA_CLOUD_LOKI_USER"
 write_env GRAFANA_CLOUD_LOKI_API_KEY "$GRAFANA_CLOUD_LOKI_API_KEY"
+}
 
 # ── Stage 11 ─────────────────────────────────────────────────────────────
-stage "Ship the compose files and .env to the box"
+stage_11() {
+stage 11
+require DEPLOY_HOST "Stage 5"
+require_file "$CI_KEY" "Stage 6"
 say "Copies compose.yaml, compose.prod.yaml, Caddyfile.prod and the Alloy config into"
 say "~/pictogram, and the assembled box.env as ~/pictogram/.env."
 box_ssh "mkdir -p pictogram/alloy"
@@ -396,21 +548,28 @@ box_scp compose.yaml compose.prod.yaml Caddyfile.prod "deploy@${DEPLOY_HOST}:pic
 box_scp alloy/config.alloy "deploy@${DEPLOY_HOST}:pictogram/alloy/config.alloy"
 box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
 box_ssh "chmod 600 pictogram/.env && ls -l pictogram/"
-step "box is staged — it will start serving once Stage 14 fills the domain + OAuth values"
+step "box is staged — it will start serving once Stage $TOTAL_STAGES fills the domain + OAuth values"
+}
 
 # ── Stage 12 ─────────────────────────────────────────────────────────────
-stage "GitHub: the deploy secrets"
+stage_12() {
+stage 12
+require_file "$CI_KEY" "Stage 6"
 say "The Deploy workflow (.github/workflows/deploy.yml) reads these."
 set_secret DEPLOY_SSH_KEY "$(cat "$CI_KEY")"
 set_secret DEPLOY_USER "$DEPLOY_USER"
-# DEPLOY_HOST (and its pinned host key) are set in Stage 14, not here. The workflow rolls
-# the box the moment DEPLOY_HOST exists — and the box cannot serve until Stage 14 fills
-# the domain + OAuth values — so setting it now would only make dispatches fail on the
-# missing ${PICTOGRAM_DOMAIN} guard. Pre-domain, the workflow builds/pushes/validates only.
-note "DEPLOY_HOST is deliberately unset until Stage 14 — a dispatch now builds and pushes, no box roll."
+# DEPLOY_HOST (and its pinned host key) are set in the domain-gated tail, not here. The
+# workflow rolls the box the moment DEPLOY_HOST exists — and the box cannot serve until
+# the tail fills the domain + OAuth values — so setting it now would only make dispatches
+# fail on the missing ${PICTOGRAM_DOMAIN} guard. Pre-domain, it builds/pushes/validates only.
+note "DEPLOY_HOST is deliberately unset until Stage $TOTAL_STAGES — a dispatch now builds and pushes, no box roll."
+}
 
 # ── Stage 13 ─────────────────────────────────────────────────────────────
-stage "Sentry: exception tracking (ADR-0016)"
+stage_13() {
+stage 13
+require DEPLOY_HOST "Stage 5"
+require_file "$CI_KEY" "Stage 6"
 say "Two Sentry projects — one per half of the app — feeding backend + frontend errors."
 open_url "https://sentry.io/signup/"
 step "Sign up (or sign in) on Sentry's free Developer plan; create an org if you don't have one."
@@ -439,9 +598,13 @@ set_secret SENTRY_AUTH_TOKEN "$SENTRY_AUTH_TOKEN"
 box_scp "$ENV_FILE" "deploy@${DEPLOY_HOST}:pictogram/.env"
 box_ssh "chmod 600 pictogram/.env"
 step "box.env re-shipped with SENTRY_DSN ✓"
+}
 
 # ── Stage 14 ─────────────────────────────────────────────────────────────
-stage "Domain-gated tail — run this part once you own the domain"
+stage_14() {
+stage 14
+require DEPLOY_HOST "Stage 5"
+require_file "$CI_KEY" "Stage 6"
 say "Everything above is done. The box is provisioned and CI can reach it, but it"
 say "cannot serve until it has a domain (for the TLS cert) and a real Google OAuth"
 say "client. Do the following when the domain is registered, then re-run this wizard"
@@ -471,7 +634,25 @@ if confirm "Have the domain and OAuth client details now?"; then
   say "Now trigger the Deploy workflow:  Actions → Deploy → Run workflow"
   say "Then work through the smoke test in docs/runbook/deployment.md."
 else
-  note "No problem — re-run the wizard when you're ready; Stages 1–13 will skip."
+  note "No problem — re-run the wizard when you're ready; Stages 1–$((TOTAL_STAGES - 1)) will skip."
 fi
+}
+
+# ── Run the selected stages, in order ─────────────────────────────────────
+if (( ${#SELECTED_LIST[@]} == TOTAL_STAGES )); then
+  BANNER_NOTE=""
+else
+  joined="${SELECTED_LIST[*]}"
+  BANNER_NOTE="Running only stage(s): ${joined// /, }"
+fi
+banner "Pictogram deployment (ADR-0012)" "$BANNER_NOTE"
+say "Provisions the temporary GCP box, wires CI to it, and prepares the box .env."
+note "Pre-domain stages run now; the domain-gated tail (Stage $TOTAL_STAGES) waits until you own the domain."
+
+for ((n = 1; n <= TOTAL_STAGES; n++)); do
+  if is_selected "$n"; then
+    "stage_$n"
+  fi
+done
 
 finish
