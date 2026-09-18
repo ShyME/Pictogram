@@ -15,7 +15,7 @@ export class LoginPage {
   }
 
   async open(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto('/login');
   }
 
   async openWithError(reason: string): Promise<void> {
