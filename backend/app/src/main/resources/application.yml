@@ -1,12 +1,32 @@
 spring:
   application:
     name: pictogram
+  # Every request-path blocking call — Hikari/JDBC, S3BlobStore, the Google OAuth2 token
+  # exchange — used to tie up one of Tomcat's limited platform-thread workers for its
+  # duration; virtual threads are exactly for this shape of workload (#265). `chat` is
+  # WebFlux/Netty (ADR-0014), so this flag has nothing to turn on there and stays app-only.
+  # The `synchronized` blocks in S3BlobStore.ensureBucket and MediaLibrary don't need
+  # rework for this: JEP 491 (targeted JDK 24, and this app requires JDK 25) removed the
+  # old behavior where a virtual thread pinned its carrier thread inside `synchronized` —
+  # downgrading the toolchain below JDK 24 would silently bring that pinning back.
+  threads:
+    virtual:
+      enabled: true
   jackson:
     time-zone: UTC   # Jackson 3 already serializes temporal types as ISO-8601 by default
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: none
+  datasource:
+    hikari:
+      # Virtual threads remove Tomcat's thread pool as the concurrency ceiling, so the real
+      # limiter becomes Hikari's pool — left at Spring Boot's default (10) it's now easier
+      # to saturate than it was behind a bounded platform-thread pool. `app` is the only
+      # writer to this Postgres instance (chat is DB-less, ADR-0014) and it shares a single
+      # e2-medium box (2 vCPU) with Postgres itself, so 10 stays the right ceiling — it's
+      # made explicit here rather than left implicit.
+      maximum-pool-size: 10
   docker:
     compose:
       enabled: false   # only the "local" profile starts infra via Compose
