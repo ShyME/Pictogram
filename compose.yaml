@@ -162,7 +162,7 @@ services:
   # below are harmless dev defaults — no account needed for `task up` — that
   # compose.prod.yaml replaces with hard `${VAR:?}` guards, same as every other secret.
   alloy:
-    image: grafana/alloy:v1.19.2
+    image: grafana/alloy:v1.20.0
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       # Discovers and tails app/chat/caddy container logs via the Docker API (read-only:
