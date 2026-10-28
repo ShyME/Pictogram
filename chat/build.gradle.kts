@@ -5,9 +5,9 @@
 // bump PR lands, or when backend's does, check whether the other should follow.
 plugins {
     java
-    id("org.springframework.boot") version "4.1.1"
+    id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.diffplug.spotless") version "8.10.2"
+    id("com.diffplug.spotless") version "8.10.4"
 }
 
 group = "me.imshy"
